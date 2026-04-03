@@ -1,0 +1,14 @@
+/*
+index.html
+sw.js
+favicon.svg
+manifest.json
+robots.txt
+sitemap.xml
+video-bg-new.mp4
+uploads/*
+sitemap.xml
+robots.txt
+manifest.json
+favicon.svg
+  Cache-Control: public, max-age=3600
