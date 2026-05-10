@@ -2,8 +2,30 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <title>KEYCODE - AI-Powered Digital Transformation</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://kit.fontawesome.com https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com https://fonts.gstatic.com; img-src 'self' data: https://*; font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com https://fonts.googleapis.com; connect-src 'self' https://api.openai.com https://api.opencode.ai wss:; object-src 'none'; base-uri 'self';">
   <meta name="description" content="World's most advanced AI-powered digital transformation partner. Build websites with AI.">
+  
+  <!-- SEO Meta Tags -->
+  <meta name="keywords" content="AI website builder, digital transformation, web development, SaaS, automation, AI-powered design">
+  <meta name="author" content="KEYCODE">
+  <meta name="robots" content="index, follow">
+  <meta name="language" content="English">
+  
+  <!-- Open Graph / Social Media -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="KEYCODE - AI-Powered Digital Transformation">
+  <meta property="og:description" content="World's most advanced AI-powered digital transformation partner. Build websites with AI.">
+  <meta property="og:image" content="/favicon.svg">
+  <meta property="og:url" content="https://keycode.ai">
+  <meta property="og:site_name" content="KEYCODE">
+  
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="KEYCODE - AI-Powered Digital Transformation">
+  <meta name="twitter:description" content="World's most advanced AI-powered digital transformation partner. Build websites with AI.">
+  <meta name="twitter:image" content="/favicon.svg">
   
   <!-- PWA / Mobile App -->
   <meta name="mobile-web-app-capable" content="yes">
@@ -34,7 +56,6 @@
   <!-- Three.js for 3D -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
   
   <style>
     /* ============================================ */
@@ -77,7 +98,7 @@
     }
 
     html {
-      scroll-behavior: smooth;
+      scroll-behavior: auto;
     }
 
     body {
@@ -87,6 +108,81 @@
       overflow-x: hidden;
       line-height: 1.7;
       min-height: 100vh;
+    }
+
+    /* ============================================ */
+    /* GLOBAL ANIMATION SYSTEM */
+    /* ============================================ */
+    .animate-on-scroll {
+      opacity: 0;
+      transform: translate3d(0, 30px, 0) scale(0.98);
+      transition: opacity 0.85s ease-out, transform 0.85s ease-out;
+    }
+
+    .animate-on-scroll.visible {
+      opacity: 1;
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+
+    .animate-pop {
+      opacity: 0;
+      transform: scale(0.94);
+      animation: popIn 0.7s cubic-bezier(0.2, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes popIn {
+      0% { opacity: 0; transform: scale(0.94) translateY(12px); }
+      60% { opacity: 1; transform: scale(1.03) translateY(-3px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .animate-slide-in {
+      opacity: 0;
+      transform: translateX(-30px);
+      animation: slideInX 0.8s ease-out forwards;
+    }
+
+    @keyframes slideInX {
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .animate-fade-in {
+      opacity: 0;
+      animation: fadeIn 0.8s ease-out forwards;
+    }
+
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+
+    .animate-rotate {
+      opacity: 0;
+      transform: rotateY(-15deg) rotateX(2deg) translateY(14px);
+      animation: rotateIn 0.85s ease-out forwards;
+    }
+
+    @keyframes rotateIn {
+      to { opacity: 1; transform: rotateY(0) rotateX(0) translateY(0); }
+    }
+
+    .shake-on-hover:hover {
+      animation: hoverShake 0.35s ease-in-out;
+    }
+
+    @keyframes hoverShake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-2px); }
+      40% { transform: translateX(2px); }
+      60% { transform: translateX(-1px); }
+      80% { transform: translateX(1px); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .animate-on-scroll, .animate-pop, .animate-slide-in, .animate-fade-in, .animate-rotate, .shake-on-hover {
+        animation: none !important;
+        transition: none !important;
+        transform: none !important;
+      }
     }
 
     /* ============================================ */
@@ -100,7 +196,14 @@
       height: 100%;
       z-index: -3;
       overflow: hidden;
-      background: linear-gradient(135deg, #030712 0%, #1a1a2e 50%, #0f0f1a 100%);
+      background: linear-gradient(135deg, #0a0a15 0%, #1a1a40 50%, #0f0f2e 100%);
+      background-size: 400% 400%;
+      animation: bgGradientShift 8s ease infinite;
+    }
+    
+    @keyframes bgGradientShift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
     }
     
     #video-canvas {
@@ -110,9 +213,13 @@
       width: 100%;
       height: 100%;
       z-index: -2;
-      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 25%, #ec4899 50%, #06b6d4 75%, #6366f4 100%);
-      background-size: 400% 400%;
-    @keyframes gradientShift {
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 20%, #ec4899 40%, #22d3ee 60%, #10b981 80%, #6366f1 100%);
+      background-size: 500% 500%;
+      animation: canvasGradientFlow 15s ease infinite;
+      filter: brightness(1.2) saturate(1.3);
+    }
+    
+    @keyframes canvasGradientFlow {
       0% { background-position: 0% 50%; }
       50% { background-position: 100% 50%; }
       100% { background-position: 0% 50%; }
@@ -127,7 +234,14 @@
       object-fit: cover;
       object-position: center center;
       z-index: -1;
-      opacity: 0.8;
+      opacity: 0.95;
+      filter: brightness(1.5) contrast(1.2) saturate(1.15);
+      animation: videoFloat 20s ease-in-out infinite;
+    }
+    
+    @keyframes videoFloat {
+      0%, 100% { transform: scale(1) translateY(0px); }
+      50% { transform: scale(1.05) translateY(-5px); }
     }
     
     @keyframes gradientShift {
@@ -142,9 +256,43 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: linear-gradient(to top, rgba(3, 3, 5, 0.95) 0%, rgba(3, 3, 5, 0.6) 30%, rgba(3, 3, 5, 0.3) 60%);
+      background: linear-gradient(to top, rgba(3, 3, 5, 0.85) 0%, rgba(3, 3, 5, 0.4) 40%, rgba(3, 3, 5, 0.1) 75%, transparent 100%);
       pointer-events: none;
-      z-index: 1;
+      z-index: 0;
+      animation: coverPulse 6s ease-in-out infinite;
+    }
+    
+    @keyframes coverPulse {
+      0%, 100% { background: linear-gradient(to top, rgba(3, 3, 5, 0.85) 0%, rgba(3, 3, 5, 0.4) 40%, rgba(3, 3, 5, 0.1) 75%, transparent 100%); }
+      50% { background: linear-gradient(to top, rgba(3, 3, 5, 0.75) 0%, rgba(3, 3, 5, 0.3) 40%, rgba(3, 3, 5, 0.05) 75%, transparent 100%); }
+    }
+
+    @keyframes orbitalGlow {
+      0% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.3), 0 0 40px rgba(139, 92, 246, 0.1); }
+      50% { box-shadow: 0 0 40px rgba(99, 102, 241, 0.6), 0 0 80px rgba(139, 92, 246, 0.3), inset 0 0 20px rgba(34, 211, 238, 0.2); }
+      100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.3), 0 0 40px rgba(139, 92, 246, 0.1); }
+    }
+
+    @keyframes geometricSpin {
+      0% { transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg); }
+      100% { transform: rotateX(360deg) rotateY(360deg) rotateZ(180deg); }
+    }
+
+    @keyframes floatUp {
+      0% { transform: translateY(0px) translateX(0px); opacity: 0; }
+      50% { opacity: 1; }
+      100% { transform: translateY(-100px) translateX(30px); opacity: 0; }
+    }
+
+    @keyframes shimmerGlow {
+      0%, 100% { opacity: 0.5; filter: brightness(1); }
+      50% { opacity: 1; filter: brightness(1.4); }
+    }
+
+    @keyframes pulseRing {
+      0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7); }
+      70% { box-shadow: 0 0 0 30px rgba(99, 102, 241, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
     }
 
     .sound-btn {
@@ -219,6 +367,72 @@
       -webkit-background-clip: text;
       background-clip: text;
       -webkit-text-fill-color: transparent;
+      font-weight: 900;
+    }
+
+    .main-hero-title {
+      font-family: 'Space Grotesk', 'Syne', 'Inter', sans-serif;
+      font-size: clamp(3rem, 8vw, 7rem);
+      color: #ffffff !important;
+      letter-spacing: -0.02em;
+      line-height: 1.05;
+      text-shadow: 0 0 70px rgba(99,102,241,0.8), 0 0 100px rgba(236,72,153,0.8), 2px 2px 8px rgba(0,0,0,0.9);
+      opacity: 1 !important;
+      animation: hero3DPulse 8s ease-in-out infinite;
+      z-index: 1002;
+      position: relative;
+      text-rendering: optimizeLegibility;
+      backface-visibility: hidden;
+      transform-style: preserve-3d;
+      perspective: 1200px;
+    }
+
+    @keyframes hero3DPulse {
+      0%, 100% { transform: perspective(1200px) rotateX(0deg) rotateY(0deg) translateZ(0); }
+      25% { transform: perspective(1200px) rotateX(1.2deg) rotateY(1deg) translateZ(8px); }
+      50% { transform: perspective(1200px) rotateX(-1.5deg) rotateY(-0.8deg) translateZ(6px); }
+      75% { transform: perspective(1200px) rotateX(0.8deg) rotateY(1.4deg) translateZ(10px); }
+    }
+
+    .hero-3d-decor {
+      position: absolute;
+      top: -24px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 240px;
+      height: 240px;
+      pointer-events: none;
+      z-index: 1001;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: decorRotate 22s linear infinite;
+    }
+
+    .hero-3d-decor span {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #ffffff, rgba(255,255,255,0));
+      opacity: 0.8;
+      animation: decorPulse 2s ease-in-out infinite;
+    }
+
+    .hero-3d-decor span:nth-child(1) { top: 8%; left: 50%; animation-delay: 0s; }
+    .hero-3d-decor span:nth-child(2) { top: 44%; left: 12%; animation-delay: 0.25s; }
+    .hero-3d-decor span:nth-child(3) { top: 70%; left: 72%; animation-delay: 0.5s; }
+    .hero-3d-decor span:nth-child(4) { top: 30%; left: 89%; animation-delay: 0.75s; }
+    .hero-3d-decor span:nth-child(5) { top: 78%; left: 38%; animation-delay: 1s; }
+
+    @keyframes decorRotate {
+      0% { transform: translateX(-50%) rotate(0deg); }
+      100% { transform: translateX(-50%) rotate(360deg); }
+    }
+
+    @keyframes decorPulse {
+      0%, 100% { transform: scale(0.8); opacity: 0.6; }
+      50% { transform: scale(1.2); opacity: 1; }
     }
 
     .text-muted {
@@ -293,6 +507,8 @@
       background: inherit;
       filter: brightness(0.7);
       transition: all 0.3s ease;
+      z-index: -1;
+      pointer-events: none;
     }
     
     .three-d-btn:hover {
@@ -491,6 +707,7 @@
       opacity: 0;
       transition: opacity 0.3s ease;
       animation: borderGlow 3s linear infinite;
+      pointer-events: none;
     }
     
     @keyframes borderGlow {
@@ -501,7 +718,55 @@
     .glow-border-three-d:hover::before {
       opacity: 1;
     }
-    
+
+    /* 3D Geometric Decorations */
+    .geometric-shape {
+      position: absolute;
+      opacity: 0.15;
+      pointer-events: none;
+    }
+
+    .geo-sphere {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, rgba(99, 102, 241, 0.4), rgba(99, 102, 241, 0));
+      box-shadow: inset -20px -20px 40px rgba(0, 0, 0, 0.5), 0 0 40px rgba(99, 102, 241, 0.3);
+      animation: orbitalGlow 8s ease-in-out infinite, geometricSpin 30s linear infinite;
+    }
+
+    .geo-cube {
+      width: 100px;
+      height: 100px;
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(34, 211, 238, 0.2));
+      border: 2px solid rgba(99, 102, 241, 0.3);
+      animation: geometricSpin 25s linear infinite reverse;
+      transform-style: preserve-3d;
+    }
+
+    .geo-ring {
+      width: 150px;
+      height: 150px;
+      border: 3px solid rgba(236, 72, 153, 0.3);
+      border-radius: 50%;
+      animation: pulseRing 3s ease-out infinite, geometricSpin 40s linear infinite;
+    }
+
+    .geo-line {
+      position: absolute;
+      background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.5), transparent);
+      animation: shimmerGlow 4s ease-in-out infinite;
+    }
+
+    .floating-particle {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.8), rgba(99, 102, 241, 0));
+      border-radius: 50%;
+      box-shadow: 0 0 10px rgba(99, 102, 241, 0.6);
+      animation: floatUp 6s ease-out infinite;
+    }
     /* 3D Parallax Container */
     .parallax-three-d {
       transform-style: preserve-3d;
@@ -534,6 +799,8 @@
       overflow: hidden;
       transform-style: preserve-3d;
       perspective: 1000px;
+      color: var(--white);
+      z-index: 1;
     }
 
     .btn::before {
@@ -545,10 +812,23 @@
       height: 100%;
       background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
       transition: left 0.6s;
+      pointer-events: none;
+      z-index: -1;
     }
 
     .btn:hover::before {
       left: 100%;
+    }
+    
+    .btn:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
+      transform: translateY(-2px);
+    }
+    
+    .btn:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
     }
 
     .btn-primary {
@@ -791,8 +1071,16 @@
       max-width: 1000px;
       text-align: center;
       position: relative;
-      z-index: 10;
+      z-index: 1001;
       color: #ffffff;
+      pointer-events: none;
+    }
+
+    .hero-content * {
+      z-index: 1002;
+      pointer-events: auto;
+      color: #ffffff !important;
+      text-shadow: 0 0 30px rgba(0,0,0,0.7), 0 0 20px rgba(0,0,0,0.5);
     }
 
     .hero-badge {
@@ -1883,6 +2171,7 @@
       background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
       transform: scale(0);
       transition: transform 0.5s;
+      pointer-events: none;
     }
     
     .btn-micro:active::before {
@@ -1970,6 +2259,14 @@
       transform: scaleX(0);
       transform-origin: left;
       transition: transform 0.5s ease;
+    }
+    
+    .loader-text {
+      font-family: var(--font-body);
+      font-size: 14px;
+      color: var(--silver);
+      letter-spacing: 0.5px;
+      animation: pulse 2s ease-in-out infinite;
     }
     
     .progress-bar-fill.animate {
@@ -2423,9 +2720,6 @@
         transform: scale(0.98);
       }
     }
-        transform: none;
-      }
-    }
 
     /* Prevent horizontal scroll */
     html, body {
@@ -2473,8 +2767,6 @@
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
       touch-action: pan-y;
-    }
-      overflow-y: auto;
     }
 
     .dash-section {
@@ -2819,6 +3111,733 @@
       outline: none;
       border-color: var(--primary);
     }
+
+    /* Footer */
+    .footer {
+      background: var(--void);
+      border-top: 2px solid var(--glass-border);
+      padding: 80px 0 40px;
+      margin-top: 120px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .footer::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--primary-glow), transparent);
+      opacity: 0.5;
+    }
+    
+    .footer .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 60px;
+    }
+    
+    .footer-content {
+      display: grid;
+      grid-template-columns: 2.5fr 3.5fr;
+      gap: 80px;
+      margin-bottom: 60px;
+    }
+    
+    .footer-brand {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .footer-logo {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: var(--gradient-1);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .footer-logo i {
+      -webkit-text-fill-color: var(--primary);
+      font-size: 1.8rem;
+    }
+    
+    .footer-tagline {
+      color: var(--silver);
+      font-size: 1rem;
+      line-height: 1.8;
+      margin-bottom: 30px;
+    }
+    
+    .footer-social {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 40px;
+    }
+    
+    .social-link {
+      width: 45px;
+      height: 45px;
+      border-radius: 12px;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--silver);
+      text-decoration: none;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      font-size: 1.1rem;
+    }
+    
+    .social-link:hover {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+      transform: translateY(-4px) translateZ(5px);
+      box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+    }
+    
+    .footer-newsletter {
+      margin-top: auto;
+    }
+    
+    .newsletter-label {
+      color: var(--white);
+      font-weight: 600;
+      margin-bottom: 12px;
+      font-size: 0.95rem;
+    }
+    
+    .newsletter-form {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .newsletter-input {
+      flex: 1;
+      padding: 12px 16px;
+      background: var(--obsidian);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      color: var(--white);
+      font-family: var(--font-body);
+      transition: all 0.3s ease;
+    }
+    
+    .newsletter-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: var(--slate);
+    }
+    
+    .newsletter-btn {
+      padding: 12px 20px;
+      background: var(--primary);
+      border: none;
+      border-radius: 10px;
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 1rem;
+    }
+    
+    .newsletter-btn:hover {
+      background: var(--primary-glow);
+      transform: translateY(-2px);
+    }
+    
+    .footer-links-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 30px;
+    }
+    
+    .footer-section {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .section-title {
+      color: var(--white);
+      font-weight: 700;
+      font-size: 1rem;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    .section-links {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .section-links li {
+      margin: 0;
+    }
+    
+    .section-links a {
+      color: var(--silver);
+      text-decoration: none;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.95rem;
+    }
+    
+    .section-links a i {
+      font-size: 0.85rem;
+      opacity: 0;
+      transform: translateX(-5px);
+      transition: all 0.3s ease;
+    }
+    
+    .section-links a:hover {
+      color: var(--primary);
+      transform: translateX(5px);
+    }
+    
+    .section-links a:hover i {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    
+    .footer-divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--glass-border), transparent);
+      margin: 40px 0;
+    }
+    
+    .footer-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 30px 0;
+    }
+    
+    .footer-copyright {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    .footer-copyright p {
+      color: var(--ash);
+      font-size: 0.9rem;
+      margin: 0;
+    }
+    
+    .ai-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(99, 102, 241, 0.2);
+      color: var(--primary);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    
+    .developer-credit {
+      color: var(--silver);
+      margin-right: 10px;
+    }
+    
+    .developer-credit strong {
+      color: var(--primary-glow);
+    }
+    
+    .ai-badge i {
+      animation: pulse 2s ease-in-out infinite;
+    }
+    
+    .footer-meta {
+      display: flex;
+      gap: 30px;
+      align-items: center;
+    }
+    
+    .meta-item {
+      color: var(--silver);
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+    }
+    
+    .meta-item:hover {
+      color: var(--primary);
+    }
+    
+    .meta-item i {
+      font-size: 1rem;
+    }
+    
+    @media (max-width: 1200px) {
+      .footer .container {
+        padding: 0 40px;
+      }
+      
+      .footer-content {
+        grid-template-columns: 1fr;
+        gap: 50px;
+      }
+      
+      .footer-links-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .footer {
+        padding: 50px 0 20px;
+        margin-top: 80px;
+      }
+      
+      .footer .container {
+        padding: 0 20px;
+      }
+      
+      .footer-content {
+        gap: 40px;
+      }
+      
+      .footer-logo {
+        font-size: 1.5rem;
+      }
+      
+      .footer-tagline {
+        font-size: 0.9rem;
+      }
+      
+      .footer-social {
+        gap: 10px;
+      }
+      
+      .social-link {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+      }
+      
+      .footer-links-grid {
+        grid-template-columns: 1fr;
+        gap: 30px;
+      }
+      
+      .footer-bottom {
+        flex-direction: column;
+        gap: 20px;
+        text-align: center;
+      }
+      
+      .footer-meta {
+        flex-direction: column;
+        gap: 15px;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .newsletter-form {
+        flex-direction: column;
+      }
+      
+      .newsletter-input,
+      .newsletter-btn {
+        width: 100%;
+      }
+      
+      .footer-social {
+        justify-content: center;
+      }
+      
+      .section-title {
+        font-size: 0.85rem;
+      }
+      
+      .section-links a {
+        font-size: 0.85rem;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .footer-content {
+        grid-template-columns: 1fr;
+        gap: 40px;
+      }
+      
+      .footer-links {
+        grid-template-columns: 1fr;
+        gap: 30px;
+      }
+      
+      .footer-bottom {
+        flex-direction: column;
+        gap: 20px;
+        text-align: center;
+      }
+    }
+
+    /* Scroll to Top */
+    .scroll-to-top {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      width: 50px;
+      height: 50px;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 50%;
+      color: var(--white);
+      cursor: pointer;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+    }
+    
+    .scroll-to-top.visible {
+      opacity: 1;
+      visibility: visible;
+    }
+    
+    .scroll-to-top:hover {
+      background: var(--primary);
+      border-color: var(--primary);
+      transform: translateY(-2px);
+    }
+    
+    @media (max-width: 768px) {
+      .scroll-to-top {
+        bottom: 20px;
+        right: 20px;
+        width: 45px;
+        height: 45px;
+        font-size: 1rem;
+      }
+    }
+
+    /* =======================================
+       ENHANCED DEVICE-SPECIFIC OPTIMIZATION
+       ======================================= */
+
+    /* Ultra-Small Mobile (< 320px) */
+    @media (max-width: 320px) {
+      #video-bg {
+        filter: brightness(1.3) contrast(1.1) saturate(1);
+      }
+      
+      .geometric-shape {
+        opacity: 0.08;
+      }
+      
+      .floating-particle {
+        animation: none;
+        opacity: 0;
+      }
+      
+      .geo-sphere, .geo-cube, .geo-ring {
+        animation: none;
+        opacity: 0;
+      }
+    }
+
+    /* Small Mobile (320px - 480px) */
+    @media (min-width: 320px) and (max-width: 480px) {
+      #video-bg {
+        filter: brightness(1.4) contrast(1.15) saturate(1.1);
+        animation: none;
+      }
+      
+      #video-canvas {
+        animation: canvasGradientFlow 20s ease infinite;
+        filter: brightness(1.3) saturate(1.2);
+      }
+      
+      #video-cover {
+        animation: coverPulse 8s ease-in-out infinite;
+      }
+      
+      .geometric-shape {
+        opacity: 0.1;
+        transform: scale(0.7);
+      }
+      
+      .geo-sphere {
+        animation: orbitalGlow 10s ease-in-out infinite;
+        width: 80px;
+        height: 80px;
+      }
+      
+      .floating-particle {
+        animation: floatUp 8s ease-out infinite;
+      }
+    }
+
+    /* Tablet (480px - 768px) */
+    @media (min-width: 481px) and (max-width: 768px) {
+      #video-bg {
+        filter: brightness(1.45) contrast(1.2) saturate(1.15);
+        animation: videoFloat 25s ease-in-out infinite;
+      }
+      
+      #video-canvas {
+        animation: canvasGradientFlow 18s ease infinite;
+        filter: brightness(1.25) saturate(1.25);
+      }
+      
+      #video-cover {
+        animation: coverPulse 7s ease-in-out infinite;
+      }
+      
+      .geometric-shape {
+        opacity: 0.12;
+        transform: scale(0.85);
+      }
+      
+      .geo-sphere {
+        animation: orbitalGlow 8s ease-in-out infinite, geometricSpin 35s linear infinite;
+        width: 100px;
+        height: 100px;
+      }
+      
+      .geo-ring {
+        animation: pulseRing 3.5s ease-out infinite, geometricSpin 40s linear infinite;
+        width: 120px;
+        height: 120px;
+      }
+      
+      .floating-particle {
+        animation: floatUp 7s ease-out infinite;
+      }
+    }
+
+    /* Medium Devices (768px - 1024px) */
+    @media (min-width: 769px) and (max-width: 1024px) {
+      #video-bg {
+        filter: brightness(1.5) contrast(1.2) saturate(1.2);
+        animation: videoFloat 22s ease-in-out infinite;
+      }
+      
+      #video-canvas {
+        animation: canvasGradientFlow 16s ease infinite;
+        filter: brightness(1.2) saturate(1.3);
+      }
+      
+      #video-cover {
+        animation: coverPulse 6.5s ease-in-out infinite;
+      }
+      
+      .geometric-shape {
+        opacity: 0.13;
+        transform: scale(0.9);
+      }
+      
+      .geo-sphere {
+        animation: orbitalGlow 7.5s ease-in-out infinite, geometricSpin 28s linear infinite;
+        width: 110px;
+        height: 110px;
+      }
+      
+      .geo-cube {
+        animation: geometricSpin 22s linear infinite reverse;
+        width: 110px;
+        height: 110px;
+      }
+      
+      .floating-particle {
+        animation: floatUp 6.5s ease-out infinite;
+        opacity: 0.3;
+      }
+    }
+
+    /* Large Devices (1024px - 1200px) */
+    @media (min-width: 1025px) and (max-width: 1200px) {
+      #video-bg {
+        filter: brightness(1.5) contrast(1.25) saturate(1.25);
+        animation: videoFloat 20s ease-in-out infinite;
+      }
+      
+      #video-canvas {
+        animation: canvasGradientFlow 15s ease infinite;
+        filter: brightness(1.15) saturate(1.35);
+      }
+      
+      #video-cover {
+        animation: coverPulse 6s ease-in-out infinite;
+      }
+      
+      .geometric-shape {
+        opacity: 0.14;
+      }
+      
+      .geo-sphere {
+        animation: orbitalGlow 8s ease-in-out infinite, geometricSpin 30s linear infinite;
+        width: 120px;
+        height: 120px;
+      }
+      
+      .geo-cube {
+        animation: geometricSpin 25s linear infinite reverse;
+        width: 115px;
+        height: 115px;
+      }
+      
+      .geo-ring {
+        animation: pulseRing 3s ease-out infinite, geometricSpin 40s linear infinite;
+        width: 150px;
+        height: 150px;
+      }
+      
+      .floating-particle {
+        animation: floatUp 5.5s ease-out infinite;
+        opacity: 0.35;
+      }
+    }
+
+    /* Desktop (1200px - 1400px) */
+    @media (min-width: 1201px) and (max-width: 1400px) {
+      #video-bg {
+        filter: brightness(1.5) contrast(1.22) saturate(1.2);
+        animation: videoFloat 20s ease-in-out infinite;
+      }
+      
+      #video-canvas {
+        animation: canvasGradientFlow 15s ease infinite;
+        filter: brightness(1.2) saturate(1.3);
+      }
+      
+      #video-cover {
+        animation: coverPulse 6s ease-in-out infinite;
+      }
+      
+      .geometric-shape {
+        opacity: 0.15;
+      }
+      
+      .floating-particle {
+        animation: floatUp 6s ease-out infinite;
+        opacity: 0.4;
+      }
+    }
+
+    /* Large Desktop (> 1400px) */
+    @media (min-width: 1401px) {
+      #video-bg {
+        filter: brightness(1.5) contrast(1.2) saturate(1.15);
+        animation: videoFloat 20s ease-in-out infinite;
+      }
+      
+      #video-canvas {
+        animation: canvasGradientFlow 15s ease infinite;
+      }
+      
+      #video-cover {
+        animation: coverPulse 6s ease-in-out infinite;
+      }
+      
+      .geometric-shape {
+        opacity: 0.16;
+      }
+      
+      .geo-sphere {
+        animation: orbitalGlow 8s ease-in-out infinite, geometricSpin 30s linear infinite;
+      }
+      
+      .geo-cube {
+        animation: geometricSpin 25s linear infinite reverse;
+      }
+      
+      .geo-ring {
+        animation: pulseRing 3s ease-out infinite, geometricSpin 40s linear infinite;
+      }
+      
+      .floating-particle {
+        animation: floatUp 6s ease-out infinite;
+        opacity: 0.45;
+      }
+    }
+
+    /* Touch Device Optimization */
+    @media (hover: none) and (pointer: coarse) {
+      /* Reduce animation complexity on touch devices for performance */
+      #video-bg {
+        animation: videoFloat 25s ease-in-out infinite;
+      }
+      
+      #video-canvas {
+        animation: canvasGradientFlow 20s ease infinite;
+      }
+      
+      .geo-sphere, .geo-cube, .geo-ring {
+        animation-duration: 8s, 40s;
+      }
+      
+      .floating-particle {
+        animation-duration: 8s;
+      }
+    }
+
+    /* High DPI / Retina Displays */
+    @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+      #video-bg {
+        filter: brightness(1.5) contrast(1.2) saturate(1.15);
+      }
+      
+      .geo-sphere {
+        box-shadow: inset -30px -30px 60px rgba(0, 0, 0, 0.6), 0 0 50px rgba(99, 102, 241, 0.4);
+      }
+    }
+
+    /* Dark Mode Support (prefers-color-scheme) */
+    @media (prefers-color-scheme: light) {
+      #video-bg {
+        filter: brightness(1.3) contrast(1.15) saturate(1.1);
+      }
+      
+      #video-cover {
+        background: linear-gradient(to top, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.3) 40%, rgba(255, 255, 255, 0.05) 75%, transparent 100%);
+      }
+      
+      .geometric-shape {
+        opacity: 0.08;
+      }
+    }
+
+    /* Reduced Motion Support */
+    @media (prefers-reduced-motion: reduce) {
+      #video-bg, #video-canvas, #video-cover {
+        animation: none !important;
+      }
+      
+      .geo-sphere, .geo-cube, .geo-ring, .floating-particle {
+        animation: none !important;
+      }
+      
+      * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -2826,6 +3845,10 @@
   <div class="loader-screen" id="loaderScreen">
     <div class="loader-logo">KEYCODE</div>
     <div class="loader-spinner"></div>
+    <div class="progress-bar-container">
+      <div class="progress-bar-fill" id="progressBar"></div>
+    </div>
+    <div class="loader-text">Initializing AI Systems...</div>
   </div>
   
   <!-- Noise Overlay -->
@@ -2844,7 +3867,7 @@
   </div>
   
   <!-- Sound Toggle Button -->
-  <button id="sound-toggle" class="sound-btn" title="Toggle Sound">
+  <button type="button" id="sound-toggle" class="sound-btn" title="Toggle Sound" aria-label="Toggle Sound">
     <svg class="sound-icon-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <path d="M11 5L6 9H2v6h4l5 4V5z"/>
       <line x1="23" y1="9" x2="17" y2="15"/>
@@ -2861,6 +3884,23 @@
   <div id="canvas-container"></div>
   <div class="bg-overlay"></div>
 
+  <!-- 3D Geometric Elements Layer -->
+  <div class="geometric-shape geo-sphere" style="top: 10%; left: 5%; width: 120px; height: 120px;"></div>
+  <div class="geometric-shape geo-cube" style="top: 20%; right: 8%; width: 100px; height: 100px;"></div>
+  <div class="geometric-shape geo-ring" style="top: 35%; left: 12%; width: 150px; height: 150px;"></div>
+  <div class="geometric-shape geo-sphere" style="bottom: 20%; right: 10%; width: 90px; height: 90px;"></div>
+  <div class="geometric-shape geo-cube" style="bottom: 15%; left: 15%; width: 110px; height: 110px;"></div>
+  
+  <!-- Floating Particles -->
+  <div class="floating-particle" style="top: 15%; left: 20%;"></div>
+  <div class="floating-particle" style="top: 25%; left: 75%;"></div>
+  <div class="floating-particle" style="top: 45%; left: 10%;"></div>
+  <div class="floating-particle" style="top: 60%; left: 85%;"></div>
+  <div class="floating-particle" style="bottom: 20%; left: 30%;"></div>
+  <div class="floating-particle" style="bottom: 25%; right: 20%;"></div>
+  <div class="floating-particle" style="bottom: 35%; left: 60%;"></div>
+  <div class="floating-particle" style="top: 50%; right: 15%;"></div>
+
   <!-- Navigation -->
   <nav class="navbar" id="navbar">
     <a href="#" class="nav-logo">
@@ -2876,7 +3916,7 @@
       <a href="#" class="btn btn-secondary btn-sm three-d-btn glow-border-three-d" onclick="openUserLoginModal()">Sign In</a>
       <a href="#" class="btn btn-accent btn-sm three-d-btn glow-border-three-d" onclick="openAdminLoginModal()">Admin</a>
       <a href="#" class="btn btn-primary btn-sm three-d-btn glow-border-three-d btn-micro hover-scale" onclick="openAIBuilder()">Build Now</a>
-      <button class="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="Menu">
+      <button type="button" class="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="Menu">
         <i class="fas fa-bars"></i>
       </button>
     </div>
@@ -2912,10 +3952,17 @@
         <i class="fas fa-sparkles"></i>
         <span>AI-Powered Design</span>
       </div>
-      <h1 class="text-3d" style="color: #ffffff; text-shadow: 0 0 40px rgba(99,102,241,0.8), 0 0 80px rgba(236,72,153,0.6), 2px 2px 4px rgba(0,0,0,0.8);">
-        Where <span class="text-gradient">Innovation</span><br>
+      <h1 class="text-3d main-hero-title" style="color: #ffffff; text-shadow: 0 0 40px rgba(99,102,241,0.8), 0 0 80px rgba(236,72,153,0.6), 2px 2px 4px rgba(0,0,0,0.8); font-family: 'Space Grotesk', 'Syne', 'Inter', sans-serif;">
+        Where <span class="text-gradient">Intelligence</span><br>
         Meets Excellence
       </h1>
+      <div class="hero-3d-decor">
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
       <p class="hero-subtitle">
         World's most advanced AI-powered digital transformation partner. 
         We build extraordinary digital experiences that define the future of your business.
@@ -2977,15 +4024,15 @@
         <div class="ai-input-container">
           <div class="ai-input-wrapper">
             <input type="text" class="ai-input" id="aiInput" placeholder="Describe your project..." onkeypress="handleAIInput(event)">
-            <button class="ai-send-btn three-d-btn" onclick="sendAIMessage()">
+            <button type="button" class="ai-send-btn three-d-btn" onclick="sendAIMessage()" aria-label="Send message">
               <i class="fas fa-paper-plane"></i>
             </button>
           </div>
           <div class="quick-prompts">
-            <button class="quick-prompt-btn three-d-btn" onclick="quickPrompt('E-commerce store for handmade jewelry')">💎 Jewelry Shop</button>
-            <button class="quick-prompt-btn three-d-btn" onclick="quickPrompt('Restaurant website with online ordering')">🍽️ Restaurant</button>
-            <button class="quick-prompt-btn three-d-btn" onclick="quickPrompt('Portfolio for graphic designer')">🎨 Portfolio</button>
-            <button class="quick-prompt-btn three-d-btn" onclick="quickPrompt('SaaS startup landing page')">🚀 SaaS</button>
+            <button type="button" class="quick-prompt-btn three-d-btn" onclick="quickPrompt('E-commerce store for handmade jewelry')">💎 Jewelry Shop</button>
+            <button type="button" class="quick-prompt-btn three-d-btn" onclick="quickPrompt('Restaurant website with online ordering')">🍽️ Restaurant</button>
+            <button type="button" class="quick-prompt-btn three-d-btn" onclick="quickPrompt('Portfolio for graphic designer')">🎨 Portfolio</button>
+            <button type="button" class="quick-prompt-btn three-d-btn" onclick="quickPrompt('SaaS startup landing page')">🚀 SaaS</button>
           </div>
         </div>
       </div>
@@ -3062,7 +4109,7 @@
         <h3>Mobile Apps</h3>
         <p>Native and cross-platform apps that provide seamless user experiences.</p>
         <ul class="service-features">
-          <li><i class="fas fa-check"></i> iOS & Android</li>
+          <li><i class="fas fa-check"></i> iOS <span class="amp">&amp;</span> Android</li>
           <li><i class="fas fa-check"></i> PWA Support</li>
           <li><i class="fas fa-check"></i> Offline Mode</li>
           <li><i class="fas fa-check"></i> Push Notifications</li>
@@ -3124,7 +4171,7 @@
           <li><i class="fas fa-check"></i> Contact Form</li>
           <li><i class="fas fa-check"></i> 1 Month Support</li>
         </ul>
-        <button class="pricing-btn pricing-btn-outline three-d-btn" onclick="openAIBuilder()">Get Started</button>
+        <button type="button" class="pricing-btn pricing-btn-outline three-d-btn" onclick="openAIBuilder()">Get Started</button>
       </div>
 
       <div class="pricing-card popular glass-three-d pricing-card-three-d three-d-tilt glow-animate">
@@ -3144,7 +4191,7 @@
           <li><i class="fas fa-check"></i> Blog Setup</li>
           <li><i class="fas fa-check"></i> 3 Months Support</li>
         </ul>
-        <button class="pricing-btn pricing-btn-primary three-d-btn" onclick="openAIBuilder()">Get Started</button>
+        <button type="button" class="pricing-btn pricing-btn-primary three-d-btn" onclick="openAIBuilder()">Get Started</button>
       </div>
 
       <div class="pricing-card glass-three-d pricing-card-three-d three-d-tilt">
@@ -3164,7 +4211,7 @@
           <li><i class="fas fa-check"></i> Priority Support</li>
           <li><i class="fas fa-check"></i> 12 Months Support</li>
         </ul>
-        <button class="pricing-btn pricing-btn-outline three-d-btn" onclick="openAIBuilder()">Contact Us</button>
+        <button type="button" class="pricing-btn pricing-btn-outline three-d-btn" onclick="openAIBuilder()">Contact Us</button>
       </div>
     </div>
   </section>
@@ -3191,48 +4238,96 @@
 
   <!-- Footer -->
   <footer class="footer">
-    <div class="footer-grid">
-      <div class="footer-brand">
-        <a href="#" class="nav-logo">
-          <i class="fas fa-bolt"></i> KEYCODE
-        </a>
-        <p>World's most advanced AI-powered digital transformation partner. We build extraordinary digital experiences.</p>
+    <div class="container">
+      <!-- Footer Main Content -->
+      <div class="footer-content">
+        <!-- Brand Section -->
+        <div class="footer-brand">
+          <div class="footer-logo">
+            <i class="fas fa-bolt"></i> KEYCODE
+          </div>
+          <p class="footer-tagline">World's most advanced AI-powered digital transformation partner. Building extraordinary digital experiences that define the future.</p>
+          <div class="footer-social">
+            <a href="#" title="Twitter" class="social-link" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+            <a href="#" title="LinkedIn" class="social-link" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+            <a href="#" title="GitHub" class="social-link" aria-label="GitHub"><i class="fab fa-github"></i></a>
+            <a href="#" title="Discord" class="social-link" aria-label="Discord"><i class="fab fa-discord"></i></a>
+            <a href="#" title="Instagram" class="social-link" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+          </div>
+          <div class="footer-newsletter">
+            <p class="newsletter-label">Subscribe to our newsletter</p>
+            <form class="newsletter-form">
+              <input type="email" placeholder="Enter your email" class="newsletter-input" required>
+              <button type="submit" class="newsletter-btn" aria-label="Subscribe"><i class="fas fa-arrow-right"></i></button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Links Section -->
+        <div class="footer-links-grid">
+          <!-- Product -->
+          <div class="footer-section">
+            <h4 class="section-title">Product</h4>
+            <ul class="section-links">
+              <li><a href="#features"><i class="fas fa-check"></i> Features</a></li>
+              <li><a href="#pricing"><i class="fas fa-tag"></i> Pricing</a></li>
+              <li><a href="#ai-builder"><i class="fas fa-wand-magic-sparkles"></i> AI Builder</a></li>
+              <li><a href="#dashboard"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+              <li><a href="#integrations"><i class="fas fa-plug"></i> Integrations</a></li>
+            </ul>
+          </div>
+
+          <!-- Company -->
+          <div class="footer-section">
+            <h4 class="section-title">Company</h4>
+            <ul class="section-links">
+              <li><a href="#about"><i class="fas fa-info-circle"></i> About Us</a></li>
+              <li><a href="#blog"><i class="fas fa-newspaper"></i> Blog</a></li>
+              <li><a href="#careers"><i class="fas fa-briefcase"></i> Careers</a></li>
+              <li><a href="#press"><i class="fas fa-microphone"></i> Press</a></li>
+              <li><a href="#contact"><i class="fas fa-envelope"></i> Contact</a></li>
+            </ul>
+          </div>
+
+          <!-- Support & Resources -->
+          <div class="footer-section">
+            <h4 class="section-title">Support</h4>
+            <ul class="section-links">
+              <li><a href="#help"><i class="fas fa-question-circle"></i> Help Center</a></li>
+              <li><a href="#docs"><i class="fas fa-book"></i> Documentation</a></li>
+              <li><a href="#status"><i class="fas fa-server"></i> Status</a></li>
+              <li><a href="#community"><i class="fas fa-users"></i> Community</a></li>
+              <li><a href="#support"><i class="fas fa-headset"></i> Support</a></li>
+            </ul>
+          </div>
+
+          <!-- Legal & Security -->
+          <div class="footer-section">
+            <h4 class="section-title">Legal</h4>
+            <ul class="section-links">
+              <li><a href="#privacy"><i class="fas fa-shield-alt"></i> Privacy Policy</a></li>
+              <li><a href="#terms"><i class="fas fa-file-contract"></i> Terms of Service</a></li>
+              <li><a href="#cookies"><i class="fas fa-cookie"></i> Cookie Policy</a></li>
+              <li><a href="#security"><i class="fas fa-lock"></i> Security</a></li>
+              <li><a href="#compliance"><i class="fas fa-check-double"></i> Compliance</a></li>
+            </ul>
+          </div>
+        </div>
       </div>
-      <div class="footer-column">
-        <h4>Services</h4>
-        <ul class="footer-links">
-          <li><a href="#">Web Development</a></li>
-          <li><a href="#">E-Commerce</a></li>
-          <li><a href="#">AI Solutions</a></li>
-          <li><a href="#">Mobile Apps</a></li>
-        </ul>
-      </div>
-      <div class="footer-column">
-        <h4>Company</h4>
-        <ul class="footer-links">
-          <li><a href="#">About Us</a></li>
-          <li><a href="#">Careers</a></li>
-          <li><a href="#">Blog</a></li>
-          <li><a href="#">Press</a></li>
-        </ul>
-      </div>
-      <div class="footer-column">
-        <h4>Support</h4>
-        <ul class="footer-links">
-          <li><a href="#">Help Center</a></li>
-          <li><a href="#">Contact Us</a></li>
-          <li><a href="#">Privacy Policy</a></li>
-          <li><a href="#">Terms of Service</a></li>
-        </ul>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      <p>&copy; 2026 KEYCODE. All rights reserved.</p>
-      <div class="footer-socials">
-        <a href="#"><i class="fab fa-twitter"></i></a>
-        <a href="#"><i class="fab fa-linkedin"></i></a>
-        <a href="#"><i class="fab fa-github"></i></a>
-        <a href="#"><i class="fab fa-instagram"></i></a>
+
+      <!-- Footer Divider -->
+      <div class="footer-divider"></div>
+
+      <!-- Footer Bottom -->
+      <div class="footer-bottom">
+        <div class="footer-copyright">
+          <p>&copy; 2026 KEYCODE. All rights reserved. <span class="developer-credit">| Developed by <strong>Vaibhav</strong></span> <span class="ai-badge"><i class="fas fa-sparkles"></i> Powered by KEYCODE Studio</span></p>
+        </div>
+        <div class="footer-meta">
+          <span class="meta-item"><i class="fas fa-globe"></i> Global</span>
+          <span class="meta-item"><i class="fas fa-shield-alt"></i> Secure</span>
+          <span class="meta-item"><i class="fas fa-lightning-bolt"></i> Fast</span>
+        </div>
       </div>
     </div>
   </footer>
@@ -3240,7 +4335,7 @@
   <!-- User Login Modal -->
   <div class="builder-modal" id="userLoginModal">
     <div class="builder-modal-content glass-three-d">
-      <button class="builder-close" onclick="closeUserLoginModal()">
+      <button type="button" class="builder-close" onclick="closeUserLoginModal()" aria-label="Close">
         <i class="fas fa-times"></i>
       </button>
       
@@ -3255,7 +4350,7 @@
         
         <div style="margin-bottom: 25px;">
           <label style="display: block; margin-bottom: 8px; color: var(--silver);">Password</label>
-          <input type="password" id="userLoginPassword" class="three-d-input" style="width: 100%; padding: 14px 16px; background: var(--slate); border: 1px solid var(--glass-border); border-radius: 12px; color: var(--white);" placeholder="Enter your password" required>
+          <input type="password" id="userLoginPassword" class="three-d-input" style="width: 100%; padding: 14px 16px; background: var(--slate); border: 1px solid var(--glass-border); border-radius: 12px; color: var(--white);" placeholder="Enter your password" autocomplete="current-password" required>
         </div>
         
         <button type="submit" class="btn btn-primary btn-lg three-d-btn" style="width: 100%;">
@@ -3276,7 +4371,7 @@
   <!-- Admin Login Modal (for project owners) -->
   <div class="builder-modal" id="adminLoginModal">
     <div class="builder-modal-content glass-three-d">
-      <button class="builder-close" onclick="closeAdminLoginModal()">
+      <button type="button" class="builder-close" onclick="closeAdminLoginModal()" aria-label="Close">
         <i class="fas fa-times"></i>
       </button>
       
@@ -3312,7 +4407,7 @@
   <!-- Registration Modal -->
   <div class="builder-modal" id="registerModal">
     <div class="builder-modal-content glass-three-d">
-      <button class="builder-close" onclick="closeRegisterModal()">
+      <button type="button" class="builder-close" onclick="closeRegisterModal()" aria-label="Close">
         <i class="fas fa-times"></i>
       </button>
       
@@ -3337,7 +4432,7 @@
         
         <div style="margin-bottom: 25px;">
           <label style="display: block; margin-bottom: 8px; color: var(--silver);">Password</label>
-          <input type="password" id="regPassword" class="three-d-input" style="width: 100%; padding: 14px 16px; background: var(--slate); border: 1px solid var(--glass-border); border-radius: 12px; color: var(--white);" placeholder="At least 8 characters" required>
+          <input type="password" id="regPassword" class="three-d-input" style="width: 100%; padding: 14px 16px; background: var(--slate); border: 1px solid var(--glass-border); border-radius: 12px; color: var(--white);" placeholder="At least 8 characters" autocomplete="new-password" required>
         </div>
         
         <button type="submit" class="btn btn-primary btn-lg three-d-btn" style="width: 100%;">
@@ -3354,7 +4449,7 @@
   <!-- User Dashboard -->
   <div class="builder-modal" id="dashboardModal">
     <div class="builder-modal-content glass-three-d" style="max-width: 1200px;">
-      <button class="builder-close" onclick="closeDashboard()">
+      <button type="button" class="builder-close" onclick="closeDashboard()" aria-label="Close">
         <i class="fas fa-times"></i>
       </button>
       
@@ -3516,17 +4611,23 @@
     // ADVANCED 3D BACKGROUND
     // ============================================
     const container = document.getElementById('canvas-container');
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    container.appendChild(renderer.domElement);
+    if (!container) {
+      console.warn('3D background container #canvas-container not found. Skipping 3D background initialization.');
+    } else if (!window.THREE) {
+      console.warn('Three.js is not loaded. Skipping 3D background initialization.');
+    } else {
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      container.appendChild(renderer.domElement);
 
-    // Create enhanced particles with multiple colors
+      // Create enhanced particles with multiple colors
     const particlesGeometry = new THREE.BufferGeometry();
-    const particlesCount = 3000;
+    const screenArea = window.innerWidth * window.innerHeight;
+    const particlesCount = Math.max(600, Math.min(1500, Math.round(screenArea / 2000)));
     const posArray = new Float32Array(particlesCount * 3);
     const colorsArray = new Float32Array(particlesCount * 3);
     
@@ -3618,16 +4719,29 @@
 
     camera.position.z = 3;
 
-    // Mouse interaction with smooth following
+    // Pointer interaction (mouse + touch) with smooth following
     let mouseX = 0;
     let mouseY = 0;
     let targetX = 0;
     let targetY = 0;
     
+    const updatePointerPosition = (clientX, clientY) => {
+      mouseX = (clientX / window.innerWidth) * 2 - 1;
+      mouseY = -(clientY / window.innerHeight) * 2 + 1;
+    };
+
     document.addEventListener('mousemove', (event) => {
-      mouseX = (event.clientX / window.innerWidth) * 2 - 1;
-      mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
-    });
+      updatePointerPosition(event.clientX, event.clientY);
+    }, { passive: true });
+
+    document.addEventListener('touchmove', (event) => {
+      if (event.touches && event.touches.length > 0) {
+        updatePointerPosition(event.touches[0].clientX, event.touches[0].clientY);
+      }
+    }, { passive: true });
+
+    document.documentElement.style.scrollBehavior = 'smooth';
+    document.body.style.touchAction = 'pan-y';
 
     // Generate connection lines
     function updateConnections() {
@@ -3659,9 +4773,9 @@
       requestAnimationFrame(animate);
       time += 0.001;
       
-      // Smooth mouse following
-      targetX += (mouseX * 0.5 - targetX) * 0.02;
-      targetY += (mouseY * 0.5 - targetY) * 0.02;
+      // Smooth mouse following (more responsive, but not jittery)
+      targetX += (mouseX * 0.8 - targetX) * 0.06;
+      targetY += (mouseY * 0.8 - targetY) * 0.06;
       camera.position.x = targetX;
       camera.position.y = targetY;
       camera.lookAt(scene.position);
@@ -3696,17 +4810,38 @@
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
     });
+  }
 
     // ============================================
-    // NAVBAR SCROLL EFFECT
+    // OPTIMIZED SCROLL + PARALLAX
     // ============================================
-    window.addEventListener('scroll', () => {
-      const navbar = document.getElementById('navbar');
-      if (window.scrollY > 50) {
-        navbar.classList.add('scrolled');
-      } else {
-        navbar.classList.remove('scrolled');
+    const navbar = document.getElementById('navbar');
+    const parallaxTargets = Array.from(document.querySelectorAll('.parallax-three-d, #video-bg-container, #canvas-container'));
+    let lastKnownScroll = 0;
+    let isTicking = false;
+
+    function onScrollUpdate(scrollY) {
+      if (navbar) {
+        navbar.classList.toggle('scrolled', scrollY > 50);
       }
+
+      const parallaxY = scrollY * 0.12;
+      parallaxTargets.forEach(el => {
+        if (el) {
+          el.style.transform = `translate3d(0, ${parallaxY}px, 0)`;
+        }
+      });
+    }
+
+    window.addEventListener('scroll', () => {
+      lastKnownScroll = window.scrollY;
+      if (!isTicking) {
+        window.requestAnimationFrame(() => {
+          onScrollUpdate(lastKnownScroll);
+          isTicking = false;
+        });
+      }
+      isTicking = true;
     });
 
     // ============================================
@@ -3803,6 +4938,11 @@
 
     function addAIMessage(content, sender) {
       const messagesContainer = document.getElementById('aiMessages');
+      if (!messagesContainer) {
+        console.warn('aiMessages container not found. Skipping AI message insertion.');
+        return null;
+      }
+
       const messageDiv = document.createElement('div');
       messageDiv.className = `ai-message ${sender}`;
       messageDiv.id = 'msg-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
@@ -3819,10 +4959,25 @@
       const previewFrame = document.getElementById('previewFrame');
       const previewUrl = document.getElementById('previewUrl');
       
-      const projectName = data.name || data.description ? data.description.split(' ').slice(0, 2).join('-').toLowerCase().replace(/[^a-z0-9]/g, '') : description.split(' ').slice(0, 2).join('-').toLowerCase().replace(/[^a-z0-9]/g, '');
-      previewUrl.textContent = projectName + '.keycode.studio';
+      if (!previewUrl) {
+        console.warn('previewUrl element not found. Skipping live preview URL text update.');
+      }
+
+      const nameKey = data.name || '';
+      const descriptionKey = data.description || description || '';
+      const projectName = (nameKey || descriptionKey)
+        ? (nameKey || descriptionKey).split(' ').slice(0, 2).join('-').toLowerCase().replace(/[^a-z0-9-]/g, '')
+        : 'my-keycode-project';
+      if (previewUrl) {
+        previewUrl.textContent = projectName + '.keycode.studio';
+      }
       
       // If we have actual generated code from OpenCode AI, display it in an iframe
+      if (!previewFrame) {
+        console.warn('previewFrame element not found. 3D preview cannot be generated.');
+        return;
+      }
+
       if (data.code) {
         const iframe = document.createElement('iframe');
         iframe.style.cssText = 'width: 100%; height: 100%; border: none; border-radius: 10px; background: white;';
@@ -3851,10 +5006,11 @@
         { icon: 'fa-mobile-alt', title: 'Mobile', desc: 'First design' }
       ];
       
-      if (description.toLowerCase().includes('shop') || description.toLowerCase().includes('store')) {
+      const descriptionText = (description || '').toLowerCase();
+      if (descriptionText.includes('shop') || descriptionText.includes('store')) {
         features[1] = { icon: 'fa-shopping-cart', title: 'Cart', desc: 'E-commerce' };
         features[2] = { icon: 'fa-credit-card', title: 'Payments', desc: 'Secure' };
-      } else if (description.toLowerCase().includes('restaurant')) {
+      } else if (descriptionText.includes('restaurant')) {
         features[1] = { icon: 'fa-utensils', title: 'Menu', desc: 'Digital' };
         features[2] = { icon: 'fa-calendar', title: 'Booking', desc: 'Tables' };
       }
@@ -3890,29 +5046,10 @@
     }
 
     // ============================================
-    // GSAP ANIMATIONS
+    // USER LOGIN & DASHBOARD
     // ============================================
-    gsap.registerPlugin(ScrollTrigger);
     
-    // Animate sections on scroll
-    document.querySelectorAll('.service-card, .pricing-card').forEach((el, i) => {
-      gsap.fromTo(el, 
-        { opacity: 0, y: 50 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.8,
-          delay: i * 0.1,
-          scrollTrigger: {
-            trigger: el,
-            start: 'top 80%',
-            toggleActions: 'play none none reverse'
-          }
-        }
-      );
-    });
-
-    // Hero animations with staggered reveal
+    // Hero animations - just play once on load
     gsap.from('.hero-badge', { 
       opacity: 0, 
       y: 20, 
@@ -3959,81 +5096,37 @@
       delay: 1.6,
       ease: 'power3.out'
     });
-    
-    // Parallax on scroll
-    gsap.utils.toArray('.hero-content').forEach(section => {
-      gsap.to(section, {
-        scrollTrigger: {
-          trigger: section,
-          start: 'top top',
-          end: 'bottom top',
-          scrub: 1
-        },
-        y: 100,
-        opacity: 0
-      });
-    });
-    
     // Loading screen
     window.addEventListener('load', () => {
-      gsap.to('#loaderScreen', {
-        opacity: 0,
-        duration: 0.5,
-        delay: 1,
-        onComplete: () => {
-          document.getElementById('loaderScreen').classList.add('hidden');
-        }
-      });
-    });
-    
-    // Counter animation
-    gsap.utils.toArray('.stat-number').forEach(counter => {
-      const target = parseInt(counter.textContent);
-      if (!isNaN(target)) {
-        gsap.fromTo(counter, 
-          { textContent: 0 },
-          {
-            textContent: target,
-            duration: 2,
-            delay: 0.5,
-            snap: { textContent: 1 },
-            scrollTrigger: {
-              trigger: counter,
-              start: 'top 85%'
-            }
-          }
-        );
+      // Animate progress bar
+      const progressBar = document.getElementById('progressBar');
+      if (progressBar) {
+        progressBar.style.transform = 'scaleX(1)';
       }
-    });
-    
-    // Progress bar animations
-    gsap.utils.toArray('.progress-bar-fill').forEach(bar => {
-      gsap.to(bar, {
-        scrollTrigger: {
-          trigger: bar,
-          start: 'top 85%'
-        },
-        scaleX: 1,
-        duration: 1,
-        ease: 'power2.out'
-      });
-    });
-    
-    // Staggered section animations
-    gsap.utils.toArray('.section-header, .service-card, .pricing-card, .ai-message').forEach((el, i) => {
-      gsap.fromTo(el,
-        { opacity: 0, y: 40 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.6,
-          delay: i * 0.1,
-          scrollTrigger: {
-            trigger: el,
-            start: 'top 85%'
+      
+      // Update loader text
+      const loaderText = document.querySelector('.loader-text');
+      if (loaderText) {
+        loaderText.textContent = 'Systems Ready!';
+      }
+      
+      if (typeof gsap !== 'undefined') {
+        gsap.to('#loaderScreen', {
+          opacity: 0,
+          duration: 0.5,
+          delay: 0.5,
+          onComplete: () => {
+            document.getElementById('loaderScreen').classList.add('hidden');
           }
-        }
-      );
+        });
+      } else {
+        setTimeout(() => {
+          document.getElementById('loaderScreen').style.opacity = '0';
+          setTimeout(() => {
+            document.getElementById('loaderScreen').classList.add('hidden');
+          }, 500);
+        }, 1000);
+      }
     });
 
     // ============================================
@@ -4350,7 +5443,7 @@
   <!-- Builder Modal -->
   <div class="builder-modal modal-three-d" id="builderModal">
     <div class="builder-modal-content glass-three-d">
-      <button class="builder-close three-d-btn" onclick="closeBuilder()">
+      <button type="button" class="builder-close three-d-btn" onclick="closeBuilder()" aria-label="Close">
         <i class="fas fa-times"></i>
       </button>
       
@@ -4398,15 +5491,15 @@
             </div>
             <div class="ai-builder-input">
               <textarea id="aiBuilderInput" placeholder="Describe your project requirements..." rows="2" onkeypress="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendToAI();}"></textarea>
-              <button class="ai-builder-send" onclick="sendToAI()">
+              <button type="button" class="ai-builder-send" onclick="sendToAI()">
                 <i class="fas fa-paper-plane"></i>
               </button>
             </div>
             <div class="quick-prompts" style="padding: 10px 15px; display: flex; gap: 8px; flex-wrap: wrap;">
-              <button onclick="quickPromptBuilder('E-commerce store for selling handmade jewelry')" style="background: var(--slate); border: 1px solid var(--glass-border); padding: 8px 12px; border-radius: 20px; color: var(--white); cursor: pointer; font-size: 12px;"><i class="fas fa-gem"></i> Jewelry</button>
-              <button onclick="quickPromptBuilder('Restaurant website with online ordering')" style="background: var(--slate); border: 1px solid var(--glass-border); padding: 8px 12px; border-radius: 20px; color: var(--white); cursor: pointer; font-size: 12px;"><i class="fas fa-utensils"></i> Restaurant</button>
-              <button onclick="quickPromptBuilder('Portfolio website for a graphic designer')" style="background: var(--slate); border: 1px solid var(--glass-border); padding: 8px 12px; border-radius: 20px; color: var(--white); cursor: pointer; font-size: 12px;"><i class="fas fa-palette"></i> Portfolio</button>
-              <button onclick="quickPromptBuilder('SaaS landing page for a startup')" style="background: var(--slate); border: 1px solid var(--glass-border); padding: 8px 12px; border-radius: 20px; color: var(--white); cursor: pointer; font-size: 12px;"><i class="fas fa-rocket"></i> SaaS</button>
+              <button type="button" onclick="quickPromptBuilder('E-commerce store for selling handmade jewelry')" style="background: var(--slate); border: 1px solid var(--glass-border); padding: 8px 12px; border-radius: 20px; color: var(--white); cursor: pointer; font-size: 12px;"><i class="fas fa-gem"></i> Jewelry</button>
+              <button type="button" onclick="quickPromptBuilder('Restaurant website with online ordering')" style="background: var(--slate); border: 1px solid var(--glass-border); padding: 8px 12px; border-radius: 20px; color: var(--white); cursor: pointer; font-size: 12px;"><i class="fas fa-utensils"></i> Restaurant</button>
+              <button type="button" onclick="quickPromptBuilder('Portfolio website for a graphic designer')" style="background: var(--slate); border: 1px solid var(--glass-border); padding: 8px 12px; border-radius: 20px; color: var(--white); cursor: pointer; font-size: 12px;"><i class="fas fa-palette"></i> Portfolio</button>
+              <button type="button" onclick="quickPromptBuilder('SaaS landing page for a startup')" style="background: var(--slate); border: 1px solid var(--glass-border); padding: 8px 12px; border-radius: 20px; color: var(--white); cursor: pointer; font-size: 12px;"><i class="fas fa-rocket"></i> SaaS</button>
             </div>
           </div>
           
@@ -4427,7 +5520,7 @@
         
         <div class="builder-nav">
           <div></div>
-          <button class="builder-btn builder-btn-primary three-d-btn glow-border-three-d" onclick="nextStep(2)">Continue to Preview <i class="fas fa-arrow-right"></i></button>
+          <button type="button" class="builder-btn builder-btn-primary three-d-btn glow-border-three-d" onclick="nextStep(2)">Continue to Preview <i class="fas fa-arrow-right"></i></button>
         </div>
       </div>
       
@@ -4441,8 +5534,8 @@
           </div>
         </div>
         <div class="builder-nav">
-          <button class="builder-btn builder-btn-secondary three-d-btn" onclick="nextStep(1)"><i class="fas fa-arrow-left"></i> Back</button>
-          <button class="builder-btn builder-btn-primary three-d-btn glow-border-three-d" onclick="nextStep(3)">Select Services <i class="fas fa-arrow-right"></i></button>
+          <button type="button" class="builder-btn builder-btn-secondary three-d-btn" onclick="nextStep(1)"><i class="fas fa-arrow-left"></i> Back</button>
+          <button type="button" class="builder-btn builder-btn-primary three-d-btn glow-border-three-d" onclick="nextStep(3)">Select Services <i class="fas fa-arrow-right"></i></button>
         </div>
       </div>
       
@@ -4454,7 +5547,7 @@
         <h3 style="margin-bottom: 15px;">Domain Name</h3>
         <div class="domain-search">
           <input type="text" id="domainInput" class="three-d-input" placeholder="Enter domain (e.g., mybusiness.com)">
-          <button class="builder-btn builder-btn-primary three-d-btn glow-border-three-d" onclick="checkDomain()">Check Availability</button>
+          <button type="button" class="builder-btn builder-btn-primary three-d-btn glow-border-three-d" onclick="checkDomain()">Check Availability</button>
         </div>
         <div id="domainResult"></div>
         
@@ -4478,8 +5571,8 @@
         </div>
         
         <div class="builder-nav">
-          <button class="builder-btn builder-btn-secondary three-d-btn" onclick="nextStep(2)"><i class="fas fa-arrow-left"></i> Back</button>
-          <button class="builder-btn builder-btn-primary" onclick="nextStep(4)">View Cart <i class="fas fa-arrow-right"></i></button>
+          <button type="button" class="builder-btn builder-btn-secondary three-d-btn" onclick="nextStep(2)"><i class="fas fa-arrow-left"></i> Back</button>
+          <button type="button" class="builder-btn builder-btn-primary" onclick="nextStep(4)">View Cart <i class="fas fa-arrow-right"></i></button>
         </div>
       </div>
       
@@ -4507,8 +5600,8 @@
         </div>
         
         <div class="builder-nav">
-          <button class="builder-btn builder-btn-secondary three-d-btn" onclick="nextStep(3)"><i class="fas fa-arrow-left"></i> Back</button>
-          <button class="builder-btn builder-btn-primary three-d-btn glow-border-three-d" onclick="nextStep(5)">Proceed to Checkout <i class="fas fa-arrow-right"></i></button>
+          <button type="button" class="builder-btn builder-btn-secondary three-d-btn" onclick="nextStep(3)"><i class="fas fa-arrow-left"></i> Back</button>
+          <button type="button" class="builder-btn builder-btn-primary three-d-btn glow-border-three-d" onclick="nextStep(5)">Proceed to Checkout <i class="fas fa-arrow-right"></i></button>
         </div>
       </div>
       
@@ -4539,13 +5632,13 @@
               <input type="text" class="three-d-input" placeholder="123">
             </div>
           </div>
-          <button class="builder-btn builder-btn-primary three-d-btn glow-border-three-d" style="width: 100%;" onclick="completeOrder()">
+          <button type="button" class="builder-btn builder-btn-primary three-d-btn glow-border-three-d" style="width: 100%;" onclick="completeOrder()">
             <i class="fas fa-lock"></i> Pay Now
           </button>
         </div>
         
         <div class="builder-nav">
-          <button class="builder-btn builder-btn-secondary three-d-btn" onclick="nextStep(4)"><i class="fas fa-arrow-left"></i> Back</button>
+          <button type="button" class="builder-btn builder-btn-secondary three-d-btn" onclick="nextStep(4)"><i class="fas fa-arrow-left"></i> Back</button>
         </div>
       </div>
     </div>
@@ -4753,51 +5846,108 @@
     const video = document.getElementById('video-bg');
     const soundBtn = document.getElementById('sound-toggle');
     const canvas = document.getElementById('video-canvas');
-    
-    soundBtn.classList.add('muted');
-    video.muted = true;
-    
-    // Force play video with error handling
-    const playVideo = () => {
-      video.play().then(() => {
-        canvas.style.display = 'none'; // Hide canvas when video plays
-      }).catch(err => {
-        console.log('Video auto-play blocked, showing animated background');
-        canvas.style.display = 'block';
-      });
-    };
-    
-    // Try to play immediately and on user interaction
-    playVideo();
-    document.addEventListener('click', playVideo, { once: true });
-    document.addEventListener('touchstart', playVideo, { once: true });
-    
-    soundBtn.addEventListener('click', function() {
-      if (video.muted) {
-        video.muted = false;
-        video.play().catch(() => {});
-        soundBtn.classList.remove('muted');
-        canvas.style.display = 'none';
-      } else {
-        video.muted = true;
+
+    if (!video) {
+      console.warn('Video element #video-bg not found. Sound toggle and auto-play are disabled.');
+    } else {
+      if (soundBtn) {
         soundBtn.classList.add('muted');
       }
-    });
+      video.muted = true;
+
+      // Force play video with error handling
+      const playVideo = () => {
+        video.play().then(() => {
+          if (canvas) canvas.style.display = 'none'; // Hide canvas when video plays
+        }).catch(err => {
+          console.log('Video auto-play blocked, showing animated background');
+          if (canvas) canvas.style.display = 'block';
+        });
+      };
+
+      // Try to play immediately and on user interaction
+      playVideo();
+      document.addEventListener('click', playVideo, { once: true });
+      document.addEventListener('touchstart', playVideo, { once: true });
+
+      if (soundBtn) {
+        soundBtn.addEventListener('click', function() {
+          if (video.muted) {
+            video.muted = false;
+            video.play().catch(() => {});
+            soundBtn.classList.remove('muted');
+            if (canvas) canvas.style.display = 'none';
+          } else {
+            video.muted = true;
+            soundBtn.classList.add('muted');
+          }
+        });
+      }
+    }
+
+    // Canvas Fallback Animation (when video doesn't play)
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      let animationId;
+      
+      const animateCanvas = () => {
+        const width = canvas.width = window.innerWidth;
+        const height = canvas.height = window.innerHeight;
+        
+        // Create animated gradient background
+        const time = Date.now() * 0.001;
+        const gradient = ctx.createLinearGradient(0, 0, width, height);
+        gradient.addColorStop(0, `hsl(${(time * 20) % 360}, 70%, 20%)`);
+        gradient.addColorStop(0.5, `hsl(${(time * 20 + 120) % 360}, 70%, 15%)`);
+        gradient.addColorStop(1, `hsl(${(time * 20 + 240) % 360}, 70%, 10%)`);
+        
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, width, height);
+        
+        // Add some floating particles
+        for (let i = 0; i < 50; i++) {
+          const x = (Math.sin(time + i) * 0.5 + 0.5) * width;
+          const y = (Math.cos(time * 0.5 + i) * 0.5 + 0.5) * height;
+          ctx.beginPath();
+          ctx.arc(x, y, 2, 0, Math.PI * 2);
+          ctx.fillStyle = `hsla(${(time * 50 + i * 10) % 360}, 70%, 60%, 0.6)`;
+          ctx.fill();
+        }
+        
+        animationId = requestAnimationFrame(animateCanvas);
+      };
+      
+      // Start animation if canvas is visible
+      const checkCanvasVisibility = () => {
+        if (canvas.style.display === 'block') {
+          animateCanvas();
+        } else {
+          if (animationId) {
+            cancelAnimationFrame(animationId);
+            animationId = null;
+          }
+        }
+      };
+      
+      // Check initially and on display change
+      checkCanvasVisibility();
+      const observer = new MutationObserver(checkCanvasVisibility);
+      observer.observe(canvas, { attributes: true, attributeFilter: ['style'] });
+    }
 
     // ================================================
     // WORLD-CLASS 3D EFFECTS
     // ================================================
     
-    // 3D Parallax on Scroll
-    window.addEventListener('scroll', () => {
-      const scrolled = window.pageYOffset;
-      const parallaxElements = document.querySelectorAll('.parallax-three-d, #video-bg-container, #canvas-container');
-      
-      parallaxElements.forEach(el => {
-        const speed = el.id === 'video-bg-container' ? 0.3 : 0.1;
-        el.style.transform = `translateY(${scrolled * speed}px)`;
+    // 3D Section Reveal
+    const parallaxBuilder = (scrollPosition) => {
+      // Avoid expensive DOM queries per scroll event
+      parallaxTargets.forEach(el => {
+        if (!el) return;
+        const speed = el.id === 'video-bg-container' ? 0.32 : 0.12;
+        el.style.transform = `translate3d(0, ${scrollPosition * speed}px, 0)`;
       });
-    });
+    };
     
     // 3D Section Reveal
     const observer3d = new IntersectionObserver((entries) => {
@@ -4810,8 +5960,7 @@
     }, { threshold: 0.1 });
     
     document.querySelectorAll('.glass-three-d, .pricing-card-three-d, .feature-card').forEach(el => {
-      el.style.opacity = '0';
-      el.style.transform = 'perspective(1000px) rotateX(10deg) translateY(50px) translateZ(-50px)';
+      el.style.opacity = '1';
       el.style.transition = 'all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
       observer3d.observe(el);
     });
@@ -4833,6 +5982,7 @@
 
     // 3D Button Hover Effects
     document.querySelectorAll('.btn, .three-d-btn, button').forEach(btn => {
+      btn.classList.add('shake-on-hover');
       btn.addEventListener('mouseenter', () => {
         btn.style.transform = 'translateY(-4px) translateZ(10px)';
       });
@@ -4840,6 +5990,41 @@
         btn.style.transform = 'translateY(0) translateZ(0)';
       });
     });
+
+    // Animate every main section and element
+    function initSiteWideAnimations() {
+      const targets = Array.from(document.querySelectorAll('header, nav, section, footer, .hero, .service-card, .pricing-card, .glass-card, .feature-card, .ai-message, .pricing-btn, .btn'))
+        .filter(el => !el.closest('#loaderScreen'));
+
+      targets.forEach((el, index) => {
+        el.classList.add('animate-on-scroll');
+        const delay = Math.min(0.45 + index * 0.03, 0.9);
+        el.style.transitionDelay = `${delay}s`;
+      });
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.13, rootMargin: '0px 0px -40px 0px' });
+
+      targets.forEach(el => observer.observe(el));
+
+      // Add shimmer and pop classes to headlines and calls to action
+      document.querySelectorAll('h1, h2, h3, .hero-cta, .btn-primary, .pricing-btn-primary').forEach((item, index) => {
+        item.classList.add('animate-pop');
+        item.style.animationDelay = `${Math.min(0.3 + index*0.04, 0.8)}s`;
+      });
+
+      document.querySelectorAll('.nav-link, .footer-link').forEach(link => {
+        link.classList.add('animate-slide-in');
+      });
+    }
+
+    initSiteWideAnimations();
 
     // Disable Service Worker on deployment (no sw.js on GitHub Pages)
     console.log('Platform:', window.location.hostname);
@@ -4850,6 +6035,72 @@
       e.preventDefault();
       deferredPrompt = e;
     });
+
+    // ================================================
+    // ENHANCED SCROLL-TRIGGERED ANIMATIONS
+    // ================================================
+    
+    // Video Background - SIMPLIFIED (no scroll processing)
+    const videoBgContainer = document.getElementById('video-bg-container');
+    if (videoBgContainer) {
+      videoBgContainer.style.willChange = 'transform';
+    }
+    
+    // Use passive scroll listeners for better performance
+    let ticking = false;
+    const updateOnScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+    window.addEventListener('scroll', updateOnScroll, { passive: true });
+    
+    // Section appear animations on scroll
+    const observerReveal = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = '1';
+          entry.target.style.transform = 'translateY(0)';
+          observerReveal.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -100px 0px' });
+    
+    document.querySelectorAll('.service-card, .pricing-card, .feature-card, .ai-message').forEach(el => {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(30px)';
+      el.style.transition = 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)';
+      observerReveal.observe(el);
+    });
+
+    // Scroll to Top Button
+    document.addEventListener('DOMContentLoaded', () => {
+      const scrollToTopBtn = document.getElementById('scrollToTop');
+      if (scrollToTopBtn) {
+        window.addEventListener('scroll', () => {
+          if (window.pageYOffset > 300) {
+            scrollToTopBtn.classList.add('visible');
+          } else {
+            scrollToTopBtn.classList.remove('visible');
+          }
+        });
+        
+        scrollToTopBtn.addEventListener('click', () => {
+          window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+          });
+        });
+      }
+    });
   </script>
+  
+  <!-- Scroll to Top Button -->
+  <button type="button" id="scrollToTop" class="scroll-to-top" title="Scroll to Top">
+    <i class="fas fa-arrow-up"></i>
+  </button>
 </body>
 </html>

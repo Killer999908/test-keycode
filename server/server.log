@@ -1,0 +1,23 @@
+[dotenv@17.3.1] injecting env (23) from .env -- tip: 🛡️ auth for agents: https://vestauth.com
+✅ Email service initialized
+
+╔═══════════════════════════════════════════════════╗
+║                                                   ║
+║   🚀 KEYCODE Server is running!                   ║
+║                                                   ║
+║   Port: 5000                                      ║
+║   Mode: DEVELOPMENT                                    ║
+║   Frontend: http://localhost:3000                  ║
+║                                                   ║
+╚═══════════════════════════════════════════════════╝
+  
+/home/killer/keycode-alien-interface/server/node_modules/mongoose/lib/drivers/node-mongodb-native/collection.js:131
+            const err = new MongooseError(message);
+                        ^
+
+MongooseError: Operation `services.countDocuments()` buffering timed out after 10000ms
+    at Timeout._onTimeout (/home/killer/keycode-alien-interface/server/node_modules/mongoose/lib/drivers/node-mongodb-native/collection.js:131:25)
+    at listOnTimeout (node:internal/timers:588:17)
+    at process.processTimers (node:internal/timers:523:7)
+
+Node.js v22.22.0
