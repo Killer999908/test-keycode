@@ -20,6 +20,3 @@ out/
 server/data/
 .env.production
 .env.development
-generated/
-deployments/
-ChatGPT Image*.png

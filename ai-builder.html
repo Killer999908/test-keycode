@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Builder - KEYCODE Studio</title>
+  <meta name="description" content="KEYCODE AI - Generate responsive websites, 3D CAD models, PCBs, and MCU firmware from text descriptions. Free AI-powered design platform.">
+  <meta name="keywords" content="AI website builder, CAD generator, PCB design AI, firmware generator, free AI tools">
+  <meta name="author" content="KEYCODE Studio">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://keycode.studio/ai-builder.html">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://keycode.studio/ai-builder.html">
+  <meta property="og:title" content="KEYCODE AI - Free AI Design Studio">
+  <meta property="og:description" content="Generate responsive websites, 3D CAD models, PCBs, and MCU firmware from text. Powered by parallel AI specialists.">
+  <meta property="og:image" content="https://keycode.studio/og-image.png">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="KEYCODE AI - Free AI Design Studio">
+  <meta name="twitter:description" content="Generate websites, CAD, PCBs, and firmware with AI. 100% free.">
+  <meta name="twitter:image" content="https://keycode.studio/og-image.png">
+
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "KEYCODE AI Design Studio",
+    "url": "https://keycode.studio/",
+    "description": "Generate responsive websites, 3D CAD models, PCBs, and MCU firmware from text descriptions using parallel AI specialists.",
+    "applicationCategory": "DesignApplication",
+    "operatingSystem": "All",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    }
+  }
+  </script>
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#6366f1">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="KEYCODE">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="alternate icon" type="image/svg+xml" href="/favicon.svg">
+
+  <!-- Preconnect to critical origins -->
+  <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" media="print" onload="this.media='all'">
+  <style>
+    :root {
+      --void: #030305; --obsidian: #0a0a0f; --graphite: #12121a; --slate: #1a1a24;
+      --primary: #6366f1; --primary-glow: #818cf8; --secondary: #ec4899; --accent: #22d3ee;
+      --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
+      --white: #ffffff; --pearl: #e2e8f0; --ash: #d1d5db; --silver: #e5e7eb;
+      --gradient-1: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+      --glass-border: rgba(255,255,255,0.06);
+      --font-display: 'Syne', sans-serif; --font-body: 'Inter', sans-serif;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: var(--font-body); background: var(--void); color: var(--white);
+      height: 100vh; overflow: hidden;
+    }
+    /* Builder header */
+    .ai-builder-header-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 24px; background: var(--slate); border-bottom: 1px solid var(--glass-border);
+    }
+    .ai-builder-header-bar .logo {
+      font-family: var(--font-display); font-size: 18px; font-weight: 800;
+      background: var(--gradient-1); -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent; display: flex; align-items: center; gap: 8px;
+    }
+    .ai-builder-header-bar .logo i { font-size: 16px; -webkit-text-fill-color: var(--primary); }
+    .ai-builder-header-bar .nav-links { display: flex; gap: 12px; }
+    .ai-builder-header-bar .nav-links a {
+      padding: 8px 16px; border-radius: 8px; color: var(--ash); text-decoration: none;
+      font-size: 13px; font-weight: 500; transition: .3s;
+    }
+    .ai-builder-header-bar .nav-links a:hover { color: var(--white); background: rgba(255,255,255,0.06); }
+    .ai-builder-header-bar .nav-links a.dashboard-link {
+      background: var(--gradient-1); color: #fff;
+    }
+    /* Builder body */
+    .ai-builder-body { display: flex; height: calc(100vh - 53px); overflow: hidden; }
+    .ai-chat-panel {
+      width: 380px; min-width: 300px; max-width: 420px;
+      display: flex; flex-direction: column;
+      border-right: 1px solid var(--glass-border); background: var(--obsidian);
+    }
+    .ai-messages-list { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+    .ai-message-row { display: flex; gap: 10px; animation: msgSlide .3s ease; }
+    @keyframes msgSlide { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+    .ai-message-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 14px; }
+    .ai-message-avatar.user { background: var(--primary); color: #fff; }
+    .ai-message-avatar.bot { background: rgba(99,102,241,0.15); color: var(--primary); }
+    .ai-message-bubble { flex: 1; padding: 10px 14px; border-radius: 12px; font-size: 13px; line-height: 1.6; color: var(--white); }
+    .ai-message-bubble.user { background: var(--primary); border-bottom-right-radius: 4px; }
+    .ai-message-bubble.bot { background: var(--slate); border: 1px solid var(--glass-border); border-bottom-left-radius: 4px; }
+    .ai-message-bubble p { margin: 0 0 6px; } .ai-message-bubble p:last-child { margin-bottom: 0; }
+    .ai-message-bubble code { background: rgba(0,0,0,0.3); padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+    .ai-message-bubble .ai-typing { display: flex; gap: 4px; padding: 4px 0; }
+    .ai-message-bubble .ai-typing span { width:6px; height:6px; border-radius: 50%; background: var(--ash); animation: typingDot 1s infinite; }
+    .ai-message-bubble .ai-typing span:nth-child(2) { animation-delay: .15s; }
+    .ai-message-bubble .ai-typing span:nth-child(3) { animation-delay: .3s; }
+    @keyframes typingDot { 0%,60%,100%{opacity:.3} 30%{opacity:1} }
+    .ai-chat-input-bar { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--glass-border); background: var(--slate); }
+    .ai-chat-input-bar textarea { flex: 1; padding: 10px 14px; background: var(--obsidian); border: 1px solid var(--glass-border); border-radius: 10px; color: var(--white); font-size: 13px; resize: none; font-family: inherit; line-height: 1.4; max-height: 80px; outline: none; transition: .3s; }
+    .ai-chat-input-bar textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(99,102,241,0.15); }
+    .ai-chat-input-bar textarea::placeholder { color: var(--ash); }
+    .ai-chat-input-bar button { width: 40px; height: 40px; border-radius: 10px; border: none; background: linear-gradient(135deg,var(--primary),var(--secondary)); color: #fff; cursor: pointer; transition: .3s; display: flex; align-items: center; justify-content: center; }
+    .ai-chat-input-bar button:hover { transform: scale(1.05); box-shadow: 0 4px 16px rgba(99,102,241,0.3); }
+    .ai-chat-input-bar button:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+    .ai-chat-input-bar .input-hint { font-size: 10px; color: var(--ash); text-align: right; padding: 2px 4px 0; opacity: 0.6; }
+    .ai-chat-suggestions { display: flex; flex-wrap: wrap; gap: 4px; padding: 8px 16px 12px; border-top: 1px solid var(--glass-border); background: var(--slate); }
+    .ai-chat-suggestions span { padding: 4px 10px; border-radius: 14px; font-size: 11px; background: var(--obsidian); border: 1px solid var(--glass-border); color: var(--ash); cursor: pointer; transition: .3s; }
+    .ai-chat-suggestions span:hover { border-color: var(--primary); color: var(--white); background: rgba(99,102,241,0.1); }
+    /* Preview panel */
+    .ai-preview-panel { flex: 1; display: flex; flex-direction: column; background: var(--slate); }
+    .ai-preview-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid var(--glass-border); background: var(--slate); }
+    .ai-preview-url { font-size: 12px; color: var(--ash); font-family: monospace; }
+    .ai-preview-toolbar-actions { display: flex; gap: 4px; }
+    .ai-preview-toolbar-actions button { width: 30px; height: 30px; border-radius: 6px; border: none; background: transparent; color: var(--ash); cursor: pointer; transition: .3s; display: flex; align-items: center; justify-content: center; font-size: 13px; }
+    .ai-preview-toolbar-actions button:hover { background: rgba(255,255,255,0.08); color: var(--white); }
+    .ai-preview-container { flex: 1; position: relative; background: #fff; overflow: hidden; }
+    .ai-preview-container iframe { width: 100%; height: 100%; border: none; }
+    .ai-preview-placeholder { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #aaa; background: #f8f9fa; padding: 40px; text-align: center; }
+    .ai-preview-placeholder i { font-size: 48px; margin-bottom: 16px; color: #ccc; }
+    .ai-preview-placeholder h3 { font-size: 18px; margin: 0 0 8px; color: #666; }
+    .ai-preview-placeholder p { font-size: 13px; margin: 0 0 20px; color: #999; }
+    .ai-preview-suggestions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+    .ai-preview-suggestions span { padding: 8px 16px; border-radius: 8px; font-size: 12px; background: #f0f0f0; border: 1px solid #e0e0e0; color: #555; cursor: pointer; transition: .3s; }
+    .ai-preview-suggestions span:hover { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .ai-launch-bar { border-top: 1px solid var(--glass-border); padding: 10px 16px; background: var(--slate); }
+    .ai-launch-info { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .ai-launch-badge { padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; background: rgba(16,185,129,0.15); color: #10b981; }
+    .ai-launch-actions { display: flex; gap: 8px; }
+    .ai-launch-btn { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--obsidian); color: var(--ash); font-size: 12px; font-weight: 600; cursor: pointer; transition: .3s; display: flex; align-items: center; gap: 6px; }
+    .ai-launch-btn:hover { border-color: var(--primary); color: var(--white); }
+    .ai-launch-primary { background: linear-gradient(135deg,var(--primary),var(--secondary)); border: none; color: #fff; }
+    .ai-launch-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(99,102,241,0.3); }
+    .ai-checkout-panel { padding: 24px; border-top: 1px solid var(--glass-border); background: var(--obsidian); overflow-y: auto; max-height: 60vh; }
+    .ai-checkout-panel select, .ai-checkout-panel input { box-sizing: border-box; }
+    .ai-checkout-panel select:focus, .ai-checkout-panel input:focus { outline: none; border-color: var(--primary) !important; box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
+    /* Header tools tabs */
+    .ai-header-tools { display: flex; gap: 4px; margin-left: 20px; }
+    .ai-header-tab { padding: 6px 14px; border-radius: 8px; border: 1px solid transparent; background: transparent; color: var(--ash); font-size: 12px; font-weight: 600; cursor: pointer; transition: .3s; display: flex; align-items: center; gap: 6px; font-family: var(--font-body); }
+    .ai-header-tab:hover { background: rgba(255,255,255,0.06); color: var(--white); }
+    .ai-header-tab.active { background: rgba(99,102,241,0.15); border-color: rgba(99,102,241,0.3); color: var(--primary-glow); }
+    .ai-header-tab i { font-size: 14px; }
+    /* Tool panels */
+    .ai-tool-panel { display: none; flex-direction: column; height: 100%; padding: 20px; overflow-y: auto; }
+    .ai-tool-panel.active { display: flex; }
+    .ai-tool-panel h2 { font-family: var(--font-display); font-size: 18px; margin-bottom: 4px; }
+    .ai-tool-panel p.sub { color: var(--ash); font-size: 13px; margin-bottom: 16px; }
+    .ai-tool-panel textarea { width: 100%; background: var(--slate); border: 1px solid var(--glass-border); border-radius: 10px; padding: 12px; color: var(--white); font-family: var(--font-body); font-size: 13px; resize: vertical; min-height: 70px; margin-bottom: 12px; }
+    .ai-tool-panel textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
+    .ai-tool-panel .tool-btn { padding: 10px 24px; border-radius: 10px; border: none; background: var(--gradient-1); color: #fff; font-weight: 600; font-size: 13px; cursor: pointer; transition: .3s; display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-body); }
+    .ai-tool-panel .tool-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(99,102,241,0.3); }
+    .ai-tool-panel .tool-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .ai-tool-output { margin-top: 16px; display: none; }
+    .ai-tool-output.show { display: block; }
+    .ai-tool-output h3 { font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--pearl); }
+    .ai-tool-output pre { background: var(--graphite); border: 1px solid var(--glass-border); border-radius: 10px; padding: 14px; font-size: 12px; overflow-x: auto; color: var(--silver); max-height: 200px; overflow-y: auto; font-family: 'Courier New', monospace; }
+    .ai-tool-output .bom-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+    .ai-tool-output .bom-table th { background: var(--graphite); color: var(--ash); padding: 8px 10px; text-align: left; font-weight: 600; border-bottom: 1px solid var(--glass-border); }
+    .ai-tool-output .bom-table td { padding: 6px 10px; border-bottom: 1px solid var(--glass-border); color: var(--silver); }
+    .ai-tool-output .bom-table tr:hover td { background: rgba(255,255,255,0.03); }
+    .ai-tool-output .svg-preview { background: var(--graphite); border-radius: 10px; padding: 16px; display: flex; justify-content: center; border: 1px solid var(--glass-border); }
+    .ai-tool-output .svg-preview svg { max-width: 100%; height: auto; }
+    .ai-tool-output .summary-card { background: var(--slate); border: 1px solid var(--glass-border); border-radius: 10px; padding: 14px; margin-bottom: 12px; }
+    .ai-tool-output .summary-card p { font-size: 13px; color: var(--ash); line-height: 1.5; }
+    .ai-tool-output .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; }
+    .ai-tool-output .meta-item { background: var(--slate); border: 1px solid var(--glass-border); border-radius: 8px; padding: 10px; }
+    .ai-tool-output .meta-item label { font-size: 10px; text-transform: uppercase; color: var(--ash); letter-spacing: 0.5px; }
+    .ai-tool-output .meta-item span { display: block; font-size: 13px; font-weight: 600; margin-top: 4px; color: var(--pearl); }
+    @media(max-width:768px){ .ai-builder-body{flex-direction:column} .ai-chat-panel{width:100%;min-width:auto;border-right:none;border-bottom:1px solid var(--glass-border);max-height:40vh} .ai-preview-container{min-height:200px} .ai-header-tools{display:none} }
+  </style>
+</head>
+<body>
+    <div class="ai-builder-header-bar">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="logo"><i class="fas fa-bolt"></i> KEYCODE AI</div>
+        <span style="font-size:10px;background:rgba(99,102,241,0.15);color:#818cf8;padding:3px 10px;border-radius:100px;font-weight:600;letter-spacing:0.5px">DeepSeek V4 Flash</span>
+          <span style="font-size:10px;background:rgba(16,185,129,0.1);color:#10b981;padding:3px 10px;border-radius:100px;font-weight:500">Free Tier</span>
+        </div>
+        <div class="ai-header-tools">
+          <button onclick="switchBuilderTab('preview')" class="ai-header-tab active" data-tab="preview"><i class="fas fa-globe"></i> Website</button>
+          <button onclick="switchBuilderTab('cad')" class="ai-header-tab" data-tab="cad"><i class="fas fa-cube"></i> CAD</button>
+          <button onclick="switchBuilderTab('pcb')" class="ai-header-tab" data-tab="pcb"><i class="fas fa-microchip"></i> PCB</button>
+          <button onclick="switchBuilderTab('mcu')" class="ai-header-tab" data-tab="mcu"><i class="fas fa-microchip"></i> Arduino</button>
+          <button onclick="switchBuilderTab('taskrouter')" class="ai-header-tab" data-tab="taskrouter"><i class="fas fa-route"></i> Router</button>
+        </div>
+      </div>
+    <div class="nav-links">
+      <a href="/"><i class="fas fa-home"></i> Home</a>
+      <a href="control-panel.html" class="dashboard-link"><i class="fas fa-th-large"></i> Dashboard</a>
+    </div>
+  </div>
+  <div class="ai-builder-body">
+    <div class="ai-chat-panel">
+      <div class="ai-messages-list" id="aiMessagesList"></div>
+      <div class="ai-chat-input-bar">
+        <textarea id="aiChatInput" rows="1" placeholder="Describe your website..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMessage()}"></textarea>
+        <button id="aiChatSendBtn" onclick="sendChatMessage()"><i class="fas fa-paper-plane"></i></button>
+      </div>
+      <div class="ai-chat-suggestions">
+        <span onclick="quickSuggestion('Create a modern business website with services, about, and contact section')">Business Site</span>
+        <span onclick="quickSuggestion('Build an e-commerce store for clothing with product grid, cart, and checkout')">E-commerce</span>
+        <span onclick="quickSuggestion('Create a personal portfolio for a photographer with gallery and booking')">Portfolio</span>
+        <span onclick="quickSuggestion('Build a SaaS landing page with features, pricing, and testimonials')">SaaS</span>
+        <span onclick="quickSuggestion('Create a blog website with articles, categories, and newsletter')">Blog</span>
+      </div>
+    </div>
+    <div class="ai-preview-panel">
+      <div class="ai-preview-toolbar">
+        <span class="ai-preview-url" id="aiPreviewUrl">keycode.studio/your-site</span>
+        <div class="ai-preview-toolbar-actions">
+          <button onclick="downloadAIWebsite()" title="Download HTML"><i class="fas fa-download"></i></button>
+          <button onclick="copyAICode()" title="Copy Code"><i class="fas fa-copy"></i></button>
+          <button onclick="openAIBuilderFullscreen()" title="Fullscreen"><i class="fas fa-expand"></i></button>
+        </div>
+      </div>
+      <div class="ai-preview-container" id="aiPreviewContainer">
+        <div class="ai-preview-placeholder" id="aiPreviewPlaceholder">
+          <i class="fas fa-globe"></i>
+          <h3>Your Website Preview</h3>
+          <p>Describe your website in the chat to generate it</p>
+          <div class="ai-preview-suggestions">
+            <span onclick="quickSuggestion('Create a landing page for a tech startup')">Startup Landing Page</span>
+            <span onclick="quickSuggestion('Build a restaurant website with online menu')">Restaurant</span>
+            <span onclick="quickSuggestion('Create a personal portfolio page')">Portfolio</span>
+          </div>
+        </div>
+        <iframe id="aiPreviewFrame" style="display:none;" sandbox="allow-scripts allow-forms allow-same-origin"></iframe>
+      </div>
+
+      <!-- CAD Tool Panel -->
+      <div class="ai-tool-panel" id="aiCadPanel">
+        <h2><i class="fas fa-cube" style="color:var(--primary-glow)"></i> CAD &amp; 3D Modeling</h2>
+        <p class="sub">Describe a 3D model or mechanical part — AI will generate OpenSCAD code and preview</p>
+        <textarea id="cadInput" placeholder="e.g. Design a parametric gear with 24 teeth, 5mm bore hole, 10mm thickness&#10;Or: Create a phone stand with 30-degree angle, 15x7cm base&#10;Or: A mechanical bracket with 4 mounting holes M4 on 50x30mm grid"></textarea>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+          <select id="cadType" style="padding:10px 12px;background:var(--slate);border:1px solid var(--glass-border);border-radius:10px;color:var(--white);font-size:13px;flex:1;min-width:140px">
+            <option value="mechanical">Mechanical Part</option>
+            <option value="architectural">Architectural</option>
+            <option value="product">Product Design</option>
+            <option value="jewelry">Jewelry / Ornament</option>
+            <option value="organic">Organic Shape</option>
+          </select>
+          <button class="tool-btn" id="cadGenerateBtn" onclick="generateCAD()"><i class="fas fa-wand-magic-sparkles"></i> Generate CAD</button>
+        </div>
+        <div class="ai-tool-output" id="cadOutput">
+          <div class="summary-card" id="cadSummaryCard" style="display:none"></div>
+          <div class="meta-grid" id="cadMeta" style="display:none"></div>
+          <h3>OpenSCAD Code</h3>
+          <pre id="cadCodeOutput" style="max-height:250px;font-size:11px;line-height:1.4"></pre>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+            <button class="tool-btn" onclick="copyCADCode()" style="background:var(--slate);color:var(--ash);font-size:12px;padding:8px 16px"><i class="fas fa-copy"></i> Copy Code</button>
+            <button class="tool-btn" onclick="downloadCADCode()" style="background:var(--slate);color:var(--ash);font-size:12px;padding:8px 16px"><i class="fas fa-download"></i> Download .scad</button>
+          </div>
+          <h3 style="margin-top:16px">Preview</h3>
+          <div class="svg-preview" id="cadPreviewSvg"><p style="color:var(--ash);font-size:13px;padding:20px">Preview generated after clicking Generate</p></div>
+        </div>
+      </div>
+
+      <!-- PCB Tool Panel -->
+      <div class="ai-tool-panel" id="aiPcbPanel">
+        <h2><i class="fas fa-microchip" style="color:var(--accent)"></i> PCB Designer</h2>
+        <p class="sub">Describe your circuit requirements — AI generates BOM, netlist, and routing diagram</p>
+        <textarea id="pcbInput" placeholder="e.g. Design a custom PCB for an ESP32 weather station with DHT22 sensor, OLED display, and battery charging circuit&#10;Or: Create a LM358 audio preamplifier PCB with 3.5mm input/output, volume pot, and 9V supply&#10;Or: An ATtiny85-based LED controller with 6 PWM channels, USB-C power input"></textarea>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+          <select id="pcbComponents" style="padding:10px 12px;background:var(--slate);border:1px solid var(--glass-border);border-radius:10px;color:var(--white);font-size:13px;flex:1;min-width:160px">
+            <option value="">Auto-detect components</option>
+            <option value="ESP32,DHT22,OLED SSD1306,18650 Li-Ion,TP4056">ESP32 Weather Station</option>
+            <option value="LM358,3.5mm jack,potentiometer 10k,electrolytic cap">Audio Preamp</option>
+            <option value="ATtiny85,WS2812B LEDs,USB-C connector,resistors 10k">LED Controller</option>
+            <option value="Arduino Nano,HC-SR04,servo SG90,buzzer,battery 9V">Robot Sensor</option>
+            <option value="NE555,LM386,pot 100k,8ohm speaker,cap 100uF">Audio Oscillator</option>
+          </select>
+          <button class="tool-btn" id="pcbGenerateBtn" onclick="generatePCB()"><i class="fas fa-wand-magic-sparkles"></i> Design PCB</button>
+        </div>
+        <div class="ai-tool-output" id="pcbOutput">
+          <div class="summary-card" id="pcbSummaryCard" style="display:none"></div>
+          <div class="meta-grid" id="pcbMeta" style="display:none"></div>
+          <h3>Bill of Materials (BOM)</h3>
+          <div id="pcbBomTable"></div>
+          <h3 style="margin-top:16px">Netlist</h3>
+          <pre id="pcbNetlistOutput" style="max-height:150px;font-size:11px"></pre>
+          <h3 style="margin-top:16px">PCB Routing Diagram</h3>
+          <div class="svg-preview" id="pcbSvgPreview"><p style="color:var(--ash);font-size:13px;padding:20px">Click "Design PCB" to generate routing diagram</p></div>
+        </div>
+      </div>
+
+      <!-- MCU/Arduino Tool Panel -->
+      <div class="ai-tool-panel" id="aiMcuPanel">
+        <h2><i class="fas fa-microchip" style="color:#00979d"></i> Arduino &amp; MCU Code Generator</h2>
+        <p class="sub">Describe your project — AI generates code for Arduino, ESP32, STM32, PIC, RISC-V and more</p>
+        <textarea id="mcuInput" placeholder="e.g. Build a weather station with DHT22 on pin 2, LCD 16x2 I2C, data logged every 10 seconds&#10;Or: Control a servo with potentiometer on A0, map 0-180 degrees&#10;Or: Blink 3 LEDs in sequence with button interrupt on pin 3"></textarea>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+           <select id="mcuType" style="padding:10px 12px;background:var(--slate);border:1px solid var(--glass-border);border-radius:10px;color:var(--white);font-size:13px;flex:1;min-width:160px">
+             <option value="arduino-uno">Arduino Uno (AVR)</option>
+             <option value="arduino-nano">Arduino Nano (AVR)</option>
+             <option value="esp32">ESP32 (Xtensa/RISC-V)</option>
+             <option value="esp32-s3">ESP32-S3 (AI Accelerator)</option>
+             <option value="esp8266">ESP8266</option>
+             <option value="stm32-f103">STM32F103 (Blue Pill)</option>
+             <option value="stm32-f407">STM32F407 (Black Pill)</option>
+             <option value="stm32-h743">STM32H743 (High-end M7)</option>
+             <option value="nrf52840">nRF52840 (BLE 5.0)</option>
+             <option value="pic16f877a">PIC16F877A</option>
+             <option value="attiny85">ATtiny85</option>
+             <option value="raspberry-pi-pico">Raspberry Pi Pico (RP2040)</option>
+             <option value="samd21">SAMD21 (M0+)</option>
+             <option value="teensy-40">Teensy 4.0</option>
+             <option value="teensy-41">Teensy 4.1 (GigE)</option>
+           </select>
+          <button class="tool-btn" id="mcuGenerateBtn" onclick="generateMCU()"><i class="fas fa-wand-magic-sparkles"></i> Generate Code</button>
+        </div>
+        <div class="ai-tool-output" id="mcuOutput">
+          <div class="summary-card" id="mcuSummaryCard" style="display:none"></div>
+          <div id="mcuFeatures" style="display:none;margin-bottom:12px"></div>
+          <h3>Generated Code</h3>
+          <pre id="mcuCodeOutput" style="max-height:300px;font-size:11px;line-height:1.4;overflow:auto"></pre>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+            <button class="tool-btn" onclick="copyMCUCode()" style="background:var(--slate);color:var(--ash);font-size:12px;padding:8px 16px"><i class="fas fa-copy"></i> Copy Code</button>
+            <button class="tool-btn" onclick="downloadMCUCode()" style="background:var(--slate);color:var(--ash);font-size:12px;padding:8px 16px"><i class="fas fa-download"></i> Download .ino</button>
+          </div>
+          <h3 style="margin-top:16px">Pin Connections</h3>
+          <pre id="mcuConnectionsOutput" style="max-height:100px;font-size:12px"></pre>
+          <h3 style="margin-top:16px">Required Libraries</h3>
+          <pre id="mcuLibrariesOutput" style="max-height:80px;font-size:12px"></pre>
+        </div>
+      </div>
+
+      <!-- Task Router Panel -->
+      <div class="ai-tool-panel" id="aiTaskRouterPanel">
+        <h2><i class="fas fa-route" style="color:#f59e0b"></i> AI Task Router</h2>
+        <p class="sub">Describe any multi-domain project — AI breaks it down, routes to specialist agents, reviews quality, and synthesizes the best result</p>
+        <textarea id="taskrouterInput" placeholder="e.g. Build a complete IoT temperature monitoring system:&#10;  - Hardware: ESP32 with TMP102 sensor&#10;  - Firmware: read sensor, MQTT publish, OTA updates&#10;  - Dashboard: real-time charts, alerts, dark mode&#10;  - Backend: REST API, PostgreSQL, JWT auth&#10;&#10;Or: Design a smart home hub with touch display, voice control, mobile app"></textarea>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+          <select id="taskrouterType" style="padding:10px 12px;background:var(--slate);border:1px solid var(--glass-border);border-radius:10px;color:var(--white);font-size:13px;flex:1;min-width:160px">
+            <option value="auto">Auto-detect domains</option>
+            <option value="web">Website / Web App</option>
+            <option value="mcu">Embedded / Firmware</option>
+            <option value="pcb">PCB / Electronics</option>
+            <option value="cad">3D / Mechanical</option>
+          </select>
+          <button class="tool-btn" id="taskrouterGenerateBtn" onclick="generateTaskRouter()"><i class="fas fa-wand-magic-sparkles"></i> Route &amp; Generate</button>
+        </div>
+        <div class="ai-tool-output" id="taskrouterOutput">
+          <div class="summary-card" id="taskrouterSummary" style="display:none"></div>
+          <div id="taskrouterQC" style="display:none;margin-bottom:12px"></div>
+          <h3>Specialist Output</h3>
+          <pre id="taskrouterResult" style="max-height:400px;font-size:11px;line-height:1.4;overflow:auto"></pre>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+            <button class="tool-btn" onclick="copyTaskRouterResult()" style="background:var(--slate);color:var(--ash);font-size:12px;padding:8px 16px"><i class="fas fa-copy"></i> Copy Result</button>
+            <button class="tool-btn" onclick="downloadTaskRouterResult()" style="background:var(--slate);color:var(--ash);font-size:12px;padding:8px 16px"><i class="fas fa-download"></i> Download</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- INVISIBLE ORCHESTRATOR ENGINE (powers all tools internally) -->
+      <div style="display:none">
+
+      <div class="ai-launch-bar" id="aiLaunchBar" style="display:none;">
+        <div class="ai-launch-info">
+          <span class="ai-launch-badge" id="aiLaunchBadge">Website Generated</span>
+          <span class="ai-launch-actions" id="aiLaunchActions">
+            <button onclick="regenerateAIWebsite()" class="ai-launch-btn"><i class="fas fa-rotate"></i> Regenerate</button>
+            <button onclick="showCheckoutAreaInline()" class="ai-launch-btn ai-launch-primary"><i class="fas fa-rocket"></i> Launch Website</button>
+            <button onclick="unlockProject()" class="ai-launch-btn" style="background:rgba(236,72,153,0.2);color:var(--secondary);border:1px solid rgba(236,72,153,0.3);"><i class="fas fa-unlock"></i> Quick Unlock ($29.99)</button>
+          </span>
+        </div>
+      </div>
+      <div class="ai-checkout-panel" id="aiCheckoutPanel" style="display:none;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;font-size:16px;font-weight:700;color:var(--white);">
+          <i class="fas fa-shopping-cart" style="color:var(--primary);"></i> Launch Your Website
+          <span style="font-size:12px;font-weight:400;color:var(--ash);margin-left:auto;" id="aiCheckoutOrderNum"></span>
+        </div>
+        <div id="aiPricingBreakdown" style="background:var(--slate);border-radius:12px;padding:16px;margin-bottom:16px;"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+          <div><label style="font-size:12px;color:var(--ash);display:block;margin-bottom:4px;">Hosting Plan</label>
+            <select id="aiCheckoutPlan" style="width:100%;padding:10px 12px;background:var(--slate);border:1px solid var(--glass-border);border-radius:8px;color:var(--white);font-size:13px;" onchange="updateCheckoutPricing()"></select>
+          </div>
+          <div><label style="font-size:12px;color:var(--ash);display:block;margin-bottom:4px;">Domain</label>
+            <select id="aiCheckoutDomain" style="width:100%;padding:10px 12px;background:var(--slate);border:1px solid var(--glass-border);border-radius:8px;color:var(--white);font-size:13px;" onchange="updateCheckoutPricing()"></select>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+          <div><label style="font-size:12px;color:var(--ash);display:block;margin-bottom:4px;">Full Name</label>
+            <input type="text" id="aiCheckoutName" placeholder="John Doe" style="width:100%;padding:10px 12px;background:var(--slate);border:1px solid var(--glass-border);border-radius:8px;color:var(--white);font-size:13px;">
+          </div>
+          <div><label style="font-size:12px;color:var(--ash);display:block;margin-bottom:4px;">Email</label>
+            <input type="email" id="aiCheckoutEmail" placeholder="john@example.com" style="width:100%;padding:10px 12px;background:var(--slate);border:1px solid var(--glass-border);border-radius:8px;color:var(--white);font-size:13px;">
+          </div>
+        </div>
+        <div id="aiCardElement" style="background:var(--slate);border:1px solid var(--glass-border);border-radius:8px;padding:12px;margin-bottom:16px;"></div>
+        <div style="display:flex;gap:12px;">
+          <button onclick="closeCheckoutPanel()" style="flex:1;padding:14px;background:var(--slate);border:1px solid var(--glass-border);border-radius:12px;color:var(--ash);font-weight:600;font-size:14px;cursor:pointer;">Back</button>
+          <button id="aiCheckoutBtn" onclick="processAICheckout()" style="flex:2;padding:14px;background:linear-gradient(135deg,var(--primary),var(--secondary));border:none;border-radius:12px;color:#fff;font-weight:700;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:.3s;">
+            <i class="fas fa-lock"></i> <span id="aiCheckoutBtnText">Pay Now</span>
+          </button>
+        </div>
+        <div id="aiCheckoutResult" style="display:none;margin-top:12px;padding:16px;border-radius:10px;text-align:center;"></div>
+      </div>
+    </div>
+  </div>
+  <script>
+    var authToken = localStorage.getItem('keycode_token') || localStorage.getItem('token');
+    if (!authToken) { window.location.href = 'login.html?redirect=open-builder'; }
+
+    var aiCurrentProjectId = null;
+    var aiProjectStatus = null;
+    var aiGenerating = false;
+    var aiProjectFiles = null;
+    var aiTimerInterval = null;
+
+    function addMessage(text, sender) {
+      var list = document.getElementById('aiMessagesList');
+      var row = document.createElement('div');
+      row.className = 'ai-message-row';
+      var ts = new Date();
+      var timeStr = String(ts.getHours()).padStart(2,'0') + ':' + String(ts.getMinutes()).padStart(2,'0');
+      row.innerHTML = '<div class="ai-message-avatar ' + sender + '"><i class="fas fa-' + (sender === 'user' ? 'user' : 'robot') + '"></i></div><div class="ai-message-bubble ' + sender + '">' + text + '<div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:6px;text-align:right">' + timeStr + '</div></div>';
+      list.appendChild(row);
+      list.scrollTop = list.scrollHeight;
+      return row;
+    }
+
+    function smoothScrollToBottom() {
+      var list = document.getElementById('aiMessagesList');
+      var target = list.scrollHeight;
+      var start = list.scrollTop;
+      var diff = target - start;
+      if (diff < 1) return;
+      var startTime = null;
+      function step(t) {
+        if (!startTime) startTime = t;
+        var p = Math.min((t - startTime) / 200, 1);
+        list.scrollTop = start + diff * easeOutCubic(p);
+        if (p < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+    function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+
+    function showTyping() {
+      var list = document.getElementById('aiMessagesList');
+      var row = document.createElement('div');
+      row.className = 'ai-message-row';
+      row.id = 'aiTypingIndicator';
+      row.innerHTML = '<div class="ai-message-avatar bot"><i class="fas fa-robot"></i></div><div class="ai-message-bubble bot"><div class="ai-typing"><span></span><span></span><span></span></div></div>';
+      list.appendChild(row);
+      list.scrollTop = list.scrollHeight;
+    }
+
+    function hideTyping() {
+      var el = document.getElementById('aiTypingIndicator');
+      if (el) el.remove();
+    }
+
+    function updatePreview(html, demoUrl) {
+      var frame = document.getElementById('aiPreviewFrame');
+      var placeholder = document.getElementById('aiPreviewPlaceholder');
+      var urlDisplay = document.getElementById('aiPreviewUrl');
+      if (html) {
+        frame.style.display = 'block';
+        placeholder.style.display = 'none';
+        var blob = new Blob([html], { type: 'text/html' });
+        frame.src = URL.createObjectURL(blob);
+        urlDisplay.textContent = 'demo.keycode.studio';
+      } else if (demoUrl) {
+        frame.style.display = 'block';
+        placeholder.style.display = 'none';
+        frame.src = demoUrl;
+        urlDisplay.textContent = 'demo.keycode.studio';
+      } else {
+        frame.style.display = 'none';
+        placeholder.style.display = 'flex';
+        urlDisplay.textContent = 'keycode.studio/your-site';
+      }
+    }
+
+    function showProjectPanel(files, status) {
+      var panel = document.getElementById('aiProjectPanel');
+      if (panel) panel.style.display = 'block';
+      document.getElementById('aiLaunchBar').style.display = 'block';
+      document.getElementById('aiLaunchBadge').textContent = files.length + ' files generated';
+      updateUnlockUI(status);
+    }
+
+    function updateUnlockUI(status) {
+      var unlockArea = document.getElementById('aiUnlockArea');
+      var timerArea = document.getElementById('aiTimerArea');
+      var downloadBtn = document.getElementById('aiDownloadBtn');
+      if (unlockArea) unlockArea.style.display = 'none';
+      if (timerArea) timerArea.style.display = 'none';
+      if (downloadBtn) downloadBtn.style.display = 'none';
+      if (status === 'locked' || !status) { if (unlockArea) unlockArea.style.display = 'flex'; }
+      else if (status === 'paid') { if (timerArea) timerArea.style.display = 'block'; pollProjectStatus(); }
+      else if (status === 'released') { if (downloadBtn) downloadBtn.style.display = 'inline-flex'; }
+    }
+
+    async function pollProjectStatus() {
+      if (!aiCurrentProjectId) return;
+      if (aiTimerInterval) clearInterval(aiTimerInterval);
+      aiTimerInterval = setInterval(async function() {
+        try {
+          var res = await fetch('/api/ai/project-status/' + aiCurrentProjectId);
+          var data = await res.json();
+          if (!data.success) return;
+          if (data.status === 'released') {
+            clearInterval(aiTimerInterval); aiTimerInterval = null;
+            updateUnlockUI('released');
+            var ta = document.getElementById('aiTimerArea');
+            if (ta) ta.innerHTML = '<div style="text-align:center;padding:12px;background:rgba(16,185,129,0.1);border-radius:8px;"><i class="fas fa-check-circle" style="color:#10b981;font-size:24px;"></i><p style="color:#10b981;margin:4px 0 0;font-weight:600;">Code Released! Download now.</p></div>';
+            return;
+          }
+          if (data.timeRemaining) {
+            var hrs = Math.floor(data.timeRemaining / 3600);
+            var mins = Math.floor((data.timeRemaining % 3600) / 60);
+            var secs = data.timeRemaining % 60;
+            var td = document.getElementById('aiTimerDisplay');
+            if (td) td.textContent = String(hrs).padStart(2,'0') + ':' + String(mins).padStart(2,'0') + ':' + String(secs).padStart(2,'0');
+          }
+        } catch(e) { console.error('Poll error:', e); }
+      }, 1000);
+    }
+
+    var aiChatHistory = [];
+
+    async function sendChatMessage() {
+      var input = document.getElementById('aiChatInput');
+      var msg = input.value.trim();
+      if (!msg || aiGenerating) return;
+      input.value = '';
+      addMessage(msg, 'user');
+      aiChatHistory.push({ role: 'user', content: msg });
+      showTyping();
+      aiGenerating = true;
+      var sendBtn = document.getElementById('aiChatSendBtn');
+      sendBtn.disabled = true;
+
+      try {
+        var res = await fetch('/api/ai/chat', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages: aiChatHistory.slice(-10),
+            description: !aiCurrentProjectId ? msg : ''
+          })
+        });
+        hideTyping();
+        var data = await res.json();
+
+        if (data.chatMessage) {
+          addMessage(data.chatMessage, 'bot');
+          aiChatHistory.push({ role: 'assistant', content: data.chatMessage });
+        }
+
+        if (data.code) {
+          updatePreview(data.code);
+          showProjectPanel([{ path: 'index.html', size: data.code.length, type: 'html' }], 'locked');
+        }
+      } catch(err) {
+        hideTyping();
+        addMessage('❌ Error: ' + err.message, 'bot');
+      }
+      aiGenerating = false; sendBtn.disabled = false; input.focus();
+    }
+
+    function quickSuggestion(text) {
+      document.getElementById('aiChatInput').value = text;
+      sendChatMessage();
+    }
+
+    async function unlockProject() {
+      var name = prompt('Enter your name:');
+      if (!name) return;
+      var email = prompt('Enter your email:');
+      if (!email) return;
+      if (!aiCurrentProjectId) return;
+      var total = 29.99;
+      try {
+        var piRes = await fetch('/api/payments/create-intent', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount: total, currency: 'usd', metadata: { projectId: aiCurrentProjectId, email: email } })
+        });
+        var piData = await piRes.json();
+        var paymentId;
+        if (piData.simulated) {
+          paymentId = 'sim_' + Date.now();
+          await fetch('/api/payments/confirm', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ paymentIntentId: piData.clientSecret || 'pi_sim_' + Date.now() })
+          });
+        } else { paymentId = piData.paymentIntentId || 'pay_' + Date.now(); }
+
+        var unlockRes = await fetch('/api/ai/project-unlock', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ projectId: aiCurrentProjectId, paymentId: paymentId, customerName: name, customerEmail: email })
+        });
+        var unlockData = await unlockRes.json();
+        if (!unlockData.success) throw new Error(unlockData.error || 'Unlock failed');
+
+        aiProjectStatus = 'paid';
+        updateUnlockUI('paid');
+        showToast('Payment successful! Code will release in 1 hour.', 'success');
+        addMessage('✅ <strong>Payment successful!</strong> Your code will be released in 1 hour. Check the dashboard for the countdown.', 'bot');
+      } catch(err) { showToast('Error: ' + err.message, 'error'); }
+    }
+
+    async function showCheckoutAreaInline() {
+      var panel = document.getElementById('aiCheckoutPanel');
+      panel.style.display = 'block';
+      document.getElementById('aiCheckoutOrderNum').textContent = '#' + (aiCurrentProjectId || '').slice(-8).toUpperCase();
+      var planSelect = document.getElementById('aiCheckoutPlan');
+      planSelect.innerHTML = '<option value="">Select Hosting Plan</option><option value="starter">Starter - $4.99/mo</option><option value="professional">Professional - $9.99/mo</option><option value="enterprise">Enterprise - $19.99/mo</option>';
+      var domainSelect = document.getElementById('aiCheckoutDomain');
+      domainSelect.innerHTML = '<option value="">No domain (use subdomain)</option><option value=".com">.com - $12.99/yr</option><option value=".net">.net - $14.99/yr</option><option value=".org">.org - $11.99/yr</option><option value=".io">.io - $39.99/yr</option><option value=".app">.app - $14.99/yr</option><option value=".dev">.dev - $12.99/yr</option><option value=".xyz">.xyz - $1.99/yr</option>';
+      if (localStorage.getItem('keycode_user')) {
+        var user = JSON.parse(localStorage.getItem('keycode_user'));
+        document.getElementById('aiCheckoutName').value = user.name || '';
+        document.getElementById('aiCheckoutEmail').value = user.email || '';
+      }
+      updateCheckoutPricing();
+    }
+
+    function updateCheckoutPricing() {
+      var plan = document.getElementById('aiCheckoutPlan').value;
+      var domain = document.getElementById('aiCheckoutDomain').value;
+      var pricingArea = document.getElementById('aiPricingBreakdown');
+      var planPrices = { starter: 4.99, professional: 9.99, enterprise: 19.99 };
+      var domainPrices = { '.com': 12.99, '.net': 14.99, '.org': 11.99, '.io': 39.99, '.app': 14.99, '.dev': 12.99, '.xyz': 1.99 };
+      var basePrice = 29.99;
+      var planPrice = plan && planPrices[plan] ? planPrices[plan] : 0;
+      var domainPrice = domain && domainPrices[domain] ? domainPrices[domain] : 0;
+      var total = basePrice + planPrice + domainPrice;
+      var html = '<div style="border-bottom:1px solid var(--glass-border);padding:8px 0;display:flex;justify-content:space-between;"><span>Project Unlock</span><span style="color:var(--primary);font-weight:600;">$' + basePrice.toFixed(2) + '</span></div>';
+      if (planPrice > 0) html += '<div style="border-bottom:1px solid var(--glass-border);padding:8px 0;display:flex;justify-content:space-between;"><span>Hosting (' + plan + ')</span><span style="color:var(--accent);font-weight:600;">$' + planPrice.toFixed(2) + '/mo</span></div>';
+      if (domainPrice > 0) html += '<div style="border-bottom:1px solid var(--glass-border);padding:8px 0;display:flex;justify-content:space-between;"><span>Domain ' + domain + '</span><span style="color:var(--accent);font-weight:600;">$' + domainPrice.toFixed(2) + '/yr</span></div>';
+      html += '<div style="padding:8px 0;display:flex;justify-content:space-between;font-size:18px;font-weight:700;"><span>Total</span><span style="color:var(--primary);">$' + total.toFixed(2) + '</span></div>';
+      pricingArea.innerHTML = html;
+      document.getElementById('aiCheckoutBtnText').textContent = 'Pay $' + total.toFixed(2);
+    }
+
+    async function processAICheckout() {
+      var name = document.getElementById('aiCheckoutName').value.trim();
+      var email = document.getElementById('aiCheckoutEmail').value.trim();
+      var plan = document.getElementById('aiCheckoutPlan').value;
+      var domain = document.getElementById('aiCheckoutDomain').value;
+      if (!name || !email) { showToast('Please enter your name and email', 'warning'); return; }
+      if (!aiCurrentProjectId) { showToast('No project to unlock', 'warning'); return; }
+      var planPrices = { starter: 4.99, professional: 9.99, enterprise: 19.99 };
+      var domainPrices = { '.com': 12.99, '.net': 14.99, '.org': 11.99, '.io': 39.99, '.app': 14.99, '.dev': 12.99, '.xyz': 1.99 };
+      var total = 29.99 + (plan && planPrices[plan] ? planPrices[plan] : 0) + (domain && domainPrices[domain] ? domainPrices[domain] : 0);
+
+      var btn = document.getElementById('aiCheckoutBtn');
+      var resultArea = document.getElementById('aiCheckoutResult');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+      resultArea.style.display = 'none';
+
+      try {
+        var piRes = await fetch('/api/payments/create-intent', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount: total, currency: 'usd', metadata: { projectId: aiCurrentProjectId, email: email } })
+        });
+        var piData = await piRes.json();
+        var paymentId;
+        if (piData.simulated) {
+          paymentId = 'sim_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+          await fetch('/api/payments/confirm', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ paymentIntentId: piData.clientSecret || 'pi_simulated_' + Date.now() })
+          });
+        } else { paymentId = piData.paymentIntentId || 'pay_' + Date.now(); }
+
+        var unlockRes = await fetch('/api/ai/project-unlock', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ projectId: aiCurrentProjectId, paymentId: paymentId, customerName: name, customerEmail: email, hosting: plan, domain: domain })
+        });
+        var unlockData = await unlockRes.json();
+        if (!unlockData.success) throw new Error(unlockData.error || 'Unlock failed');
+
+        resultArea.style.display = 'block';
+        resultArea.style.background = 'rgba(16,185,129,0.1)';
+        resultArea.innerHTML = '<i class="fas fa-check-circle" style="color:#10b981;font-size:28px;"></i><p style="color:#10b981;font-weight:600;margin:8px 0;">Payment Successful!</p><p style="color:var(--ash);font-size:13px;">Your project code will be released in 1 hour. Check the dashboard for the countdown.</p>';
+        aiProjectStatus = 'paid';
+        updateUnlockUI('paid');
+        document.getElementById('aiLaunchBadge').textContent = 'Payment received - Unlocking in 1hr';
+        document.getElementById('aiLaunchBar').style.display = 'block';
+        setTimeout(function() { window.location.href = 'control-panel.html'; }, 3000);
+      } catch(err) {
+        resultArea.style.display = 'block';
+        resultArea.style.background = 'rgba(239,68,68,0.1)';
+        resultArea.innerHTML = '<p style="color:var(--danger);font-weight:600;">Error: ' + err.message + '</p>';
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-lock"></i> <span id="aiCheckoutBtnText">Pay Now</span>';
+      }
+    }
+
+    function closeCheckoutPanel() { document.getElementById('aiCheckoutPanel').style.display = 'none'; }
+
+    function regenerateAIWebsite() {
+      var r = confirm('Regenerate the current website? This will replace all generated files.');
+      if (r) {
+        aiCurrentProjectId = null; aiProjectFiles = null; aiProjectStatus = null;
+        document.getElementById('aiPreviewFrame').style.display = 'none';
+        document.getElementById('aiPreviewPlaceholder').style.display = 'flex';
+        document.getElementById('aiLaunchBar').style.display = 'none';
+        document.getElementById('aiCheckoutPanel').style.display = 'none';
+        document.getElementById('aiMessagesList').innerHTML = '';
+        addMessage('👋 Welcome to <strong>KEYCODE AI</strong>! Describe the full-stack project you want to build.', 'bot');
+        addMessage('Try: <em>"Build a SaaS dashboard with user authentication and a pricing page"</em>', 'bot');
+      }
+    }
+
+    function openAIBuilderFullscreen() {
+      var frame = document.getElementById('aiPreviewFrame');
+      if (frame && frame.style.display !== 'none') {
+        if (frame.requestFullscreen) frame.requestFullscreen();
+        else if (frame.webkitRequestFullscreen) frame.webkitRequestFullscreen();
+      }
+    }
+
+    function copyAICode() { addMessage('📋 Use the Download button to get your project files.', 'bot'); }
+    function downloadAIWebsite() {
+      if (!aiCurrentProjectId) return;
+      window.open('/api/ai/project-download/' + aiCurrentProjectId, '_blank');
+    }
+
+    // ===== TOAST NOTIFICATION SYSTEM =====
+    function showToast(message, type) {
+      type = type || 'info';
+      var container = document.getElementById('aiToastContainer');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'aiToastContainer';
+        container.style.cssText = 'position:fixed;top:16px;right:16px;z-index:10000;display:flex;flex-direction:column;gap:8px;max-width:360px';
+        document.body.appendChild(container);
+      }
+      var t = document.createElement('div');
+      var colors = { info: '#6366f1', success: '#10b981', error: '#ef4444', warning: '#f59e0b' };
+      var icons = { info: 'fa-info-circle', success: 'fa-check-circle', error: 'fa-exclamation-circle', warning: 'fa-exclamation-triangle' };
+      t.style.cssText = 'padding:12px 16px;border-radius:10px;background:' + (colors[type]||'#6366f1') + ';color:#fff;font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px;box-shadow:0 8px 32px rgba(0,0,0,0.3);animation:toastIn .3s ease;cursor:pointer';
+      t.innerHTML = '<i class="fas ' + (icons[type]||'fa-info-circle') + '"></i> ' + message;
+      t.onclick = function(){ t.style.animation = 'toastOut .2s ease'; setTimeout(function(){t.remove()}, 200); };
+      container.appendChild(t);
+      setTimeout(function(){ if(t.parentNode){t.style.animation='toastOut .2s ease';setTimeout(function(){t.remove()},200)} }, 4000);
+    }
+    // Add toast keyframes once
+    if (!document.getElementById('aiToastStyle')) {
+      var st = document.createElement('style');
+      st.id = 'aiToastStyle';
+      st.textContent = '@keyframes toastIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}} @keyframes toastOut{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(40px)}}';
+      document.head.appendChild(st);
+    }
+
+    // ===== OFFLINE DETECTION =====
+    var offlineBanner = null;
+    function updateOnlineStatus() {
+      if (navigator.onLine) {
+        if (offlineBanner) { offlineBanner.remove(); offlineBanner = null; }
+      } else {
+        if (!offlineBanner) {
+          offlineBanner = document.createElement('div');
+          offlineBanner.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#ef4444;color:#fff;text-align:center;padding:8px;font-size:13px;font-weight:600;z-index:9999;animation:toastIn .3s ease';
+          offlineBanner.innerHTML = '<i class="fas fa-wifi-slash"></i> You are offline. AI generation requires an internet connection.';
+          document.body.appendChild(offlineBanner);
+        }
+      }
+    }
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    updateOnlineStatus();
+
+    // ===== AUTO-RESIZE TEXTAREA =====
+    document.getElementById('aiChatInput').addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+      // Auto-save draft
+      try { localStorage.setItem('ai_builder_draft', this.value); } catch(e) {}
+    });
+
+    // ===== AUTO-SAVE DRAFT =====
+    try {
+      var saved = localStorage.getItem('ai_builder_draft');
+      if (saved) {
+        document.getElementById('aiChatInput').value = saved;
+        document.getElementById('aiChatInput').style.height = 'auto';
+        document.getElementById('aiChatInput').style.height = Math.min(document.getElementById('aiChatInput').scrollHeight, 120) + 'px';
+      }
+    } catch(e) {}
+    // Clear draft on send
+    var origSend = sendChatMessage;
+    sendChatMessage = function() {
+      try { localStorage.removeItem('ai_builder_draft'); } catch(e) {}
+      return origSend.apply(this, arguments);
+    };
+
+    // ===== KEYBOARD SHORTCUT HINT =====
+    var hint = document.createElement('div');
+    hint.className = 'input-hint';
+    hint.textContent = 'Enter to send · Shift+Enter for new line';
+    document.querySelector('.ai-chat-input-bar').appendChild(hint);
+
+    // ===== NETWORK REQUEST INTERCEPTOR FOR RATE LIMIT WARNINGS =====
+    var origFetch = window.fetch;
+    window.fetch = function() {
+      return origFetch.apply(this, arguments).then(function(resp) {
+        if (resp.status === 429) {
+          showToast('Rate limit reached. Using fallback AI...', 'warning');
+        }
+        return resp;
+      });
+    };
+
+    // ===== TAB SWITCHING =====
+    var activeBuilderTab = 'preview';
+    function switchBuilderTab(tab) {
+      activeBuilderTab = tab;
+      document.querySelectorAll('.ai-header-tab').forEach(function(b) { b.classList.toggle('active', b.dataset.tab === tab); });
+      document.getElementById('aiPreviewContainer').style.display = tab === 'preview' ? '' : 'none';
+      document.getElementById('aiCadPanel').classList.toggle('active', tab === 'cad');
+      document.getElementById('aiPcbPanel').classList.toggle('active', tab === 'pcb');
+      document.getElementById('aiMcuPanel').classList.toggle('active', tab === 'mcu');
+      document.getElementById('aiTaskRouterPanel').classList.toggle('active', tab === 'taskrouter');
+      if (tab !== 'preview') { document.getElementById('aiLaunchBar').style.display = 'none'; }
+    }
+
+    // ===== CAD: GENERATE =====
+    async function generateCAD() {
+      var input = document.getElementById('cadInput');
+      var desc = input.value.trim();
+      if (!desc) { showToast('Please describe what to design', 'warning'); input.focus(); return; }
+      var btn = document.getElementById('cadGenerateBtn');
+      btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+      document.getElementById('cadOutput').classList.add('show');
+      document.getElementById('cadSummaryCard').style.display = 'none';
+      document.getElementById('cadMeta').style.display = 'none';
+      try {
+        var res = await fetch('/api/ai/cad-design', {
+          method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+          body: JSON.stringify({ description: desc, designType: document.getElementById('cadType').value })
+        });
+        var data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Generation failed');
+        document.getElementById('cadSummaryCard').innerHTML = '<p>' + data.summary + '</p>';
+        document.getElementById('cadSummaryCard').style.display = 'block';
+        document.getElementById('cadMeta').innerHTML =
+          '<div class="meta-item"><label>Dimensions</label><span>' + (data.dimensions || 'N/A') + '</span></div>' +
+          '<div class="meta-item"><label>Materials</label><span>' + (data.materials || 'N/A') + '</span></div>';
+        document.getElementById('cadMeta').style.display = 'grid';
+        document.getElementById('cadCodeOutput').textContent = data.openscad || '// No code generated';
+        var previewDiv = document.getElementById('cadPreviewSvg');
+        if (data.preview) { previewDiv.innerHTML = data.preview; } else { previewDiv.innerHTML = '<p style="color:var(--ash);font-size:13px;padding:20px">Copy the OpenSCAD code and open in <a href="https://openscad.org" target="_blank" style="color:var(--primary-glow)">OpenSCAD</a> to render</p>'; }
+      } catch (e) { showToast('Error: ' + e.message, 'error'); }
+      btn.disabled = false; btn.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i> Generate CAD';
+    }
+
+    function copyCADCode() {
+      var code = document.getElementById('cadCodeOutput').textContent;
+      navigator.clipboard.writeText(code).then(function() { showToast('OpenSCAD code copied!', 'success'); });
+    }
+
+    function downloadCADCode() {
+      var code = document.getElementById('cadCodeOutput').textContent;
+      var blob = new Blob([code], { type: 'text/plain' });
+      var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'design.scad'; a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    // ===== PCB: GENERATE =====
+    async function generatePCB() {
+      var input = document.getElementById('pcbInput');
+      var desc = input.value.trim();
+      if (!desc) { showToast('Please describe your PCB requirements', 'warning'); input.focus(); return; }
+      var btn = document.getElementById('pcbGenerateBtn');
+      btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Designing...';
+      document.getElementById('pcbOutput').classList.add('show');
+      document.getElementById('pcbSummaryCard').style.display = 'none';
+      document.getElementById('pcbMeta').style.display = 'none';
+      try {
+        var comps = document.getElementById('pcbComponents').value;
+        var res = await fetch('/api/ai/pcb-design', {
+          method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+          body: JSON.stringify({ description: desc, components: comps ? comps.split(',') : [] })
+        });
+        var data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Design failed');
+        document.getElementById('pcbSummaryCard').innerHTML = '<p>' + (data.summary || 'PCB design generated') + '</p>';
+        document.getElementById('pcbSummaryCard').style.display = 'block';
+        document.getElementById('pcbMeta').innerHTML =
+          '<div class="meta-item"><label>Power</label><span>' + (data.power_requirements || '5V DC') + '</span></div>' +
+          '<div class="meta-item"><label>Board Size</label><span>' + (data.board_dimensions || '50x50mm') + '</span></div>' +
+          '<div class="meta-item"><label>Layers</label><span>' + (data.layer_count || 2) + '</span></div>' +
+          '<div class="meta-item"><label>Components</label><span>' + (data.bom ? data.bom.length : 0) + '</span></div>';
+        document.getElementById('pcbMeta').style.display = 'grid';
+        // BOM table
+        var bomHtml = '<table class="bom-table"><thead><tr><th>Ref</th><th>Value</th><th>Package</th><th>Qty</th><th>Description</th></tr></thead><tbody>';
+        if (data.bom && data.bom.length) {
+          data.bom.forEach(function(item) {
+            bomHtml += '<tr><td>' + item.ref + '</td><td>' + item.value + '</td><td>' + item.package + '</td><td>' + item.qty + '</td><td>' + item.description + '</td></tr>';
+          });
+        }
+        bomHtml += '</tbody></table>';
+        document.getElementById('pcbBomTable').innerHTML = bomHtml;
+        // Netlist
+        var netText = '';
+        if (data.netlist && data.netlist.length) {
+          data.netlist.forEach(function(n) { netText += n.net + ': ' + n.nodes.join(' → ') + '\n'; });
+        }
+        document.getElementById('pcbNetlistOutput').textContent = netText || '// No netlist generated';
+        // SVG
+        if (data.svg_trace) {
+          document.getElementById('pcbSvgPreview').innerHTML = data.svg_trace;
+        } else {
+          document.getElementById('pcbSvgPreview').innerHTML = '<p style="color:var(--ash);font-size:13px;padding:20px">No routing diagram generated</p>';
+        }
+      } catch (e) { showToast('Error: ' + e.message, 'error'); }
+      btn.disabled = false; btn.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i> Design PCB';
+    }
+
+    // ===== MCU / ARDUINO CODE GENERATOR =====
+    async function generateMCU() {
+      var input = document.getElementById('mcuInput');
+      var desc = input.value.trim();
+      if (!desc) { showToast('Please describe your project', 'warning'); input.focus(); return; }
+      var btn = document.getElementById('mcuGenerateBtn');
+      btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+      document.getElementById('mcuOutput').classList.add('show');
+      document.getElementById('mcuSummaryCard').style.display = 'none';
+      document.getElementById('mcuFeatures').style.display = 'none';
+      try {
+        var mcuType = document.getElementById('mcuType').value;
+        var res = await fetch('/api/ai/arduino-code', {
+          method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+          body: JSON.stringify({ description: desc, mcu: mcuType })
+        });
+        var data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Generation failed');
+        document.getElementById('mcuSummaryCard').innerHTML = '<p>' + (data.explanation || 'Code generated') + '</p>';
+        document.getElementById('mcuSummaryCard').style.display = 'block';
+        if (data.features && data.features.length) {
+          document.getElementById('mcuFeatures').innerHTML = '<div style="display:flex;gap:6px;flex-wrap:wrap">' + data.features.map(function(f) { return '<span style="padding:4px 10px;border-radius:100px;font-size:11px;font-weight:600;background:rgba(99,102,241,0.15);color:#818cf8">' + f + '</span>'; }).join('') + '</div>';
+          document.getElementById('mcuFeatures').style.display = 'block';
+        }
+        document.getElementById('mcuCodeOutput').textContent = data.code || '// No code generated';
+        document.getElementById('mcuConnectionsOutput').textContent = data.connections || '// See code comments';
+        document.getElementById('mcuLibrariesOutput').textContent = data.libraries || 'Standard libraries';
+      } catch (e) { showToast('Error: ' + e.message, 'error'); }
+      btn.disabled = false; btn.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i> Generate Code';
+    }
+
+    function copyMCUCode() {
+      var code = document.getElementById('mcuCodeOutput').textContent;
+      navigator.clipboard.writeText(code).then(function() { showToast('Code copied!', 'success'); });
+    }
+
+    function downloadMCUCode() {
+      var code = document.getElementById('mcuCodeOutput').textContent;
+      var mcuType = document.getElementById('mcuType').value;
+      var ext = mcuType.startsWith('arduino') || mcuType === 'esp32' || mcuType === 'esp8266' || mcuType === 'attiny85' ? '.ino' : '.c';
+      var blob = new Blob([code], { type: 'text/plain' });
+      var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'firmware' + ext; a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    // ===== TASK ROUTER =====
+    async function generateTaskRouter() {
+      var input = document.getElementById('taskrouterInput');
+      var desc = input.value.trim();
+      if (!desc) { showToast('Please describe your project', 'warning'); input.focus(); return; }
+      var btn = document.getElementById('taskrouterGenerateBtn');
+      btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Routing...';
+      var output = document.getElementById('taskrouterOutput');
+      output.classList.add('show');
+      document.getElementById('taskrouterSummary').style.display = 'none';
+      document.getElementById('taskrouterQC').style.display = 'none';
+      try {
+        var taskType = document.getElementById('taskrouterType').value;
+        var res = await fetch('/api/ai/task-router', {
+          method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+          body: JSON.stringify({ request: desc, taskType: taskType, maxTokens: 4096 })
+        });
+        var data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Routing failed');
+        var summary = document.getElementById('taskrouterSummary');
+        var specialists = data.specialistCount || 0;
+        var score = data.synthesisScore || 'N/A';
+        summary.innerHTML = '<div style="display:flex;gap:12px;flex-wrap:wrap"><span style="padding:4px 12px;border-radius:100px;font-size:12px;background:rgba(245,158,11,0.15);color:#f59e0b;font-weight:600"><i class="fas fa-route"></i> ' + specialists + ' specialists</span><span style="padding:4px 12px;border-radius:100px;font-size:12px;background:rgba(99,102,241,0.15);color:#818cf8;font-weight:600"><i class="fas fa-star"></i> Score: ' + score + '/10</span></div>';
+        summary.style.display = 'block';
+        if (data.qcResults && data.qcResults.length) {
+          var qcDiv = document.getElementById('taskrouterQC');
+          qcDiv.innerHTML = '<div style="display:flex;gap:6px;flex-wrap:wrap">' + data.qcResults.map(function(q) {
+            var color = q.score >= 8 ? '#10b981' : q.score >= 5 ? '#f59e0b' : '#ef4444';
+            return '<span style="padding:4px 10px;border-radius:100px;font-size:11px;font-weight:600;background:rgba(' + (q.score >= 8 ? '16,185,129' : q.score >= 5 ? '245,158,11' : '239,68,68') + ',0.15);color:' + color + '">' + q.role + ': ' + q.score + '/10</span>';
+          }).join('') + '</div>';
+          qcDiv.style.display = 'block';
+        }
+        var resultText = data.result || JSON.stringify(data, null, 2);
+        document.getElementById('taskrouterResult').textContent = typeof resultText === 'string' ? resultText : JSON.stringify(resultText, null, 2);
+      } catch (e) { showToast('Error: ' + e.message, 'error'); }
+      btn.disabled = false; btn.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i> Route &amp; Generate';
+    }
+
+    function copyTaskRouterResult() {
+      var code = document.getElementById('taskrouterResult').textContent;
+      navigator.clipboard.writeText(code).then(function() { showToast('Copied!', 'success'); });
+    }
+
+    function downloadTaskRouterResult() {
+      var code = document.getElementById('taskrouterResult').textContent;
+      var blob = new Blob([code], { type: 'text/plain' });
+      var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'task-router-output.json'; a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    // ===== URL PARAM HANDLER =====
+    var urlParams = new URLSearchParams(window.location.search);
+    var toolParam = urlParams.get('tool');
+    if (toolParam && ['cad','pcb','mcu','taskrouter'].includes(toolParam)) {
+      switchBuilderTab(toolParam);
+      var toolInput = document.getElementById(toolParam + 'Input');
+      if (toolInput) { setTimeout(function(){ toolInput.focus(); }, 300); }
+    }
+
+    // ===== KEYBOARD SHORTCUTS =====
+    document.addEventListener('keydown', function(e) {
+      if (e.ctrlKey && e.key === 'Enter') {
+        var activeTab = document.querySelector('.ai-tool-panel.active');
+        if (!activeTab) return;
+        if (activeTab.id === 'aiCadPanel') document.getElementById('cadGenerateBtn')?.click();
+        else if (activeTab.id === 'aiPcbPanel') document.getElementById('pcbGenerateBtn')?.click();
+        else if (activeTab.id === 'aiMcuPanel') document.getElementById('mcuGenerateBtn')?.click();
+        else if (activeTab.id === 'aiTaskRouterPanel') document.getElementById('taskrouterGenerateBtn')?.click();
+        else if (document.querySelector('.ai-chat-input-area')) document.querySelector('.ai-send-btn')?.click();
+      }
+      if (e.ctrlKey && e.key === 'p') {
+        e.preventDefault();
+        loadProjectHistory();
+      }
+    });
+
+    // ===== AUTO-SAVE DRAFTS =====
+    ['cadInput','pcbInput','mcuInput','taskrouterInput'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) {
+        var saved = localStorage.getItem('draft_' + id);
+        if (saved && !el.value) el.value = saved;
+        el.addEventListener('input', function() {
+          localStorage.setItem('draft_' + id, el.value);
+        });
+      }
+    });
+
+    // ===== PROJECT HISTORY PANEL =====
+    function loadProjectHistory(toolFilter) {
+      var overlay = document.getElementById('historyOverlay');
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'historyOverlay';
+        overlay.innerHTML = '<div class="history-panel"><div class="history-header"><h3><i class="fas fa-history"></i> Project History</h3><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><input id="historySearch" placeholder="Search projects..." style="padding:6px 10px;font-size:12px;border-radius:6px;border:1px solid var(--glass-border);background:var(--slate);color:var(--white);width:140px"><select id="historyFilter" style="padding:6px 8px;font-size:11px;border-radius:6px;border:1px solid var(--glass-border);background:var(--slate);color:var(--white)"><option value="">All</option><option value="cad">CAD</option><option value="pcb">PCB</option><option value="mcu">MCU</option><option value="website">Website</option></select><button onclick="closeHistory()" style="background:none;border:none;color:var(--ash);font-size:18px;cursor:pointer">&times;</button></div></div><div id="historyList" style="max-height:60vh;overflow-y:auto;padding:4px 0"><div style="text-align:center;padding:20px;color:var(--ash)"><i class="fas fa-spinner fa-spin"></i> Loading...</div></div></div>';
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)';
+        document.body.appendChild(overlay);
+      }
+      overlay.style.display = 'flex';
+      var list = document.getElementById('historyList');
+      var q = document.getElementById('historySearch')?.value || '';
+      var filter = toolFilter || document.getElementById('historyFilter')?.value || '';
+
+      var url = '/api/ai/projects/search?q=' + encodeURIComponent(q) + (filter ? '&tool=' + filter : '');
+      fetch(url).then(function(r) { return r.json(); }).then(function(data) {
+        list.innerHTML = '';
+        if (!data.projects || data.projects.length === 0) {
+          list.innerHTML = '<div style="text-align:center;padding:30px;color:var(--ash)"><i class="fas fa-inbox" style="font-size:32px;display:block;margin-bottom:12px;opacity:0.4"></i>No projects yet</div>';
+          return;
+        }
+        data.projects.forEach(function(p) {
+          var toolIcons = {cad:'fa-cube',pcb:'fa-microchip',mcu:'fa-code',website:'fa-globe',orch:'fa-brain'};
+          var colors = {cad:'#22d3ee',pcb:'#f59e0b',mcu:'#00979d',website:'#a78bfa',orch:'#f59e0b'};
+          var icon = toolIcons[p.tool] || 'fa-file';
+          var color = colors[p.tool] || 'var(--ash)';
+          var desc = (p.description || 'No description').substring(0, 100);
+          var date = new Date(p.createdAt).toLocaleDateString();
+          var item = document.createElement('div');
+          item.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;margin:2px 0;cursor:pointer;transition:background 0.2s';
+          item.onmouseenter = function(){item.style.background='rgba(255,255,255,0.05)'};
+          item.onmouseleave = function(){item.style.background='transparent'};
+          item.innerHTML = '<i class="fas ' + icon + '" style="color:' + color + ';width:20px;text-align:center"></i><div style="flex:1;min-width:0"><div style="font-size:12px;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + desc + '</div><div style="font-size:10px;color:var(--ash)">' + date + ' · ' + p.tool + ' · ' + (p.size || 0) + 'B</div></div><div style="display:flex;gap:4px">';
+          // Delete button
+          var delBtn = document.createElement('button');
+          delBtn.innerHTML = '<i class="fas fa-trash" style="font-size:10px"></i>';
+          delBtn.style.cssText = 'background:none;border:none;color:#ef4444;cursor:pointer;padding:4px;border-radius:4px;opacity:0.5';
+          delBtn.onmouseenter = function(){delBtn.style.opacity='1';delBtn.style.background='rgba(239,68,68,0.1)'};
+          delBtn.onmouseleave = function(){delBtn.style.opacity='0.5';delBtn.style.background='transparent'};
+          delBtn.onclick = function(e) { e.stopPropagation(); if (confirm('Delete this project?')) fetch('/api/ai/projects/' + p.id, {method:'DELETE'}).then(function(){ loadProjectHistory(); }); };
+          item.querySelector('div:last-child').appendChild(delBtn);
+          // View button
+          var viewBtn = document.createElement('button');
+          viewBtn.innerHTML = '<i class="fas fa-eye" style="font-size:10px"></i>';
+          viewBtn.style.cssText = 'background:none;border:none;color:#22d3ee;cursor:pointer;padding:4px;border-radius:4px;opacity:0.5';
+          viewBtn.onmouseenter = function(){viewBtn.style.opacity='1';viewBtn.style.background='rgba(34,211,238,0.1)'};
+          viewBtn.onmouseleave = function(){viewBtn.style.opacity='0.5';viewBtn.style.background='transparent'};
+          viewBtn.onclick = function(e) { e.stopPropagation(); viewProject(p.id); };
+          item.querySelector('div:last-child').appendChild(viewBtn);
+          item.onclick = function() { viewProject(p.id); };
+          list.appendChild(item);
+        });
+      }).catch(function() { list.innerHTML = '<div style="text-align:center;padding:20px;color:#ef4444">Failed to load</div>'; });
+
+      // Search on input
+      var searchInput = document.getElementById('historySearch');
+      if (searchInput) {
+        searchInput.oninput = function() { loadProjectHistory(); };
+      }
+      var filterSelect = document.getElementById('historyFilter');
+      if (filterSelect) {
+        filterSelect.onchange = function() { loadProjectHistory(); };
+      }
+    }
+
+    function closeHistory() {
+      var overlay = document.getElementById('historyOverlay');
+      if (overlay) overlay.style.display = 'none';
+    }
+
+    function viewProject(id) {
+      fetch('/api/ai/download/' + id).then(function(r) { return r.json(); }).then(function(data) {
+        closeHistory();
+        var panel = document.getElementById('aiPreviewContainer');
+        if (panel) {
+          panel.style.display = 'block';
+          panel.innerHTML = '<div style="padding:20px;max-height:60vh;overflow:auto"><h3 style="color:var(--white);margin-bottom:12px">Project: ' + id + '</h3><pre style="font-size:11px;line-height:1.4;color:var(--ash);max-height:500px;overflow:auto;white-space:pre-wrap;background:var(--slate);padding:16px;border-radius:8px">' + JSON.stringify(data, null, 2) + '</pre></div>';
+        }
+      }).catch(function() { showToast('Failed to load project', 'error'); });
+    }
+
+    // ===== CHARACTER COUNTER =====
+    function updateCharCount(id) {
+      var el = document.getElementById(id);
+      var counter = document.getElementById(id + 'Count');
+      if (el && counter) counter.textContent = el.value.length + ' chars';
+    }
+
+    // ===== PROVIDER BADGE =====
+    function showProviderBadge(providerName) {
+      var bar = document.getElementById('aiLaunchBar');
+      if (bar) {
+        var badge = bar.querySelector('.ai-launch-badge');
+        if (badge) badge.innerHTML = '<i class="fas fa-bolt"></i> ' + (providerName || 'AI');
+      }
+    }
+
+    // ===== THEME SUPPORT =====
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+      document.documentElement.style.setProperty('--bg', '#f8fafc');
+      document.documentElement.style.setProperty('--white', '#0f172a');
+      document.documentElement.style.setProperty('--ash', '#475569');
+      document.documentElement.style.setProperty('--slate', '#e2e8f0');
+    }
+
+    // ===== LOADING SKELETONS =====
+    function showLoading(id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.innerHTML = '<div style="padding:20px"><div class="skeleton-line" style="height:14px;width:60%;margin-bottom:10px;background:linear-gradient(90deg,var(--slate),rgba(255,255,255,0.1),var(--slate));background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:4px"></div><div class="skeleton-line" style="height:14px;width:80%;margin-bottom:10px;background:linear-gradient(90deg,var(--slate),rgba(255,255,255,0.1),var(--slate));background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:4px"></div><div class="skeleton-line" style="height:14px;width:40%;margin-bottom:10px;background:linear-gradient(90deg,var(--slate),rgba(255,255,255,0.1),var(--slate));background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:4px"></div></div>';
+    }
+
+    // Inject shimmer animation
+    var style = document.createElement('style');
+    style.textContent = '@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}.history-panel{background:var(--bg);border:1px solid var(--glass-border);border-radius:16px;padding:16px;width:90%;max-width:560px;max-height:80vh;overflow:hidden;box-shadow:0 25px 60px rgba(0,0,0,0.5)}.history-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px}.history-header h3{color:var(--white);margin:0;font-size:16px}';
+    document.head.appendChild(style);
+
+    // ===== PROMPT EXAMPLES =====
+    var promptExamples = {
+      cad: ['Design a parametric gear with 24 teeth, 5mm bore', 'Create a phone stand with 30° angle, 15×7cm base', 'A mechanical bracket with 4 M4 holes on 50×30mm grid'],
+      pcb: ['ESP32 weather station with DHT22 + OLED display', 'LM358 audio preamp with 3.5mm jacks and volume pot', 'ATtiny85 LED controller with 6 PWM channels, USB-C'],
+      mcu: ['Read SHT30 temp/humidity sensor via I2C, show on OLED', 'Control servo with potentiometer, smooth acceleration', 'Blink LED, read analog A0, print serial every 500ms']
+    };
+
+    document.querySelectorAll('.ai-tool-panel textarea').forEach(function(ta) {
+      var parent = ta.parentElement;
+      var panelId = parent?.id || '';
+      var tool = panelId.replace('ai','').replace('Panel','').toLowerCase();
+      if (promptExamples[tool]) {
+        var chipDiv = document.createElement('div');
+        chipDiv.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px';
+        chipDiv.className = 'prompt-chips';
+        promptExamples[tool].forEach(function(ex) {
+          var chip = document.createElement('span');
+          chip.textContent = ex;
+          chip.style.cssText = 'padding:4px 10px;font-size:11px;border-radius:100px;background:rgba(99,102,241,0.1);color:#818cf8;border:1px solid rgba(99,102,241,0.2);cursor:pointer;transition:all 0.2s;white-space:nowrap';
+          chip.onmouseenter = function(){chip.style.background='rgba(99,102,241,0.2)'};
+          chip.onmouseleave = function(){chip.style.background='rgba(99,102,241,0.1)'};
+          chip.onclick = function(){ ta.value = ex; ta.focus(); localStorage.setItem('draft_' + ta.id, ex); };
+          chipDiv.appendChild(chip);
+        });
+        ta.parentNode.insertBefore(chipDiv, ta);
+      }
+    });
+
+    // ===== ADD HISTORY BUTTON TO HEADER =====
+    var headerTabs = document.querySelector('.ai-header-tabs');
+    if (headerTabs) {
+      var histBtn = document.createElement('button');
+      histBtn.innerHTML = '<i class="fas fa-history"></i> History';
+      histBtn.style.cssText = 'padding:8px 14px;font-size:12px;border-radius:8px;border:1px solid var(--glass-border);background:var(--slate);color:var(--ash);cursor:pointer;margin-left:8px;transition:all 0.2s';
+      histBtn.onmouseenter = function(){histBtn.style.background='rgba(255,255,255,0.1)';histBtn.style.color='var(--white)'};
+      histBtn.onmouseleave = function(){histBtn.style.background='var(--slate)';histBtn.style.color='var(--ash)'};
+      histBtn.onclick = function(){ loadProjectHistory(); };
+      headerTabs.parentNode.insertBefore(histBtn, headerTabs.nextSibling);
+    }
+
+    // Auto-open welcome message
+    addMessage('👋 Welcome to <strong>KEYCODE AI</strong>! Describe the full-stack project you want to build.', 'bot');
+    addMessage('Try: <em>"Build a SaaS dashboard with user authentication and a pricing page"</em>', 'bot');
+    document.getElementById('aiChatInput').focus();
+  </script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('/sw.js?v=4').then(function(reg) {
+      console.log('SW registered:', reg.scope);
+    }).catch(function(err) {
+      console.log('SW failed:', err);
+    });
+  });
+}
+</script>
+</body>
+</html>

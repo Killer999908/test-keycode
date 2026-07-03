@@ -10,7 +10,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "jszip": "^3.10.1",
     "wrangler": "^4.90.0"
   }
 }

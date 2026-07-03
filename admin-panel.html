@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Master Admin - KEYCODE Studio</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --void: #030305;
+      --obsidian: #0a0a0f;
+      --graphite: #12121a;
+      --slate: #1a1a24;
+      --primary: #6366f1;
+      --primary-glow: #818cf8;
+      --secondary: #ec4899;
+      --accent: #22d3ee;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --white: #ffffff;
+      --ash: #d1d5db;
+      --gradient-1: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+      --font-display: 'Syne', sans-serif;
+      --font-body: 'Inter', sans-serif;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: var(--font-body);
+      background: var(--void);
+      color: var(--white);
+      min-height: 100vh;
+    }
+    .sidebar {
+      position: fixed; left: 0; top: 0;
+      width: 260px; height: 100vh;
+      background: var(--obsidian);
+      border-right: 1px solid rgba(99,102,241,0.1);
+      padding: 20px 12px;
+      display: flex; flex-direction: column;
+      z-index: 100;
+      overflow-y: auto;
+    }
+    .sidebar-logo { text-align: center; padding: 12px 0 24px; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 20px; }
+    .sidebar-logo span { font-family: var(--font-display); font-size: 22px; font-weight: 800; background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .sidebar-logo small { display: block; color: var(--primary); font-size: 10px; text-transform: uppercase; letter-spacing: 2px; margin-top: 4px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 14px; border-radius: 10px;
+      color: var(--ash); text-decoration: none;
+      font-size: 13px; font-weight: 500;
+      cursor: pointer; transition: all 0.3s; margin-bottom: 2px;
+    }
+    .nav-item:hover, .nav-item.active { background: rgba(99,102,241,0.15); color: var(--white); }
+    .nav-item i { width: 18px; text-align: center; font-size: 15px; }
+    .nav-divider { height: 1px; background: rgba(255,255,255,0.05); margin: 12px 0; }
+    .main-content { margin-left: 260px; padding: 28px; min-height: 100vh; }
+    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; }
+    .page-title { font-family: var(--font-display); font-size: 26px; font-weight: 700; }
+    .admin-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(99,102,241,0.2); padding: 6px 14px;
+      border-radius: 20px; font-size: 12px; color: var(--primary-glow);
+    }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 16px; margin-bottom: 28px; }
+    .stat-card {
+      background: var(--graphite); border: 1px solid rgba(99,102,241,0.1);
+      border-radius: 14px; padding: 20px; transition: all 0.3s;
+    }
+    .stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(99,102,241,0.12); }
+    .stat-icon { width: 40px; height: 40px; background: rgba(99,102,241,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--primary); margin-bottom: 12px; }
+    .stat-value { font-size: 28px; font-weight: 700; margin-bottom: 2px; }
+    .stat-label { color: var(--ash); font-size: 13px; }
+    .stat-change { font-size: 12px; margin-top: 4px; }
+    .stat-change.up { color: var(--success); }
+    .stat-change.down { color: var(--danger); }
+    .section-card {
+      background: var(--graphite); border: 1px solid rgba(99,102,241,0.1);
+      border-radius: 14px; padding: 24px; margin-bottom: 24px;
+    }
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .section-title { font-family: var(--font-display); font-size: 16px; font-weight: 600; }
+    .page-section { display: none; }
+    .page-section.active { display: block; }
+    .search-bar { display: flex; gap: 12px; margin-bottom: 20px; }
+    .search-bar input {
+      flex: 1; padding: 12px 16px;
+      background: var(--slate); border: 1px solid rgba(99,102,241,0.2);
+      border-radius: 10px; color: var(--white); font-size: 14px;
+    }
+    .search-bar input:focus { outline: none; border-color: var(--primary); }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 12px 14px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 13px; }
+    th { color: var(--ash); font-size: 11px; text-transform: uppercase; font-weight: 600; }
+    tr:hover { background: rgba(99,102,241,0.03); }
+    .badge {
+      display: inline-block; padding: 3px 10px; border-radius: 12px;
+      font-size: 11px; font-weight: 500;
+    }
+    .badge-green { background: rgba(16,185,129,0.15); color: var(--success); }
+    .badge-yellow { background: rgba(245,158,11,0.15); color: var(--warning); }
+    .badge-red { background: rgba(239,68,68,0.15); color: var(--danger); }
+    .badge-blue { background: rgba(99,102,241,0.15); color: var(--primary-glow); }
+    .badge-gray { background: rgba(255,255,255,0.05); color: var(--ash); }
+    .btn-sm {
+      padding: 6px 14px; border: none; border-radius: 8px;
+      font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.3s;
+    }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-glow); }
+    .btn-success { background: var(--success); color: white; }
+    .btn-danger { background: rgba(239,68,68,0.8); color: white; }
+    .btn-danger:hover { background: var(--danger); }
+    .btn-warning { background: var(--warning); color: white; }
+    .btn-sm:disabled { opacity: 0.5; cursor: not-allowed; }
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(3,3,5,0.85); display: none;
+      align-items: center; justify-content: center; z-index: 1000;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal {
+      background: var(--graphite); border: 1px solid rgba(99,102,241,0.2);
+      border-radius: 16px; padding: 32px; max-width: 500px; width: 90%;
+      max-height: 80vh; overflow-y: auto;
+    }
+    .modal h2 { font-family: var(--font-display); font-size: 20px; margin-bottom: 20px; }
+    .modal label { display: block; font-size: 13px; color: var(--ash); margin-bottom: 6px; }
+    .modal input, .modal select, .modal textarea {
+      width: 100%; padding: 10px 14px;
+      background: var(--slate); border: 1px solid rgba(99,102,241,0.2);
+      border-radius: 8px; color: var(--white); font-size: 14px; margin-bottom: 16px;
+    }
+    .modal input:focus, .modal select:focus { outline: none; border-color: var(--primary); }
+    .modal textarea { min-height: 100px; resize: vertical; }
+    .modal .btn-row { display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px; }
+    .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+    @media (max-width: 900px) { .charts-grid { grid-template-columns: 1fr; } }
+    .chart-box { background: var(--graphite); border: 1px solid rgba(99,102,241,0.1); border-radius: 14px; padding: 20px; }
+    .chart-box h3 { font-size: 14px; color: var(--ash); margin-bottom: 16px; font-weight: 500; }
+    .login-prompt {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; min-height: 100vh; text-align: center; padding: 20px;
+    }
+    .login-prompt i { font-size: 64px; color: var(--primary); margin-bottom: 20px; }
+    .login-prompt h2 { font-family: var(--font-display); font-size: 24px; margin-bottom: 12px; }
+    .login-prompt p { color: var(--ash); margin-bottom: 24px; }
+    .login-prompt input {
+      width: 100%; max-width: 360px; padding: 14px 18px;
+      background: var(--slate); border: 1px solid rgba(99,102,241,0.3);
+      border-radius: 12px; color: var(--white); font-size: 14px; margin-bottom: 12px;
+    }
+    .login-prompt input:focus { outline: none; border-color: var(--primary); }
+    .login-prompt button {
+      padding: 14px 40px; background: var(--gradient-1);
+      border: none; border-radius: 12px; color: white;
+      font-size: 16px; font-weight: 600; cursor: pointer;
+      font-family: var(--font-display);
+    }
+    .login-prompt button:hover { transform: translateY(-2px); box-shadow: 0 10px 40px rgba(99,102,241,0.4); }
+    .error-msg { color: var(--danger); margin-bottom: 12px; font-size: 14px; display: none; }
+    .toast {
+      position: fixed; bottom: 30px; right: 30px;
+      padding: 14px 24px; border-radius: 12px;
+      color: white; font-size: 14px; font-weight: 500;
+      z-index: 2000; display: none; animation: slideUp 0.3s ease;
+    }
+    .toast.show { display: block; }
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+    .toast.info { background: var(--primary); }
+    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .empty-state { text-align: center; padding: 40px; color: var(--ash); }
+    .loading-spinner {
+      width: 20px; height: 20px;
+      border: 2px solid rgba(255,255,255,0.2);
+      border-top-color: white; border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--slate); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+  </style>
+</head>
+  <body>
+  <div id="loginPrompt" class="login-prompt">
+    <i class="fas fa-shield-crown"></i>
+    <h2>Master Admin Access</h2>
+    <p>Restricted area - administrator authentication required</p>
+    <div class="error-msg" id="loginError"></div>
+    <form id="adminLoginForm" style="width:100%;max-width:360px;">
+      <input type="email" id="adminEmailInput" placeholder="Admin Email" required>
+      <input type="password" id="adminPassword" placeholder="Password" required>
+      <button type="submit" id="adminLoginBtn">Authenticate</button>
+    </form>
+  </div>
+
+  <div id="dashboardContent" style="display:none;">
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <span>KEYCODE</span>
+        <small>Master Admin</small>
+      </div>
+      <nav>
+        <div class="nav-item active" data-page="overview"><i class="fas fa-chart-pie"></i> Overview</div>
+        <div class="nav-item" data-page="orders"><i class="fas fa-shopping-bag"></i> Orders</div>
+        <div class="nav-item" data-page="users"><i class="fas fa-users"></i> Users</div>
+        <div class="nav-item" data-page="active-users"><i class="fas fa-signal"></i> Logged-in Users</div>
+        <div class="nav-item" data-page="services"><i class="fas fa-briefcase"></i> Services</div>
+        <div class="nav-item" data-page="reviews"><i class="fas fa-star"></i> Reviews</div>
+        <div class="nav-item" data-page="inquiries"><i class="fas fa-envelope"></i> Inquiries</div>
+        <div class="nav-divider"></div>
+        <div class="nav-item" data-page="subscriptions"><i class="fas fa-bell"></i> Subscriptions</div>
+        <div class="nav-item" data-page="discounts"><i class="fas fa-tag"></i> Discounts</div>
+        <div class="nav-item" data-page="email"><i class="fas fa-paper-plane"></i> Email</div>
+        <div class="nav-divider"></div>
+        <div class="nav-item" data-page="audit"><i class="fas fa-history"></i> Audit Log</div>
+        <div class="nav-item" data-page="system"><i class="fas fa-server"></i> System</div>
+      </nav>
+      <div style="margin-top:auto;padding-top:16px;border-top:1px solid rgba(255,255,255,0.05);">
+        <div style="display:flex;align-items:center;gap:10px;padding:12px;background:rgba(99,102,241,0.1);border-radius:10px;margin-bottom:10px;">
+          <div style="width:36px;height:36px;background:var(--gradient-1);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;">A</div>
+          <div style="flex:1;">
+            <div id="adminName" style="font-size:14px;font-weight:600;">Admin</div>
+            <div id="adminEmail" style="font-size:11px;color:var(--ash);">admin@keycode.studio</div>
+          </div>
+        </div>
+        <button onclick="logout()" style="width:100%;padding:10px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);border-radius:10px;color:var(--danger);cursor:pointer;font-size:13px;"><i class="fas fa-sign-out-alt"></i> Logout</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div id="overview" class="page-section active">
+        <div class="page-header">
+          <h1 class="page-title">Dashboard Overview</h1>
+          <span class="admin-badge"><i class="fas fa-crown"></i> Master Admin</span>
+        </div>
+        <div class="stats-grid" id="overviewStats">
+          <div class="stat-card"><div class="stat-icon"><i class="fas fa-users"></i></div><div class="stat-value" id="statUsers">-</div><div class="stat-label">Total Users</div></div>
+          <div class="stat-card"><div class="stat-icon"><i class="fas fa-shopping-bag"></i></div><div class="stat-value" id="statOrders">-</div><div class="stat-label">Total Orders</div></div>
+          <div class="stat-card"><div class="stat-icon"><i class="fas fa-dollar-sign"></i></div><div class="stat-value" id="statRevenue">$0</div><div class="stat-label">Revenue</div></div>
+          <div class="stat-card"><div class="stat-icon"><i class="fas fa-star"></i></div><div class="stat-value" id="statReviews">-</div><div class="stat-label">Reviews</div></div>
+          <div class="stat-card"><div class="stat-icon"><i class="fas fa-envelope"></i></div><div class="stat-value" id="statInquiries">-</div><div class="stat-label">Inquiries</div></div>
+          <div class="stat-card"><div class="stat-icon"><i class="fas fa-bell"></i></div><div class="stat-value" id="statSubscribers">-</div><div class="stat-label">Subscribers</div></div>
+        </div>
+        <div class="charts-grid">
+          <div class="chart-box"><h3><i class="fas fa-chart-line"></i> Revenue Overview</h3><canvas id="revenueChart" height="200"></canvas></div>
+          <div class="chart-box"><h3><i class="fas fa-chart-bar"></i> Order Status</h3><canvas id="ordersChart" height="200"></canvas></div>
+        </div>
+        <div class="section-card">
+          <div class="section-header"><h2 class="section-title">Recent Orders</h2></div>
+          <div style="overflow-x:auto;"><table><thead><tr><th>ID</th><th>Customer</th><th>Service</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead><tbody id="recentOrdersList"></tbody></table></div>
+        </div>
+      </div>
+
+      <div id="orders" class="page-section">
+        <div class="page-header"><h1 class="page-title">Orders</h1><div class="search-bar"><input type="text" id="ordersSearch" placeholder="Search orders..." oninput="filterOrders()"><button class="btn-sm btn-primary" onclick="loadOrders()"><i class="fas fa-sync"></i></button></div></div>
+        <div class="section-card">
+          <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+            <button class="btn-sm btn-primary" onclick="filterByStatus('all')">All</button>
+            <button class="btn-sm" style="background:rgba(245,158,11,0.2);color:var(--warning);" onclick="filterByStatus('pending')">Pending</button>
+            <button class="btn-sm" style="background:rgba(99,102,241,0.2);color:var(--primary-glow);" onclick="filterByStatus('in_progress')">In Progress</button>
+            <button class="btn-sm" style="background:rgba(16,185,129,0.2);color:var(--success);" onclick="filterByStatus('completed')">Completed</button>
+          </div>
+          <div style="overflow-x:auto;"><table><thead><tr><th>ID</th><th>Customer</th><th>Email</th><th>Service</th><th>Total</th><th>Payment</th><th>Status</th><th>Date</th><th>Action</th></tr></thead><tbody id="ordersList"></tbody></table></div>
+        </div>
+      </div>
+
+      <div id="users" class="page-section">
+        <div class="page-header"><h1 class="page-title">Users</h1></div>
+        <div class="section-card">
+          <div style="overflow-x:auto;"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Orders</th><th>Joined</th><th>Action</th></tr></thead><tbody id="usersList"></tbody></table></div>
+        </div>
+      </div>
+
+      <div id="active-users" class="page-section">
+        <div class="page-header"><h1 class="page-title"><i class="fas fa-signal"></i> Logged-in Users</h1><span style="font-size:13px;color:var(--ash);">Users active in last 24 hours</span></div>
+        <div class="section-card">
+          <div style="overflow-x:auto;"><table><thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Role</th><th>Orders</th><th>Subscribed</th><th>Last Login</th><th>Status</th><th>Action</th></tr></thead><tbody id="activeUsersList"></tbody></table></div>
+        </div>
+        <div class="section-card" id="activeUserDetail" style="display:none;">
+          <h3 class="section-title" style="margin-bottom:16px;">User Details</h3>
+          <div id="activeUserDetailContent"></div>
+        </div>
+      </div>
+
+      <div id="services" class="page-section">
+        <div class="page-header"><h1 class="page-title">Services</h1><button class="btn-sm btn-primary" onclick="showAddService()"><i class="fas fa-plus"></i> Add Service</button></div>
+        <div class="section-card">
+          <div style="overflow-x:auto;"><table><thead><tr><th>Name</th><th>Category</th><th>Price</th><th>Featured</th><th>Orders</th><th>Action</th></tr></thead><tbody id="servicesList"></tbody></table></div>
+        </div>
+      </div>
+
+      <div id="reviews" class="page-section">
+        <div class="page-header"><h1 class="page-title">Reviews</h1></div>
+        <div class="section-card">
+          <div style="overflow-x:auto;"><table><thead><tr><th>Name</th><th>Company</th><th>Rating</th><th>Review</th><th>Status</th><th>Action</th></tr></thead><tbody id="reviewsList"></tbody></table></div>
+        </div>
+      </div>
+
+      <div id="inquiries" class="page-section">
+        <div class="page-header"><h1 class="page-title">Inquiries</h1></div>
+        <div class="section-card">
+          <div style="overflow-x:auto;"><table><thead><tr><th>Name</th><th>Email</th><th>Type</th><th>Message</th><th>Date</th><th>Status</th></tr></thead><tbody id="inquiriesList"></tbody></table></div>
+        </div>
+      </div>
+
+      <div id="subscriptions" class="page-section">
+        <div class="page-header"><h1 class="page-title">Subscriptions</h1></div>
+        <div class="section-card">
+          <div style="overflow-x:auto;"><table><thead><tr><th>Email</th><th>Name</th><th>Status</th><th>Source</th><th>Date</th></tr></thead><tbody id="subsList"></tbody></table></div>
+        </div>
+      </div>
+
+      <div id="discounts" class="page-section">
+        <div class="page-header"><h1 class="page-title">Discount Codes</h1><button class="btn-sm btn-primary" onclick="showAddDiscount()"><i class="fas fa-plus"></i> Add Code</button></div>
+        <div class="section-card">
+          <div style="overflow-x:auto;"><table><thead><tr><th>Code</th><th>Type</th><th>Value</th><th>Uses</th><th>Max</th><th>Status</th><th>Action</th></tr></thead><tbody id="discountsList"></tbody></table></div>
+        </div>
+      </div>
+
+      <div id="email" class="page-section">
+        <div class="page-header"><h1 class="page-title">Email</h1></div>
+        <div class="section-card">
+          <h3 style="margin-bottom:16px;">Send Broadcast to Subscribers</h3>
+          <input type="text" id="broadcastSubject" placeholder="Subject" style="width:100%;padding:12px;background:var(--slate);border:1px solid rgba(99,102,241,0.2);border-radius:10px;color:var(--white);margin-bottom:12px;">
+          <textarea id="broadcastContent" placeholder="Email content (HTML)" rows="8" style="width:100%;padding:12px;background:var(--slate);border:1px solid rgba(99,102,241,0.2);border-radius:10px;color:var(--white);resize:vertical;margin-bottom:12px;font-family:monospace;"></textarea>
+          <button class="btn-sm btn-primary" onclick="sendBroadcast()"><i class="fas fa-paper-plane"></i> Send Broadcast</button>
+        </div>
+        <div class="section-card">
+          <h3 style="margin-bottom:16px;">Send Manual Email</h3>
+          <input type="email" id="manualEmail" placeholder="To" style="width:100%;padding:12px;background:var(--slate);border:1px solid rgba(99,102,241,0.2);border-radius:10px;color:var(--white);margin-bottom:12px;">
+          <input type="text" id="manualSubject" placeholder="Subject" style="width:100%;padding:12px;background:var(--slate);border:1px solid rgba(99,102,241,0.2);border-radius:10px;color:var(--white);margin-bottom:12px;">
+          <textarea id="manualContent" placeholder="Content" rows="6" style="width:100%;padding:12px;background:var(--slate);border:1px solid rgba(99,102,241,0.2);border-radius:10px;color:var(--white);resize:vertical;margin-bottom:12px;"></textarea>
+          <button class="btn-sm btn-primary" onclick="sendManualEmail()"><i class="fas fa-envelope"></i> Send Email</button>
+        </div>
+      </div>
+
+      <div id="audit" class="page-section">
+        <div class="page-header"><h1 class="page-title">Audit Log</h1></div>
+        <div class="section-card">
+          <div class="search-bar"><input type="text" id="auditSearch" placeholder="Filter by action..." oninput="loadAuditLogs()"><button class="btn-sm btn-primary" onclick="loadAuditLogs()"><i class="fas fa-sync"></i></button></div>
+          <div style="overflow-x:auto;"><table><thead><tr><th>Action</th><th>Resource</th><th>User</th><th>IP</th><th>Status</th><th>Date</th></tr></thead><tbody id="auditList"></tbody></table></div>
+        </div>
+      </div>
+
+      <div id="system" class="page-section">
+        <div class="page-header"><h1 class="page-title">System Health</h1></div>
+        <div class="stats-grid" id="systemStats">
+          <div class="stat-card"><div class="stat-icon" style="color:var(--success);"><i class="fas fa-server"></i></div><div class="stat-value" id="sysStatus">-</div><div class="stat-label">Status</div></div>
+          <div class="stat-card"><div class="stat-icon"><i class="fas fa-clock"></i></div><div class="stat-value" id="sysUptime">-</div><div class="stat-label">Uptime</div></div>
+          <div class="stat-card"><div class="stat-icon"><i class="fas fa-memory"></i></div><div class="stat-value" id="sysMemory">-</div><div class="stat-label">Memory</div></div>
+          <div class="stat-card"><div class="stat-icon"><i class="fas fa-database"></i></div><div class="stat-value" id="sysMongo">-</div><div class="stat-label">MongoDB</div></div>
+        </div>
+        <div class="section-card">
+          <h3 class="section-title" style="margin-bottom:16px;">Environment</h3>
+          <div id="envInfo"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-overlay" id="serviceModal">
+    <div class="modal">
+      <h2 id="serviceModalTitle">Add Service</h2>
+      <input type="hidden" id="serviceId">
+      <label>Name</label><input type="text" id="svcName">
+      <label>Category</label><select id="svcCategory"><option>Web Development</option><option>Mobile Development</option><option>AI Solutions</option><option>E-Commerce</option><option>Design</option></select>
+      <label>Price ($)</label><input type="number" id="svcPrice">
+      <label>Description</label><textarea id="svcDesc" rows="3"></textarea>
+      <label>Features (comma-separated)</label><input type="text" id="svcFeatures">
+      <div class="btn-row"><button class="btn-sm btn-warning" onclick="closeModal('serviceModal')">Cancel</button><button class="btn-sm btn-primary" onclick="saveService()">Save</button></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="discountModal">
+    <div class="modal">
+      <h2>Add Discount Code</h2>
+      <label>Code</label><input type="text" id="discCode" placeholder="SAVE20">
+      <label>Type</label><select id="discType"><option value="percentage">Percentage</option><option value="fixed">Fixed Amount</option></select>
+      <label>Value</label><input type="number" id="discValue" placeholder="20">
+      <label>Max Uses</label><input type="number" id="discMaxUses" value="100">
+      <div class="btn-row"><button class="btn-sm btn-warning" onclick="closeModal('discountModal')">Cancel</button><button class="btn-sm btn-primary" onclick="saveDiscount()">Create</button></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const API = '/api';
+    let token = null, admin = null, chart1 = null, chart2 = null;
+
+    async function api(endpoint, opts = {}) {
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch(`${API}${endpoint}`, { ...opts, headers: { ...headers, ...opts.headers } });
+      if (res.status === 401) { showToast('Session expired', 'error'); setTimeout(logout, 1500); return null; }
+      return res.json();
+    }
+
+    function showToast(msg, type = 'info') {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.className = 'toast show ' + type;
+      setTimeout(() => t.classList.remove('show'), 4000);
+    }
+
+    function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+    function openModal(id) { document.getElementById(id).classList.add('show'); }
+
+    document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('adminLoginBtn');
+      btn.disabled = true; btn.textContent = 'Authenticating...';
+      const email = document.getElementById('adminEmailInput').value;
+      const password = document.getElementById('adminPassword').value;
+      const err = document.getElementById('loginError');
+      err.style.display = 'none';
+
+      const res = await api('/auth/admin-login', { method: 'POST', body: JSON.stringify({ email, password, adminCode: 'admin' }) });
+      const data = await (res?.json ? res.json() : res);
+      
+      if (data?.token) {
+        token = data.token; admin = data.user;
+        localStorage.setItem('adminToken', token);
+        localStorage.setItem('adminUser', JSON.stringify(admin));
+        document.getElementById('loginPrompt').style.display = 'none';
+        document.getElementById('dashboardContent').style.display = 'block';
+        document.getElementById('adminName').textContent = admin.name;
+        document.getElementById('adminEmail').textContent = admin.email;
+        initDashboard();
+      } else {
+        // Try regular login
+        const r2 = await api('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
+        if (r2?.token && r2?.user?.role === 'admin') {
+          token = r2.token; admin = r2.user;
+          localStorage.setItem('adminToken', token);
+          localStorage.setItem('adminUser', JSON.stringify(admin));
+          document.getElementById('loginPrompt').style.display = 'none';
+          document.getElementById('dashboardContent').style.display = 'block';
+          document.getElementById('adminName').textContent = admin.name;
+          document.getElementById('adminEmail').textContent = admin.email;
+          initDashboard();
+        } else {
+          err.textContent = r2?.error || 'Invalid admin credentials';
+          err.style.display = 'block';
+        }
+      }
+      btn.disabled = false; btn.textContent = 'Authenticate';
+    });
+
+    function logout() {
+      localStorage.removeItem('adminToken');
+      localStorage.removeItem('adminUser');
+      token = null; admin = null;
+      document.getElementById('dashboardContent').style.display = 'none';
+      document.getElementById('loginPrompt').style.display = 'flex';
+    }
+
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', () => {
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        item.classList.add('active');
+        document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active'));
+        document.getElementById(item.dataset.page).classList.add('active');
+        if (item.dataset.page === 'overview') loadOverview();
+        if (item.dataset.page === 'orders') loadOrders();
+        if (item.dataset.page === 'users') loadUsers();
+        if (item.dataset.page === 'active-users') loadActiveUsers();
+        if (item.dataset.page === 'services') loadServices();
+        if (item.dataset.page === 'reviews') loadReviews();
+        if (item.dataset.page === 'inquiries') loadInquiries();
+        if (item.dataset.page === 'subscriptions') loadSubscriptions();
+        if (item.dataset.page === 'discounts') loadDiscounts();
+        if (item.dataset.page === 'audit') loadAuditLogs();
+        if (item.dataset.page === 'system') loadSystem();
+      });
+    });
+
+    async function initDashboard() {
+      loadOverview(); loadOrders(); loadUsers(); loadServices();
+      loadReviews(); loadInquiries(); loadSubscriptions();
+      loadDiscounts(); loadAuditLogs(); loadActiveUsers(); loadSystem();
+    }
+
+    async function loadOverview() {
+      const data = await api('/admin/analytics');
+      if (!data) return;
+      document.getElementById('statUsers').textContent = data.overview?.totalUsers || '-';
+      document.getElementById('statOrders').textContent = data.overview?.totalOrders || '-';
+      document.getElementById('statRevenue').textContent = '$' + (data.overview?.totalRevenue || 0);
+
+      // Reviews
+      const revs = await api('/reviews');
+      document.getElementById('statReviews').textContent = revs?.length || '-';
+
+      // Inquiries
+      let inqs = [];
+      try {
+        const i = await fetch(API + '/admin/inquiries', { headers: { Authorization: 'Bearer ' + token } });
+        if (i.ok) { const j = await i.json(); inqs = j.inquiries || j || []; }
+      } catch(e) {}
+      document.getElementById('statInquiries').textContent = inqs.length || '-';
+
+      // Subscribers
+      const subs = await api('/admin/subscriptions');
+      document.getElementById('statSubscribers').textContent = subs?.active || '-';
+
+      // Recent orders
+      const recent = data.recentOrders || [];
+      document.getElementById('recentOrdersList').innerHTML = recent.slice(0, 6).map(o => `
+        <tr><td>#${(o._id||'').slice(-8).toUpperCase()}</td>
+        <td>${o.user?.name || o.billingAddress?.name || 'N/A'}</td>
+        <td>${o.items?.[0]?.name || o.serviceType || 'Custom'}</td>
+        <td>$${o.total || 0}</td>
+        <td><span class="badge ${statusBadge(o.status)}">${(o.status||'pending').replace('_',' ')}</span></td>
+        <td>${new Date(o.createdAt).toLocaleDateString()}</td></tr>
+      `).join('') || '<tr><td colspan="6" class="empty-state">No orders</td></tr>';
+
+      // Charts
+      if (chart1) chart1.destroy();
+      if (chart2) chart2.destroy();
+      const mRev = data.monthlyRevenue || [];
+      chart1 = new Chart(document.getElementById('revenueChart'), {
+        type: 'line', data: {
+          labels: mRev.map(r => r._id?.month ? new Date(r._id.year, r._id.month - 1).toLocaleString('default', { month: 'short' }) : ''),
+          datasets: [{ label: 'Revenue', data: mRev.map(r => r.revenue), borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.1)', fill: true, tension: 0.4 }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#888' } }, y: { ticks: { color: '#888' } } } }
+      });
+      const oStatus = data.ordersByStatus || {};
+      chart2 = new Chart(document.getElementById('ordersChart'), {
+        type: 'doughnut', data: {
+          labels: Object.keys(oStatus), datasets: [{ data: Object.values(oStatus), backgroundColor: ['#f59e0b','#6366f1','#ec4899','#10b981','#ef4444'] }]
+        },
+        options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: '#888' } } } }
+      });
+    }
+
+    async function loadOrders() {
+      const data = await api('/admin/orders');
+      if (!data) return;
+      const orders = data.orders || data || [];
+      window._allOrders = orders;
+      renderOrders(orders);
+    }
+
+    function renderOrders(orders) {
+      document.getElementById('ordersList').innerHTML = orders.map(o => `
+        <tr>
+          <td>#${(o._id||'').slice(-8).toUpperCase()}</td>
+          <td>${o.user?.name || o.billingAddress?.name || 'N/A'}</td>
+          <td>${o.user?.email || o.billingAddress?.email || 'N/A'}</td>
+          <td>${o.items?.[0]?.name || o.serviceType || 'Custom'}</td>
+          <td>$${o.total || 0}</td>
+          <td><span class="badge ${o.paymentStatus === 'paid' ? 'badge-green' : 'badge-yellow'}">${o.paymentStatus || 'pending'}</span></td>
+          <td><span class="badge ${statusBadge(o.status)}">${(o.status||'pending').replace('_',' ')}</span></td>
+          <td>${new Date(o.createdAt).toLocaleDateString()}</td>
+          <td>
+            <select onchange="updateOrderStatus('${o._id}', this.value)" style="padding:4px 8px;background:var(--slate);border:1px solid rgba(99,102,241,0.2);border-radius:6px;color:var(--white);font-size:12px;">
+              <option value="pending" ${o.status==='pending'?'selected':''}>Pending</option>
+              <option value="confirmed" ${o.status==='confirmed'?'selected':''}>Confirmed</option>
+              <option value="in_progress" ${o.status==='in_progress'?'selected':''}>In Progress</option>
+              <option value="review" ${o.status==='review'?'selected':''}>Review</option>
+              <option value="completed" ${o.status==='completed'?'selected':''}>Completed</option>
+              <option value="cancelled" ${o.status==='cancelled'?'selected':''}>Cancelled</option>
+            </select>
+          </td>
+        </tr>
+      `).join('') || '<tr><td colspan="9" class="empty-state">No orders</td></tr>';
+    }
+
+    function filterByStatus(s) {
+      const orders = window._allOrders || [];
+      renderOrders(s === 'all' ? orders : orders.filter(o => o.status === s));
+    }
+
+    function filterOrders() {
+      const q = document.getElementById('ordersSearch').value.toLowerCase();
+      const orders = (window._allOrders || []).filter(o => 
+        (o._id||'').toLowerCase().includes(q) || (o.user?.name||'').toLowerCase().includes(q) || (o.user?.email||'').toLowerCase().includes(q)
+      );
+      renderOrders(orders);
+    }
+
+    async function updateOrderStatus(id, status) {
+      const res = await api(`/admin/orders/${id}`, { method: 'PUT', body: JSON.stringify({ status }) });
+      if (res) showToast('Order updated', 'success');
+      loadOrders();
+    }
+
+    async function loadUsers() {
+      const data = await api('/admin/users');
+      if (!data) return;
+      const users = data.users || data || [];
+      document.getElementById('usersList').innerHTML = users.map(u => `
+        <tr>
+          <td><strong>${u.name}</strong></td>
+          <td>${u.email}</td>
+          <td><span class="badge ${u.role === 'admin' ? 'badge-green' : 'badge-blue'}">${u.role}</span></td>
+          <td><span class="badge ${u.isActive ? 'badge-green' : 'badge-red'}">${u.isActive ? 'Active' : 'Disabled'}</span></td>
+          <td>${u.orderCount || '-'}</td>
+          <td>${new Date(u.createdAt).toLocaleDateString()}</td>
+          <td>
+            <button class="btn-sm ${u.isActive ? 'btn-danger' : 'btn-success'}" onclick="toggleUser('${u._id}', ${!u.isActive})">
+              ${u.isActive ? 'Disable' : 'Enable'}
+            </button>
+          </td>
+        </tr>
+      `).join('') || '<tr><td colspan="7" class="empty-state">No users</td></tr>';
+    }
+
+    async function toggleUser(id, active) {
+      if (!confirm(`Are you sure you want to ${active ? 'enable' : 'disable'} this user?`)) return;
+      const res = await api(`/admin/users/${id}`, { method: 'PUT', body: JSON.stringify({ isActive: active }) });
+      if (res) showToast(`User ${active ? 'enabled' : 'disabled'}`, 'success');
+      loadUsers();
+    }
+
+    async function loadActiveUsers() {
+      const data = await api('/admin/active-users');
+      if (!data) return;
+      document.getElementById('activeUsersList').innerHTML = data.map(u => `
+        <tr>
+          <td><code style="font-size:11px;color:var(--primary-glow);">${(u._id||'').slice(-8).toUpperCase()}</code></td>
+          <td><strong>${u.name}</strong></td>
+          <td>${u.email}</td>
+          <td>${u.phone || '-'}</td>
+          <td><span class="badge ${u.role === 'admin' ? 'badge-green' : u.role === 'client' ? 'badge-blue' : 'badge-gray'}">${u.role}</span></td>
+          <td>${(u.orderCount||0) + (u.websiteOrderCount||0)}</td>
+          <td>${u.subscription ? `<span class="badge ${u.subscription.isActive ? 'badge-green' : 'badge-gray'}">${u.subscription.isActive ? 'Active' : 'Inactive'}</span>` : '<span class="badge badge-gray">None</span>'}</td>
+          <td style="font-size:12px;">${u.lastLogin ? new Date(u.lastLogin).toLocaleString() : 'Never'}</td>
+          <td><span class="badge ${u.isActive ? 'badge-green' : 'badge-red'}">${u.isActive ? 'Active' : 'Disabled'}</span></td>
+          <td><button class="btn-sm btn-primary" onclick="showUserDetail('${u._id}')"><i class="fas fa-eye"></i></button></td>
+        </tr>
+      `).join('') || '<tr><td colspan="10" class="empty-state">No active users in the last 24 hours</td></tr>';
+    }
+
+    function showUserDetail(id) {
+      const card = document.getElementById('activeUserDetail');
+      const content = document.getElementById('activeUserDetailContent');
+      card.style.display = 'block';
+      content.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Loading...</p>';
+      api('/admin/active-users').then(users => {
+        const u = users.find(x => x._id === id);
+        if (!u) { content.innerHTML = '<p class="empty-state">User not found</p>'; return; }
+        const sub = u.subscription;
+        content.innerHTML = `
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div style="background:var(--slate);padding:16px;border-radius:10px;">
+              <h4 style="margin-bottom:12px;color:var(--primary-glow);"><i class="fas fa-user-circle"></i> Account Info</h4>
+              <div style="display:grid;gap:8px;font-size:14px;">
+                <div><strong>ID:</strong> <code style="color:var(--primary-glow);">${u._id}</code></div>
+                <div><strong>Name:</strong> ${u.name}</div>
+                <div><strong>Email:</strong> ${u.email}</div>
+                <div><strong>Phone:</strong> ${u.phone || 'Not set'}</div>
+                <div><strong>Role:</strong> <span class="badge ${u.role === 'admin' ? 'badge-green' : 'badge-blue'}">${u.role}</span></div>
+                <div><strong>Admin No:</strong> ${u.adminNo || 'N/A'}</div>
+                <div><strong>Status:</strong> <span class="badge ${u.isActive ? 'badge-green' : 'badge-red'}">${u.isActive ? 'Active' : 'Disabled'}</span></div>
+                <div><strong>Email Verified:</strong> <span class="badge ${u.emailVerified ? 'badge-green' : 'badge-yellow'}">${u.emailVerified ? 'Yes' : 'No'}</span></div>
+              </div>
+            </div>
+            <div style="background:var(--slate);padding:16px;border-radius:10px;">
+              <h4 style="margin-bottom:12px;color:var(--success);"><i class="fas fa-chart-line"></i> Activity</h4>
+              <div style="display:grid;gap:8px;font-size:14px;">
+                <div><strong>Orders:</strong> ${u.orderCount || 0}</div>
+                <div><strong>Website Projects:</strong> ${u.websiteOrderCount || 0}</div>
+                <div><strong>Total Orders:</strong> ${(u.orderCount||0) + (u.websiteOrderCount||0)}</div>
+                <div><strong>Last Login:</strong> ${u.lastLogin ? new Date(u.lastLogin).toLocaleString() : 'Never'}</div>
+                <div><strong>Registered:</strong> ${u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '-'}</div>
+                <div><strong>Failed Logins:</strong> <span class="badge ${(u.failedLoginAttempts||0) > 3 ? 'badge-red' : 'badge-gray'}">${u.failedLoginAttempts || 0}</span></div>
+                <div><strong>2FA:</strong> <span class="badge ${u.twoFactorEnabled ? 'badge-green' : 'badge-gray'}">${u.twoFactorEnabled ? 'Enabled' : 'Disabled'}</span></div>
+                <div><strong>Trusted Devices:</strong> ${(u.trustedDevices||[]).length}</div>
+              </div>
+            </div>
+          </div>
+          ${sub ? `
+          <div style="background:var(--slate);padding:16px;border-radius:10px;margin-top:16px;">
+            <h4 style="margin-bottom:12px;color:var(--warning);"><i class="fas fa-bell"></i> Subscription</h4>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:14px;">
+              <div><strong>Status:</strong> <span class="badge ${sub.isActive ? 'badge-green' : 'badge-gray'}">${sub.isActive ? 'Active' : 'Inactive'}</span></div>
+              <div><strong>Subscribed:</strong> ${new Date(sub.subscribedAt).toLocaleDateString()}</div>
+              <div><strong>Source:</strong> ${sub.source}</div>
+              <div><strong>Newsletter:</strong> ${sub.preferences?.newsletter ? '✓' : '✗'}</div>
+              <div><strong>Promotions:</strong> ${sub.preferences?.promotions ? '✓' : '✗'}</div>
+              <div><strong>Updates:</strong> ${sub.preferences?.productUpdates ? '✓' : '✗'}</div>
+            </div>
+          </div>` : ''}
+          <div style="margin-top:16px;">
+            <button class="btn-sm btn-danger" onclick="document.getElementById('activeUserDetail').style.display='none'"><i class="fas fa-times"></i> Close</button>
+          </div>
+        `;
+      });
+    }
+
+    async function loadServices() {
+      const data = await api('/admin/services');
+      if (!data) return;
+      const svcs = data.services || data || [];
+      document.getElementById('servicesList').innerHTML = svcs.map(s => `
+        <tr>
+          <td><strong>${s.name}</strong></td>
+          <td><span class="badge badge-blue">${s.category}</span></td>
+          <td>$${s.basePrice || s.price || 0}</td>
+          <td><span class="badge ${s.featured ? 'badge-green' : 'badge-gray'}">${s.featured ? 'Featured' : 'Standard'}</span></td>
+          <td>-</td>
+          <td>
+            <button class="btn-sm btn-primary" onclick="editService('${s._id}')"><i class="fas fa-edit"></i></button>
+            <button class="btn-sm btn-danger" onclick="deleteService('${s._id}')"><i class="fas fa-trash"></i></button>
+          </td>
+        </tr>
+      `).join('') || '<tr><td colspan="6" class="empty-state">No services</td></tr>';
+    }
+
+    async function showAddService() {
+      document.getElementById('serviceModalTitle').textContent = 'Add Service';
+      document.getElementById('serviceId').value = '';
+      document.getElementById('svcName').value = '';
+      document.getElementById('svcCategory').value = 'Web Development';
+      document.getElementById('svcPrice').value = '';
+      document.getElementById('svcDesc').value = '';
+      document.getElementById('svcFeatures').value = '';
+      openModal('serviceModal');
+    }
+
+    async function editService(id) {
+      const data = await api('/admin/services');
+      const svc = (data.services || data).find(s => s._id === id);
+      if (!svc) return;
+      document.getElementById('serviceModalTitle').textContent = 'Edit Service';
+      document.getElementById('serviceId').value = id;
+      document.getElementById('svcName').value = svc.name;
+      document.getElementById('svcCategory').value = svc.category;
+      document.getElementById('svcPrice').value = svc.basePrice || svc.price || '';
+      document.getElementById('svcDesc').value = svc.description || '';
+      document.getElementById('svcFeatures').value = (svc.features || []).join(', ');
+      openModal('serviceModal');
+    }
+
+    async function saveService() {
+      const id = document.getElementById('serviceId').value;
+      const body = {
+        name: document.getElementById('svcName').value,
+        category: document.getElementById('svcCategory').value,
+        basePrice: parseFloat(document.getElementById('svcPrice').value),
+        description: document.getElementById('svcDesc').value,
+        features: document.getElementById('svcFeatures').value.split(',').map(f => f.trim()).filter(Boolean)
+      };
+      if (!body.name || !body.basePrice) { showToast('Name and price required', 'error'); return; }
+      const method = id ? 'PUT' : 'POST';
+      const endpoint = id ? `/admin/services/${id}` : '/admin/services';
+      const res = await api(endpoint, { method, body: JSON.stringify(body) });
+      if (res) { showToast(id ? 'Service updated' : 'Service created', 'success'); closeModal('serviceModal'); loadServices(); }
+    }
+
+    async function deleteService(id) {
+      if (!confirm('Delete this service?')) return;
+      const res = await api(`/admin/services/${id}`, { method: 'DELETE' });
+      if (res) { showToast('Service deleted', 'success'); loadServices(); }
+    }
+
+    async function loadReviews() {
+      const data = await api('/reviews');
+      if (!data) return;
+      const revs = Array.isArray(data) ? data : data.reviews || [];
+      document.getElementById('reviewsList').innerHTML = revs.map(r => `
+        <tr>
+          <td>${r.name}</td>
+          <td>${r.company || '-'}</td>
+          <td>${'★'.repeat(r.rating)}${'☆'.repeat(5 - (r.rating || 0))}</td>
+          <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.text || '-'}</td>
+          <td><span class="badge ${r.approved ? 'badge-green' : 'badge-yellow'}">${r.approved ? 'Approved' : 'Pending'}</span></td>
+          <td>
+            ${!r.approved ? `<button class="btn-sm btn-success" onclick="approveReview('${r._id}')">Approve</button>` : ''}
+          </td>
+        </tr>
+      `).join('') || '<tr><td colspan="6" class="empty-state">No reviews</td></tr>';
+    }
+
+    async function approveReview(id) {
+      const res = await api(`/admin/reviews/${id}`, { method: 'PUT', body: JSON.stringify({ approved: true }) });
+      if (res) { showToast('Review approved!', 'success'); loadReviews(); }
+    }
+
+    async function loadInquiries() {
+      try {
+        const res = await fetch(API + '/admin/inquiries', { headers: { Authorization: 'Bearer ' + token } });
+        if (!res.ok) {
+          // Try regular inquiries endpoint
+          const data = await api('/inquiries');
+          if (!data) { document.getElementById('inquiriesList').innerHTML = '<tr><td colspan="6" class="empty-state">No inquiries endpoint available</td></tr>'; return; }
+          renderInquiries(data.inquiries || data || []);
+          return;
+        }
+        const data = await res.json();
+        renderInquiries(data.inquiries || data || []);
+      } catch(e) {
+        document.getElementById('inquiriesList').innerHTML = '<tr><td colspan="6" class="empty-state">Unable to load inquiries</td></tr>';
+      }
+    }
+
+    function renderInquiries(items) {
+      document.getElementById('inquiriesList').innerHTML = items.map(i => `
+        <tr>
+          <td>${i.name}</td>
+          <td>${i.email}</td>
+          <td><span class="badge badge-blue">${i.projectType || 'General'}</span></td>
+          <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${i.message || '-'}</td>
+          <td>${new Date(i.createdAt).toLocaleDateString()}</td>
+          <td><span class="badge ${i.status === 'new' ? 'badge-yellow' : 'badge-green'}">${i.status || 'new'}</span></td>
+        </tr>
+      `).join('') || '<tr><td colspan="6" class="empty-state">No inquiries</td></tr>';
+    }
+
+    async function loadSubscriptions() {
+      const data = await api('/admin/subscriptions');
+      if (!data) return;
+      const subs = data.subscriptions || [];
+      document.getElementById('subsList').innerHTML = subs.map(s => `
+        <tr>
+          <td>${s.email}</td>
+          <td>${s.name || '-'}</td>
+          <td><span class="badge ${s.isActive ? 'badge-green' : 'badge-gray'}">${s.isActive ? 'Active' : 'Unsubscribed'}</span></td>
+          <td>${s.source || 'Website'}</td>
+          <td>${new Date(s.subscribedAt).toLocaleDateString()}</td>
+        </tr>
+      `).join('') || '<tr><td colspan="5" class="empty-state">No subscribers</td></tr>';
+    }
+
+    async function loadDiscounts() {
+      const data = await api('/discount/codes');
+      if (!data) return;
+      const codes = data.codes || data || [];
+      document.getElementById('discountsList').innerHTML = codes.map(c => `
+        <tr>
+          <td><strong style="font-family:monospace;">${c.code}</strong></td>
+          <td><span class="badge badge-blue">${c.type}</span></td>
+          <td>${c.type === 'percentage' ? c.value + '%' : '$' + c.value}</td>
+          <td>${c.usedCount || 0}</td>
+          <td>${c.maxUses || '∞'}</td>
+          <td><span class="badge ${c.isActive ? 'badge-green' : 'badge-gray'}">${c.isActive ? 'Active' : 'Expired'}</span></td>
+          <td><button class="btn-sm btn-danger" onclick="deleteDiscount('${c._id}')"><i class="fas fa-trash"></i></button></td>
+        </tr>
+      `).join('') || '<tr><td colspan="7" class="empty-state">No discount codes</td></tr>';
+    }
+
+    function showAddDiscount() { openModal('discountModal'); }
+
+    async function loadAuditLogs(q = '') {
+      const data = await api(`/audit-logs${q ? '?action=' + q : ''}`);
+      if (!data) return;
+      const logs = data.logs || [];
+      document.getElementById('auditList').innerHTML = logs.map(l => `
+        <tr>
+          <td><code style="color:var(--primary-glow);">${l.action}</code></td>
+          <td>${l.resource}</td>
+          <td>${l.user?.name || l.user?.email || 'System'}</td>
+          <td style="font-family:monospace;font-size:12px;">${l.ip || '-'}</td>
+          <td><span class="badge ${l.status === 'success' ? 'badge-green' : 'badge-red'}">${l.status}</span></td>
+          <td style="font-size:12px;">${new Date(l.createdAt).toLocaleString()}</td>
+        </tr>
+      `).join('') || '<tr><td colspan="6" class="empty-state">No audit logs</td></tr>';
+    }
+
+    async function loadSystem() {
+      const data = await api('/system/health');
+      if (!data) return;
+      document.getElementById('sysStatus').textContent = data.status || '-';
+      document.getElementById('sysUptime').textContent = data.uptimeFormatted || '-';
+      document.getElementById('sysMemory').textContent = data.memory?.heapUsed || '-';
+      document.getElementById('sysMongo').textContent = data.mongodb || '-';
+      document.getElementById('envInfo').innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div style="background:var(--slate);padding:12px;border-radius:8px;"><small style="color:var(--ash);">Node</small><br>${data.node || '-'}</div>
+          <div style="background:var(--slate);padding:12px;border-radius:8px;"><small style="color:var(--ash);">Platform</small><br>${data.platform || '-'}</div>
+          <div style="background:var(--slate);padding:12px;border-radius:8px;"><small style="color:var(--ash);">Heap Total</small><br>${data.memory?.heapTotal || '-'}</div>
+          <div style="background:var(--slate);padding:12px;border-radius:8px;"><small style="color:var(--ash);">RSS</small><br>${data.memory?.rss || '-'}</div>
+        </div>
+      `;
+    }
+
+    function statusBadge(s) {
+      const map = { pending: 'badge-yellow', confirmed: 'badge-blue', in_progress: 'badge-blue', review: 'badge-yellow', completed: 'badge-green', cancelled: 'badge-red' };
+      return map[s] || 'badge-gray';
+    }
+
+    // Check for existing session
+    (async () => {
+      const savedToken = localStorage.getItem('adminToken');
+      const savedUser = localStorage.getItem('adminUser');
+      if (savedToken && savedUser) {
+        token = savedToken; admin = JSON.parse(savedUser);
+        const health = await api('/system/health');
+        if (health) {
+          document.getElementById('loginPrompt').style.display = 'none';
+          document.getElementById('dashboardContent').style.display = 'block';
+          document.getElementById('adminName').textContent = admin.name;
+          document.getElementById('adminEmail').textContent = admin.email;
+          initDashboard();
+        }
+      }
+    })();
+  </script>
+</body>
+</html>
