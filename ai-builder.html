@@ -197,13 +197,6 @@
         <span style="font-size:10px;background:rgba(99,102,241,0.15);color:#818cf8;padding:3px 10px;border-radius:100px;font-weight:600;letter-spacing:0.5px">DeepSeek V4 Flash</span>
           <span style="font-size:10px;background:rgba(16,185,129,0.1);color:#10b981;padding:3px 10px;border-radius:100px;font-weight:500">Free Tier</span>
         </div>
-        <div class="ai-header-tools">
-          <button onclick="switchBuilderTab('preview')" class="ai-header-tab active" data-tab="preview"><i class="fas fa-globe"></i> Website</button>
-          <button onclick="switchBuilderTab('cad')" class="ai-header-tab" data-tab="cad"><i class="fas fa-cube"></i> CAD</button>
-          <button onclick="switchBuilderTab('pcb')" class="ai-header-tab" data-tab="pcb"><i class="fas fa-microchip"></i> PCB</button>
-          <button onclick="switchBuilderTab('mcu')" class="ai-header-tab" data-tab="mcu"><i class="fas fa-microchip"></i> Arduino</button>
-          <button onclick="switchBuilderTab('taskrouter')" class="ai-header-tab" data-tab="taskrouter"><i class="fas fa-route"></i> Router</button>
-        </div>
       </div>
     <div class="nav-links">
       <a href="/"><i class="fas fa-home"></i> Home</a>
@@ -211,20 +204,20 @@
     </div>
   </div>
   <div class="ai-builder-body">
-    <div class="ai-chat-panel">
-      <div class="ai-messages-list" id="aiMessagesList"></div>
-      <div class="ai-chat-input-bar">
-        <textarea id="aiChatInput" rows="1" placeholder="Describe your website..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMessage()}"></textarea>
-        <button id="aiChatSendBtn" onclick="sendChatMessage()"><i class="fas fa-paper-plane"></i></button>
+      <div class="ai-chat-panel">
+        <div class="ai-messages-list" id="aiMessagesList"></div>
+        <div class="ai-chat-input-bar">
+          <textarea id="aiChatInput" rows="1" placeholder="Describe your idea... e.g. Design a PCB, create a 3D model, write firmware, build a website..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMessage()}"></textarea>
+          <button id="aiChatSendBtn" onclick="sendChatMessage()"><i class="fas fa-paper-plane"></i></button>
+        </div>
+        <div class="ai-chat-suggestions">
+          <span onclick="quickSuggestion('Design a PCB for an ESP32 temperature sensor')"><i class="fas fa-microchip"></i> PCB</span>
+          <span onclick="quickSuggestion('Create a 3D enclosure 80x50x30mm with mounting holes')"><i class="fas fa-cube"></i> 3D Model</span>
+          <span onclick="quickSuggestion('Write Arduino firmware for a servo motor controller')"><i class="fas fa-code"></i> Firmware</span>
+          <span onclick="quickSuggestion('Build a modern landing page for my coffee shop')"><i class="fas fa-globe"></i> Website</span>
+          <span onclick="quickSuggestion('Design a 12V to 5V voltage divider circuit')"><i class="fas fa-bolt"></i> Circuit</span>
+        </div>
       </div>
-      <div class="ai-chat-suggestions">
-        <span onclick="quickSuggestion('Create a modern business website with services, about, and contact section')">Business Site</span>
-        <span onclick="quickSuggestion('Build an e-commerce store for clothing with product grid, cart, and checkout')">E-commerce</span>
-        <span onclick="quickSuggestion('Create a personal portfolio for a photographer with gallery and booking')">Portfolio</span>
-        <span onclick="quickSuggestion('Build a SaaS landing page with features, pricing, and testimonials')">SaaS</span>
-        <span onclick="quickSuggestion('Create a blog website with articles, categories, and newsletter')">Blog</span>
-      </div>
-    </div>
     <div class="ai-preview-panel">
       <div class="ai-preview-toolbar">
         <span class="ai-preview-url" id="aiPreviewUrl">keycode.studio/your-site</span>
@@ -247,22 +240,6 @@
         </div>
         <iframe id="aiPreviewFrame" style="display:none;" sandbox="allow-scripts allow-forms allow-same-origin"></iframe>
       </div>
-
-      <!-- CAD Tool Panel -->
-      <div class="ai-tool-panel" id="aiCadPanel">
-        <h2><i class="fas fa-cube" style="color:var(--primary-glow)"></i> CAD &amp; 3D Modeling</h2>
-        <p class="sub">Describe a 3D model or mechanical part — AI will generate OpenSCAD code and preview</p>
-        <textarea id="cadInput" placeholder="e.g. Design a parametric gear with 24 teeth, 5mm bore hole, 10mm thickness&#10;Or: Create a phone stand with 30-degree angle, 15x7cm base&#10;Or: A mechanical bracket with 4 mounting holes M4 on 50x30mm grid"></textarea>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
-          <select id="cadType" style="padding:10px 12px;background:var(--slate);border:1px solid var(--glass-border);border-radius:10px;color:var(--white);font-size:13px;flex:1;min-width:140px">
-            <option value="mechanical">Mechanical Part</option>
-            <option value="architectural">Architectural</option>
-            <option value="product">Product Design</option>
-            <option value="jewelry">Jewelry / Ornament</option>
-            <option value="organic">Organic Shape</option>
-          </select>
-          <button class="tool-btn" id="cadGenerateBtn" onclick="generateCAD()"><i class="fas fa-wand-magic-sparkles"></i> Generate CAD</button>
-        </div>
         <div class="ai-tool-output" id="cadOutput">
           <div class="summary-card" id="cadSummaryCard" style="display:none"></div>
           <div class="meta-grid" id="cadMeta" style="display:none"></div>
@@ -426,6 +403,7 @@
     var aiCurrentProjectId = null;
     var aiProjectStatus = null;
     var aiGenerating = false;
+    function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
     var aiProjectFiles = null;
     var aiTimerInterval = null;
 
@@ -556,24 +534,65 @@
       sendBtn.disabled = true;
 
       try {
-        var res = await fetch('/api/ai/chat', {
+        var res = await fetch('/api/ai/analyze', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            messages: aiChatHistory.slice(-10),
-            description: !aiCurrentProjectId ? msg : ''
-          })
+          body: JSON.stringify({ description: msg })
         });
         hideTyping();
         var data = await res.json();
 
-        if (data.chatMessage) {
-          addMessage(data.chatMessage, 'bot');
-          aiChatHistory.push({ role: 'assistant', content: data.chatMessage });
+        if (!data.success) {
+          addMessage('❌ ' + (data.error || 'Analysis failed'), 'bot');
+          aiGenerating = false; sendBtn.disabled = false; input.focus();
+          return;
         }
 
-        if (data.code) {
-          updatePreview(data.code);
-          showProjectPanel([{ path: 'index.html', size: data.code.length, type: 'html' }], 'locked');
+        var typeIcons = { cad:'🔧', pcb:'🔌', mcu:'🤖', website:'🌐', circuit:'⚡', general:'💬' };
+        var typeLabel = { cad:'3D CAD Model', pcb:'PCB Design', mcu:'Firmware', website:'Website', circuit:'Circuit Design', general:'Response' };
+        var icon = typeIcons[data.taskType] || '💬';
+        var label = typeLabel[data.taskType] || 'Result';
+        var responseText = '';
+
+        if (data.taskType === 'cad' && data.openscad) {
+          responseText = `<b>${icon} ${label}</b> — ${data.summary || ''}<br><br>` +
+            `<details><summary style="cursor:pointer;font-weight:600">OpenSCAD Code</summary><pre style="background:rgba(0,0,0,0.3);padding:10px;border-radius:8px;overflow-x:auto;font-size:12px">${escHtml(data.openscad)}</pre></details>`;
+          if (data.preview3d) {
+            responseText += `<br><a href="${data.preview3d}" target="_blank" style="display:inline-block;padding:6px 16px;background:#6366f1;color:white;border-radius:8px;text-decoration:none;font-size:12px;margin-right:6px">View 3D</a>`;
+          }
+          responseText += `<a href="/api/ai/export/${data.fileId}/stl" style="display:inline-block;padding:6px 16px;background:rgba(255,255,255,0.1);color:white;border-radius:8px;text-decoration:none;font-size:12px;margin-right:6px">STL</a>` +
+            `<a href="/api/ai/export/${data.fileId}/openscad" style="display:inline-block;padding:6px 16px;background:rgba(255,255,255,0.1);color:white;border-radius:8px;text-decoration:none;font-size:12px">OpenSCAD</a>`;
+        } else if ((data.taskType === 'pcb' || data.taskType === 'circuit') && data.components) {
+          responseText = `<b>${icon} ${label}</b> — ${data.summary || ''}<br><b>Components:</b> ${data.components.length}<br>`;
+          if (data.simulation && !data.simulation.error) {
+            responseText += `<details><summary style="cursor:pointer;font-weight:600">SPICE Results</summary><pre style="background:rgba(0,0,0,0.3);padding:10px;border-radius:8px;font-size:12px">${escHtml((data.simulation.values||[]).slice(0,8).join('\n'))}</pre></details>`;
+          }
+          responseText += `<br><a href="/api/ai/export/${data.fileId}/kicad" style="display:inline-block;padding:6px 16px;background:#6366f1;color:white;border-radius:8px;text-decoration:none;font-size:12px;margin-right:6px">KiCad</a>` +
+            `<a href="/api/ai/export/${data.fileId}/ltspice" style="display:inline-block;padding:6px 16px;background:rgba(255,255,255,0.1);color:white;border-radius:8px;text-decoration:none;font-size:12px;margin-right:6px">LTspice</a>`;
+          if (data.simulateUrl) {
+            responseText += `<a href="${data.simulateUrl}" target="_blank" style="display:inline-block;padding:6px 16px;background:rgba(255,255,255,0.1);color:white;border-radius:8px;text-decoration:none;font-size:12px">Falstad Sim</a>`;
+          }
+        } else if (data.taskType === 'mcu' && data.code) {
+          responseText = `<b>${icon} ${label}</b> — ${data.summary || ''}<br><br>` +
+            `<details open><summary style="cursor:pointer;font-weight:600">Code</summary><pre style="background:rgba(0,0,0,0.3);padding:10px;border-radius:8px;overflow-x:auto;font-size:12px">${escHtml(data.code)}</pre></details>`;
+          if (data.explanation) responseText += `<br><i>${data.explanation}</i>`;
+        } else if (data.taskType === 'website') {
+          responseText = `<b>${icon} ${label}</b><br>${data.summary || ''}`;
+          if (data.html) {
+            responseText += `<br><a href="/api/ai/download/${data.fileId}" style="display:inline-block;padding:6px 16px;background:#6366f1;color:white;border-radius:8px;text-decoration:none;font-size:12px">Download HTML</a>`;
+          }
+        } else if (data.response) {
+          responseText = '<b>💬 Response</b><br>' + data.response.replace(/\n/g, '<br>');
+        } else {
+          responseText = `<b>${icon} ${label}</b> — ${data.summary || 'Done'}`;
+        }
+
+        addMessage(responseText, 'bot');
+        aiChatHistory.push({ role: 'assistant', content: responseText });
+
+        // Show website preview if HTML was generated
+        if (data.html) {
+          updatePreview(data.html);
+          showProjectPanel([{ path: 'index.html', size: data.html.length, type: 'html' }], 'locked');
         }
       } catch(err) {
         hideTyping();

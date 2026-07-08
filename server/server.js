@@ -20,6 +20,14 @@ import { fileURLToPath } from "url";
 import sanitizeHtml from "sanitize-html";
 import OpenAI from "openai";
 import JSZip from "jszip";
+import passport from "passport";
+import { Strategy as GoogleStrategy } from "passport-google-oauth20";
+import { Strategy as GitHubStrategy } from "passport-github2";
+import { Strategy as DiscordStrategy } from "passport-discord";
+import * as exportService from "./services/exportService.js";
+import * as openscadService from "./services/openscadService.js";
+import * as spiceService from "./services/spiceService.js";
+import * as cadService from "./services/cadService.js";
 
 dotenv.config({ path: "./server/.env" });
 
@@ -744,6 +752,25 @@ if (!process.env.JWT_SECRET) {
 const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(64).toString("hex");
 const JWT_EXPIRES = process.env.JWT_EXPIRES || "7d";
 
+// ===== OAUTH CONFIGURATION =====
+const OAUTH = {
+  google: {
+    clientID: process.env.GOOGLE_CLIENT_ID || "",
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+    callbackURL: process.env.GOOGLE_CALLBACK_URL || "http://localhost:5000/api/auth/google/callback"
+  },
+  github: {
+    clientID: process.env.GITHUB_CLIENT_ID || "",
+    clientSecret: process.env.GITHUB_CLIENT_SECRET || "",
+    callbackURL: process.env.GITHUB_CALLBACK_URL || "http://localhost:5000/api/auth/github/callback"
+  },
+  discord: {
+    clientID: process.env.DISCORD_CLIENT_ID || "",
+    clientSecret: process.env.DISCORD_CLIENT_SECRET || "",
+    callbackURL: process.env.DISCORD_CALLBACK_URL || "http://localhost:5000/api/auth/discord/callback"
+  }
+};
+
 // MongoDB Connection with retry
 const MONGODB_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/keycode";
 
@@ -820,7 +847,7 @@ app.use((err, req, res, next) => {
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true, minlength: 2, maxlength: 100 },
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-  password: { type: String, required: true, minlength: 8 },
+  password: { type: String, minlength: 8, default: "" },
   phone: { type: String, trim: true },
   adminNo: { type: String, trim: true }, // User's unique admin number
   adminCode: { type: String, unique: true, sparse: true }, // Unique code for admin panel access
@@ -835,6 +862,8 @@ const userSchema = new mongoose.Schema({
   otpExpiry: Date,
   failedLoginAttempts: { type: Number, default: 0 },
   lockUntil: Date,
+  authProvider: { type: String, enum: ["local", "google", "github", "discord"], default: "local" },
+  providerId: { type: String, default: "" },
   twoFactorEnabled: { type: Boolean, default: false },
   twoFactorSecret: String,
   trustedDevices: [{
@@ -984,6 +1013,85 @@ const Order = mongoose.models.Order || mongoose.model("Order", orderSchema);
 const Cart = mongoose.models.Cart || mongoose.model("Cart", cartSchema);
 const Review = mongoose.models.Review || mongoose.model("Review", reviewSchema);
 const Inquiry = mongoose.models.Inquiry || mongoose.model("Inquiry", inquirySchema);
+
+// ===== PASSPORT OAUTH STRATEGIES =====
+passport.serializeUser((user, done) => done(null, user.id));
+passport.deserializeUser(async (id, done) => {
+  try { done(null, await User.findById(id)); }
+  catch (e) { done(e); }
+});
+
+if (OAUTH.google.clientID) {
+  passport.use(new GoogleStrategy({
+    clientID: OAUTH.google.clientID,
+    clientSecret: OAUTH.google.clientSecret,
+    callbackURL: OAUTH.google.callbackURL,
+    scope: ["profile", "email"]
+  }, async (accessToken, refreshToken, profile, done) => {
+    try {
+      const email = profile.emails?.[0]?.value || profile.id + "@google.oauth";
+      let user = await User.findOne({ $or: [{ providerId: profile.id, authProvider: "google" }, { email }] });
+      if (!user) {
+        user = await User.create({
+          name: profile.displayName || profile.username || "Google User",
+          email, password: "", authProvider: "google", providerId: profile.id,
+          emailVerified: true, avatar: profile.photos?.[0]?.value || "",
+          adminNo: 'KCA' + Date.now().toString().slice(-6)
+        });
+      }
+      return done(null, user);
+    } catch (e) { return done(e, null); }
+  }));
+}
+
+if (OAUTH.github.clientID) {
+  passport.use(new GitHubStrategy({
+    clientID: OAUTH.github.clientID,
+    clientSecret: OAUTH.github.clientSecret,
+    callbackURL: OAUTH.github.callbackURL,
+    scope: ["user:email"]
+  }, async (accessToken, refreshToken, profile, done) => {
+    try {
+      const email = profile.emails?.[0]?.value || profile.username + "@github.oauth";
+      let user = await User.findOne({ $or: [{ providerId: profile.id, authProvider: "github" }, { email }] });
+      if (!user) {
+        user = await User.create({
+          name: profile.displayName || profile.username || "GitHub User",
+          email, password: "", authProvider: "github", providerId: profile.id,
+          emailVerified: true, avatar: profile.photos?.[0]?.value || "",
+          adminNo: 'KCA' + Date.now().toString().slice(-6)
+        });
+      }
+      return done(null, user);
+    } catch (e) { return done(e, null); }
+  }));
+}
+
+if (OAUTH.discord.clientID) {
+  passport.use(new DiscordStrategy({
+    clientID: OAUTH.discord.clientID,
+    clientSecret: OAUTH.discord.clientSecret,
+    callbackURL: OAUTH.discord.callbackURL,
+    scope: ["identify", "email"]
+  }, async (accessToken, refreshToken, profile, done) => {
+    try {
+      const email = profile.emails?.[0]?.value || profile.id + "@discord.oauth";
+      let user = await User.findOne({ $or: [{ providerId: profile.id, authProvider: "discord" }, { email }] });
+      if (!user) {
+        user = await User.create({
+          name: profile.displayName || profile.username || profile.global_name || "Discord User",
+          email, password: "", authProvider: "discord", providerId: profile.id,
+          emailVerified: true,
+          avatar: profile.avatar ? `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png` : "",
+          adminNo: 'KCA' + Date.now().toString().slice(-6)
+        });
+      }
+      return done(null, user);
+    } catch (e) { return done(e, null); }
+  }));
+}
+
+app.use(passport.initialize());
 
 // Blog Post Schema & Model
 const blogPostSchema = new mongoose.Schema({
@@ -1890,6 +1998,39 @@ app.post("/api/auth/admin-login", authLimiter, async (req, res) => {
     res.status(500).json({ error: "Admin login failed" });
   }
 });
+
+// ===== OAUTH ROUTES =====
+// Helper: generates JWT and redirects to frontend with token
+function oauthRedirect(res, user) {
+  const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5000";
+  res.redirect(`${frontendUrl}/login.html?token=${token}&name=${encodeURIComponent(user.name)}&email=${encodeURIComponent(user.email)}&avatar=${encodeURIComponent(user.avatar || '')}`);
+}
+
+// Register routes only if provider config exists
+if (OAUTH.google.clientID) {
+  app.get("/api/auth/google", passport.authenticate("google", { session: false }));
+  app.get("/api/auth/google/callback",
+    passport.authenticate("google", { session: false, failureRedirect: "/login.html?error=google_auth_failed" }),
+    (req, res) => oauthRedirect(res, req.user)
+  );
+}
+
+if (OAUTH.github.clientID) {
+  app.get("/api/auth/github", passport.authenticate("github", { session: false }));
+  app.get("/api/auth/github/callback",
+    passport.authenticate("github", { session: false, failureRedirect: "/login.html?error=github_auth_failed" }),
+    (req, res) => oauthRedirect(res, req.user)
+  );
+}
+
+if (OAUTH.discord.clientID) {
+  app.get("/api/auth/discord", passport.authenticate("discord", { session: false }));
+  app.get("/api/auth/discord/callback",
+    passport.authenticate("discord", { session: false, failureRedirect: "/login.html?error=discord_auth_failed" }),
+    (req, res) => oauthRedirect(res, req.user)
+  );
+}
 
 // User Dashboard - Get Dashboard Data
 app.get("/api/user/dashboard", auth, async (req, res) => {
@@ -7402,6 +7543,245 @@ app.get("/api/ai/download/:fileId", (req, res) => {
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Content-Disposition', `attachment; filename="${fileId}.json"`);
     res.json(data);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ==================== UNIFIED AI ANALYZE ENDPOINT ====================
+// Single entry point: user describes an idea → AI classifies + routes to best specialist
+
+app.post("/api/ai/analyze", async (req, res) => {
+  try {
+    const { description } = req.body;
+    if (!description) return res.status(400).json({ error: "Description required" });
+
+    // Step 1: Classify the task type with a quick AI call
+    const classifyPrompt = `Classify this request into exactly one category:\n"${description.slice(0, 300)}"\n\nCategories: cad (3D/CAD/mechanical design), pcb (electronics/PCB/circuit board), mcu (firmware/Arduino/microcontroller code), website (web design/landing page), circuit (circuit simulation/SPICE), general. Reply with ONLY the category word.`;
+    const classification = (await callAI(classifyPrompt, 10) || '').toLowerCase().trim();
+    const taskType = ['cad', 'pcb', 'mcu', 'website', 'circuit'].includes(classification) ? classification : 'general';
+
+    // Step 2: Route to the appropriate specialist and auto-run ALL tools
+    let result, fileId;
+    const exportUrl = (fmt) => `/api/ai/export/${fileId}/${fmt}`;
+
+    switch (taskType) {
+      case 'cad': {
+        let raw = await orchestrateWithManager(
+          `Design a production-ready 3D/CAD model: "${description}". Generate parametric OpenSCAD code, SVG preview, engineering specs, materials, and dimensions. Return JSON with keys: openscad (full OpenSCAD code), summary, dimensions (object with length, width, height, thickness).`,
+          'cad', 4096
+        );
+        let parsed;
+        try { parsed = JSON.parse((raw || '{}').replace(/```json\s*|```\s*/g, '').trim()); } catch { parsed = { openscad: raw || '', summary: 'CAD design generated' }; }
+        // Fallback when AI fails
+        if (!parsed.openscad || parsed.openscad.length < 10) {
+          const dims = { length: 100, width: 60, height: 40, thickness: 2 };
+          parsed = {
+            summary: `${description} — default enclosure`,
+            dimensions: dims,
+            openscad: `// ${description}\n$fn=64;\ndifference() {\n  cube([${dims.length}, ${dims.width}, ${dims.height}], center=true);\n  translate([0,0,${dims.thickness/2}])\n    cube([${dims.length-dims.thickness*2}, ${dims.width-dims.thickness*2}, ${dims.height-dims.thickness}], center=true);\n}`
+          };
+        }
+        fileId = 'cad_' + Date.now();
+        fs.writeFileSync(path.join(generatedDir, fileId + '.json'), JSON.stringify(parsed, null, 2));
+        // Auto-run: OpenSCAD render → STL
+        let preview3d = null;
+        if (parsed.openscad && parsed.openscad.length > 20) {
+          try { openscadService.renderSTL(parsed.openscad, fileId); preview3d = `/viewer.html?model=/exports/${fileId}.stl`; } catch (e) { console.warn('OpenSCAD:', e.message); }
+        }
+        if (!preview3d) {
+          // Fallback STL from basic dimensions
+          try {
+            const dims = parsed.dimensions || {};
+            const scad = openscadService.generateOpenscad({ type: 'enclosure', fileId, ...dims });
+            openscadService.renderSTL(scad, fileId);
+            preview3d = `/viewer.html?model=/exports/${fileId}.stl`;
+          } catch (e) { console.warn('Fallback 3D:', e.message); }
+        }
+        result = { type: 'cad', fileId, ...parsed, preview3d };
+        break;
+      }
+      case 'pcb': {
+        let raw = await orchestrateWithManager(
+          `Design a professional PCB: "${description}". Generate complete BOM with real MPNs, netlist with all connections, SVG routing diagram, power specs, and KiCad export notes. Return JSON with keys: bom (array of {ref, value, package, mpn}), netlist (array of {net, nodes}), components (array of {reference, type, value, package}), width, height, summary.`,
+          'pcb', 5120
+        );
+        let parsed;
+        try { parsed = JSON.parse((raw || '{}').replace(/```json\s*|```\s*/g, '').trim()); } catch { parsed = { bom: [], netlist: [], components: [], summary: 'PCB design generated' }; }
+        // Fallback when AI fails
+        if ((!parsed.components || parsed.components.length === 0) && (!parsed.bom || parsed.bom.length === 0)) {
+          parsed = {
+            summary: `${description} — reference design`,
+            width: 80, height: 50, layers: 2,
+            components: [
+              { reference: 'U1', type: 'IC', value: 'ATMEGA328P', package: 'TQFP-32', mpn: 'ATMEGA328P-AU' },
+              { reference: 'C1', type: 'C', value: '100nF', package: '0805', mpn: 'CC0805KRX7R9BB104' },
+              { reference: 'C2', type: 'C', value: '10µF', package: '0805', mpn: 'CL21A106KQFNNNE' },
+              { reference: 'R1', type: 'R', value: '10k', package: '0805', mpn: 'RC0805JR-0710KL' },
+              { reference: 'R2', type: 'R', value: '1k', package: '0805', mpn: 'RC0805JR-071KL' },
+            ],
+            netlist: [
+              { net: 'VCC', nodes: ['U1:7', 'C1:1', 'C2:1', 'R1:1'] },
+              { net: 'GND', nodes: ['U1:8', 'C1:2', 'C2:2'] },
+              { net: 'OUT', nodes: ['U1:1', 'R2:1'] },
+            ]
+          };
+        }
+        fileId = 'pcb_' + Date.now();
+        fs.writeFileSync(path.join(generatedDir, fileId + '.json'), JSON.stringify(parsed, null, 2));
+        // Auto-run: 3D board preview via OpenSCAD
+        let preview3d = null;
+        try {
+          const w = parseFloat(parsed.width) || 80;
+          const h = parseFloat(parsed.height) || 50;
+          const scad = openscadService.generateOpenscad({ type: 'pcb', width: w, height: h, fileId });
+          openscadService.renderSTL(scad, fileId);
+          preview3d = `/viewer.html?model=/exports/${fileId}.stl`;
+        } catch (e) { console.warn('PCB 3D:', e.message); }
+        result = { type: 'pcb', fileId, ...parsed, preview3d };
+        break;
+      }
+      case 'circuit': {
+        let raw = await orchestrateWithManager(
+          `Design a circuit: "${description}". Generate complete BOM, netlist, component list, and simulation data. Return JSON with keys: components (array of {reference, type, value, net1, net2}), netlist (array of {net, nodes}), bom (array of {ref, value}), summary.`,
+          'pcb', 4096
+        );
+        let parsed;
+        try { parsed = JSON.parse((raw || '{}').replace(/```json\s*|```\s*/g, '').trim()); } catch { parsed = { components: [], summary: 'Circuit design generated' }; }
+        // Fallback when AI fails
+        if (!parsed.components || parsed.components.length === 0) {
+          parsed = {
+            summary: `${description} — reference RC circuit`,
+            components: [
+              { reference: 'V1', type: 'V', value: '5', net1: 1, net2: 0 },
+              { reference: 'R1', type: 'R', value: '1k', net1: 1, net2: 2 },
+              { reference: 'C1', type: 'C', value: '1u', net1: 2, net2: 0 },
+            ],
+            sourceName: 'V1', start: 0, end: 5, step: 0.1
+          };
+        }
+        fileId = 'ckt_' + Date.now();
+        fs.writeFileSync(path.join(generatedDir, fileId + '.json'), JSON.stringify(parsed, null, 2));
+        // Auto-run: SPICE simulation
+        let simulation = null;
+        try {
+          const netlist = spiceService.generateNetlist(parsed);
+          simulation = spiceService.runSimulation(netlist);
+        } catch (e) { simulation = { error: e.message }; }
+        // Auto-run: Falstad URL
+        let simulateUrl = null;
+        try { const f = exportService.exportToFalstad(fileId); simulateUrl = f.content; } catch {}
+        // Auto-run: 3D preview
+        let preview3d = null;
+        try {
+          const scad = openscadService.generateOpenscad({ type: 'pcb', width: 80, height: 50, fileId });
+          openscadService.renderSTL(scad, fileId);
+          preview3d = `/viewer.html?model=/exports/${fileId}.stl`;
+        } catch (e) { console.warn('Circuit 3D:', e.message); }
+        result = { type: 'circuit', fileId, ...parsed, preview3d, simulateUrl, simulation };
+        break;
+      }
+      case 'mcu': {
+        const raw = await orchestrateWithManager(
+          `Write production-grade firmware: "${description}". Generate complete compilable code with pin definitions, wiring, libraries, and documentation. Return JSON with keys: code, explanation, pinout (object), libraries (array).`,
+          'mcu', 4096
+        );
+        let parsed;
+        try { parsed = JSON.parse((raw || '{}').replace(/```json\s*|```\s*/g, '').trim()); } catch { parsed = { code: raw || '', summary: 'MCU firmware generated' }; }
+        if (!parsed.code || parsed.code.length < 20) {
+          parsed = {
+            summary: `${description} — Arduino sketch`,
+            code: `// ${description}\nvoid setup() {\n  pinMode(LED_BUILTIN, OUTPUT);\n  Serial.begin(9600);\n}\n\nvoid loop() {\n  digitalWrite(LED_BUILTIN, HIGH);\n  delay(1000);\n  digitalWrite(LED_BUILTIN, LOW);\n  delay(1000);\n}`,
+            explanation: 'Basic Arduino sketch — AI was unavailable, using template.'
+          };
+        }
+        fileId = 'mcu_' + Date.now();
+        fs.writeFileSync(path.join(generatedDir, fileId + '.json'), JSON.stringify(parsed, null, 2));
+        result = { type: 'mcu', fileId, ...parsed };
+        break;
+      }
+      case 'website': {
+        const raw = await orchestrateWithManager(
+          `Build a complete, modern responsive website: "${description}". Generate full HTML/CSS/JS code. Return JSON with keys: html (complete HTML), css, js, summary.`,
+          'website', 4096
+        );
+        let parsed;
+        try { parsed = JSON.parse((raw || '{}').replace(/```json\s*|```\s*/g, '').trim()); } catch { parsed = { html: raw || '', summary: 'Website generated' }; }
+        if (!parsed.html || parsed.html.length < 50) {
+          const title = description.slice(0, 60);
+          parsed = {
+            summary: `${description}`,
+            html: `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>${escHtml(title)}</title><style>body{font-family:system-ui,sans-serif;margin:0;padding:40px 20px;background:#0a0a12;color:#e2e8f0;text-align:center}h1{color:#6366f1;font-size:2.5rem}p{color:#94a3b8;max-width:600px;margin:20px auto}.btn{display:inline-block;padding:12px 32px;background:linear-gradient(135deg,#6366f1,#22d3ee);color:white;border:none;border-radius:8px;font-size:16px;cursor:pointer;text-decoration:none}.btn:hover{transform:translateY(-2px)}</style></head><body><h1>${escHtml(title)}</h1><p>Your project has been generated by KEYCODE AI.</p><a class="btn" href="#">Get Started</a></body></html>`
+          };
+        }
+        fileId = 'web_' + Date.now();
+        fs.writeFileSync(path.join(generatedDir, fileId + '.json'), JSON.stringify(parsed, null, 2));
+        result = { type: 'website', fileId, ...parsed };
+        break;
+      }
+      default: {
+        const chatResult = await callAI(description, 2048);
+        result = { type: 'general', response: chatResult || "I understand you're asking about: " + description + ". Try 'design a PCB', 'create firmware', 'build a 3D enclosure', or 'make a landing page'." };
+      }
+    }
+
+    res.json({ success: true, taskType, ...result });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ===== REFINE ENDPOINT — follow-up chat for existing results =====
+app.post("/api/ai/refine", async (req, res) => {
+  try {
+    const { description, context } = req.body;
+    if (!description) return res.status(400).json({ error: "Description required" });
+    const fullPrompt = context ? `${context}\n\nFollow-up: ${description}\n\nImprove the previous result based on this feedback. Return updated JSON in the same format.` : description;
+    const result = await callAI(fullPrompt, 4096);
+    res.json({ success: true, response: result || 'Could not refine. Please try rephrasing.' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ==================== EXPORT ENDPOINTS ====================
+// Export generated designs to real engineering tool formats
+
+app.get("/api/ai/export/:fileId/:format", async (req, res) => {
+  try {
+    const { fileId, format } = req.params;
+    const sanitized = fileId.replace(/[^a-zA-Z0-9_-]/g, '');
+
+    const exporters = {
+      kicad:    () => exportService.exportToKiCad(sanitized),
+      freecad:  () => exportService.exportToFreeCAD(sanitized),
+      blender:  () => exportService.exportToBlender(sanitized),
+      ltspice:  () => exportService.exportToLTspice(sanitized),
+      qucs:     () => exportService.exportToQucs(sanitized),
+      falstad:  () => exportService.exportToFalstad(sanitized),
+      stl:      () => exportService.exportToSTL(sanitized),
+      openscad: () => {
+        const fp = path.join(generatedDir, sanitized + '.json');
+        const data = JSON.parse(fs.readFileSync(fp, 'utf8'));
+        const code = data.openscad || '// No OpenSCAD code available\ncube(10);';
+        return { content: code, filename: sanitized + '.scad', contentType: 'text/plain' };
+      },
+    };
+
+    const exporter = exporters[format];
+    if (!exporter) return res.status(400).json({ error: 'Unsupported format. Use: kicad, freecad, blender, ltspice, qucs, falstad, stl, openscad' });
+
+    const result = await exporter();
+
+    if (result.path) {
+      return res.download(result.path, result.filename);
+    }
+
+    res.setHeader('Content-Type', result.contentType);
+    res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
+    res.send(result.content);
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

@@ -310,7 +310,20 @@
       <button type="submit" class="btn-login" id="submitBtn">Sign In</button>
     </form>
 
-      <div class="register-link">
+    <div class="divider"><span>Or continue with</span></div>
+    <div class="social-login">
+      <a href="/api/auth/google" class="btn-social" title="Sign in with Google">
+        <i class="fab fa-google"></i>
+      </a>
+      <a href="/api/auth/github" class="btn-social" title="Sign in with GitHub">
+        <i class="fab fa-github"></i>
+      </a>
+      <a href="/api/auth/discord" class="btn-social" title="Sign in with Discord">
+        <i class="fab fa-discord"></i>
+      </a>
+    </div>
+
+    <div class="register-link">
         Don't have an account? <a href="register.html">Create one</a>
       </div>
       <div class="register-link" style="margin-top:8px;">
@@ -358,6 +371,22 @@
       var saved = localStorage.getItem('remembered_email');
       if (saved) { document.getElementById('email').value = saved; document.getElementById('remember').checked = true; }
     } catch(e) {}
+
+    // Handle OAuth callback: parse token from URL
+    (function() {
+      var params = new URLSearchParams(window.location.search);
+      var token = params.get('token');
+      if (token) {
+        var name = params.get('name') || 'User';
+        var email = params.get('email') || '';
+        var avatar = params.get('avatar') || '';
+        localStorage.setItem('token', token);
+        localStorage.setItem('keycode_token', token);
+        localStorage.setItem('user', JSON.stringify({ name: decodeURIComponent(name), email: decodeURIComponent(email), avatar: decodeURIComponent(avatar) }));
+        localStorage.setItem('keycode_user', JSON.stringify({ name: decodeURIComponent(name), email: decodeURIComponent(email), avatar: decodeURIComponent(avatar) }));
+        window.location.href = 'control-panel.html';
+      }
+    })();
 
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();

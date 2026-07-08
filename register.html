@@ -176,8 +176,44 @@
       box-shadow: 0 10px 40px rgba(99, 102, 241, 0.4);
     }
     .btn-register:disabled {
-      opacity: 0.7;
+      opacity: 0.6;
       cursor: not-allowed;
+    }
+    .divider {
+      display: flex;
+      align-items: center;
+      margin: 24px 0;
+      color: var(--ash);
+      font-size: 13px;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(255,255,255,0.1);
+    }
+    .divider span { padding: 0 16px; }
+    .social-login {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .btn-social {
+      flex: 1;
+      padding: 14px;
+      background: rgba(26, 26, 36, 0.8);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      border-radius: 12px;
+      color: white;
+      font-size: 18px;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: none;
+      transition: all 0.3s;
+    }
+    .btn-social:hover {
+      background: rgba(99, 102, 241, 0.2);
+      border-color: var(--primary);
     }
     .terms-text {
       text-align: center;
@@ -298,6 +334,19 @@
 
       <button type="submit" class="btn-register" id="submitBtn">Create Account</button>
     </form>
+
+    <div class="divider"><span>Or sign up with</span></div>
+    <div class="social-login">
+      <a href="/api/auth/google" class="btn-social" title="Sign up with Google">
+        <i class="fab fa-google"></i>
+      </a>
+      <a href="/api/auth/github" class="btn-social" title="Sign up with GitHub">
+        <i class="fab fa-github"></i>
+      </a>
+      <a href="/api/auth/discord" class="btn-social" title="Sign up with Discord">
+        <i class="fab fa-discord"></i>
+      </a>
+    </div>
 
     <p class="terms-text">
       By registering, you agree to our <a href="terms.html">Terms of Service</a> and <a href="privacy.html">Privacy Policy</a>

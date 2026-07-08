@@ -10,7 +10,13 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "circuit-json-to-kicad": "^0.0.158",
     "jszip": "^3.10.1",
+    "kicad-toolkit": "^1.0.28",
+    "passport": "^0.7.0",
+    "passport-discord": "^0.1.4",
+    "passport-github2": "^0.1.12",
+    "passport-google-oauth20": "^2.0.0",
     "wrangler": "^4.90.0"
   }
 }

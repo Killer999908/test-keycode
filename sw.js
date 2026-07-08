@@ -1,7 +1,5 @@
-const CACHE = 'keycode-v4';
+const CACHE = 'keycode-v5';
 const PRECACHE = [
-  '/',
-  '/index.html',
   '/offline.html',
   '/favicon.svg',
   '/logo-nav.png',
@@ -30,17 +28,27 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
-
-  // Only intercept same-origin GET requests
   if (e.request.method !== 'GET' || url.origin !== location.origin) return;
 
-  // Special handling for offline page to avoid loops
+  // Offline page - cache with fallback
   if (url.pathname === '/offline.html') {
     return e.respondWith(
       caches.match('/offline.html').then(cached => cached || fetch(e.request).catch(() => OFFLINE_RESPONSE))
     );
   }
 
+  // HTML pages: network-first (always fetch fresh, fall back to cache)
+  if (url.pathname === '/' || url.pathname === '/index.html') {
+    return e.respondWith(
+      fetch(e.request).then(response => {
+        const clone = response.clone();
+        caches.open(CACHE).then(c => c.put(e.request, clone)).catch(() => {});
+        return response;
+      }).catch(() => caches.match(e.request).then(cached => cached || OFFLINE_RESPONSE))
+    );
+  }
+
+  // Static assets: cache-first
   e.respondWith(
     caches.match(e.request).then(cached => {
       if (cached) return cached;
