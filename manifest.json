@@ -2,8 +2,12 @@
   "name": "KEYCODE - AI Design Studio",
   "short_name": "KEYCODE",
   "description": "Generate websites, 3D models, PCBs, and firmware with AI",
-  "start_url": "/",
+  "start_url": "/index.html",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "categories": ["productivity", "utilities"],
+  "scope": "/",
+  "description": "AI-powered digital design platform",
   "background_color": "#0a0a15",
   "theme_color": "#6366f1",
   "icons": [

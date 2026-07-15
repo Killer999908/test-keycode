@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="manifest" href="/manifest.json">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Your KEYCODE Studio dashboard - Manage AI projects, manufacturing orders, and account settings.">
+<title>Dashboard - KEYCODE Studio</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha384-/o6I2CkkWC//PSjvWC/eYN7l3xM3tJm8ZzVkCOfp//W05QcE3mlGskpoHB6XqI+B" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--void:#030305;--obsidian:#0a0a0f;--graphite:#12121a;--slate:#1a1a24;--surface:#181825;--primary:#6366f1;--primary-glow:#818cf8;--secondary:#ec4899;--accent:#22d3ee;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--white:#fff;--pearl:#e2e8f0;--ash:#94a3b8;--silver:#cbd5e1;--glass-border:rgba(255,255,255,0.06);--sidebar-w:260px;--header-h:64px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:var(--void);color:var(--pearl);overflow-x:hidden}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--void)}::-webkit-scrollbar-thumb{background:var(--slate);border-radius:4px}::-webkit-scrollbar-thumb:hover{background:var(--ash)}
+
+/* Sidebar */
+.sidebar{position:fixed;top:0;left:0;width:var(--sidebar-w);height:100vh;background:var(--obsidian);border-right:1px solid var(--glass-border);z-index:100;display:flex;flex-direction:column;transition:.3s}
+.sidebar-logo{padding:18px 24px;border-bottom:1px solid var(--glass-border);display:flex;align-items:center;gap:10px}
+.sidebar-logo .logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--primary),var(--accent));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;color:white}
+.sidebar-logo span{font-size:18px;font-weight:800;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sidebar-nav{flex:1;padding:16px 12px;overflow-y:auto}
+.sidebar-label{font-size:10px;text-transform:uppercase;color:rgba(255,255,255,0.2);padding:16px 12px 6px;letter-spacing:1.5px;font-weight:700}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;color:var(--ash);cursor:pointer;transition:.2s;font-size:13px;margin-bottom:2px;text-decoration:none;position:relative}
+.nav-item:hover{background:rgba(255,255,255,0.04);color:var(--white)}
+.nav-item.active{background:rgba(99,102,241,0.1);color:var(--primary-glow)}
+.nav-item.active::before{content:'';position:absolute;left:-12px;top:50%;transform:translateY(-50%);width:3px;height:20px;background:var(--primary);border-radius:0 4px 4px 0}
+.nav-item i{width:18px;text-align:center;font-size:14px}
+.nav-item .badge{position:absolute;right:10px;font-size:9px;padding:2px 6px;border-radius:10px;background:var(--danger);color:white;font-weight:600}
+.sidebar-footer{padding:16px;border-top:1px solid var(--glass-border)}
+.user-card{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:10px;cursor:pointer;transition:.2s}
+.user-card:hover{background:rgba(255,255,255,0.04)}
+.user-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;font-size:13px;color:white;font-weight:700;flex-shrink:0}
+.user-info{flex:1;min-width:0}
+.user-name{font-size:13px;font-weight:600;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-email{font-size:11px;color:var(--ash);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Main */
+.main{margin-left:var(--sidebar-w);min-height:100vh}
+.header{height:var(--header-h);padding:0 32px;background:rgba(10,10,15,0.85);backdrop-filter:blur(16px);border-bottom:1px solid var(--glass-border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.header-left{display:flex;align-items:center;gap:16px}
+.header-left h1{font-size:18px;font-weight:700;color:var(--white)}
+.header-breadcrumb{font-size:12px;color:var(--ash);display:flex;align-items:center;gap:6px}
+.header-breadcrumb span{color:var(--ash)}.header-breadcrumb .current{color:var(--primary-glow)}
+.header-right{display:flex;align-items:center;gap:10px}
+.header-btn{padding:8px 14px;border-radius:8px;background:var(--slate);border:1px solid var(--glass-border);color:var(--ash);font-size:12px;cursor:pointer;transition:.2s;display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-family:inherit}
+.header-btn:hover{background:rgba(255,255,255,0.06);color:var(--white)}
+.header-btn.primary{background:linear-gradient(135deg,var(--primary),var(--accent));color:white;border:none}
+.header-btn.primary:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(99,102,241,0.3)}
+
+/* Content */
+.content{padding:28px 32px}
+
+/* Stats */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:28px}
+.stat-card{background:var(--surface);border:1px solid var(--glass-border);border-radius:16px;padding:22px;position:relative;overflow:hidden;transition:.3s}
+.stat-card:hover{transform:translateY(-2px);border-color:rgba(99,102,241,0.2)}
+.stat-card .stat-glow{position:absolute;top:-40px;right:-40px;width:100px;height:100px;border-radius:50%;opacity:.08;filter:blur(30px)}
+.stat-card .stat-icon{font-size:22px;margin-bottom:8px;position:relative}
+.stat-card .stat-value{font-size:30px;font-weight:800;color:var(--white);position:relative}
+.stat-card .stat-label{font-size:12px;color:var(--ash);margin-top:2px;position:relative}
+.stat-card .stat-trend{font-size:11px;margin-top:4px;position:relative}
+
+/* Grid layout */
+.dash-grid{display:grid;grid-template-columns:2fr 1fr;gap:20px;margin-bottom:28px}
+@media(max-width:1024px){.dash-grid{grid-template-columns:1fr}}
+
+/* Section */
+.section{margin-bottom:28px}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.section-header h3{font-size:16px;font-weight:700;color:var(--white);display:flex;align-items:center;gap:8px}
+.section-header .subtitle{font-size:12px;color:var(--ash);font-weight:400}
+.see-all{font-size:12px;color:var(--primary);cursor:pointer;text-decoration:none;font-weight:500;transition:.2s;display:inline-flex;align-items:center;gap:4px}
+.see-all:hover{color:var(--primary-glow);gap:6px}
+
+/* Card */
+.card{background:var(--surface);border:1px solid var(--glass-border);border-radius:14px;overflow:hidden}
+.card-body{padding:20px}
+
+/* Table */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;padding:14px 18px;font-size:11px;text-transform:uppercase;color:var(--ash);letter-spacing:.5px;border-bottom:1px solid var(--glass-border);font-weight:600}
+td{padding:14px 18px;font-size:13px;border-bottom:1px solid rgba(255,255,255,0.03)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,0.015)}
+
+/* Project Cards */
+.project-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.project-item{background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;padding:16px;display:flex;align-items:center;gap:14px;transition:.3s;cursor:pointer}
+.project-item:hover{border-color:rgba(99,102,241,0.25);transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,0,0,0.2)}
+.project-item .p-icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.project-item .p-info{flex:1;min-width:0}
+.project-item .p-name{font-size:14px;font-weight:600;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.project-item .p-meta{font-size:11px;color:var(--ash);margin-top:2px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.project-item .p-actions{display:flex;gap:4px}
+.project-item .p-actions button,.project-item .p-actions a{padding:5px 10px;border-radius:6px;font-size:10px;border:1px solid var(--glass-border);background:var(--graphite);color:var(--ash);cursor:pointer;transition:.15s;text-decoration:none;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;font-family:inherit}
+.project-item .p-actions button:hover,.project-item .p-actions a:hover{background:rgba(255,255,255,0.06);color:var(--white)}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600;gap:4px}
+.badge-success{background:rgba(16,185,129,0.12);color:var(--success)}
+.badge-warning{background:rgba(245,158,11,0.12);color:var(--warning)}
+.badge-danger{background:rgba(239,68,68,0.12);color:var(--danger)}
+.badge-info{background:rgba(99,102,241,0.12);color:var(--primary-glow)}
+.badge-secondary{background:rgba(255,255,255,0.06);color:var(--ash)}
+
+/* Manufacturing Order Button */
+.order-btn{background:linear-gradient(135deg,#f59e0b,#d97706)!important;color:white!important;border:none!important}
+.order-btn:hover{box-shadow:0 4px 16px rgba(245,158,11,0.3)!important}
+
+/* Quick Actions */
+.quick-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:28px}
+.qa-card{background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;padding:18px;text-align:center;cursor:pointer;transition:.3s;text-decoration:none;display:block}
+.qa-card:hover{transform:translateY(-3px);border-color:rgba(99,102,241,0.3);box-shadow:0 8px 30px rgba(0,0,0,0.2)}
+.qa-card .qa-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;font-size:18px}
+.qa-card .qa-title{font-size:13px;font-weight:600;color:var(--white)}
+.qa-card .qa-desc{font-size:10px;color:var(--ash);margin-top:2px}
+
+/* Activity Feed */
+.activity-feed{display:flex;flex-direction:column;gap:8px}
+.activity-item{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
+.activity-item:last-child{border-bottom:none}
+.activity-dot{width:8px;height:8px;border-radius:50%;margin-top:6px;flex-shrink:0}
+.activity-content{flex:1}
+.activity-text{font-size:12px;color:var(--pearl)}
+.activity-time{font-size:10px;color:var(--ash);margin-top:2px}
+
+/* Modal */
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(8px)}
+.modal{background:var(--obsidian);border:1px solid var(--glass-border);border-radius:20px;max-width:540px;width:92%;padding:32px;max-height:90vh;overflow-y:auto}
+.modal h3{font-size:17px;font-weight:700;color:var(--white);margin-bottom:4px}
+.modal p.sub{font-size:13px;color:var(--ash);margin-bottom:20px}
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:11px;color:var(--ash);margin-bottom:4px;font-weight:500}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:10px 14px;background:var(--graphite);border:1px solid var(--glass-border);border-radius:10px;color:var(--white);font-size:13px;outline:none;font-family:inherit;transition:.2s}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(99,102,241,0.1)}
+.form-group textarea{min-height:80px;resize:vertical}
+.form-group select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2394a3b8' d='M6 8L0 0h12z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:36px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+
+/* Buttons */
+.btn{padding:10px 22px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:.3s;font-family:inherit;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--accent));color:white}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(99,102,241,0.3)}
+.btn-secondary{background:var(--slate);border:1px solid var(--glass-border);color:var(--ash)}
+.btn-secondary:hover{background:rgba(255,255,255,0.06);color:var(--white)}
+.btn-success{background:linear-gradient(135deg,var(--success),#059669);color:white}
+.btn-success:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(16,185,129,0.3)}
+.btn-danger{background:var(--danger);color:white}
+.btn-sm{padding:6px 12px;font-size:11px;border-radius:6px}
+
+/* Empty state */
+.empty-state{text-align:center;padding:48px 20px;color:var(--ash)}
+.empty-state i{font-size:36px;opacity:.25;margin-bottom:8px}
+.empty-state p{font-size:13px;margin-bottom:12px}
+
+/* Loading */
+.loading{text-align:center;padding:40px;color:var(--ash)}
+.loading i{font-size:20px}
+
+/* Page visibility */
+.page{display:none}.page.active{display:block}
+
+/* AI Bot */
+.bot-toggle{position:fixed;bottom:24px;right:24px;width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--secondary));color:white;font-size:20px;border:none;cursor:pointer;z-index:999;box-shadow:0 4px 24px rgba(99,102,241,0.4);transition:.3s;display:flex;align-items:center;justify-content:center}
+.bot-toggle:hover{transform:scale(1.1)}
+.bot-panel{position:fixed;bottom:84px;right:24px;width:380px;height:500px;background:var(--obsidian);border:1px solid var(--glass-border);border-radius:16px;display:none;flex-direction:column;z-index:998;box-shadow:0 20px 60px rgba(0,0,0,0.5);overflow:hidden;backdrop-filter:blur(20px)}
+.bot-panel.open{display:flex}
+.bot-header{padding:14px 18px;border-bottom:1px solid var(--glass-border);display:flex;align-items:center;justify-content:space-between}
+.bot-header h4{font-size:13px;color:var(--white);display:flex;align-items:center;gap:8px}
+.bot-header h4 i{color:var(--primary)}
+.bot-close{background:none;border:none;color:var(--ash);cursor:pointer;font-size:18px}
+.bot-msgs{flex:1;overflow-y:auto;padding:14px 18px;display:flex;flex-direction:column;gap:8px}
+.bot-msg{padding:10px 14px;border-radius:12px;font-size:12px;line-height:1.6;max-width:88%}
+.bot-msg.incoming{background:var(--slate);color:var(--pearl);align-self:flex-start;border-bottom-left-radius:4px}
+.bot-msg.outgoing{background:rgba(99,102,241,0.18);color:var(--white);align-self:flex-end;border-bottom-right-radius:4px}
+.bot-bar{padding:10px 14px;border-top:1px solid var(--glass-border);display:flex;gap:8px}
+.bot-bar input{flex:1;padding:8px 12px;background:var(--graphite);border:1px solid var(--glass-border);border-radius:10px;color:var(--white);font-size:12px;outline:none;font-family:inherit}
+.bot-bar button{padding:8px 16px;background:var(--primary);border:none;border-radius:10px;color:white;font-size:12px;cursor:pointer}
+.bot-bar button:hover{background:var(--primary-glow)}
+
+/* MFG Partner Chips */
+.partner-chips{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.partner-chip{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:12px;background:var(--surface);border:2px solid var(--glass-border);cursor:pointer;transition:.2s;font-size:12px;color:var(--ash)}
+.partner-chip:hover{border-color:rgba(99,102,241,0.3);color:var(--white)}
+.partner-chip.selected{border-color:var(--primary);background:rgba(99,102,241,0.08);color:var(--primary-glow)}
+.partner-chip i{font-size:16px}
+
+/* Product Grid */
+.prod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.prod-card{background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;padding:16px;transition:.3s}
+.prod-card:hover{border-color:rgba(99,102,241,0.2);transform:translateY(-2px)}
+.prod-card .prod-name{font-size:14px;font-weight:600;color:var(--white)}
+.prod-card .prod-price{font-size:18px;font-weight:800;color:var(--white);margin:4px 0}
+.prod-card .prod-meta{font-size:11px;color:var(--ash)}
+.prod-card .prod-actions{display:flex;gap:4px;margin-top:10px}
+
+/* Service Provider Cards */
+.svc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+.svc-card{background:var(--surface);border:1px solid var(--glass-border);border-radius:14px;padding:18px;transition:.3s;position:relative;overflow:hidden}
+.svc-card:hover{transform:translateY(-2px);border-color:rgba(99,102,241,0.2)}
+.svc-card .svc-top{display:flex;align-items:flex-start;gap:14px}
+.svc-card .svc-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.svc-card .svc-info{flex:1;min-width:0}
+.svc-card .svc-name{font-size:14px;font-weight:600;color:var(--white);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.svc-card .svc-desc{font-size:11px;color:var(--ash);margin-top:2px}
+.svc-card .svc-meta{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.svc-card .svc-meta span{font-size:10px;background:var(--graphite);padding:4px 10px;border-radius:6px;color:var(--ash);display:inline-flex;align-items:center;gap:4px}
+.svc-card .svc-meta span i{font-size:9px}
+.svc-badge{font-size:10px;font-weight:600;padding:3px 10px;border-radius:20px;display:inline-flex;align-items:center;gap:4px}
+.svc-badge.online{background:rgba(16,185,129,0.12);color:var(--success)}
+.svc-badge.configured{background:rgba(99,102,241,0.12);color:var(--primary-glow)}
+.svc-badge.rate_limited{background:rgba(245,158,11,0.12);color:var(--warning)}
+.svc-badge.not_configured{background:rgba(239,68,68,0.08);color:var(--danger)}
+.svc-badge.simulated{background:rgba(245,158,11,0.12);color:var(--warning)}
+.svc-badge.error{background:rgba(239,68,68,0.12);color:var(--danger)}
+.svc-badge.coming_soon{background:rgba(148,163,184,0.12);color:var(--ash)}
+.svc-badge.fallback{background:rgba(148,163,184,0.12);color:var(--ash)}
+
+/* Toast */
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);padding:12px 28px;border-radius:12px;font-size:13px;font-weight:500;z-index:9999;color:white;box-shadow:0 8px 30px rgba(0,0,0,0.4);animation:slideUp .3s}
+.toast.success{background:linear-gradient(135deg,var(--success),#059669)}
+.toast.error{background:linear-gradient(135deg,var(--danger),#dc2626)}
+@keyframes slideUp{from{opacity:0;transform:translateX(-50%) translateY(20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+/* Responsive */
+@media(max-width:768px){
+  .sidebar{width:64px}.sidebar-logo span,.sidebar-label,.nav-item span,.user-info{display:none}
+  .nav-item{padding:10px;justify-content:center}.nav-item.active::before{left:-12px}
+  .sidebar-footer{padding:8px}.user-card{padding:8px;justify-content:center}
+  .main{margin-left:64px}.content{padding:16px}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}.header{padding:0 16px}
+  .header-left h1{font-size:15px}.header-btn span{display:none}
+  .bot-panel{width:calc(100vw - 32px);right:16px;bottom:80px;height:50vh}
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo"><div class="logo-icon"><i class="fas fa-bolt"></i></div><span>KEYCODE</span></div>
+  <nav class="sidebar-nav">
+    <div class="sidebar-label">Main</div>
+    <a class="nav-item active" data-page="overview" href="#"><i class="fas fa-th-large"></i><span>Overview</span></a>
+    <a class="nav-item" data-page="projects" href="#"><i class="fas fa-folder"></i><span>Projects</span></a>
+    <a class="nav-item" data-page="orders" href="#"><i class="fas fa-truck"></i><span>Orders</span></a>
+    <a class="nav-item" data-page="manufacturing" href="#"><i class="fas fa-industry"></i><span>Manufacturing</span></a>
+    <div class="sidebar-label">Business</div>
+    <a class="nav-item" data-page="products" href="#"><i class="fas fa-store"></i><span>Products</span></a>
+    <a class="nav-item" data-page="payments" href="#"><i class="fas fa-credit-card"></i><span>Payments</span></a>
+    <a class="nav-item" data-page="social" href="#"><i class="fas fa-share-nodes"></i><span>Social</span></a>
+    <a class="nav-item" data-page="embeds" href="#"><i class="fas fa-code"></i><span>Embeds</span></a>
+    <a class="nav-item" data-page="services" href="#"><i class="fas fa-plug"></i><span>Services</span></a>
+    <div class="sidebar-label">Account</div>
+    <a class="nav-item" data-page="settings" href="#"><i class="fas fa-gear"></i><span>Settings</span></a>
+    <div class="sidebar-label" id="adminLabel" style="display:none">Admin</div>
+    <a class="nav-item" id="adminSvcOrders" data-page="service-orders" href="#" style="display:none"><i class="fas fa-clipboard-list"></i><span>Service Orders</span></a>
+    <a class="nav-item" href="/ai-builder.html"><i class="fas fa-wand-magic-sparkles"></i><span>AI Builder</span></a>
+    <a class="nav-item" href="/shop"><i class="fas fa-store"></i><span>Marketplace</span></a>
+    <a class="nav-item" href="#" onclick="logout()"><i class="fas fa-right-from-bracket"></i><span>Logout</span></a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-avatar" id="dashAvatar">U</div>
+      <div class="user-info"><div class="user-name" id="dashName">User</div><div class="user-email" id="dashEmail">user@keycode.app</div></div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+<div class="header">
+  <div class="header-left"><div class="header-breadcrumb"><span>KEYCODE</span> <i class="fas fa-chevron-right" style="font-size:8px;opacity:.4"></i> <span class="current" id="pageTitle">Overview</span></div></div>
+  <div class="header-right">
+    <a href="/shop" class="header-btn"><i class="fas fa-store"></i> <span>Marketplace</span></a>
+    <a href="/ai-builder.html" class="header-btn primary"><i class="fas fa-wand-magic-sparkles"></i> <span>AI Builder</span></a>
+  </div>
+</div>
+
+<div class="content">
+
+<!-- OVERVIEW -->
+<div class="page active" id="page-overview">
+  <div class="quick-actions">
+    <a class="qa-card" href="/ai-builder.html"><div class="qa-icon" style="background:rgba(99,102,241,0.12);color:var(--primary)"><i class="fas fa-wand-magic-sparkles"></i></div><div class="qa-title">New Project</div><div class="qa-desc">Generate with AI</div></a>
+    <div class="qa-card" onclick="navigate('manufacturing')"><div class="qa-icon" style="background:rgba(245,158,11,0.12);color:var(--warning)"><i class="fas fa-microchip"></i></div><div class="qa-title">Order PCB</div><div class="qa-desc">From your design</div></div>
+    <div class="qa-card" onclick="navigate('manufacturing')"><div class="qa-icon" style="background:rgba(16,185,129,0.12);color:var(--success)"><i class="fas fa-cube"></i></div><div class="qa-title">3D Print</div><div class="qa-desc">Order a print</div></div>
+    <div class="qa-card" onclick="navigate('products')"><div class="qa-icon" style="background:rgba(236,72,153,0.12);color:var(--secondary)"><i class="fas fa-store"></i></div><div class="qa-title">Products</div><div class="qa-desc">Manage your shop</div></div>
+  </div>
+
+  <div class="stats-grid" id="statsGrid"><div class="loading"><i class="fas fa-spinner fa-spin"></i><p style="margin-top:8px">Loading stats...</p></div></div>
+
+  <div class="dash-grid">
+    <div class="section">
+      <div class="section-header"><h3><i class="fas fa-clock-rotate"></i> Recent Projects</h3><a class="see-all" onclick="navigate('projects')">See All →</a></div>
+      <div class="card" id="recentProjects"><div class="loading"><i class="fas fa-spinner fa-spin"></i></div></div>
+    </div>
+    <div class="section">
+      <div class="section-header"><h3><i class="fas fa-bolt"></i> Activity</h3></div>
+      <div class="card" id="activityFeed"><div class="card-body" style="padding:8px 20px"><div class="activity-feed"><div class="activity-item"><div class="activity-dot" style="background:var(--ash)"></div><div class="activity-content"><div class="activity-text">Sign in to see your activity</div><div class="activity-time">Now</div></div></div></div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- PROJECTS -->
+<div class="page" id="page-projects">
+  <div class="section-header"><h3><i class="fas fa-folder"></i> Your Projects <span class="subtitle">AI-generated designs</span></h3><button class="btn btn-primary btn-sm" onclick="window.location.href='/ai-builder.html'"><i class="fas fa-plus"></i> New</button></div>
+  <div id="projectsList"></div>
+</div>
+
+<!-- ORDERS -->
+<div class="page" id="page-orders">
+  <div class="section-header"><h3><i class="fas fa-truck"></i> Orders <span class="subtitle">Manufacturing & product orders</span></h3></div>
+  <div class="card" id="ordersList"><div class="loading"><i class="fas fa-spinner fa-spin"></i></div></div>
+</div>
+
+<!-- MANUFACTURING -->
+<div class="page" id="page-manufacturing">
+  <div class="section-header"><h3><i class="fas fa-industry"></i> Manufacturing <span class="subtitle">Order PCBs & 3D prints from your projects</span></h3></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+    <div class="card"><div class="card-body">
+      <h4 style="color:var(--white);font-size:14px;margin-bottom:4px"><i class="fas fa-microchip" style="color:var(--warning)"></i> Order PCBs</h4>
+      <p style="font-size:12px;color:var(--ash);margin-bottom:12px">Send your PCB design to JLCPCB, PCBWay, or Seeed Studio for fabrication.</p>
+      <button class="btn btn-warning btn-sm" onclick="showMfgOrder('pcb')">Order PCB <i class="fas fa-arrow-right"></i></button>
+    </div></div>
+    <div class="card"><div class="card-body">
+      <h4 style="color:var(--white);font-size:14px;margin-bottom:4px"><i class="fas fa-cube" style="color:var(--success)"></i> Order 3D Prints</h4>
+      <p style="font-size:12px;color:var(--ash);margin-bottom:12px">Send your 3D model to Shapeways, JLCPCB 3D, or PCBWay for printing.</p>
+      <button class="btn btn-success btn-sm" onclick="showMfgOrder('3d')">Order 3D Print <i class="fas fa-arrow-right"></i></button>
+    </div></div>
+  </div>
+  <div class="card"><div class="card-body"><h4 style="color:var(--white);font-size:14px;margin-bottom:12px">Your Manufacturing Orders</h4><div id="mfgOrdersList"><div class="empty-state"><i class="fas fa-box"></i><p>No manufacturing orders yet. Design a PCB or 3D model and order it!</p></div></div></div></div>
+</div>
+
+<!-- PRODUCTS -->
+<div class="page" id="page-products">
+  <div class="section-header"><h3><i class="fas fa-store"></i> Your Products</h3><button class="btn btn-primary btn-sm" onclick="showAddProduct()"><i class="fas fa-plus"></i> Add Product</button></div>
+  <div id="productsList"></div>
+</div>
+
+<!-- PAYMENTS -->
+<div class="page" id="page-payments">
+  <div class="section-header"><h3><i class="fas fa-credit-card"></i> Payments</h3></div>
+  <div class="card" id="paymentsList"><div class="empty-state"><i class="fas fa-credit-card"></i><p>Payment history will appear here after your first transaction</p></div></div>
+</div>
+
+<!-- SOCIAL -->
+<div class="page" id="page-social">
+  <div class="section-header"><h3><i class="fas fa-share-nodes"></i> Social Links</h3><button class="btn btn-primary btn-sm" onclick="saveSocialLinks()"><i class="fas fa-save"></i> Save</button></div>
+  <div class="card"><div class="card-body">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div class="form-group"><label><i class="fab fa-github"></i> GitHub</label><input id="socGithub" placeholder="https://github.com/username"></div>
+      <div class="form-group"><label><i class="fab fa-twitter"></i> Twitter</label><input id="socTwitter" placeholder="https://twitter.com/username"></div>
+      <div class="form-group"><label><i class="fab fa-linkedin"></i> LinkedIn</label><input id="socLinkedin" placeholder="https://linkedin.com/in/username"></div>
+      <div class="form-group"><label><i class="fab fa-instagram"></i> Instagram</label><input id="socInstagram" placeholder="https://instagram.com/username"></div>
+      <div class="form-group"><label><i class="fab fa-youtube"></i> YouTube</label><input id="socYoutube" placeholder="https://youtube.com/@channel"></div>
+      <div class="form-group"><label><i class="fas fa-globe"></i> Website</label><input id="socWebsite" placeholder="https://yoursite.com"></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- EMBEDS -->
+<div class="page" id="page-embeds">
+  <div class="section-header"><h3><i class="fas fa-code"></i> Embeds</h3></div>
+  <div class="card" style="margin-bottom:16px"><div class="card-body">
+    <h4 style="color:var(--white);font-size:14px;margin-bottom:14px">CodePen</h4>
+    <p style="color:var(--ash);font-size:12px;margin-bottom:12px">Paste a CodePen URL to generate an embed snippet for your projects.</p>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <input id="codepenUrl" placeholder="https://codepen.io/username/pen/abc123" style="flex:1;background:var(--slate);border:1px solid var(--glass-border);color:var(--white);padding:10px 14px;border-radius:8px;font-size:13px">
+      <button class="btn btn-primary btn-sm" onclick="fetchCodePenEmbed()"><i class="fas fa-code"></i> Embed</button>
+    </div>
+    <div id="codepenResult" style="display:none">
+      <label style="color:var(--ash);font-size:11px;display:block;margin-bottom:6px">Embed Code:</label>
+      <textarea id="codepenEmbedCode" readonly style="width:100%;background:var(--graphite);border:1px solid var(--glass-border);color:var(--pearl);padding:10px;border-radius:8px;font-size:11px;font-family:monospace;height:60px;resize:vertical"></textarea>
+      <div id="codepenPreview" style="margin-top:10px;border-radius:8px;overflow:hidden;border:1px solid var(--glass-border)"></div>
+    </div>
+  </div></div>
+
+  <div class="card"><div class="card-body">
+    <h4 style="color:var(--white);font-size:14px;margin-bottom:14px">StackBlitz WebContainers</h4>
+    <p style="color:var(--ash);font-size:12px;margin-bottom:12px">Open your projects in StackBlitz for full online editing with WebContainer technology (Node.js in the browser).</p>
+    <div id="stackblitzProjectList">
+      <p style="color:var(--ash);font-size:12px">Go to <strong>Projects</strong> and open any project's code viewer — click <kbd style="background:var(--slate);padding:2px 6px;border-radius:4px;font-size:11px">StackBlitz</kbd> to edit in-browser.</p>
+    </div>
+  </div></div>
+</div>
+
+<!-- SETTINGS -->
+<div class="page" id="page-settings">
+  <div class="section-header"><h3><i class="fas fa-gear"></i> Settings</h3></div>
+  <div class="card" style="margin-bottom:16px"><div class="card-body">
+    <h4 style="color:var(--white);font-size:14px;margin-bottom:14px">Profile</h4>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div class="form-group"><label>Name</label><input id="setName" placeholder="Your name"></div>
+      <div class="form-group"><label>Email</label><input id="setEmail" placeholder="email@example.com" readonly style="opacity:.6"></div>
+      <div class="form-group"><label>Phone</label><input id="setPhone" placeholder="+1 555-0123"></div>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="saveProfile()" style="margin-top:8px"><i class="fas fa-save"></i> Save Profile</button>
+  </div></div>
+  <div class="card"><div class="card-body">
+    <h4 style="color:var(--white);font-size:14px;margin-bottom:14px"><i class="fas fa-key"></i> Security Keys (Passkeys)</h4>
+    <p style="font-size:12px;color:var(--ash);margin-bottom:12px">Register a passkey for passwordless login. Admin users with a passkey will be required to use it as a second factor.</p>
+    <div id="passkeyList" style="margin-bottom:12px;font-size:13px;color:var(--ash)">Loading...</div>
+    <button class="btn btn-primary btn-sm" onclick="registerPasskey()"><i class="fas fa-plus"></i> Register New Passkey</button>
+  </div></div>
+</div>
+
+<!-- SERVICES -->
+<div class="page" id="page-services">
+  <div class="section-header"><h3><i class="fas fa-plug"></i> Third-Party Services <span class="subtitle">Connected services & API integrations</span></h3></div>
+  <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+    <div class="stat-card" style="flex:1;min-width:120px;padding:16px"><div class="stat-value" id="svcOnline" style="font-size:20px">0</div><div class="stat-label">Online</div></div>
+    <div class="stat-card" style="flex:1;min-width:120px;padding:16px"><div class="stat-value" id="svcConfigured" style="font-size:20px">0</div><div class="stat-label">Configured</div></div>
+    <div class="stat-card" style="flex:1;min-width:120px;padding:16px"><div class="stat-value" id="svcUnconfigured" style="font-size:20px;color:var(--warning)">0</div><div class="stat-label">Needs Setup</div></div>
+    <div class="stat-card" style="flex:1;min-width:120px;padding:16px"><div class="stat-value" id="svcTotal" style="font-size:20px">0</div><div class="stat-label">Total</div></div>
+  </div>
+  <div id="servicesList"><div class="loading"><i class="fas fa-spinner fa-spin"></i></div></div>
+</div>
+
+</div><!-- /content -->
+</div><!-- /main -->
+
+<!-- SERVICE ORDERS (Admin) -->
+<div class="page" id="page-service-orders">
+  <div class="section-header"><h3><i class="fas fa-clipboard-list"></i> Service Orders <span class="subtitle">Incoming manufacturing requests via KEYCODE Service</span></h3></div>
+  <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+    <div class="stat-card" style="flex:1;min-width:100px;padding:14px"><div class="stat-value" id="svcoPending" style="font-size:18px;color:var(--warning)">0</div><div class="stat-label">Pending Review</div></div>
+    <div class="stat-card" style="flex:1;min-width:100px;padding:14px"><div class="stat-value" id="svcoForwarded" style="font-size:18px;color:var(--primary-glow)">0</div><div class="stat-label">Forwarded</div></div>
+    <div class="stat-card" style="flex:1;min-width:100px;padding:14px"><div class="stat-value" id="svcoCompleted" style="font-size:18px;color:var(--success)">0</div><div class="stat-label">Completed</div></div>
+    <div class="stat-card" style="flex:1;min-width:100px;padding:14px"><div class="stat-value" id="svcoTotal" style="font-size:18px">0</div><div class="stat-label">Total</div></div>
+  </div>
+  <div id="serviceOrdersList"><div class="empty-state"><i class="fas fa-clipboard-list"></i><p>No service orders yet</p></div></div>
+</div>
+
+<!-- SERVICE ORDER DETAIL MODAL (Admin) -->
+<div class="modal-overlay" id="svcDetailModal">
+  <div class="modal" style="max-width:640px">
+    <h3 id="svcDetailTitle">Order Details</h3>
+    <p class="sub" id="svcDetailSub">Review and manage this order</p>
+    <div id="svcDetailBody"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('svcDetailModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- FORWARD MODAL (Admin) -->
+<div class="modal-overlay" id="forwardModal">
+  <div class="modal">
+    <h3>Forward to Manufacturer</h3>
+    <p class="sub">Select a partner and forward this order</p>
+    <div class="form-group"><label>Manufacturer Partner</label><div id="forwardPartners"></div></div>
+    <div class="form-group"><label>Admin Notes</label><textarea id="forwardNotes" placeholder="Add notes for your records..."></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('forwardModal')">Cancel</button>
+      <button class="btn btn-success" id="forwardBtn" onclick="confirmForward()"><i class="fas fa-paper-plane"></i> Forward Order</button>
+    </div>
+    <div id="forwardResult"></div>
+  </div>
+</div>
+
+<!-- MANUFACTURING ORDER MODAL -->
+<div class="modal-overlay" id="mfgModal">
+  <div class="modal">
+    <h3 id="mfgModalTitle">Order PCB Manufacturing</h3>
+    <p class="sub">Choose how to place your order</p>
+    <div style="display:flex;gap:8px;margin-bottom:16px">
+      <button class="btn btn-sm" id="mfgTabService" onclick="setMfgTab('service')" style="flex:1;background:linear-gradient(135deg,var(--primary),var(--accent));color:white;border:none;padding:10px;border-radius:10px;font-weight:600;cursor:pointer;font-size:12px;font-family:inherit"><i class="fas fa-crown"></i> KEYCODE Service <span style="font-size:9px;opacity:.8">(Recommended)</span></button>
+      <button class="btn btn-sm" id="mfgTabDirect" onclick="setMfgTab('direct')" style="flex:1;background:var(--slate);color:var(--ash);border:1px solid var(--glass-border);padding:10px;border-radius:10px;font-weight:600;cursor:pointer;font-size:12px;font-family:inherit"><i class="fas fa-external-link-alt"></i> Direct Order</button>
+    </div>
+    <div class="form-group"><label>Project</label><select id="mfgProject"></select></div>
+    <!-- Service mode (default) -->
+    <div id="mfgServiceMode">
+      <div style="background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.15);border-radius:10px;padding:14px;margin-bottom:14px">
+        <p style="font-size:12px;color:var(--pearl);line-height:1.5"><i class="fas fa-info-circle" style="color:var(--primary)"></i> Your order will be reviewed by KEYCODE and forwarded to the best manufacturer. Generated files (Gerber/STL) are automatically attached.</p>
+      </div>
+      <div class="form-group"><label>Quantity</label><input id="mfgSvcQty" type="number" value="5" min="1"></div>
+      <div class="form-group"><label>Notes (optional)</label><textarea id="mfgSvcNotes" placeholder="Any special requirements for manufacturing..."></textarea></div>
+      <button class="btn btn-primary" id="mfgSvcBtn" onclick="submitServiceOrder()" style="width:100%;justify-content:center;padding:12px"><i class="fas fa-paper-plane"></i> Submit to KEYCODE Service</button>
+      <div id="mfgSvcResult" style="margin-top:10px"></div>
+    </div>
+    <!-- Direct mode -->
+    <div id="mfgDirectMode" style="display:none">
+      <div class="form-group"><label>Manufacturer</label><div id="mfgPartners"></div></div>
+      <div class="form-group"><label>Quantity</label><input id="mfgQty" type="number" value="5" min="1"></div>
+      <div class="form-group"><label>Notes</label><textarea id="mfgNotes" placeholder="Any special requirements..."></textarea></div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal('mfgModal')">Cancel</button>
+        <button class="btn btn-success" id="mfgSubmitBtn" onclick="submitMfgOrder()"><i class="fas fa-paper-plane"></i> Place Order</button>
+      </div>
+      <div id="mfgResult" style="margin-top:12px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PRODUCT MODAL -->
+<div class="modal-overlay" id="productModal">
+  <div class="modal">
+    <h3 id="productModalTitle">Add Product</h3>
+    <p class="sub">List a product for sale on the marketplace</p>
+    <div class="form-group"><label>Product Name *</label><input id="prodName" placeholder="My Awesome Product"></div>
+    <div class="form-row"><div class="form-group"><label>Price ($) *</label><input id="prodPrice" type="number" step="0.01" placeholder="9.99"></div>
+    <div class="form-group"><label>Category</label><select id="prodCategory"><option value="general">General</option><option value="electronics">Electronics</option><option value="3d-print">3D Print</option><option value="pcb">PCB</option><option value="digital">Digital</option><option value="clothing">Clothing</option></select></div></div>
+    <div class="form-row"><div class="form-group"><label>Inventory</label><input id="prodInventory" type="number" placeholder="-1 = unlimited" value="-1"></div>
+    <div class="form-group"><label>Image URL</label><input id="prodImage" placeholder="https://..."></div></div>
+    <div class="form-group"><label>Description</label><textarea id="prodDesc" placeholder="Describe your product..."></textarea></div>
+    <div class="modal-actions"><button class="btn btn-secondary" onclick="closeModal('productModal')">Cancel</button><button class="btn btn-primary" id="saveProductBtn" onclick="saveProduct()"><i class="fas fa-check"></i> Save</button></div>
+  </div>
+</div>
+
+<!-- AI BOT -->
+<button class="bot-toggle" id="botBtn" onclick="toggleBot()"><i class="fas fa-robot"></i></button>
+<div class="bot-panel" id="botPanel">
+  <div class="bot-header"><h4><i class="fas fa-robot"></i> KEYCODE Assistant</h4><button class="bot-close" onclick="toggleBot()">&times;</button></div>
+  <div class="bot-msgs" id="botMsgs"><div class="bot-msg incoming">Hi! I'm your KEYCODE assistant. Ask about your projects, orders, or how to manufacture your designs.</div></div>
+  <div class="bot-bar"><input id="botInput" placeholder="Ask me anything..." onkeydown="if(event.key==='Enter')sendBot()"><button onclick="sendBot()"><i class="fas fa-paper-plane"></i></button></div>
+</div>
+
+<script>
+var TOKEN = localStorage.getItem('keycode_token') || localStorage.getItem('token') || localStorage.getItem('authToken') || '';
+var userData = null;
+var allProjects = [];
+var mfgType = 'pcb';
+var editingProductId = null;
+
+function apiHeaders(){return{'Content-Type':'application/json','Authorization':'Bearer '+TOKEN}}
+
+// === AUTH ===
+async function checkAuth(){
+  if(!TOKEN){window.location.href='/';return}
+  try{
+    var r=await fetch('/api/auth/me',{headers:{'Authorization':'Bearer '+TOKEN}});
+    if(!r.ok){clearToken();window.location.href='/';return}
+    userData=await r.json();userData=userData.user||userData;
+    document.getElementById('dashName').textContent=userData.name||'User';
+    document.getElementById('dashEmail').textContent=userData.email||'';
+    document.getElementById('dashAvatar').textContent=(userData.name||'U')[0].toUpperCase();
+    if(userData.email)document.getElementById('setEmail').value=userData.email;
+    if(userData.name)document.getElementById('setName').value=userData.name;
+    if(userData.phone)document.getElementById('setPhone').value=userData.phone;
+    // Show admin UI if user is admin
+    if(userData.role==='admin'){
+      document.getElementById('adminLabel').style.display='block';
+      document.getElementById('adminSvcOrders').style.display='flex';
+    }
+  }catch(e){clearToken();window.location.href='/'}
+}
+
+// === NAVIGATION ===
+document.querySelectorAll('.nav-item[data-page]').forEach(function(el){
+  el.addEventListener('click',function(e){e.preventDefault();navigate(el.dataset.page)})
+});
+
+function navigate(page){
+  document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active')});
+  var navEl=document.querySelector('.nav-item[data-page="'+page+'"]');
+  if(navEl)navEl.classList.add('active');
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active')});
+  var pg=document.getElementById('page-'+page);
+  if(pg)pg.classList.add('active');
+  var titles={overview:'Overview',projects:'Projects',orders:'Orders',manufacturing:'Manufacturing',products:'Products',payments:'Payments',social:'Social Links',embeds:'Embeds',services:'Services','service-orders':'Service Orders',settings:'Settings'};
+  document.getElementById('pageTitle').textContent=titles[page]||page;
+  if(page==='overview')loadOverview();
+  if(page==='projects')loadProjects();
+  if(page==='orders')loadOrders();
+  if(page==='products')loadProducts();
+  if(page==='manufacturing')loadManufacturingOrders();
+  if(page==='social')loadSocial();
+  if(page==='services')loadServices();
+  if(page==='service-orders')loadAdminServiceOrders();
+}
+
+// === OVERVIEW ===
+async function loadOverview(){
+  try{
+    var r=await fetch('/api/user/dashboard',{headers:apiHeaders()});
+    var d=await r.json();
+    var s=d.stats||{};
+    document.getElementById('statsGrid').innerHTML=[
+      {icon:'fas fa-folder',val:s.totalAiProjects||0,label:'AI Projects',color:'#6366f1',trend:'+'+((s.totalAiProjects||0)>0?'1 this week':'0 this week')},
+      {icon:'fas fa-box',val:s.totalOrders||0,label:'Orders',color:'#22d3ee',trend:s.totalOrders>0?'Last 30 days':'No orders yet'},
+      {icon:'fas fa-industry',val:0,label:'Manufactured',color:'#f59e0b',trend:'Order PCBs & 3D prints'},
+      {icon:'fas fa-dollar-sign',val:'$'+(s.totalRevenue||0).toFixed(2),label:'Revenue',color:'#10b981',trend:'From orders & hosting'},
+    ].map(function(c){return'<div class="stat-card"><div class="stat-glow" style="background:'+c.color+'"></div><div class="stat-icon" style="color:'+c.color+'"><i class="'+c.icon+'"></i></div><div class="stat-value">'+c.val+'</div><div class="stat-label">'+c.label+'</div><div class="stat-trend" style="color:'+c.color+'">'+c.trend+'</div></div>'}).join('');
+
+    var projects=d.aiProjects||[];
+    var recentEl=document.getElementById('recentProjects');
+    if(projects.length){
+      recentEl.innerHTML='<div class="table-wrap"><table><tr><th>Project</th><th>Type</th><th>Actions</th></tr>'+projects.slice(0,5).map(function(p){
+        var t=p.projectType||'website';var tc=t==='pcb'?'#f59e0b':t==='cad'?'#22d3ee':t==='mcu'?'#10b981':'#6366f1';
+        return '<tr><td style="font-weight:600;color:var(--white)">'+(p.title||'Project')+'</td><td><span class="badge badge-info">'+t+'</span></td><td><div style="display:flex;gap:4px"><a href="/preview/'+(p.fileId||'')+'/" class="badge badge-secondary" style="cursor:pointer;text-decoration:none" target="_blank"><i class="fas fa-eye"></i> View</a>'+(t==='pcb'||t==='circuit'?' <span class="badge badge-warning" style="cursor:pointer" onclick="showMfgOrder(\'pcb\')"><i class="fas fa-microchip"></i> PCB</span>':'')+(t==='cad'?' <span class="badge badge-success" style="cursor:pointer" onclick="showMfgOrder(\'3d\')"><i class="fas fa-cube"></i> 3D</span>':'')+'</div></td></tr>';
+      }).join('')+'</table></div>';
+    } else {
+      recentEl.innerHTML='<div class="empty-state"><i class="fas fa-folder-open"></i><p>No projects yet</p><a href="/ai-builder.html" class="btn btn-primary btn-sm">Build Something</a></div>';
+    }
+
+    // Activity feed
+    var feed=document.getElementById('activityFeed').querySelector('.activity-feed');
+    if(feed){
+      var items=[];
+      if(projects.length)items.push({text:'Generated "'+(projects[0].title||'a project')+'"',time:'Recently',color:'#6366f1'});
+      items.push({text:'Welcome to KEYCODE Dashboard',time:'Now',color:'#10b981'});
+      feed.innerHTML=items.map(function(a){return'<div class="activity-item"><div class="activity-dot" style="background:'+a.color+'"></div><div class="activity-content"><div class="activity-text">'+a.text+'</div><div class="activity-time">'+a.time+'</div></div></div>'}).join('');
+    }
+  }catch(e){
+    document.getElementById('statsGrid').innerHTML='<div class="empty-state"><i class="fas fa-exclamation-triangle" style="color:var(--warning)"></i><p>Could not load stats. Make sure MongoDB is running.</p></div>';
+  }
+}
+
+// === PROJECTS ===
+async function loadProjects(){
+  var el=document.getElementById('projectsList');
+  el.innerHTML='<div class="loading"><i class="fas fa-spinner fa-spin"></i></div>';
+  try{
+    var r=await fetch('/api/user/ai-projects',{headers:apiHeaders()});
+    var data=await r.json();
+    if(!data.success||!data.projects.length){
+      el.innerHTML='<div class="empty-state"><i class="fas fa-folder-open"></i><p>No projects</p><a href="/ai-builder.html" class="btn btn-primary btn-sm">Generate One</a></div>';
+      return;
+    }
+    allProjects=data.projects;
+    var colors={website:'#6366f1',cad:'#22d3ee',pcb:'#f59e0b',mcu:'#10b981',other:'#94a3b8'};
+    var icons={website:'fas fa-globe',cad:'fas fa-cube',pcb:'fas fa-microchip',mcu:'fas fa-chip',other:'fas fa-file'};
+    el.innerHTML='<div class="project-grid">'+data.projects.map(function(p){
+      var c=colors[p.type]||'#94a3b8',ic=icons[p.type]||'fas fa-file';
+      var mfgBtns='';
+      if(p.type==='pcb')mfgBtns='<button class="order-btn" onclick="event.stopPropagation();showMfgOrder(\'pcb\')"><i class="fas fa-microchip"></i> Order PCB</button>';
+      if(p.type==='cad')mfgBtns='<button class="order-btn" onclick="event.stopPropagation();showMfgOrder(\'3d\')"><i class="fas fa-cube"></i> 3D Print</button>';
+      return '<div class="project-item"><div class="p-icon" style="background:'+c+'15;color:'+c+'"><i class="'+ic+'"></i></div><div class="p-info"><div class="p-name">'+(p.title||p.fileId||'Project')+'</div><div class="p-meta">'+(p.fileCount||0)+' files · '+p.type+'</div></div><div class="p-actions"><a href="'+(p.liveUrl||'/preview/'+p.fileId+'/')+'" target="_blank"><i class="fas fa-eye"></i></a><button onclick="event.stopPropagation();openCodeViewer(\''+p.fileId+'\')"><i class="fas fa-code"></i></button>'+mfgBtns+'</div></div>';
+    }).join('')+'</div>';
+  }catch(e){el.innerHTML='<div class="empty-state"><i class="fas fa-exclamation-triangle" style="color:var(--danger)"></i><p>Error: '+e.message+'</p></div>'}
+}
+
+// === ORDERS ===
+async function loadOrders(){
+  var el=document.getElementById('ordersList');
+  el.innerHTML='<div class="loading"><i class="fas fa-spinner fa-spin"></i></div>';
+  try{
+    var r=await fetch('/api/orders',{headers:apiHeaders()});
+    var data=await r.json();
+    var orders=data.orders||data||[];
+    if(!orders.length){el.innerHTML='<div class="empty-state"><i class="fas fa-truck"></i><p>No orders yet</p></div>';return;}
+    el.innerHTML='<div class="table-wrap"><table><tr><th>Order</th><th>Items</th><th>Total</th><th>Status</th><th>Payment</th><th>Date</th></tr>'+orders.map(function(o){
+      var sb=o.status==='completed'?'badge-success':o.status==='cancelled'?'badge-danger':'badge-warning';
+      var pb=o.paymentStatus==='paid'?'badge-success':'badge-danger';
+      return '<tr><td style="font-weight:600;color:var(--white);font-size:12px">'+(o.orderNumber||o._id||'').toString().slice(-8).toUpperCase()+'</td><td>'+(o.items?o.items.length+' item(s)':'-')+'</td><td>$'+(o.total||0).toFixed(2)+'</td><td><span class="badge '+sb+'">'+o.status+'</span></td><td><span class="badge '+pb+'">'+o.paymentStatus+'</span></td><td style="color:var(--ash);font-size:12px">'+(o.createdAt?new Date(o.createdAt).toLocaleDateString():'-')+'</td></tr>';
+    }).join('')+'</table></div>';
+  }catch(e){el.innerHTML='<div class="empty-state"><i class="fas fa-exclamation-triangle" style="color:var(--danger)"></i><p>Error: '+e.message+'</p></div>'}
+}
+
+// === MANUFACTURING ===
+var mfgActiveTab = 'service';
+
+function setMfgTab(tab){
+  mfgActiveTab = tab;
+  var svc = document.getElementById('mfgServiceMode');
+  var dir = document.getElementById('mfgDirectMode');
+  var svcBtn = document.getElementById('mfgTabService');
+  var dirBtn = document.getElementById('mfgTabDirect');
+  if(tab === 'service'){
+    svc.style.display = 'block';
+    dir.style.display = 'none';
+    svcBtn.style.background = 'linear-gradient(135deg,var(--primary),var(--accent))';
+    svcBtn.style.color = 'white';
+    svcBtn.style.border = 'none';
+    dirBtn.style.background = 'var(--slate)';
+    dirBtn.style.color = 'var(--ash)';
+    dirBtn.style.border = '1px solid var(--glass-border)';
+  } else {
+    svc.style.display = 'none';
+    dir.style.display = 'block';
+    dirBtn.style.background = 'linear-gradient(135deg,var(--primary),var(--accent))';
+    dirBtn.style.color = 'white';
+    dirBtn.style.border = 'none';
+    svcBtn.style.background = 'var(--slate)';
+    svcBtn.style.color = 'var(--ash)';
+    svcBtn.style.border = '1px solid var(--glass-border)';
+  }
+}
+
+async function showMfgOrder(type){
+  mfgType=type;
+  document.getElementById('mfgModalTitle').textContent=type==='pcb'?'Order PCB Manufacturing':'Order 3D Printing';
+  document.getElementById('mfgSvcResult').innerHTML='';
+  document.getElementById('mfgResult').innerHTML='';
+  document.getElementById('mfgModal').style.display='flex';
+  setMfgTab('service');
+
+  // Load projects for selector
+  var sel=document.getElementById('mfgProject');
+  sel.innerHTML='<option value="">Select a project...</option>';
+  try{
+    var r=await fetch('/api/user/ai-projects',{headers:apiHeaders()});
+    var data=await r.json();
+    if(data.success&&data.projects.length){
+      data.projects.forEach(function(p){sel.innerHTML+='<option value="'+p.fileId+'">'+(p.title||p.fileId)+' ('+p.type+')</option>'});
+    }
+  }catch(e){}
+
+  // Load partners for direct mode
+  var partnersEl=document.getElementById('mfgPartners');
+  partnersEl.innerHTML='<div class="loading"><i class="fas fa-spinner fa-spin"></i></div>';
+  try{
+    var pr=await fetch('/api/order/partners');
+    var pd=await pr.json();
+    var partners=pd.partners?pd.partners[type]||pd.partners.pcb:[];
+    partnersEl.innerHTML='<div class="partner-chips">'+partners.map(function(p,i){
+      return '<div class="partner-chip'+(i===0?' selected':'')+'" onclick="document.querySelectorAll(\'.partner-chip\').forEach(function(c){c.classList.remove(\'selected\')});this.classList.add(\'selected\');window._mfgPartner=this.dataset.url" data-url="'+p.url+'" data-name="'+p.name+'"><i class="'+p.icon+'"></i> '+p.name+'<span style="font-size:10px;opacity:.7;display:block">'+p.desc+'</span></div>';
+    }).join('')+'</div>';
+    window._mfgPartner=partners[0]?.url||'';
+  }catch(e){partnersEl.innerHTML='<p style="color:var(--ash);font-size:12px">Could not load partners</p>'}
+}
+
+async function submitServiceOrder(){
+  var projectId=document.getElementById('mfgProject').value;
+  if(!projectId){showToast('Select a project','error');return;}
+  var qty=document.getElementById('mfgSvcQty').value;
+  var notes=document.getElementById('mfgSvcNotes').value;
+  var btn=document.getElementById('mfgSvcBtn');
+  btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Submitting...';
+  document.getElementById('mfgSvcResult').innerHTML='';
+  try{
+    var r=await fetch('/api/service-order/manufacture',{method:'POST',headers:apiHeaders(),body:JSON.stringify({type:mfgType,fileId:projectId,quantity:parseInt(qty)||5,notes:notes})});
+    var data=await r.json();
+    if(data.success){
+      document.getElementById('mfgSvcResult').innerHTML='<div style="padding:16px;background:rgba(16,185,129,0.1);border-radius:12px;text-align:center"><i class="fas fa-check-circle" style="color:var(--success);font-size:28px"></i><p style="color:var(--success);font-weight:600;margin:8px 0">Order Submitted!</p><p style="font-size:12px;color:var(--ash)">Order #'+data.orderId+'</p><p style="font-size:12px;color:var(--ash);margin-top:4px">Files attached: '+data.order.fileCount+' · Status: '+data.order.status+'</p><p style="font-size:11px;color:var(--ash);margin-top:6px">KEYCODE will review and forward to the best manufacturer.</p></div>';
+      btn.style.display='none';
+      loadManufacturingOrders();
+    }else{throw new Error(data.error||'Failed')}
+  }catch(e){document.getElementById('mfgSvcResult').innerHTML='<p style="color:var(--danger);font-size:12px;text-align:center;margin-top:8px">'+e.message+'</p>';btn.disabled=false;btn.innerHTML='<i class="fas fa-paper-plane"></i> Submit to KEYCODE Service';}
+}
+
+async function submitMfgOrder(){
+  var projectId=document.getElementById('mfgProject').value;
+  if(!projectId){showToast('Select a project','error');return;}
+  var qty=document.getElementById('mfgQty').value;
+  var notes=document.getElementById('mfgNotes').value;
+  var btn=document.getElementById('mfgSubmitBtn');
+  btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Submitting...';
+  try{
+    var r=await fetch('/api/order/manufacture',{method:'POST',headers:apiHeaders(),body:JSON.stringify({type:mfgType,project:{fileId:projectId},partnerUrl:window._mfgPartner||'',quantity:parseInt(qty)||5,notes:notes})});
+    var data=await r.json();
+    if(data.success){
+      document.getElementById('mfgResult').innerHTML='<div style="padding:14px;background:rgba(16,185,129,0.1);border-radius:10px;text-align:center"><i class="fas fa-check-circle" style="color:var(--success);font-size:24px"></i><p style="color:var(--success);font-weight:600;margin:6px 0">Order Placed!</p><p style="font-size:12px;color:var(--ash)">Order #'+data.orderId+'</p><a href="'+data.url+'" target="_blank" class="btn btn-success btn-sm" style="margin-top:8px;display:inline-flex"><i class="fas fa-external-link-alt"></i> Go to '+(data.order?.partner?.name||'Manufacturer')+'</a></div>';
+      loadManufacturingOrders();
+    }else{throw new Error(data.error||'Failed')}
+  }catch(e){document.getElementById('mfgResult').innerHTML='<p style="color:var(--danger);font-size:12px;text-align:center">'+e.message+'</p>'}
+  btn.disabled=false;btn.innerHTML='<i class="fas fa-paper-plane"></i> Place Order';
+}
+
+async function loadManufacturingOrders(){
+  var el=document.getElementById('mfgOrdersList');
+  try{
+    var r=await fetch('/api/user/manufacturing-orders',{headers:apiHeaders()});
+    var data=await r.json();
+    if(!data.success||!data.orders.length){
+      el.innerHTML='<div class="empty-state"><i class="fas fa-box"></i><p>No manufacturing orders yet. Design a PCB or 3D model and order it!</p></div>';
+      return;
+    }
+    el.innerHTML='<div class="table-wrap"><table><tr><th>Order</th><th>Type</th><th>Partner</th><th>Qty</th><th>Status</th><th>Date</th><th></th></tr>'+data.orders.map(function(o){
+      var typeIcon=o.type==='pcb'?'fa-microchip':o.type==='3d'?'fa-cube':'fa-box';
+      var typeColor=o.type==='pcb'?'var(--warning)':o.type==='3d'?'var(--success)':'var(--ash)';
+      var isSvc=o.partner&&o.partner.name==='KEYCODE Service';
+      return '<tr><td style="font-weight:600;color:var(--white);font-size:12px">'+o.id.slice(-10).toUpperCase()+'</td><td><i class="fas '+typeIcon+'" style="color:'+typeColor+'"></i> '+o.type+'</td><td>'+(isSvc?'<span style="color:var(--primary)">🔧 KEYCODE</span>':o.partner.name)+'</td><td>'+o.quantity+'</td><td><span class="badge '+(o.status==='pending_review'?'badge-warning':o.status==='forwarded'?'badge-info':'badge-success')+'">'+o.status+'</span></td><td style="color:var(--ash);font-size:12px">'+new Date(o.createdAt).toLocaleDateString()+'</td><td>'+(o.partner.url?'<a href="'+o.partner.url+'" target="_blank" class="badge badge-secondary" style="cursor:pointer;text-decoration:none"><i class="fas fa-external-link-alt"></i> Open</a>':'<span class="badge badge-secondary" style="opacity:.5">Awaiting</span>')+'</td></tr>';
+    }).join('')+'</table></div>';
+  }catch(e){
+    el.innerHTML='<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Could not load orders</p></div>';
+  }
+}
+
+// === PRODUCTS ===
+async function loadProducts(){
+  var el=document.getElementById('productsList');
+  el.innerHTML='<div class="loading"><i class="fas fa-spinner fa-spin"></i></div>';
+  try{
+    var r=await fetch('/api/user/products',{headers:apiHeaders()});
+    var data=await r.json();
+    if(!data.success||!data.products.length){
+      el.innerHTML='<div class="empty-state"><i class="fas fa-store-slash"></i><p>No products. Start selling!</p></div>';return;
+    }
+    el.innerHTML='<div class="prod-grid">'+data.products.map(function(p){
+      return '<div class="prod-card"><div class="prod-name">'+p.name+'</div><div class="prod-price">$'+Number(p.price).toFixed(2)+'</div><div class="prod-meta">'+(p.category||'General')+' · '+(p.inventory===-1?'Unlimited':p.inventory+' in stock')+'</div><div class="prod-actions"><button class="btn btn-secondary btn-sm" onclick="editProduct(\''+p.id+'\')"><i class="fas fa-pen"></i></button><button class="btn btn-danger btn-sm" onclick="deleteProduct(\''+p.id+'\')"><i class="fas fa-trash"></i></button></div></div>';
+    }).join('')+'</div>';
+  }catch(e){el.innerHTML='<div class="empty-state"><i class="fas fa-exclamation-triangle" style="color:var(--danger)"></i><p>Error: '+e.message+'</p></div>'}
+}
+
+function showAddProduct(){
+  editingProductId=null;
+  document.getElementById('productModalTitle').textContent='Add Product';
+  document.getElementById('prodName').value='';document.getElementById('prodPrice').value='';
+  document.getElementById('prodCategory').value='general';document.getElementById('prodInventory').value='-1';
+  document.getElementById('prodImage').value='';document.getElementById('prodDesc').value='';
+  document.getElementById('saveProductBtn').innerHTML='<i class="fas fa-check"></i> Save';
+  document.getElementById('productModal').style.display='flex';
+}
+
+async function saveProduct(){
+  var name=document.getElementById('prodName').value.trim();
+  var price=document.getElementById('prodPrice').value;
+  if(!name||!price){showToast('Name and price required','error');return;}
+  var body={name,price,category:document.getElementById('prodCategory').value,inventory:parseInt(document.getElementById('prodInventory').value)||-1,image:document.getElementById('prodImage').value.trim(),description:document.getElementById('prodDesc').value.trim()};
+  try{
+    var url='/api/user/products';var method='POST';
+    if(editingProductId){url+='/'+editingProductId;method='PUT'}
+    var r=await fetch(url,{method,headers:apiHeaders(),body:JSON.stringify(body)});
+    var data=await r.json();
+    if(!data.success)throw new Error(data.error||'Failed');
+    showToast('Product saved!','success');closeModal('productModal');loadProducts();
+  }catch(e){showToast(e.message,'error')}
+}
+
+async function editProduct(id){
+  try{
+    var r=await fetch('/api/products/'+id,{headers:apiHeaders()});
+    var data=await r.json();
+    if(!data.success||!data.product)throw new Error('Not found');
+    var p=data.product;editingProductId=p.id;
+    document.getElementById('productModalTitle').textContent='Edit Product';
+    document.getElementById('prodName').value=p.name;document.getElementById('prodPrice').value=p.price;
+    document.getElementById('prodCategory').value=p.category||'general';document.getElementById('prodInventory').value=p.inventory??-1;
+    document.getElementById('prodImage').value=p.image||'';document.getElementById('prodDesc').value=p.description||'';
+    document.getElementById('saveProductBtn').innerHTML='<i class="fas fa-check"></i> Update';
+    document.getElementById('productModal').style.display='flex';
+  }catch(e){showToast('Failed to load product','error')}
+}
+
+async function deleteProduct(id){
+  if(!confirm('Delete this product?'))return;
+  try{var r=await fetch('/api/user/products/'+id,{method:'DELETE',headers:apiHeaders()});var data=await r.json();if(!data.success)throw new Error(data.error||'Failed');showToast('Deleted','success');loadProducts()}catch(e){showToast(e.message,'error')}
+}
+
+// === SOCIAL ===
+async function loadSocial(){
+  try{var r=await fetch('/api/user/social-links',{headers:apiHeaders()});var data=await r.json();if(data.success&&data.links){var l=data.links;document.getElementById('socGithub').value=l.github||'';document.getElementById('socTwitter').value=l.twitter||'';document.getElementById('socLinkedin').value=l.linkedin||'';document.getElementById('socInstagram').value=l.instagram||'';document.getElementById('socYoutube').value=l.youtube||'';document.getElementById('socWebsite').value=l.website||''}}catch(e){}
+}
+async function saveSocialLinks(){
+  var body={github:document.getElementById('socGithub').value,twitter:document.getElementById('socTwitter').value,linkedin:document.getElementById('socLinkedin').value,instagram:document.getElementById('socInstagram').value,youtube:document.getElementById('socYoutube').value,website:document.getElementById('socWebsite').value};
+  try{var r=await fetch('/api/user/social-links',{method:'PUT',headers:apiHeaders(),body:JSON.stringify(body)});var data=await r.json();showToast(data.message||'Saved!','success')}catch(e){showToast('Failed','error')}
+}
+
+// === SERVICES ===
+async function loadServices(){
+  var el=document.getElementById('servicesList');
+  el.innerHTML='<div class="loading"><i class="fas fa-spinner fa-spin"></i></div>';
+  try{
+    var r=await fetch('/api/services/providers');
+    var data=await r.json();
+    if(!data.success||!data.providers.length){el.innerHTML='<div class="empty-state"><i class="fas fa-plug"></i><p>No services found</p></div>';return;}
+    var s=data.stats||{};
+    document.getElementById('svcOnline').textContent=s.online||0;
+    document.getElementById('svcConfigured').textContent=s.configured||0;
+    document.getElementById('svcUnconfigured').textContent=s.unconfigured||0;
+    document.getElementById('svcTotal').textContent=s.total||0;
+
+    var cats={ai:'AI Providers',hosting:'Hosting & Deploy',payments:'Payments',auth:'Authentication',security:'Security',email:'Email',storage:'Storage',domains:'Domains',communications:'Communications'};
+    var catIcons={ai:'fa-brain',hosting:'fa-cloud',payments:'fa-credit-card',auth:'fa-lock',security:'fa-shield',email:'fa-envelope',storage:'fa-database',domains:'fa-globe',communications:'fa-message'};
+    var catColors={ai:'var(--primary)',hosting:'var(--accent)',payments:'var(--success)',auth:'var(--secondary)',security:'var(--warning)',email:'var(--pearl)',storage:'var(--ash)',domains:'var(--primary-glow)',communications:'var(--secondary)'};
+
+    var grouped={};
+    data.providers.forEach(function(p){
+      if(!grouped[p.category])grouped[p.category]=[];
+      grouped[p.category].push(p);
+    });
+
+    var html='';
+    Object.keys(cats).forEach(function(cat){
+      if(!grouped[cat]||!grouped[cat].length)return;
+      html+='<div class="section" style="margin-bottom:20px"><div class="section-header" style="margin-bottom:10px"><h3 style="font-size:14px"><i class="fas '+(catIcons[cat]||'fa-plug')+'" style="color:'+(catColors[cat]||'var(--ash)')+'"></i> '+(cats[cat]||cat)+' <span class="subtitle">'+grouped[cat].length+' service(s)</span></h3></div><div class="svc-grid">';
+      html+=grouped[cat].map(function(p){
+        var statusLabels={online:'Online',configured:'Configured',rate_limited:'Rate Limited',not_configured:'Needs Setup',simulated:'Simulated',error:'Error',coming_soon:'Coming Soon',fallback:'Fallback'};
+        var iconColor=p.status==='online'?'var(--success)':p.status==='configured'||p.status==='rate_limited'?'var(--primary-glow)':p.status==='not_configured'||p.status==='error'?'var(--danger)':p.status==='simulated'||p.status==='coming_soon'?'var(--ash)':'var(--ash)';
+        var envHtml=p.env&&p.env.length?'<span><i class="fas fa-key"></i> '+p.env.join(', ')+'</span>':'';
+        return '<div class="svc-card"><div class="svc-top"><div class="svc-icon" style="background:rgba('+(p.status==='online'?'16,185,129':p.status==='configured'?'99,102,241':p.status==='rate_limited'?'245,158,11':'239,68,68')+',0.1);color:'+iconColor+'"><i class="fas '+p.icon+'"></i></div><div class="svc-info"><div class="svc-name">'+p.name+' <span class="svc-badge '+p.status+'">'+(statusLabels[p.status]||p.status)+'</span></div><div class="svc-desc">'+p.desc+'</div><div class="svc-meta">'+(p.limit?'<span><i class="fas fa-gauge"></i> '+p.limit+'</span>':'')+envHtml+'</div></div></div></div>';
+      }).join('');
+      html+='</div></div>';
+    });
+    el.innerHTML=html;
+  }catch(e){el.innerHTML='<div class="empty-state"><i class="fas fa-exclamation-triangle" style="color:var(--warning)"></i><p>Error: '+e.message+'</p></div>';}
+}
+
+// === ADMIN: SERVICE ORDERS ===
+async function loadAdminServiceOrders(){
+  var el=document.getElementById('serviceOrdersList');
+  el.innerHTML='<div class="loading"><i class="fas fa-spinner fa-spin"></i></div>';
+  try{
+    var r=await fetch('/api/admin/service-orders',{headers:apiHeaders()});
+    var data=await r.json();
+    if(!data.success||!data.orders.length){
+      el.innerHTML='<div class="empty-state"><i class="fas fa-clipboard-list"></i><p>No service orders yet</p></div>';
+      return;
+    }
+    var st=data.stats||{};
+    document.getElementById('svcoPending').textContent=st.pending_review||0;
+    document.getElementById('svcoForwarded').textContent=st.forwarded||0;
+    document.getElementById('svcoCompleted').textContent=st.completed||0;
+    document.getElementById('svcoTotal').textContent=st.total||0;
+    el.innerHTML='<div class="table-wrap"><table><tr><th>Order</th><th>User</th><th>Type</th><th>Project</th><th>Files</th><th>Status</th><th>Date</th><th>Actions</th></tr>'+data.orders.map(function(o){
+      var statusLabels={pending_review:'Pending Review',forwarded:'Forwarded',completed:'Completed',rejected:'Rejected'};
+      var statusBadges={pending_review:'badge-warning',forwarded:'badge-info',completed:'badge-success',rejected:'badge-danger'};
+      return '<tr><td style="font-weight:600;color:var(--white);font-size:11px">'+o.id.slice(-10).toUpperCase()+'</td><td style="font-size:12px;color:var(--pearl)">'+(o.userName||o.userEmail||'Unknown')+'</td><td><i class="fas '+(o.type==='pcb'?'fa-microchip':o.type==='3d'?'fa-cube':'fa-box')+'" style="color:'+(o.type==='pcb'?'var(--warning)':'var(--success)')+'"></i> '+o.type+'</td><td style="font-size:12px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(o.project?.title||o.project?.fileId||'-')+'</td><td>'+(o.files?o.files.length:0)+' file(s)</td><td><span class="badge '+(statusBadges[o.status]||'badge-secondary')+'">'+(statusLabels[o.status]||o.status)+'</span></td><td style="font-size:12px;color:var(--ash)">'+new Date(o.createdAt).toLocaleDateString()+'</td><td><div style="display:flex;gap:4px"><button class="btn btn-sm btn-secondary" onclick="showServiceOrderDetail(\''+o.id+'\')"><i class="fas fa-eye"></i></button>'+(o.status==='pending_review'?'<button class="btn btn-sm btn-success" onclick="showForwardModal(\''+o.id+'\')"><i class="fas fa-forward"></i></button>':'')+'</div></td></tr>';
+    }).join('')+'</table></div>';
+  }catch(e){el.innerHTML='<div class="empty-state"><i class="fas fa-exclamation-triangle" style="color:var(--danger)"></i><p>Error: '+e.message+'</p></div>'}
+}
+
+async function showServiceOrderDetail(id){
+  try{
+    var r=await fetch('/api/admin/service-orders/'+id,{headers:apiHeaders()});
+    var data=await r.json();
+    if(!data.success||!data.order)throw new Error('Not found');
+    var o=data.order;
+    document.getElementById('svcDetailTitle').textContent='Order '+(o.project?.title||o.id.slice(-10).toUpperCase());
+    document.getElementById('svcDetailSub').textContent='Review manufacturing request';
+    var statusLabels={pending_review:'Pending Review',forwarded:'Forwarded',completed:'Completed',rejected:'Rejected'};
+    var statusColors={pending_review:'var(--warning)',forwarded:'var(--primary-glow)',completed:'var(--success)',rejected:'var(--danger)'};
+    var filesHtml=o.files&&o.files.length?'<div style="margin-top:12px"><h4 style="font-size:13px;color:var(--white);margin-bottom:6px">Attached Files</h4>'+o.files.map(function(f){
+      var sizeStr=f.size>1024?(f.size/1024).toFixed(1)+' KB':'<1 KB';
+      return '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--graphite);border-radius:8px;margin-bottom:4px"><i class="fas '+(f.type==='gerber'?'fa-file-zipper':f.type==='stl'?'fa-cube':'fa-file-code')+'" style="color:var(--primary);font-size:14px"></i><div style="flex:1"><div style="font-size:12px;color:var(--white);font-weight:500">'+f.name+'</div><div style="font-size:10px;color:var(--ash)">'+f.label+' · '+sizeStr+'</div></div><a href="/api/admin/service-orders/'+o.id+'/files/'+f.name+'" target="_blank" class="btn btn-sm btn-secondary"><i class="fas fa-download"></i></a></div>';
+    }).join('')+'</div>':'<p style="font-size:12px;color:var(--ash);margin-top:8px">No files attached</p>';
+    document.getElementById('svcDetailBody').innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px"><div style="background:var(--surface);border:1px solid var(--glass-border);border-radius:10px;padding:14px"><div style="font-size:10px;color:var(--ash);text-transform:uppercase;letter-spacing:.5px">Customer</div><div style="font-size:13px;color:var(--white);font-weight:600;margin-top:4px">'+(o.userName||'N/A')+'</div><div style="font-size:11px;color:var(--ash)">'+o.userEmail+'</div></div><div style="background:var(--surface);border:1px solid var(--glass-border);border-radius:10px;padding:14px"><div style="font-size:10px;color:var(--ash);text-transform:uppercase;letter-spacing:.5px">Order Info</div><div style="font-size:13px;color:var(--white);font-weight:600;margin-top:4px">'+(o.type==='pcb'?'PCB':'3D Print')+'</div><div style="font-size:11px;color:var(--ash)">Qty: '+o.quantity+'</div></div></div>'+(o.notes?'<div style="background:var(--surface);border:1px solid var(--glass-border);border-radius:10px;padding:14px;margin-bottom:12px"><div style="font-size:10px;color:var(--ash);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Customer Notes</div><div style="font-size:12px;color:var(--pearl)">'+o.notes+'</div></div>':'')+'<div style="display:flex;align-items:center;gap:8px;padding:12px;background:rgba('+(o.status==='forwarded'?'99,102,241':o.status==='completed'?'16,185,129':'245,158,11')+',0.08);border-radius:10px;margin-bottom:12px"><span class="badge '+(statusBadges[o.status]||'badge-secondary')+'" style="font-size:11px">'+(statusLabels[o.status]||o.status)+'</span>'+(o.forwardedTo&&o.forwardedTo.name?'<span style="font-size:12px;color:var(--ash)">Forwarded to <strong style="color:var(--white)">'+o.forwardedTo.name+'</strong></span>':'<span style="font-size:12px;color:var(--ash)">Awaiting review</span>')+'</div>'+filesHtml+(o.adminNotes?'<div style="background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.15);border-radius:10px;padding:14px;margin-top:12px"><div style="font-size:10px;color:var(--warning);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Admin Notes</div><div style="font-size:12px;color:var(--pearl)">'+o.adminNotes+'</div></div>':'');
+    document.getElementById('svcDetailModal').style.display='flex';
+  }catch(e){showToast(e.message,'error')}
+}
+
+var _forwardingOrderId=null;
+async function showForwardModal(id){
+  _forwardingOrderId=id;
+  document.getElementById('forwardResult').innerHTML='';
+  document.getElementById('forwardBtn').disabled=false;
+  document.getElementById('forwardBtn').innerHTML='<i class="fas fa-paper-plane"></i> Forward Order';
+  var partnersEl=document.getElementById('forwardPartners');
+  partnersEl.innerHTML='<div class="loading"><i class="fas fa-spinner fa-spin"></i></div>';
+  document.getElementById('forwardModal').style.display='flex';
+  try{
+    var r=await fetch('/api/order/partners');
+    var pd=await r.json();
+    var partners=pd.partners?pd.partners.pcb.concat(pd.partners['3d']||[]).concat(pd.partners.hosting||[]):[];
+    partnersEl.innerHTML='<div class="partner-chips">'+partners.map(function(p,i){
+      return '<div class="partner-chip'+(i===0?' selected':'')+'" onclick="document.querySelectorAll(\'.partner-chip\').forEach(function(c){c.classList.remove(\'selected\')});this.classList.add(\'selected\');window._fwdPartner=this.dataset.url;window._fwdPartnerName=this.dataset.name" data-url="'+p.url+'" data-name="'+p.name+'"><i class="'+p.icon+'"></i> '+p.name+'<span style="font-size:10px;opacity:.7;display:block">'+p.desc+'</span></div>';
+    }).join('')+'</div>';
+    window._fwdPartner=partners[0]?.url||'';
+    window._fwdPartnerName=partners[0]?.name||'';
+  }catch(e){partnersEl.innerHTML='<p style="color:var(--ash);font-size:12px">Could not load partners</p>'}
+}
+
+async function confirmForward(){
+  if(!_forwardingOrderId||!window._fwdPartnerName){showToast('Select a partner','error');return;}
+  var btn=document.getElementById('forwardBtn');
+  btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Forwarding...';
+  try{
+    var r=await fetch('/api/admin/service-orders/'+_forwardingOrderId+'/forward',{method:'POST',headers:apiHeaders(),body:JSON.stringify({partnerName:window._fwdPartnerName,partnerUrl:window._fwdPartner||'',adminNotes:document.getElementById('forwardNotes').value})});
+    var data=await r.json();
+    if(data.success){
+      document.getElementById('forwardResult').innerHTML='<div style="padding:14px;background:rgba(16,185,129,0.1);border-radius:10px;text-align:center;margin-top:12px"><i class="fas fa-check-circle" style="color:var(--success);font-size:24px"></i><p style="color:var(--success);font-weight:600;margin:4px 0">Forwarded!</p><p style="font-size:12px;color:var(--ash)">'+data.message+'</p></div>';
+      setTimeout(function(){closeModal('forwardModal');loadAdminServiceOrders();},1500);
+    }else throw new Error(data.error||'Failed');
+  }catch(e){document.getElementById('forwardResult').innerHTML='<p style="color:var(--danger);font-size:12px;text-align:center;margin-top:8px">'+e.message+'</p>';btn.disabled=false;btn.innerHTML='<i class="fas fa-paper-plane"></i> Forward Order';}
+}
+
+// === SETTINGS ===
+async function saveProfile(){
+  var body={name:document.getElementById('setName').value,phone:document.getElementById('setPhone').value};
+  try{var r=await fetch('/api/auth/profile',{method:'PUT',headers:apiHeaders(),body:JSON.stringify(body)});var data=await r.json();if(data.success||data.user){document.getElementById('dashName').textContent=body.name||'User';document.getElementById('dashAvatar').textContent=(body.name||'U')[0].toUpperCase();showToast('Profile updated!','success')}}catch(e){showToast('Failed','error')}
+}
+
+// === BOT ===
+function toggleBot(){document.getElementById('botPanel').classList.toggle('open');if(document.getElementById('botPanel').classList.contains('open'))document.getElementById('botInput')?.focus()}
+async function sendBot(){
+  var inp=document.getElementById('botInput');var msg=inp.value.trim();if(!msg)return;inp.value='';
+  var msgs=document.getElementById('botMsgs');
+  msgs.innerHTML+='<div class="bot-msg outgoing">'+msg+'</div>';
+  msgs.innerHTML+='<div class="bot-msg incoming" id="botThink"><i class="fas fa-spinner fa-spin"></i> Thinking...</div>';
+  msgs.scrollTop=msgs.scrollHeight;
+  try{
+    var r=await fetch('/api/ai/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:[{role:'user',content:msg}]})});
+    var data=await r.json();var think=document.getElementById('botThink');
+    if(think)think.outerHTML='<div class="bot-msg incoming">'+(data.response||data.reply||data.message||'I can help with your projects and orders!')+'</div>';
+  }catch(e){var el=document.getElementById('botThink');if(el)el.outerHTML='<div class="bot-msg incoming">Sorry, connection issue. Try again!</div>'}
+  msgs.scrollTop=msgs.scrollHeight;
+}
+
+// === UTILITIES ===
+function closeModal(id){document.getElementById(id).style.display='none'}
+function openCodeViewer(id){window.open('/ai-builder.html?viewCode='+id,'_blank')}
+function clearToken(){localStorage.removeItem('authToken');localStorage.removeItem('token');localStorage.removeItem('keycode_token')}
+function logout(){clearToken();window.location.href='/'}
+function showToast(msg,type){
+  var t=document.createElement('div');t.className='toast '+(type||'success');t.textContent=msg;
+  document.body.appendChild(t);setTimeout(function(){t.style.opacity='0';t.style.transition='.3s';setTimeout(function(){t.remove()},300)},2500)
+}
+
+// === PASSKEY HELPERS ===
+function base64urlToBuffer(b){
+  var s=b.replace(/-/g,'+').replace(/_/g,'/');
+  while(s.length%4) s+='=';
+  return Uint8Array.from(atob(s),function(c){return c.charCodeAt(0)}).buffer;
+}
+function bufferToBase64url(buf){
+  var s=btoa(String.fromCharCode.apply(null,new Uint8Array(buf)));
+  return s.replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+}
+function mapCredential(c){
+  return {
+    id:c.id,type:c.type,rawId:bufferToBase64url(c.rawId),
+    response:{
+      clientDataJSON:bufferToBase64url(c.response.clientDataJSON),
+      authenticatorData:bufferToBase64url(c.response.authenticatorData),
+      signature:bufferToBase64url(c.response.signature),
+      userHandle:c.response.userHandle?bufferToBase64url(c.response.userHandle):null,
+      transports:c.response.getTransports?c.response.getTransports():[]
+    }
+  };
+}
+
+async function loadPasskeys(){
+  try{
+    var r=await fetch('/api/auth/webauthn/credentials',{headers:apiHeaders()});
+    if(!r.ok)throw new Error('Auth failed');
+    var creds=await r.json();
+    var el=document.getElementById('passkeyList');
+    if(!creds||creds.length===0){
+      el.innerHTML='<p style="color:var(--ash);font-size:12px">No passkeys registered yet.</p>';
+    }else{
+      el.innerHTML=creds.map(function(c){
+        var label=c.deviceName||'Passkey';
+        var icon=c.isHardwareBacked?'<i class="fas fa-usb-chip" style="color:var(--primary)"></i>':'<i class="fas fa-mobile" style="color:var(--accent)"></i>';
+        var date=new Date(c.lastUsed).toLocaleDateString();
+        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--slate);border-radius:8px;margin-bottom:6px">'
+          +'<span>'+icon+' <strong>'+label+'</strong> <span style="font-size:11px;color:var(--ash)">(last used '+date+')</span></span>'
+          +'<button class="btn btn-danger btn-xs" onclick="deletePasskey(\''+c._id+'\')" style="padding:4px 8px;font-size:11px"><i class="fas fa-trash"></i></button>'
+          +'</div>';
+      }).join('');
+    }
+  }catch(e){
+    document.getElementById('passkeyList').innerHTML='<p style="color:var(--ash);font-size:12px">Could not load passkeys.</p>';
+  }
+}
+
+async function registerPasskey(){
+  try{
+    var beginRes=await fetch('/api/auth/webauthn/register/begin',{method:'POST',headers:apiHeaders()});
+    if(!beginRes.ok){showToast('Failed to start registration','error');return}
+    var opts=await beginRes.json();
+    opts.challenge=base64urlToBuffer(opts.challenge);
+    opts.user.id=base64urlToBuffer(opts.user.id);
+    if(opts.excludeCredentials){
+      opts.excludeCredentials=opts.excludeCredentials.map(function(c){c.id=base64urlToBuffer(c.id);return c});
+    }
+    var cred=await navigator.credentials.create({publicKey:opts});
+    var regResp=mapCredential(cred);
+    regResp.deviceName='My Passkey';
+    var completeRes=await fetch('/api/auth/webauthn/register/complete',{
+      method:'POST',headers:apiHeaders(),
+      body:JSON.stringify(regResp)
+    });
+    var data=await completeRes.json();
+    if(data.verified){
+      showToast('Passkey registered successfully!','success');
+      loadPasskeys();
+    }else{
+      showToast('Registration failed','error');
+    }
+  }catch(e){
+    showToast('Error: '+(e.message||'unknown'),'error');
+  }
+}
+
+async function deletePasskey(id){
+  if(!confirm('Remove this passkey?'))return;
+  try{
+    await fetch('/api/auth/webauthn/credentials/'+id,{method:'DELETE',headers:apiHeaders()});
+    showToast('Passkey removed','success');
+    loadPasskeys();
+  }catch(e){
+    showToast('Failed to remove','error');
+  }
+}
+
+// === INIT ===
+checkAuth().then(function(){loadOverview();loadPasskeys()});
+
+// === KEYBOARD ===
+document.addEventListener('keydown',function(e){
+  if(e.key==='?'&&!e.ctrlKey&&!e.metaKey){toggleBot()}
+  if(e.key==='Escape'){document.getElementById('botPanel')?.classList.remove('open');document.querySelectorAll('.modal-overlay').forEach(function(m){m.style.display='none'})}
+});
+
+// Date
+var d=new Date();var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+var days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+// ===== EMBEDS =====
+function fetchCodePenEmbed() {
+  var url=document.getElementById('codepenUrl').value.trim();
+  if(!url){showToast('Please enter a CodePen URL');return}
+  fetch('/api/embed/codepen?url='+encodeURIComponent(url))
+    .then(function(r){return r.json()})
+    .then(function(d){
+      if(!d.success){showToast(d.error||'Failed');return}
+      document.getElementById('codepenResult').style.display='block';
+      document.getElementById('codepenEmbedCode').value=d.html;
+      document.getElementById('codepenPreview').innerHTML=d.html;
+      showToast('Embed generated!');
+    })
+    .catch(function(err){showToast('Error: '+err.message)});
+}
+</script>
+<script>navigator.serviceWorker.register('/sw.js').catch(function(e){console.error('SW registration failed:',e)});</script>
+</body>
+</html>

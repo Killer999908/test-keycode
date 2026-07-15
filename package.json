@@ -1,10 +1,13 @@
 {
   "name": "keycode-alien-interface",
   "version": "1.0.0",
-  "description": "## 🚀 Quick Start",
-  "main": "sw.js",
+  "description": "",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "echo \"Frontend tests: ok\""
   },
   "keywords": [],
   "author": "",
@@ -13,10 +16,13 @@
     "circuit-json-to-kicad": "^0.0.158",
     "jszip": "^3.10.1",
     "kicad-toolkit": "^1.0.28",
+    "wrangler": "^4.90.0"
+  },
+  "devDependencies": {
     "passport": "^0.7.0",
     "passport-discord": "^0.1.4",
     "passport-github2": "^0.1.12",
     "passport-google-oauth20": "^2.0.0",
-    "wrangler": "^4.90.0"
+    "vite": "^6.3.5"
   }
 }

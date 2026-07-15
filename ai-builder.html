@@ -58,7 +58,11 @@
   <link rel="dns-prefetch" href="https://fonts.googleapis.com">
 
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" media="print" onload="this.media='all'">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha384-/o6I2CkkWC//PSjvWC/eYN7l3xM3tJm8ZzVkCOfp//W05QcE3mlGskpoHB6XqI+B" crossorigin="anonymous" media="print" onload="this.media='all'">
+  <!-- Monaco Editor (free, browser-based VS Code engine) -->
+  <link rel="stylesheet" data-name="vs/editor/editor.main" href="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/editor/editor.main.min.css">
+  <!-- Stripe.js (inline payments, no redirect) -->
+  <script src="https://js.stripe.com/v3/"></script>
   <style>
     :root {
       --void: #030305; --obsidian: #0a0a0f; --graphite: #12121a; --slate: #1a1a24;
@@ -125,9 +129,6 @@
     .ai-chat-input-bar button:hover { transform: scale(1.05); box-shadow: 0 4px 16px rgba(99,102,241,0.3); }
     .ai-chat-input-bar button:disabled { opacity: .4; cursor: not-allowed; transform: none; }
     .ai-chat-input-bar .input-hint { font-size: 10px; color: var(--ash); text-align: right; padding: 2px 4px 0; opacity: 0.6; }
-    .ai-chat-suggestions { display: flex; flex-wrap: wrap; gap: 4px; padding: 8px 16px 12px; border-top: 1px solid var(--glass-border); background: var(--slate); }
-    .ai-chat-suggestions span { padding: 4px 10px; border-radius: 14px; font-size: 11px; background: var(--obsidian); border: 1px solid var(--glass-border); color: var(--ash); cursor: pointer; transition: .3s; }
-    .ai-chat-suggestions span:hover { border-color: var(--primary); color: var(--white); background: rgba(99,102,241,0.1); }
     /* Preview panel */
     .ai-preview-panel { flex: 1; display: flex; flex-direction: column; background: var(--slate); }
     .ai-preview-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid var(--glass-border); background: var(--slate); }
@@ -141,9 +142,6 @@
     .ai-preview-placeholder i { font-size: 48px; margin-bottom: 16px; color: #ccc; }
     .ai-preview-placeholder h3 { font-size: 18px; margin: 0 0 8px; color: #666; }
     .ai-preview-placeholder p { font-size: 13px; margin: 0 0 20px; color: #999; }
-    .ai-preview-suggestions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
-    .ai-preview-suggestions span { padding: 8px 16px; border-radius: 8px; font-size: 12px; background: #f0f0f0; border: 1px solid #e0e0e0; color: #555; cursor: pointer; transition: .3s; }
-    .ai-preview-suggestions span:hover { background: var(--primary); border-color: var(--primary); color: #fff; }
     .ai-launch-bar { border-top: 1px solid var(--glass-border); padding: 10px 16px; background: var(--slate); }
     .ai-launch-info { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
     .ai-launch-badge { padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; background: rgba(16,185,129,0.15); color: #10b981; }
@@ -188,6 +186,20 @@
     .ai-tool-output .meta-item label { font-size: 10px; text-transform: uppercase; color: var(--ash); letter-spacing: 0.5px; }
     .ai-tool-output .meta-item span { display: block; font-size: 13px; font-weight: 600; margin-top: 4px; color: var(--pearl); }
     @media(max-width:768px){ .ai-builder-body{flex-direction:column} .ai-chat-panel{width:100%;min-width:auto;border-right:none;border-bottom:1px solid var(--glass-border);max-height:40vh} .ai-preview-container{min-height:200px} .ai-header-tools{display:none} }
+    /* Code Viewer Modal */
+    .code-viewer-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.85); z-index:10001; display:none; align-items:center; justify-content:center; backdrop-filter:blur(8px); }
+    .code-viewer-modal { background:var(--obsidian); border:1px solid var(--glass-border); border-radius:16px; width:92%; max-width:1100px; height:88vh; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 25px 60px rgba(0,0,0,0.5); }
+    .code-viewer-header { display:flex; align-items:center; justify-content:space-between; padding:12px 20px; border-bottom:1px solid var(--glass-border); flex-shrink:0; }
+    .code-viewer-header h3 { margin:0; font-size:15px; color:var(--white); display:flex; align-items:center; gap:8px; }
+    .code-viewer-tabs { display:flex; gap:2px; padding:0 20px; background:var(--graphite); border-bottom:1px solid var(--glass-border); overflow-x:auto; flex-shrink:0; }
+    .code-viewer-tab { padding:8px 16px; font-size:12px; cursor:pointer; border-bottom:2px solid transparent; color:var(--ash); transition:.2s; white-space:nowrap; display:flex; align-items:center; gap:6px; }
+    .code-viewer-tab:hover { color:var(--white); background:rgba(255,255,255,0.03); }
+    .code-viewer-tab.active { color:var(--primary-glow); border-bottom-color:var(--primary); }
+    .code-viewer-tab .lang-dot { display:inline-block; width:8px; height:8px; border-radius:50%; }
+    .code-viewer-body { flex:1; overflow:hidden; position:relative; min-height:0; }
+    .code-viewer-footer { display:flex; align-items:center; justify-content:space-between; padding:10px 20px; border-top:1px solid var(--glass-border); font-size:11px; color:var(--ash); flex-shrink:0; }
+    .code-viewer-footer button { background:var(--slate); border:1px solid var(--glass-border); color:var(--ash); padding:5px 12px; border-radius:6px; cursor:pointer; font-size:11px; transition:.2s; }
+    .code-viewer-footer button:hover { background:rgba(255,255,255,0.1); color:var(--white); }
   </style>
 </head>
 <body>
@@ -210,33 +222,22 @@
           <textarea id="aiChatInput" rows="1" placeholder="Describe your idea... e.g. Design a PCB, create a 3D model, write firmware, build a website..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMessage()}"></textarea>
           <button id="aiChatSendBtn" onclick="sendChatMessage()"><i class="fas fa-paper-plane"></i></button>
         </div>
-        <div class="ai-chat-suggestions">
-          <span onclick="quickSuggestion('Design a PCB for an ESP32 temperature sensor')"><i class="fas fa-microchip"></i> PCB</span>
-          <span onclick="quickSuggestion('Create a 3D enclosure 80x50x30mm with mounting holes')"><i class="fas fa-cube"></i> 3D Model</span>
-          <span onclick="quickSuggestion('Write Arduino firmware for a servo motor controller')"><i class="fas fa-code"></i> Firmware</span>
-          <span onclick="quickSuggestion('Build a modern landing page for my coffee shop')"><i class="fas fa-globe"></i> Website</span>
-          <span onclick="quickSuggestion('Design a 12V to 5V voltage divider circuit')"><i class="fas fa-bolt"></i> Circuit</span>
-        </div>
       </div>
     <div class="ai-preview-panel">
       <div class="ai-preview-toolbar">
-        <span class="ai-preview-url" id="aiPreviewUrl">keycode.studio/your-site</span>
+        <span class="ai-preview-url" id="aiPreviewUrl">keycode.studio/project</span>
         <div class="ai-preview-toolbar-actions">
-          <button onclick="downloadAIWebsite()" title="Download HTML"><i class="fas fa-download"></i></button>
-          <button onclick="copyAICode()" title="Copy Code"><i class="fas fa-copy"></i></button>
-          <button onclick="openAIBuilderFullscreen()" title="Fullscreen"><i class="fas fa-expand"></i></button>
+     <button onclick="downloadAIWebsite()" title="Download HTML"><i class="fas fa-download"></i></button>
+      <button onclick="copyAICode()" title="Copy Code"><i class="fas fa-copy"></i></button>
+      <button onclick="refreshPreview()" title="Refresh Preview"><i class="fas fa-sync-alt"></i></button>
+      <button onclick="openAIBuilderFullscreen()" title="Fullscreen"><i class="fas fa-expand"></i></button>
         </div>
       </div>
       <div class="ai-preview-container" id="aiPreviewContainer">
         <div class="ai-preview-placeholder" id="aiPreviewPlaceholder">
           <i class="fas fa-globe"></i>
-          <h3>Your Website Preview</h3>
-          <p>Describe your website in the chat to generate it</p>
-          <div class="ai-preview-suggestions">
-            <span onclick="quickSuggestion('Create a landing page for a tech startup')">Startup Landing Page</span>
-            <span onclick="quickSuggestion('Build a restaurant website with online menu')">Restaurant</span>
-            <span onclick="quickSuggestion('Create a personal portfolio page')">Portfolio</span>
-          </div>
+          <h3>Project Preview</h3>
+          <p>Describe your project in the chat to generate it</p>
         </div>
         <iframe id="aiPreviewFrame" style="display:none;" sandbox="allow-scripts allow-forms allow-same-origin"></iframe>
       </div>
@@ -476,8 +477,10 @@
     function showProjectPanel(files, status) {
       var panel = document.getElementById('aiProjectPanel');
       if (panel) panel.style.display = 'block';
-      document.getElementById('aiLaunchBar').style.display = 'block';
-      document.getElementById('aiLaunchBadge').textContent = files.length + ' files generated';
+      var lb = document.getElementById('aiLaunchBar');
+      if (lb) lb.style.display = 'block';
+      var badge = document.getElementById('aiLaunchBadge');
+      if (badge) badge.textContent = files.length + ' files generated';
       updateUnlockUI(status);
     }
 
@@ -534,65 +537,109 @@
       sendBtn.disabled = true;
 
       try {
-        var res = await fetch('/api/ai/analyze', {
+        var res = await fetch('/api/ai/consult', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ description: msg })
+          body: JSON.stringify({ messages: aiChatHistory })
         });
         hideTyping();
         var data = await res.json();
 
-        if (!data.success) {
-          addMessage('❌ ' + (data.error || 'Analysis failed'), 'bot');
+        if (data.error) {
+          addMessage('❌ ' + data.error, 'bot');
           aiGenerating = false; sendBtn.disabled = false; input.focus();
           return;
         }
 
-        var typeIcons = { cad:'🔧', pcb:'🔌', mcu:'🤖', website:'🌐', circuit:'⚡', general:'💬' };
-        var typeLabel = { cad:'3D CAD Model', pcb:'PCB Design', mcu:'Firmware', website:'Website', circuit:'Circuit Design', general:'Response' };
-        var icon = typeIcons[data.taskType] || '💬';
-        var label = typeLabel[data.taskType] || 'Result';
-        var responseText = '';
+        // Show the consultant's message
+        addMessage(data.message, 'bot');
+        aiChatHistory.push({ role: 'assistant', content: data.message });
 
-        if (data.taskType === 'cad' && data.openscad) {
-          responseText = `<b>${icon} ${label}</b> — ${data.summary || ''}<br><br>` +
-            `<details><summary style="cursor:pointer;font-weight:600">OpenSCAD Code</summary><pre style="background:rgba(0,0,0,0.3);padding:10px;border-radius:8px;overflow-x:auto;font-size:12px">${escHtml(data.openscad)}</pre></details>`;
-          if (data.preview3d) {
-            responseText += `<br><a href="${data.preview3d}" target="_blank" style="display:inline-block;padding:6px 16px;background:#6366f1;color:white;border-radius:8px;text-decoration:none;font-size:12px;margin-right:6px">View 3D</a>`;
-          }
-          responseText += `<a href="/api/ai/export/${data.fileId}/stl" style="display:inline-block;padding:6px 16px;background:rgba(255,255,255,0.1);color:white;border-radius:8px;text-decoration:none;font-size:12px;margin-right:6px">STL</a>` +
-            `<a href="/api/ai/export/${data.fileId}/openscad" style="display:inline-block;padding:6px 16px;background:rgba(255,255,255,0.1);color:white;border-radius:8px;text-decoration:none;font-size:12px">OpenSCAD</a>`;
-        } else if ((data.taskType === 'pcb' || data.taskType === 'circuit') && data.components) {
-          responseText = `<b>${icon} ${label}</b> — ${data.summary || ''}<br><b>Components:</b> ${data.components.length}<br>`;
-          if (data.simulation && !data.simulation.error) {
-            responseText += `<details><summary style="cursor:pointer;font-weight:600">SPICE Results</summary><pre style="background:rgba(0,0,0,0.3);padding:10px;border-radius:8px;font-size:12px">${escHtml((data.simulation.values||[]).slice(0,8).join('\n'))}</pre></details>`;
-          }
-          responseText += `<br><a href="/api/ai/export/${data.fileId}/kicad" style="display:inline-block;padding:6px 16px;background:#6366f1;color:white;border-radius:8px;text-decoration:none;font-size:12px;margin-right:6px">KiCad</a>` +
-            `<a href="/api/ai/export/${data.fileId}/ltspice" style="display:inline-block;padding:6px 16px;background:rgba(255,255,255,0.1);color:white;border-radius:8px;text-decoration:none;font-size:12px;margin-right:6px">LTspice</a>`;
-          if (data.simulateUrl) {
-            responseText += `<a href="${data.simulateUrl}" target="_blank" style="display:inline-block;padding:6px 16px;background:rgba(255,255,255,0.1);color:white;border-radius:8px;text-decoration:none;font-size:12px">Falstad Sim</a>`;
-          }
-        } else if (data.taskType === 'mcu' && data.code) {
-          responseText = `<b>${icon} ${label}</b> — ${data.summary || ''}<br><br>` +
-            `<details open><summary style="cursor:pointer;font-weight:600">Code</summary><pre style="background:rgba(0,0,0,0.3);padding:10px;border-radius:8px;overflow-x:auto;font-size:12px">${escHtml(data.code)}</pre></details>`;
-          if (data.explanation) responseText += `<br><i>${data.explanation}</i>`;
-        } else if (data.taskType === 'website') {
-          responseText = `<b>${icon} ${label}</b><br>${data.summary || ''}`;
-          if (data.html) {
-            responseText += `<br><a href="/api/ai/download/${data.fileId}" style="display:inline-block;padding:6px 16px;background:#6366f1;color:white;border-radius:8px;text-decoration:none;font-size:12px">Download HTML</a>`;
-          }
-        } else if (data.response) {
-          responseText = '<b>💬 Response</b><br>' + data.response.replace(/\n/g, '<br>');
-        } else {
-          responseText = `<b>${icon} ${label}</b> — ${data.summary || 'Done'}`;
-        }
+        // If AI decided to generate, call analyze (with streaming for websites)
+        if (data.generate && data.description) {
+          var isWebsite = /website|web|landing page|html|css|site/.test(data.description);
 
-        addMessage(responseText, 'bot');
-        aiChatHistory.push({ role: 'assistant', content: responseText });
+          if (isWebsite) {
+            // Streaming preview for websites
+            showTyping();
+            addMessage('<i class="fas fa-spinner fa-spin"></i> Building your website... <span id="streamStatus" style="color:var(--ash);font-size:12px">AI is coding</span>', 'bot');
 
-        // Show website preview if HTML was generated
-        if (data.html) {
-          updatePreview(data.html);
-          showProjectPanel([{ path: 'index.html', size: data.html.length, type: 'html' }], 'locked');
+            try {
+              var streamRes = await fetch('/api/ai/stream-website', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ description: data.description })
+              });
+              var reader = streamRes.body.getReader();
+              var decoder = new TextDecoder();
+              var buffer = '';
+              var streamHtml = '';
+              var streamCompleted = false;
+
+              while (true) {
+                var { done, value } = await reader.read();
+                if (done) break;
+                buffer += decoder.decode(value, { stream: true });
+                var lines = buffer.split('\n');
+                buffer = lines.pop() || '';
+
+                for (var _i = 0; _i < lines.length; _i++) {
+                  var line = lines[_i];
+                  if (!line.startsWith('data: ')) continue;
+                  try {
+                    var evt = JSON.parse(line.slice(6));
+                    if (evt.type === 'token') {
+                      document.getElementById('streamStatus').textContent = 'Coding...';
+                    } else if (evt.type === 'html' && evt.html) {
+                      streamHtml = evt.html;
+                      updatePreview(streamHtml);
+                      document.getElementById('streamStatus').textContent = '🔥 Live preview updating...';
+                    } else if (evt.type === 'status' && evt.message) {
+                      document.getElementById('streamStatus').textContent = evt.message;
+                    } else if (evt.type === 'complete' && evt.data) {
+                      streamCompleted = true;
+                      var genData = evt.data;
+                      // Remove the streaming message
+                      var msgs = document.getElementById('aiMessagesList');
+                      if (msgs.lastChild) msgs.removeChild(msgs.lastChild);
+                      hideTyping();
+                      renderGenerationResult(genData);
+                    } else if (evt.type === 'error') {
+                      document.getElementById('streamStatus').textContent = '⚠️ ' + (evt.message || 'Error');
+                    }
+                  } catch (e) { /* skip parse errors */ }
+                }
+              }
+
+              if (!streamCompleted) {
+                // Fallback: re-render if stream didn't complete properly
+                hideTyping();
+                var msgs = document.getElementById('aiMessagesList');
+                if (msgs.lastChild) msgs.removeChild(msgs.lastChild);
+                addMessage('⚠️ Stream ended unexpectedly. Please try again.', 'bot');
+              }
+            } catch (err) {
+              hideTyping();
+              addMessage('❌ Stream error: ' + err.message, 'bot');
+            }
+          } else {
+            // Non-website: use standard analyze endpoint
+            showTyping();
+            var genRes = await fetch('/api/ai/analyze', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ description: data.description })
+            });
+            hideTyping();
+            var genData = await genRes.json();
+
+            if (!genData.success) {
+              addMessage('❌ ' + (genData.error || 'Generation failed'), 'bot');
+              aiGenerating = false; sendBtn.disabled = false; input.focus();
+              return;
+            }
+
+            renderGenerationResult(genData);
+          }
+
+          aiGenerating = false; sendBtn.disabled = false; input.focus();
         }
       } catch(err) {
         hideTyping();
@@ -601,9 +648,74 @@
       aiGenerating = false; sendBtn.disabled = false; input.focus();
     }
 
-    function quickSuggestion(text) {
-      document.getElementById('aiChatInput').value = text;
-      sendChatMessage();
+    var _pendingGenData = null;
+
+    function renderGenerationResult(genData) {
+      _pendingGenData = genData;
+      var typeIcons = { cad:'🔧', pcb:'🔌', mcu:'🤖', website:'🌐', circuit:'⚡', general:'💬' };
+      var typeLabel = { cad:'3D CAD Model', pcb:'PCB Design', mcu:'Firmware', website:'Website', circuit:'Circuit Design', general:'Response' };
+      var icon = typeIcons[genData.taskType] || '💬';
+      var label = typeLabel[genData.taskType] || 'Result';
+      var taskType = genData.taskType || 'general';
+
+      // Show a compact summary with SVG preview, then payment CTA
+      var responseText = `<div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:12px;padding:16px;margin:8px 0">`;
+      responseText += `<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px"><span style="font-size:24px">${icon}</span><div><b style="font-size:15px">${label}</b><br><span style="color:var(--ash);font-size:12px">${(genData.summary || genData.description || '').slice(0,100)}</span></div></div>`;
+
+      // Show SVG preview for PCB/CAD
+      if ((taskType === 'pcb' || taskType === 'circuit') && (genData.svg_trace || genData.pcbSvg)) {
+        responseText += `<div style="margin:8px 0;background:rgba(0,0,0,0.2);border-radius:8px;padding:8px;text-align:center;max-height:180px;overflow:hidden">${genData.svg_trace || genData.pcbSvg}</div>`;
+      }
+      if (taskType === 'cad' && genData.preview3d) {
+        responseText += `<div style="text-align:center;padding:8px;color:var(--ash);font-size:12px">🔄 3D model generated (preview available after payment)</div>`;
+      }
+
+      responseText += `<div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.06)">`;
+      responseText += `<span style="color:var(--ash);font-size:12px">${genData.components ? genData.components.length + ' components · ' : ''}${genData.netlist ? genData.netlist.length + ' nets' : ''}${genData.fileCount ? genData.fileCount + ' files' : ''}</span>`;
+      responseText += `<button onclick="proceedToPayment('${taskType}')" class="glow-border-three-d" style="padding:10px 24px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:.3s"><i class="fas fa-lock"></i> Unlock & Get Project</button>`;
+      responseText += `</div></div>`;
+
+      addMessage(responseText, 'bot');
+      aiChatHistory.push({ role: 'assistant', content: responseText });
+
+      // Update preview with placeholder
+      document.getElementById('aiPreviewUrl').textContent = window.location.origin + '/client-panel.html#orders';
+    }
+
+    async function proceedToPayment(taskType) {
+      var token = localStorage.getItem('keycode_token') || localStorage.getItem('token');
+      if (!token) { window.location.href = 'login.html?redirect=ai-builder.html'; return; }
+
+      var genData = _pendingGenData;
+      if (!genData) return;
+
+      var btn = event.target;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating order...';
+
+      try {
+        var res = await fetch('/api/ai/generate-and-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({
+            description: genData.summary || genData.description || 'AI Generated Project',
+            taskType: taskType,
+            projectData: genData
+          })
+        });
+        var data = await res.json();
+        if (data.success && data.redirectUrl) {
+          window.location.href = data.redirectUrl;
+        } else {
+          alert('Failed to create order: ' + (data.error || 'Unknown error'));
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fas fa-lock"></i> Unlock & Get Project';
+        }
+      } catch (err) {
+        alert('Error: ' + err.message);
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-lock"></i> Unlock & Get Project';
+      }
     }
 
     async function unlockProject() {
@@ -756,6 +868,21 @@
       }
     }
 
+    function refreshPreview() {
+      var htmlFile = null;
+      for (var i = 0; i < codeViewerFiles.length; i++) {
+        if (codeViewerFiles[i].name === 'index.html') { htmlFile = codeViewerFiles[i]; break; }
+      }
+      if (htmlFile && htmlFile.content && htmlFile.content.length > 50) {
+        updatePreview(htmlFile.content);
+        showToast('Preview refreshed');
+      } else if (htmlFile) {
+        showToast('HTML content too short for preview', 'warning');
+      } else {
+        showToast('No HTML file loaded. Generate a website first.', 'warning');
+      }
+    }
+
     function copyAICode() { addMessage('📋 Use the Download button to get your project files.', 'bot'); }
     function downloadAIWebsite() {
       if (!aiCurrentProjectId) return;
@@ -853,20 +980,25 @@
     function switchBuilderTab(tab) {
       activeBuilderTab = tab;
       document.querySelectorAll('.ai-header-tab').forEach(function(b) { b.classList.toggle('active', b.dataset.tab === tab); });
-      document.getElementById('aiPreviewContainer').style.display = tab === 'preview' ? '' : 'none';
-      document.getElementById('aiCadPanel').classList.toggle('active', tab === 'cad');
-      document.getElementById('aiPcbPanel').classList.toggle('active', tab === 'pcb');
-      document.getElementById('aiMcuPanel').classList.toggle('active', tab === 'mcu');
-      document.getElementById('aiTaskRouterPanel').classList.toggle('active', tab === 'taskrouter');
-      if (tab !== 'preview') { document.getElementById('aiLaunchBar').style.display = 'none'; }
+      var pc = document.getElementById('aiPreviewContainer');
+      if (pc) pc.style.display = tab === 'preview' ? '' : 'none';
+      var el;
+      el = document.getElementById('aiCadPanel'); if (el) el.classList.toggle('active', tab === 'cad');
+      el = document.getElementById('aiPcbPanel'); if (el) el.classList.toggle('active', tab === 'pcb');
+      el = document.getElementById('aiMcuPanel'); if (el) el.classList.toggle('active', tab === 'mcu');
+      el = document.getElementById('aiTaskRouterPanel'); if (el) el.classList.toggle('active', tab === 'taskrouter');
+      var lb = document.getElementById('aiLaunchBar');
+      if (lb && tab !== 'preview') lb.style.display = 'none';
     }
 
     // ===== CAD: GENERATE =====
     async function generateCAD() {
       var input = document.getElementById('cadInput');
+      if (!input) { showToast('CAD tool is not available in chat mode. Use the AI chat to generate 3D models.', 'warning'); return; }
       var desc = input.value.trim();
       if (!desc) { showToast('Please describe what to design', 'warning'); input.focus(); return; }
       var btn = document.getElementById('cadGenerateBtn');
+      if (!btn) return;
       btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
       document.getElementById('cadOutput').classList.add('show');
       document.getElementById('cadSummaryCard').style.display = 'none';
@@ -1127,7 +1259,7 @@
           delBtn.style.cssText = 'background:none;border:none;color:#ef4444;cursor:pointer;padding:4px;border-radius:4px;opacity:0.5';
           delBtn.onmouseenter = function(){delBtn.style.opacity='1';delBtn.style.background='rgba(239,68,68,0.1)'};
           delBtn.onmouseleave = function(){delBtn.style.opacity='0.5';delBtn.style.background='transparent'};
-          delBtn.onclick = function(e) { e.stopPropagation(); if (confirm('Delete this project?')) fetch('/api/ai/projects/' + p.id, {method:'DELETE'}).then(function(){ loadProjectHistory(); }); };
+          delBtn.onclick = function(e) { e.stopPropagation(); if (confirm('Delete this project?')) fetch('/api/ai/projects/' + p.id, {method:'DELETE'}).then(function(){ loadProjectHistory(); }).catch(function(err) { console.error('[Fetch Error]', err); }); };
           item.querySelector('div:last-child').appendChild(delBtn);
           // View button
           var viewBtn = document.createElement('button');
@@ -1249,6 +1381,27 @@
     addMessage('👋 Welcome to <strong>KEYCODE AI</strong>! Describe the full-stack project you want to build.', 'bot');
     addMessage('Try: <em>"Build a SaaS dashboard with user authentication and a pricing page"</em>', 'bot');
     document.getElementById('aiChatInput').focus();
+
+    // Handle Stripe return (hosting payment success)
+    var urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('launch') === 'success') {
+      var retFileId = urlParams.get('fileId');
+      var retPlanId = urlParams.get('planId');
+      var retProvider = urlParams.get('provider') || 'vercel';
+      if (retFileId && retPlanId) {
+        currentLaunchFileId = retFileId;
+        setTimeout(function() {
+          showLaunchModal(retFileId);
+          document.querySelector('.launch-plan-card[data-plan="' + retPlanId + '"]')?.classList.add('selected');
+          document.querySelector('.launch-plan-card.selected:not([data-plan="' + retPlanId + '"])')?.classList.remove('selected');
+          // Select the right provider
+          document.querySelector('.provider-chip[data-provider="' + retProvider + '"]')?.classList.add('selected');
+          document.querySelector('.provider-chip.selected:not([data-provider="' + retProvider + '"])')?.classList.remove('selected');
+          confirmLaunch();
+          history.replaceState({}, '', '/ai-builder.html');
+        }, 500);
+      }
+    }
   </script>
 
 <script>
@@ -1261,6 +1414,479 @@ if ('serviceWorker' in navigator) {
     });
   });
 }
+
+// ===== LAUNCH MODAL =====
+var currentLaunchFileId = null;
+var availableProviders = [];
+
+function showLaunchModal(fileId) {
+  currentLaunchFileId = fileId;
+  document.getElementById('launchModal').style.display = 'flex';
+  document.querySelectorAll('.launch-plan-card').forEach(c => c.classList.remove('selected'));
+  document.querySelector('.launch-plan-card.free').classList.add('selected');
+  document.getElementById('launchResult').innerHTML = '';
+  // Fetch available providers
+  fetch('/api/ai/hosting-providers').then(r => r.json()).then(d => {
+    availableProviders = d.providers || [];
+    renderProviders(d.providers || []);
+  }).catch(() => {});
+}
+
+function renderProviders(providers) {
+  var el = document.getElementById('providerOptions');
+  if (!providers.length) { el.innerHTML = '<p style="color:var(--ash);font-size:12px">Loading providers...</p>'; return; }
+  el.innerHTML = providers.map(p =>
+    '<label class="provider-chip' + (p.id === 'vercel' ? ' selected' : '') + '" data-provider="' + p.id + '" onclick="selectProvider(this)" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;border:1px solid var(--glass-border);background:var(--surface);cursor:pointer;font-size:12px;color:var(--ash);transition:.2s;margin:4px">' +
+    p.icon + ' ' + p.name +
+    (p.available ? '' : ' <span style="font-size:9px;opacity:.5">(needs API key)</span>') +
+    '</label>'
+  ).join('');
+}
+
+function selectProvider(el) {
+  document.querySelectorAll('.provider-chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function closeLaunchModal() {
+  document.getElementById('launchModal').style.display = 'none';
+}
+
+function selectLaunchPlan(el) {
+  document.querySelectorAll('.launch-plan-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function getSelectedProvider() {
+  var sel = document.querySelector('.provider-chip.selected');
+  return sel ? sel.dataset.provider : 'vercel';
+}
+
+// ===== INLINE STRIPE PAYMENT =====
+var stripeElements = null;
+var stripePaymentElement = null;
+var stripeInstance = null;
+var pendingPaymentData = null;
+
+async function confirmLaunch() {
+  var selected = document.querySelector('.launch-plan-card.selected');
+  if (!selected) return alert('Please select a plan');
+  var planId = selected.dataset.plan;
+  var provider = getSelectedProvider();
+  var btn = document.getElementById('launchConfirmBtn');
+
+  var deployBody = {
+    fileId: currentLaunchFileId,
+    planId: planId,
+    provider: provider,
+    customerName: localStorage.getItem('userName') || 'User',
+    customerEmail: localStorage.getItem('userEmail') || 'user@keycode.app'
+  };
+
+  // Free plan → deploy immediately
+  if (planId === 'free') {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deploying...';
+    try {
+      var res = await fetch('/api/ai/launch', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(deployBody)
+      });
+      var data = await res.json();
+      showLaunchResult(data);
+    } catch (err) { showLaunchError(err.message); }
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-rocket"></i> Launch';
+    return;
+  }
+
+  // Paid plan → show inline payment form
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparing payment...';
+
+  try {
+    var checkoutRes = await fetch('/api/ai/hosting-checkout', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fileId: currentLaunchFileId, planId: planId,
+        customerName: deployBody.customerName, customerEmail: deployBody.customerEmail,
+      })
+    });
+    var checkoutData = await checkoutRes.json();
+
+    if (!checkoutData.success) {
+      showLaunchError(checkoutData.error || 'Checkout failed');
+      btn.disabled = false; btn.innerHTML = '<i class="fas fa-rocket"></i> Launch';
+      return;
+    }
+
+    // Show inline payment form
+    document.getElementById('launchResult').innerHTML =
+      '<div id="inlinePaymentForm" style="padding:16px 0">' +
+        '<div style="text-align:center;margin-bottom:16px">' +
+          '<i class="fas fa-lock" style="color:var(--primary);font-size:20px"></i>' +
+          '<h4 style="margin:8px 0 4px;color:var(--white);font-size:15px">Secure Payment</h4>' +
+          '<p style="color:var(--ash);font-size:12px;margin:0">Subscribe to <strong>' + selected.querySelector('h3').textContent + '</strong> — $' + checkoutData.amount + '/mo</p>' +
+        '</div>' +
+        '<div id="stripePaymentElement" style="padding:12px;background:var(--slate);border-radius:10px;margin-bottom:12px;min-height:120px"></div>' +
+        '<div style="display:flex;gap:8px">' +
+          '<button onclick="cancelInlinePayment()" style="flex:1;padding:10px;background:var(--obsidian);border:1px solid var(--glass-border);border-radius:8px;color:var(--ash);cursor:pointer;font-size:13px">Cancel</button>' +
+          '<button id="payBtn" onclick="submitInlinePayment()" style="flex:2;padding:10px;background:linear-gradient(135deg,#6366f1,#22d3ee);border:none;border-radius:8px;color:white;font-weight:600;cursor:pointer;font-size:13px"><i class="fas fa-lock"></i> Pay $' + checkoutData.amount + '</button>' +
+        '</div>' +
+        '<p style="font-size:10px;color:var(--ash);text-align:center;margin:12px 0 0"><i class="fas fa-shield-alt"></i> Powered by Stripe · Your card info is never stored here</p>' +
+      '</div>';
+
+    // Initialize Stripe Elements
+    pendingPaymentData = deployBody;
+    stripeInstance = Stripe(checkoutData.publishableKey);
+    var elements = stripeInstance.elements({ clientSecret: checkoutData.clientSecret, appearance: { theme: 'night', labels: 'floating', variables: { colorPrimary: '#6366f1', colorBackground: '#1a1a24', colorText: '#e2e8f0', colorDanger: '#ef4444', fontFamily: 'Inter, sans-serif', borderRadius: '8px' } } });
+    stripePaymentElement = elements.create('payment', { layout: 'tabs' });
+    stripePaymentElement.mount('#stripePaymentElement');
+
+    // Handle payment confirmation when form submitted
+    window._stripeElements = elements;
+    window._stripeClientSecret = checkoutData.clientSecret;
+  } catch (err) {
+    showLaunchError(err.message);
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fas fa-rocket"></i> Launch';
+}
+
+function cancelInlinePayment() {
+  document.getElementById('launchResult').innerHTML = '';
+  if (stripePaymentElement) { stripePaymentElement.unmount(); stripePaymentElement = null; }
+  pendingPaymentData = null;
+}
+
+async function submitInlinePayment() {
+  var payBtn = document.getElementById('payBtn');
+  payBtn.disabled = true;
+  payBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+  try {
+    var result = await stripeInstance.confirmPayment({
+      elements: window._stripeElements,
+      confirmParams: {
+        return_url: window.location.origin + '/ai-builder.html?launch=processing',
+      },
+      redirect: 'if_required',
+    });
+
+    if (result.error) {
+      payBtn.disabled = false;
+      payBtn.innerHTML = '<i class="fas fa-lock"></i> Try Again';
+      document.getElementById('inlinePaymentForm').innerHTML =
+        '<div style="padding:12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;color:#ef4444;font-size:12px;text-align:center">' +
+        result.error.message + '</div>' +
+        document.getElementById('inlinePaymentForm').innerHTML;
+      return;
+    }
+
+    if (result.paymentIntent && result.paymentIntent.status === 'succeeded') {
+      // Payment successful → deploy
+      document.getElementById('inlinePaymentForm').innerHTML =
+        '<div style="text-align:center;padding:12px"><i class="fas fa-check-circle" style="font-size:32px;color:#10b981"></i>' +
+        '<p style="color:var(--green);font-size:13px;margin:8px 0">Payment successful! Deploying your project...</p>' +
+        '<i class="fas fa-spinner fa-spin" style="font-size:20px;color:var(--primary)"></i></div>';
+
+      var deployRes = await fetch('/api/ai/launch', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(pendingPaymentData)
+      });
+      var deployData = await deployRes.json();
+      showLaunchResult(deployData);
+      pendingPaymentData = null;
+    }
+  } catch (err) {
+    payBtn.disabled = false;
+    payBtn.innerHTML = '<i class="fas fa-lock"></i> Try Again';
+    showLaunchError(err.message);
+  }
+}
+
+function showLaunchResult(data) {
+  if (data.success) {
+    document.getElementById('launchResult').innerHTML =
+      '<div style="text-align:center;padding:20px"><i class="fas fa-check-circle" style="font-size:48px;color:#10b981"></i>' +
+      '<h3 style="margin:12px 0 4px;color:var(--white)">🚀 Project Launched!</h3>' +
+      '<p style="color:var(--ash);font-size:13px">' + (data.message || 'Your site is live') + '</p>' +
+      '<a href="' + data.liveUrl + '" target="_blank" style="display:inline-block;margin-top:12px;padding:10px 28px;background:linear-gradient(135deg,#6366f1,#22d3ee);color:white;border-radius:8px;text-decoration:none;font-weight:600">' +
+      '<i class="fas fa-external-link-alt"></i> Visit Live Site</a></div>';
+  } else {
+    document.getElementById('launchResult').innerHTML =
+      '<div style="text-align:center;padding:20px;color:#ef4444"><i class="fas fa-times-circle" style="font-size:48px"></i>' +
+      '<p style="margin:8px 0 0">' + (data.error || 'Deployment failed') + '</p></div>';
+  }
+}
+
+function showLaunchError(msg) {
+  document.getElementById('launchResult').innerHTML =
+    '<div style="text-align:center;padding:20px;color:#ef4444"><i class="fas fa-times-circle" style="font-size:48px"></i>' +
+    '<p style="margin:8px 0 0">Error: ' + msg + '</p></div>';
+}
 </script>
 </body>
-</html>
+
+<!-- Launch Modal -->
+<div id="launchModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:10000;align-items:center;justify-content:center;backdrop-filter:blur(4px)">
+  <div style="background:var(--bg);border:1px solid var(--glass-border);border-radius:20px;max-width:900px;width:90%;max-height:90vh;overflow-y:auto;padding:32px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+      <h2 style="margin:0;font-size:22px;color:var(--white)"><i class="fas fa-rocket" style="color:var(--primary)"></i> Launch Your Project</h2>
+      <button onclick="closeLaunchModal()" style="background:none;border:none;color:var(--ash);font-size:24px;cursor:pointer">&times;</button>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-bottom:24px">
+      <div class="launch-plan-card free selected" data-plan="free" onclick="selectLaunchPlan(this)" style="background:var(--surface);border:2px solid var(--glass-border);border-radius:14px;padding:20px;cursor:pointer;transition:.3s;text-align:center">
+        <div style="font-size:32px;margin-bottom:8px;color:#10b981">🆓</div>
+        <h3 style="margin:0 0 4px;font-size:18px;color:var(--white)">Free</h3>
+        <div style="font-size:28px;font-weight:700;color:var(--white);margin:8px 0">$0<span style="font-size:14px;color:var(--ash);font-weight:400">/mo</span></div>
+        <ul style="list-style:none;padding:0;margin:12px 0 0;font-size:12px;color:var(--ash);text-align:left">
+          <li style="padding:3px 0"><i class="fas fa-check" style="color:#10b981;width:16px"></i> Vercel Edge Network</li>
+          <li style="padding:3px 0"><i class="fas fa-check" style="color:#10b981;width:16px"></i> keycode-*.vercel.app domain</li>
+          <li style="padding:3px 0"><i class="fas fa-check" style="color:#10b981;width:16px"></i> Free SSL (HTTPS)</li>
+          <li style="padding:3px 0"><i class="fas fa-check" style="color:#10b981;width:16px"></i> 100K visits/month</li>
+          <li style="padding:3px 0"><i class="fas fa-check" style="color:#10b981;width:16px"></i> Automatic deploys</li>
+        </ul>
+      </div>
+
+      <div class="launch-plan-card" data-plan="starter" onclick="selectLaunchPlan(this)" style="background:var(--surface);border:2px solid var(--glass-border);border-radius:14px;padding:20px;cursor:pointer;transition:.3s;text-align:center;position:relative">
+        <div style="position:absolute;top:-8px;right:12px;background:var(--primary);color:white;font-size:10px;padding:2px 10px;border-radius:20px;font-weight:600">POPULAR</div>
+        <div style="font-size:32px;margin-bottom:8px">🌐</div>
+        <h3 style="margin:0 0 4px;font-size:18px;color:var(--white)">Starter</h3>
+        <div style="font-size:28px;font-weight:700;color:var(--white);margin:8px 0">$4.99<span style="font-size:14px;color:var(--ash);font-weight:400">/mo</span></div>
+        <ul style="list-style:none;padding:0;margin:12px 0 0;font-size:12px;color:var(--ash);text-align:left">
+          <li style="padding:3px 0"><i class="fas fa-check" style="color:#10b981;width:16px"></i> 5 GB SSD Storage</li>
+          <li style="padding:3px 0"><i class="fas fa-check" style="color:#10b981;width:16px"></i> Custom domain</li>
+          <li style="padding:3px 0"><i class="fas fa-check" style="color:#10b981;width:16px"></i> Free SSL Certificate</li>
+          <li style="padding:3px 0"><i class="fas fa-check" style="color:#10b981;width:16px"></i> 24/7 Support</li>
+        </ul>
+      </div>
+
+      <div class="launch-plan-card" data-plan="professional" onclick="selectLaunchPlan(this)" style="background:var(--surface);border:2px solid var(--glass-border);border-radius:14px;padding:20px;cursor:pointer;transition:.3s;text-align:center">
+        <div style="font-size:32px;margin-bottom:8px">🚀</div>
+        <h3 style="margin:0 0 4px;font-size:18px;color:var(--white)">Professional</h3>
+        <div style="font-size:28px;font-weight:700;color:var(--white);margin:8px 0">$9.99<span style="font-size:14px;color:var(--ash);font-weight:400">/mo</span></div>
+        <ul style="list-style:none;padding:0;margin:12px 0 0;font-size:12px;color:var(--ash);text-align:left">
+          <li style="padding:3px 0"><i class="fas fa-check" style="color:#10b981;width:16px"></i> 50 GB SSD Storage</li>
+          <li style="padding:3px 0"><i class="fas fa-check" style="color:#10b981;width:16px"></i> 5 Websites</li>
+          <li style="padding:3px 0"><i class="fas fa-check" style="color:#10b981;width:16px"></i> Daily Backups</li>
+          <li style="padding:3px 0"><i class="fas fa-check" style="color:#10b981;width:16px"></i> Priority Support</li>
+        </ul>
+      </div>
+    </div>
+
+    <div id="launchResult"></div>
+
+    <!-- Provider Selection -->
+    <div style="margin-bottom:20px">
+      <div style="font-size:12px;color:var(--ash);margin-bottom:8px;font-weight:600"><i class="fas fa-server"></i> Deploy to:</div>
+      <div id="providerOptions" style="display:flex;flex-wrap:wrap;gap:6px">Loading providers...</div>
+    </div>
+
+    <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:16px">
+      <button onclick="closeLaunchModal()" style="padding:10px 24px;background:var(--obsidian);border:1px solid var(--glass-border);border-radius:10px;color:var(--ash);cursor:pointer;font-size:13px">Cancel</button>
+      <button id="launchConfirmBtn" onclick="confirmLaunch()" style="padding:10px 32px;background:linear-gradient(135deg,#10b981,#059669);border:none;border-radius:10px;color:white;font-weight:600;cursor:pointer;font-size:13px"><i class="fas fa-rocket"></i> Launch</button>
+    </div>
+  </div>
+</div>
+
+<!-- Code Viewer Modal (Monaco Editor) -->
+<div class="code-viewer-overlay" id="codeViewerOverlay">
+  <div class="code-viewer-modal">
+    <div class="code-viewer-header">
+      <h3><i class="fas fa-code"></i> <span id="codeViewerTitle">Project Files</span></h3>
+      <button onclick="closeCodeViewer()" style="background:none;border:none;color:var(--ash);font-size:22px;cursor:pointer">&times;</button>
+    </div>
+    <div class="code-viewer-tabs" id="codeViewerTabs"></div>
+    <div class="code-viewer-body" id="codeViewerBody"><div style="padding:40px;text-align:center;color:var(--ash)"><i class="fas fa-spinner fa-spin" style="font-size:24px"></i><p style="margin-top:12px">Loading editor...</p></div></div>
+    <div class="code-viewer-footer">
+      <span id="codeViewerInfo">Ready</span>
+      <div style="display:flex;gap:8px">
+        <button onclick="openInStackBlitz()" title="Edit in StackBlitz"><i class="fas fa-bolt"></i> StackBlitz</button>
+        <button onclick="copyCurrentCode()" title="Copy code"><i class="fas fa-copy"></i> Copy</button>
+        <button onclick="closeCodeViewer()">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Monaco Editor Loader -->
+<script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
+<script>
+var monacoReady = false;
+require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs' } });
+require(['vs/editor/editor.main'], function() { monacoReady = true; });
+
+// ===== CODE VIEWER =====
+var codeViewerEditor = null;
+var codeViewerFiles = [];
+var codeViewerCurrentFile = null;
+var codeViewerProjectId = null;
+var codeViewerPreviewTimer = null;
+
+function openCodeViewer(projectId) {
+  codeViewerProjectId = projectId;
+  document.getElementById('codeViewerOverlay').style.display = 'flex';
+  document.getElementById('codeViewerTitle').textContent = 'Project: ' + projectId;
+  document.getElementById('codeViewerBody').innerHTML = '<div style="padding:40px;text-align:center;color:var(--ash)"><i class="fas fa-spinner fa-spin" style="font-size:24px"></i><p style="margin-top:12px">Loading files...</p></div>';
+
+  fetch('/api/ai/project-files/' + projectId)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (!data.success || !data.files || !data.files.length) {
+        document.getElementById('codeViewerBody').innerHTML = '<div style="padding:40px;text-align:center;color:var(--ash)">No files found</div>';
+        return;
+      }
+      codeViewerFiles = data.files;
+      renderCodeViewerTabs();
+      if (data.files.length > 0) selectCodeViewerFile(data.files[0].name);
+    })
+    .catch(function(err) {
+      document.getElementById('codeViewerBody').innerHTML = '<div style="padding:40px;text-align:center;color:#ef4444">Error loading project: ' + err.message + '</div>';
+    });
+}
+
+function closeCodeViewer() {
+  document.getElementById('codeViewerOverlay').style.display = 'none';
+  if (codeViewerEditor) { codeViewerEditor.dispose(); codeViewerEditor = null; }
+}
+
+function renderCodeViewerTabs() {
+  var container = document.getElementById('codeViewerTabs');
+  var langColors = {
+    html: '#e44d26', css: '#264de4', javascript: '#f7df1e', typescript: '#3178c6',
+    json: '#5bc500', python: '#3776ab', cpp: '#00599c', c: '#a8b9cc',
+    xml: '#f16529', yaml: '#6b6b6b', markdown: '#083fa1', shell: '#4eaa25',
+    plaintext: '#888',
+  };
+  container.innerHTML = codeViewerFiles.map(function(f) {
+    var isActive = codeViewerCurrentFile === f.name;
+    var dot = langColors[f.language] || '#888';
+    return '<div class="code-viewer-tab' + (isActive ? ' active' : '') + '" onclick="selectCodeViewerFile(\'' + f.name.replace(/'/g, "\\'") + '\')"><span class="lang-dot" style="background:' + dot + '"></span>' + f.name + '</div>';
+  }).join('');
+}
+
+function selectCodeViewerFile(fileName) {
+  var file = null;
+  for (var i = 0; i < codeViewerFiles.length; i++) {
+    if (codeViewerFiles[i].name === fileName) { file = codeViewerFiles[i]; break; }
+  }
+  if (!file) return;
+  codeViewerCurrentFile = file.name;
+  renderCodeViewerTabs();
+  document.getElementById('codeViewerInfo').textContent = file.name + ' — ' + formatSize(file.size);
+
+  var container = document.getElementById('codeViewerBody');
+  container.innerHTML = '<div id="monacoContainer" style="width:100%;height:100%"></div>';
+
+  if (!monacoReady) {
+    container.innerHTML = '<div style="padding:40px;text-align:center;color:var(--ash)"><i class="fas fa-spinner fa-spin" style="font-size:24px"></i><p style="margin-top:12px">Loading Monaco Editor...</p></div>';
+    var checkReady = setInterval(function() {
+      if (monacoReady) {
+        clearInterval(checkReady);
+        container.innerHTML = '<div id="monacoContainer" style="width:100%;height:100%"></div>';
+        createMonacoEditor(file);
+      }
+    }, 200);
+    return;
+  }
+  createMonacoEditor(file);
+}
+
+function createMonacoEditor(file) {
+  if (codeViewerEditor) { codeViewerEditor.dispose(); codeViewerEditor = null; }
+  if (!document.getElementById('monacoContainer')) return;
+
+  codeViewerEditor = monaco.editor.create(document.getElementById('monacoContainer'), {
+    value: file.content,
+    language: file.language || 'plaintext',
+    theme: 'vs-dark',
+    fontSize: 13,
+    fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
+    lineNumbers: 'on',
+    minimap: { enabled: true },
+    scrollBeyondLastLine: false,
+    readOnly: false,
+    wordWrap: 'on',
+    renderWhitespace: 'selection',
+    bracketPairColorization: { enabled: true },
+    automaticLayout: true,
+    padding: { top: 8 },
+  });
+
+  codeViewerEditor.onDidChangeModelContent(function() {
+    if (codeViewerPreviewTimer) clearTimeout(codeViewerPreviewTimer);
+    codeViewerPreviewTimer = setTimeout(function() {
+      var val = codeViewerEditor.getValue();
+      for (var i = 0; i < codeViewerFiles.length; i++) {
+        if (codeViewerFiles[i].name === codeViewerCurrentFile) {
+          codeViewerFiles[i].content = val;
+          break;
+        }
+      }
+      var htmlFile = null;
+      for (var i = 0; i < codeViewerFiles.length; i++) {
+        if (codeViewerFiles[i].name === 'index.html') { htmlFile = codeViewerFiles[i]; break; }
+      }
+      if (htmlFile && htmlFile.content && htmlFile.content.length > 50) {
+        updatePreview(htmlFile.content);
+      }
+    }, 800);
+  });
+
+  setTimeout(function() { if (codeViewerEditor) codeViewerEditor.layout(); }, 100);
+}
+
+function copyCurrentCode() {
+  if (codeViewerEditor) {
+    var text = codeViewerEditor.getValue();
+    navigator.clipboard.writeText(text).then(function() {
+      showToast('Code copied!');
+    }).catch(function() {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      showToast('Code copied!');
+    });
+  }
+}
+
+function openInStackBlitz() {
+  if (!codeViewerFiles || !codeViewerFiles.length) { showToast('No files to open'); return; }
+  var files = {};
+  for (var i = 0; i < codeViewerFiles.length; i++) {
+    var f = codeViewerFiles[i];
+    files[f.name] = f.content;
+  }
+  var hasIndex = files['index.html'] || files['index.htm'] || files['index.js'];
+  var template = hasIndex ? 'html' : 'javascript';
+  fetch('/api/embed/stackblitz', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('keycode_token') || localStorage.getItem('token') || '') },
+    body: JSON.stringify({ title: codeViewerProjectId || 'KEYCODE Project', files: files, template: template })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.success && data.url) {
+      window.open(data.url, '_blank');
+      showToast('Opening in StackBlitz...');
+    } else {
+      showToast('Error: ' + (data.error || 'Unknown'));
+    }
+  })
+  .catch(function(err) {
+    showToast('Error: ' + err.message);
+  });
+}
+
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / 1048576).toFixed(1) + ' MB';
+}
+</script>

@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <link rel="manifest" href="/manifest.json">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard - KEYCODE Studio</title>
   <meta name="description" content="Manage your AI projects, orders, and account settings.">
@@ -9,7 +10,7 @@
   <meta property="og:description" content="Manage your AI-generated websites and projects.">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha384-/o6I2CkkWC//PSjvWC/eYN7l3xM3tJm8ZzVkCOfp//W05QcE3mlGskpoHB6XqI+B" crossorigin="anonymous">
   <style>
     :root {
       --void: #030305;
@@ -630,7 +631,7 @@
       const response = await fetch(`${API_BASE}${endpoint}`, {
         ...options,
         headers: { ...headers, ...options.headers }
-      });
+      }).catch(function(err) { console.error('[Fetch Error]', err); return null; });
       
       if (response.status === 401) {
         logout();
@@ -964,5 +965,6 @@
     window.alert = function(m) { showToast(m, 'warning'); };
   })();
   </script>
+<script>navigator.serviceWorker.register('/sw.js').catch(function(e){console.error('SW registration failed:',e)});</script>
 </body>
 </html>

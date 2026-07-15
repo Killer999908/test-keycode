@@ -1,9 +1,15 @@
 const CACHE = 'keycode-v5';
 const PRECACHE = [
+  '/index.html',
   '/offline.html',
   '/favicon.svg',
+  '/favicon.png',
   '/logo-nav.png',
-  '/icon-192.png'
+  '/icon-192.png',
+  '/icon-512.png',
+  '/shop.html',
+  '/login.html',
+  '/ai-builder.html'
 ];
 
 const OFFLINE_RESPONSE = new Response(

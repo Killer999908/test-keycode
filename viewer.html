@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="manifest" href="/manifest.json">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="KEYCODE Studio - AI-powered development platform">
+<title>3D Viewer — KEYCODE</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="alternate icon" type="image/png" href="favicon.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha384-/o6I2CkkWC//PSjvWC/eYN7l3xM3tJm8ZzVkCOfp//W05QcE3mlGskpoHB6XqI+B" crossorigin="anonymous">
+<style>
+:root {
+  --bg: #0a0a12;
+  --surface: rgba(26,26,46,0.9);
+  --primary: #6366f1; --secondary: #22d3ee; --accent: #f59e0b;
+  --text: #e2e8f0; --ash: #94a3b8;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  overflow: hidden;
+  height: 100vh;
+}
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  padding: 12px 24px;
+  background: rgba(10,10,18,0.9);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(99,102,241,0.2);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  z-index: 100;
+}
+nav img { height: 32px; }
+nav h1 { font-size: 16px; font-weight: 600; flex: 1; }
+nav a {
+  color: var(--ash);
+  text-decoration: none;
+  font-size: 14px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  transition: all 0.3s;
+}
+nav a:hover { background: rgba(99,102,241,0.2); color: white; }
+#canvas-container {
+  width: 100vw;
+  height: 100vh;
+  display: block;
+}
+.controls-hint {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface);
+  border: 1px solid rgba(99,102,241,0.3);
+  border-radius: 12px;
+  padding: 10px 20px;
+  font-size: 13px;
+  color: var(--ash);
+  display: flex;
+  gap: 20px;
+  backdrop-filter: blur(8px);
+  z-index: 50;
+}
+.controls-hint span { display: flex; align-items: center; gap: 6px; }
+.controls-hint i { color: var(--primary); }
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  transition: opacity 0.5s;
+}
+.loading-overlay.hidden { opacity: 0; pointer-events: none; }
+.spinner {
+  width: 48px; height: 48px;
+  border: 3px solid rgba(99,102,241,0.2);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-overlay p { margin-top: 16px; color: var(--ash); font-size: 14px; }
+.error-msg {
+  position: fixed;
+  top: 80px; left: 50%; transform: translateX(-50%);
+  background: rgba(239,68,68,0.2);
+  border: 1px solid #ef4444;
+  border-radius: 12px;
+  padding: 12px 24px;
+  color: #ef4444;
+  font-size: 14px;
+  display: none;
+  z-index: 100;
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <img src="logo-nav.png" alt="KEYCODE" loading="lazy">
+  <h1>3D Viewer</h1>
+  <a href="control-panel.html"><i class="fas fa-arrow-left"></i> Back</a>
+</nav>
+
+<div class="error-msg" id="errorMsg"></div>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <p>Loading 3D model...</p>
+</div>
+
+<div id="canvas-container"></div>
+
+<div class="controls-hint">
+  <span><i class="fas fa-mouse-pointer"></i> Rotate</span>
+  <span><i class="fas fa-scroll"></i> Zoom</span>
+  <span><i class="fas fa-arrows-alt"></i> Pan (right-click)</span>
+</div>
+
+<script src="three.min.js"></script>
+<script src="STLLoader.js"></script>
+<script src="OrbitControls.js"></script>
+<script>
+var params = new URLSearchParams(window.location.search);
+var modelUrl = params.get('model') || '';
+
+if (!modelUrl) {
+  showError('No model specified. Add ?model=path/to/file.stl to the URL.');
+}
+
+var container = document.getElementById('canvas-container');
+var scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0a0a12);
+
+var camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+camera.position.set(5, 5, 10);
+
+var renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(container.clientWidth, container.clientHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.2;
+container.appendChild(renderer.domElement);
+
+var controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.1;
+controls.autoRotate = true;
+controls.autoRotateSpeed = 1.5;
+
+// Lights
+var ambient = new THREE.AmbientLight(0x404060, 0.5);
+scene.add(ambient);
+
+var dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
+dirLight.position.set(10, 20, 10);
+dirLight.castShadow = true;
+scene.add(dirLight);
+
+var fillLight = new THREE.DirectionalLight(0x6366f1, 0.5);
+fillLight.position.set(-10, 0, 10);
+scene.add(fillLight);
+
+var rimLight = new THREE.DirectionalLight(0x22d3ee, 0.3);
+rimLight.position.set(0, -10, -10);
+scene.add(rimLight);
+
+// Ground grid
+var grid = new THREE.GridHelper(20, 20, 0x6366f1, 0x1a1a2e);
+grid.position.y = -1;
+scene.add(grid);
+
+// Ground plane (shadow receiver)
+var groundGeo = new THREE.PlaneGeometry(20, 20);
+var groundMat = new THREE.ShadowMaterial({ opacity: 0.3 });
+var ground = new THREE.Mesh(groundGeo, groundMat);
+ground.rotation.x = -Math.PI / 2;
+ground.position.y = -0.99;
+ground.receiveShadow = true;
+scene.add(ground);
+
+function showError(msg) {
+  var el = document.getElementById('errorMsg');
+  el.textContent = msg;
+  el.style.display = 'block';
+  document.getElementById('loadingOverlay').classList.add('hidden');
+}
+
+function loadModel(url) {
+  url = decodeURIComponent(url);
+  // If relative path, prepend origin
+  if (url.startsWith('/')) {
+    url = window.location.origin + url;
+  }
+
+  var loader = new THREE.STLLoader();
+  loader.load(
+    url,
+    function(geometry) {
+      geometry.computeVertexNormals();
+      geometry.center();
+
+      var material = new THREE.MeshPhysicalMaterial({
+        color: 0x6366f1,
+        metalness: 0.3,
+        roughness: 0.4,
+        clearcoat: 0.1,
+        envMapIntensity: 0.5,
+      });
+
+      var mesh = new THREE.Mesh(geometry, material);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+
+      // Auto-size
+      var box = new THREE.Box3().setFromObject(mesh);
+      var size = box.getSize(new THREE.Vector3());
+      var maxDim = Math.max(size.x, size.y, size.z);
+      var scale = 5 / maxDim;
+      mesh.scale.set(scale, scale, scale);
+
+      box = new THREE.Box3().setFromObject(mesh);
+      var center = box.getCenter(new THREE.Vector3());
+      mesh.position.sub(center);
+      mesh.position.y += 0.5;
+
+      scene.add(mesh);
+      document.getElementById('loadingOverlay').classList.add('hidden');
+    },
+    function(xhr) {
+      if (xhr.total) {
+        var pct = Math.round(xhr.loaded / xhr.total * 100);
+        document.querySelector('.loading-overlay p').textContent = 'Loading 3D model... ' + pct + '%';
+      }
+    },
+    function(err) {
+      showError('Failed to load model: ' + (err.message || err));
+    }
+  );
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene, camera);
+}
+animate();
+
+window.addEventListener('resize', function() {
+  camera.aspect = container.clientWidth / container.clientHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(container.clientWidth, container.clientHeight);
+});
+
+// Start loading
+if (modelUrl) loadModel(modelUrl);
+
+// Keyboard shortcut: toggle auto-rotate
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'r' || e.key === 'R') {
+    controls.autoRotate = !controls.autoRotate;
+  }
+});
+</script>
+<script>navigator.serviceWorker.register('/sw.js').catch(function(e){console.error('SW registration failed:',e)});</script>
+</body>
+</html>

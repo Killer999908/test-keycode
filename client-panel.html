@@ -2,11 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <link rel="manifest" href="/manifest.json">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="KEYCODE Studio - AI-powered development platform">
   <title>Client Portal - KEYCODE Studio</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha384-/o6I2CkkWC//PSjvWC/eYN7l3xM3tJm8ZzVkCOfp//W05QcE3mlGskpoHB6XqI+B" crossorigin="anonymous">
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <style>
     :root {
       --void: #030305; --obsidian: #0a0a0f; --graphite: #12121a; --slate: #1a1a24;
@@ -112,7 +115,7 @@
     <h2>Client Portal</h2>
     <p>Sign in to manage your projects, track orders, and communicate with your team</p>
     <a href="login.html"><i class="fas fa-arrow-right"></i> Sign In</a>
-    <p style="margin-top:20px;font-size:13px;">New client? <a href="register.html" style="display:inline;padding:0;background:transparent;color:var(--primary);font-size:13px;">Create account</a></p>
+    <p style="margin-top:20px;font-size:13px;">New client? <a href="login.html?tab=register" style="display:inline;padding:0;background:transparent;color:var(--primary);font-size:13px;">Create account</a></p>
   </div>
 
   <div id="dashboardContent" style="display:none;">
@@ -164,13 +167,39 @@
       </div>
 
       <div id="orders" class="page-section">
-        <div class="page-header"><h1 class="page-title">Order History</h1></div>
+        <div class="page-header"><h1 class="page-title">My Orders</h1></div>
         <div class="section-card">
           <div style="overflow-x:auto;">
             <table>
-              <thead><tr><th>Order ID</th><th>Service</th><th>Amount</th><th>Payment</th><th>Status</th><th>Date</th></tr></thead>
+              <thead><tr><th>Order ID</th><th>Project</th><th>Amount</th><th>Tier</th><th>Payment</th><th>Status</th><th>Access</th><th>Date</th></tr></thead>
               <tbody id="ordersList"></tbody>
             </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Payment Modal -->
+      <div id="paymentModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);align-items:center;justify-content:center;">
+        <div style="background:var(--dark);border:1px solid var(--glass-border);border-radius:20px;padding:32px;max-width:440px;width:90%;position:relative;">
+          <button onclick="closePaymentModal()" style="position:absolute;top:16px;right:16px;background:none;border:none;color:var(--ash);font-size:20px;cursor:pointer">&times;</button>
+          <div style="text-align:center;margin-bottom:20px">
+            <div style="width:56px;height:56px;background:var(--gradient-1);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:24px"><i class="fas fa-lock"></i></div>
+            <h2 style="margin:0 0 4px;font-size:20px">Unlock Your Project</h2>
+            <p style="color:var(--ash);font-size:13px;margin:0">Pay to get full access to your generated project</p>
+          </div>
+          <div id="paymentOrderDetails" style="background:rgba(255,255,255,0.03);border-radius:12px;padding:16px;margin-bottom:16px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:var(--ash);font-size:13px">Order ID</span><span id="payOrderId" style="font-size:13px;font-weight:600">-</span></div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:var(--ash);font-size:13px">Project Type</span><span id="payProjectType" style="font-size:13px">-</span></div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:var(--ash);font-size:13px">Pricing Tier</span><span id="payTier" style="font-size:13px">-</span></div>
+            <div style="display:flex;justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06)"><span style="font-size:15px;font-weight:600">Total</span><span id="payAmount" style="font-size:18px;font-weight:800;color:#6366f1">₹0</span></div>
+          </div>
+          <div id="paymentActions" style="display:flex;flex-direction:column;gap:8px">
+            <button id="payNowBtn" onclick="processPayment()" class="glow-border-three-d" style="width:100%;padding:14px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;transition:.3s"><i class="fas fa-credit-card"></i> Pay with Razorpay</button>
+            <button id="payUpiBtn" onclick="payWithUPI()" style="width:100%;padding:12px;background:rgba(255,255,255,0.05);color:var(--ash);border:1px solid var(--glass-border);border-radius:12px;font-size:13px;cursor:pointer"><i class="fas fa-qrcode"></i> Pay with UPI</button>
+          </div>
+          <div id="paymentStatus" style="display:none;text-align:center;padding:20px">
+            <div class="spinner" style="width:32px;height:32px;border:3px solid rgba(99,102,241,0.2);border-top-color:#6366f1;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px"></div>
+            <p style="color:var(--ash);font-size:13px">Processing payment...</p>
           </div>
         </div>
       </div>
@@ -204,7 +233,7 @@
     async function api(endpoint, opts = {}) {
       const headers = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
-      const res = await fetch(API + endpoint, { ...opts, headers: { ...headers, ...opts.headers } });
+      const res = await fetch(API + endpoint, { ...opts, headers: { ...headers, ...opts.headers } }).catch(function(err) { console.error('[Fetch Error]', err); return null; });
       if (res.status === 401) { showToast('Session expired', 'error'); logout(); return null; }
       return res.json();
     }
@@ -241,17 +270,6 @@
       return true;
     }
 
-    document.querySelectorAll('.nav-item').forEach(item => {
-      item.addEventListener('click', () => {
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        item.classList.add('active');
-        document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active'));
-        document.getElementById(item.dataset.page).classList.add('active');
-        if (item.dataset.page === 'overview') loadDashboard();
-        if (item.dataset.page === 'projects') loadProjects();
-      });
-    });
-
     async function loadDashboard() {
       const orders = await api('/orders');
       if (!orders) return;
@@ -259,7 +277,7 @@
       document.getElementById('totalProjects').textContent = arr.length;
       document.getElementById('activeProjects').textContent = arr.filter(o => o.status === 'in_progress' || o.status === 'pending').length;
       document.getElementById('completedProjects').textContent = arr.filter(o => o.status === 'completed').length;
-      document.getElementById('totalSpent').textContent = '$' + arr.reduce((s, o) => s + (o.total || 0), 0);
+      document.getElementById('totalSpent').textContent = '₹' + arr.reduce((s, o) => s + (o.total||0), 0);
 
       const timeline = document.getElementById('projectTimeline');
       const active = arr.filter(o => o.status !== 'cancelled').slice(0, 5);
@@ -267,7 +285,7 @@
         <div class="timeline-item ${o.status === 'completed' ? 'completed' : ''}">
           <div class="timeline-date">${new Date(o.createdAt).toLocaleDateString()}</div>
           <div class="timeline-text">
-            <strong>#${(o._id||'').slice(-8).toUpperCase()}</strong> - ${o.items?.[0]?.name || o.serviceType || 'Project'}
+            <strong>#${(o._id||'').slice(-8).toUpperCase()}</strong> - ${o.items?.[0]?.name || o.projectType || o.serviceType || 'Project'}
             <br><span class="badge badge-blue">${(o.status||'pending').replace('_',' ')}</span>
           </div>
         </div>
@@ -283,17 +301,134 @@
           <td><strong>${o.project?.name || 'Project #' + (o._id||'').slice(-8).toUpperCase()}</strong></td>
           <td>${o.items?.[0]?.name || o.serviceType || 'Custom'}</td>
           <td><span class="badge ${o.status === 'completed' ? 'badge-green' : o.status === 'in_progress' ? 'badge-blue' : 'badge-yellow'}">${(o.status||'pending').replace('_',' ')}</span></td>
-          <td>$${o.total || 0}</td>
+          <td>₹${o.total || 0}</td>
           <td>${new Date(o.createdAt).toLocaleDateString()}</td>
           <td><button class="btn-sm btn-primary" onclick="showToast('Project details coming soon','info')">View</button></td>
         </tr>
       `).join('') || '<tr><td colspan="6" class="empty-state">No projects yet</td></tr>';
     }
 
+    var _payingOrderId = null;
+
+    function loadOrders() {
+      api('/orders').then(function(orders) {
+        if (!orders || !Array.isArray(orders)) return;
+        document.getElementById('ordersList').innerHTML = orders.map(function(o) {
+          var typeLabel = { website:'🌐 Website', pcb:'🔌 PCB', cad:'🔧 CAD', mcu:'🤖 Firmware', circuit:'⚡ Circuit', general:'💬 Project' };
+          var projectIcon = typeLabel[o.projectType] || '💬 Project';
+          var payStatus = o.paymentStatus === 'paid' ? '<span class="badge badge-green">Paid</span>' : '<span class="badge badge-yellow">Pending</span>';
+          var statusBadge = o.status === 'completed' ? '<span class="badge badge-green">Completed</span>' : o.status === 'processing' ? '<span class="badge badge-blue">Processing</span>' : o.status === 'cancelled' ? '<span class="badge badge-red">Cancelled</span>' : '<span class="badge badge-yellow">Pending</span>';
+          var accessHtml = '';
+          if (o.paymentStatus === 'paid' && o.deployment && o.deployment.liveUrl) {
+            accessHtml = '<a href="' + o.deployment.liveUrl + '" target="_blank" class="btn-sm btn-primary" style="font-size:11px;padding:4px 10px;text-decoration:none"><i class="fas fa-external-link-alt"></i> View</a>';
+          } else if (o.paymentStatus === 'paid' && o.needsAdminReview) {
+            accessHtml = '<span style="font-size:11px;color:#22d3ee">⏳ Processing</span>';
+          } else if (o.paymentStatus === 'paid') {
+            accessHtml = '<span style="font-size:11px;color:#10b981">✅ Accessible</span>';
+          } else {
+            accessHtml = '<button onclick="openPayment(\'' + o._id + '\',\'' + (o.projectType||'general') + '\',\'' + (o.pricingTier||'basic') + '\',' + (o.total||0) + ')" class="btn-sm btn-accent" style="font-size:11px;padding:4px 12px;cursor:pointer"><i class="fas fa-credit-card"></i> Pay Now</button>';
+          }
+          return '<tr><td>#' + (o._id||'').slice(-8).toUpperCase() + '</td><td>' + projectIcon + '</td><td>₹' + (o.total || 0).toFixed(0) + '</td><td><span class="badge badge-blue">' + (o.pricingTier||'basic') + '</span></td><td>' + payStatus + '</td><td>' + statusBadge + '</td><td>' + accessHtml + '</td><td>' + new Date(o.createdAt).toLocaleDateString() + '</td></tr>';
+        }).join('') || '<tr><td colspan="8" class="empty-state">No orders yet</td></tr>';
+      });
+    }
+
+    function openPayment(orderId, projectType, tier, amount) {
+      _payingOrderId = orderId;
+      document.getElementById('payOrderId').textContent = '#' + orderId.slice(-8).toUpperCase();
+      document.getElementById('payProjectType').textContent = projectType;
+      document.getElementById('payTier').textContent = tier;
+      document.getElementById('payAmount').textContent = '₹' + (amount || 0).toFixed(0);
+      document.getElementById('paymentModal').style.display = 'flex';
+    }
+
+    function closePaymentModal() {
+      document.getElementById('paymentModal').style.display = 'none';
+      _payingOrderId = null;
+    }
+
+    async function processPayment() {
+      if (!_payingOrderId) return;
+      document.getElementById('paymentActions').style.display = 'none';
+      document.getElementById('paymentStatus').style.display = 'block';
+
+      try {
+        var initRes = await api('/orders/' + _payingOrderId + '/initiate-payment', { method: 'POST' });
+        if (!initRes) throw new Error('Failed to initiate payment');
+
+        if (initRes.gateway === 'razorpay') {
+          var rzp = new Razorpay({
+            key: initRes.keyId,
+            amount: initRes.amount,
+            currency: initRes.currency,
+            name: 'KEYCODE Studio',
+            description: 'Order #' + _payingOrderId.slice(-8).toUpperCase(),
+            order_id: initRes.orderId,
+            prefill: initRes.prefill,
+            handler: function(response) {
+              confirmPayment(_payingOrderId, response.razorpay_payment_id, response.razorpay_order_id, response.razorpay_signature);
+            },
+            modal: { ondismiss: function() { closePaymentModal(); } }
+          });
+          rzp.open();
+        } else if (initRes.gateway === 'upi_qr') {
+          document.getElementById('paymentStatus').innerHTML = '<p style="color:var(--ash);font-size:14px">📱 Pay to UPI ID: <strong>' + initRes.upiId + '</strong></p><p style="color:var(--ash);font-size:12px;margin-top:8px">Amount: ₹' + (initRes.amount / 100).toFixed(2) + '</p><button onclick="confirmPayment(\'' + _payingOrderId + '\',null,null,null,\'upi\')" style="margin-top:12px;padding:10px 24px;background:#6366f1;color:white;border:none;border-radius:8px;cursor:pointer">I\'ve Paid</button>';
+        }
+      } catch (err) {
+        document.getElementById('paymentActions').style.display = 'flex';
+        document.getElementById('paymentStatus').style.display = 'none';
+        showToast('Payment error: ' + err.message, 'error');
+      }
+    }
+
+    async function confirmPayment(orderId, paymentId, razorpayOrderId, signature, method) {
+      document.getElementById('paymentStatus').innerHTML = '<div class="spinner" style="width:32px;height:32px;border:3px solid rgba(99,102,241,0.2);border-top-color:#6366f1;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px"></div><p style="color:var(--ash);font-size:13px">Verifying payment...</p>';
+
+      try {
+        var confirmRes = await api('/orders/' + orderId + '/confirm-payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            razorpay_payment_id: paymentId,
+            razorpay_order_id: razorpayOrderId,
+            razorpay_signature: signature,
+            method: method || 'razorpay'
+          })
+        });
+        if (confirmRes.success) {
+          document.getElementById('paymentStatus').innerHTML = '<div style="text-align:center"><div style="width:48px;height:48px;background:rgba(16,185,129,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:24px;color:#10b981">✓</div><h3 style="margin:0 0 4px">Payment Successful!</h3><p style="color:var(--ash);font-size:13px;margin:0">Your project is now accessible</p></div>';
+          setTimeout(function() { closePaymentModal(); loadOrders(); loadDashboard(); loadProjects(); }, 2000);
+        } else {
+          throw new Error(confirmRes.error || 'Verification failed');
+        }
+      } catch (err) {
+        document.getElementById('paymentStatus').innerHTML = '<p style="color:#ef4444;font-size:13px">❌ ' + err.message + '</p><button onclick="closePaymentModal()" style="margin-top:8px;padding:8px 16px;background:rgba(255,255,255,0.1);border:1px solid var(--glass-border);border-radius:8px;color:var(--ash);cursor:pointer">Close</button>';
+      }
+    }
+
+    function payWithUPI() {
+      if (!_payingOrderId) return;
+      processPayment(); // Process initiates with UPI QR as fallback
+    }
+
+    // Load orders when orders tab is clicked
+    document.querySelectorAll('.nav-item').forEach(function(item) {
+      item.addEventListener('click', function() {
+        document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+        this.classList.add('active');
+        document.querySelectorAll('.page-section').forEach(function(p) { p.classList.remove('active'); });
+        document.getElementById(this.dataset.page).classList.add('active');
+        if (this.dataset.page === 'overview') loadDashboard();
+        if (this.dataset.page === 'projects') loadProjects();
+        if (this.dataset.page === 'orders') loadOrders();
+      });
+    });
+
     // Init
     if (!checkAuth()) {
       document.getElementById('loginPrompt').style.display = 'flex';
     }
   </script>
+<script>navigator.serviceWorker.register('/sw.js').catch(function(e){console.error('SW registration failed:',e)});</script>
 </body>
 </html>

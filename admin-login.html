@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com https://kit.fontawesome.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com; connect-src 'self' http://localhost:5000 http://localhost:5001; img-src 'self' data:; form-action 'self'; base-uri 'self';">
+  <title>Admin Login - KEYCODE Studio</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-vzz0YwRR+8oK1XWAgqJx8VGnCbFJRuABRsc7tFbxK9RJ0vFJT/1KQ/9WIQMWbEBs7OY5tUGpWjtRK8TArlBbIQ==" crossorigin="anonymous" referrerpolicy="no-referrer">
+  <style>
+    :root {
+      --void: #030305; --obsidian: #0a0a0f; --graphite: #12121a; --slate: #1a1a24;
+      --primary: #6366f1; --primary-glow: #818cf8; --secondary: #ec4899;
+      --success: #10b981; --warning: #f59e0b; --danger: #ef4444; --white: #ffffff; --ash: #d1d5db;
+      --gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+      --font-display: 'Syne', sans-serif; --font-body: 'Inter', sans-serif;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: var(--font-body); background: var(--void); color: var(--white);
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+    }
+    .bg-grid {
+      position: fixed; inset: 0;
+      background-image: radial-gradient(circle at 1px 1px, rgba(99,102,241,0.08) 1px, transparent 0);
+      background-size: 40px 40px; z-index: 0;
+    }
+    .login-container {
+      position: relative; z-index: 1; width: 100%; max-width: 420px; padding: 20px;
+    }
+    .login-card {
+      background: var(--graphite); border: 1px solid rgba(99,102,241,0.15);
+      border-radius: 20px; padding: 48px 36px; text-align: center;
+      box-shadow: 0 0 60px rgba(99,102,241,0.05);
+    }
+    .logo { font-family: var(--font-display); font-size: 28px; font-weight: 800; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 4px; }
+    .subtitle { color: var(--ash); font-size: 13px; margin-bottom: 32px; }
+    .shield { width: 56px; height: 56px; background: rgba(99,102,241,0.12); border-radius: 14px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 22px; color: var(--primary); }
+    h1 { font-family: var(--font-display); font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+    p { color: var(--ash); font-size: 13px; margin-bottom: 28px; }
+    .input-group { margin-bottom: 16px; text-align: left; }
+    .input-group label { display: block; font-size: 12px; color: var(--ash); margin-bottom: 6px; font-weight: 500; }
+    .input-group input {
+      width: 100%; padding: 14px 16px; background: var(--slate); border: 1px solid rgba(99,102,241,0.2);
+      border-radius: 10px; color: var(--white); font-size: 14px; transition: all 0.3s;
+    }
+    .input-group input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 20px rgba(99,102,241,0.1); }
+    .input-group input::placeholder { color: rgba(255,255,255,0.2); }
+    .error-msg { color: var(--danger); font-size: 13px; margin-bottom: 16px; min-height: 20px; }
+    .btn-login {
+      width: 100%; padding: 14px; background: var(--gradient); border: none; border-radius: 10px;
+      color: var(--white); font-size: 15px; font-weight: 600; cursor: pointer;
+      transition: all 0.3s; position: relative; overflow: hidden;
+    }
+    .btn-login:hover { transform: translateY(-2px); box-shadow: 0 10px 40px rgba(99,102,241,0.4); }
+    .btn-login:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .btn-login .spinner {
+      display: none; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white; border-radius: 50%; animation: spin 0.6s linear infinite;
+      margin: 0 auto;
+    }
+    .btn-login.loading .spinner { display: inline-block; }
+    .btn-login.loading .btn-text { display: none; }
+    .footer-links { margin-top: 20px; font-size: 12px; color: var(--ash); }
+    .footer-links a { color: var(--primary); text-decoration: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .toast {
+      position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+      background: var(--graphite); border: 1px solid rgba(99,102,241,0.2); border-radius: 10px;
+      padding: 14px 24px; font-size: 13px; z-index: 100; display: none;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    }
+    .toast.show { display: block; animation: fadeIn 0.3s ease; }
+    .toast.success { border-color: var(--success); }
+    .toast.error { border-color: var(--danger); }
+    @keyframes fadeIn { from { opacity: 0; transform: translateX(-50%) translateY(20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+  </style>
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="login-container">
+    <div class="login-card">
+      <div class="shield"><i class="fas fa-shield-crown"></i></div>
+      <div class="logo">KEYCODE</div>
+      <div class="subtitle">Master Admin Portal</div>
+      <h1>Welcome Back</h1>
+      <p>Sign in to manage your platform</p>
+      <div class="error-msg" id="loginError"></div>
+      <form id="loginForm">
+        <div class="input-group">
+          <label>Email Address</label>
+          <input type="email" id="emailInput" placeholder="admin@keycode.studio" required autocomplete="email" autofocus>
+        </div>
+        <div class="input-group">
+          <label>Password</label>
+          <input type="password" id="passwordInput" placeholder="••••••••" required autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn-login" id="loginBtn">
+          <span class="btn-text">Sign In <i class="fas fa-arrow-right" style="margin-left:8px;font-size:12px;"></i></span>
+          <span class="spinner"></span>
+        </button>
+      </form>
+      <div class="footer-links">
+        <a href="#" onclick="showToast('Contact your system administrator to reset your password.','info')">Forgot password?</a>
+        &middot; <a href="http://localhost:5000" referrerpolicy="no-referrer">Main Website</a>
+      </div>
+    </div>
+  </div>
+  <div class="toast" id="toast"></div>
+  <script>
+    const form = document.getElementById('loginForm');
+    const btn = document.getElementById('loginBtn');
+    const err = document.getElementById('loginError');
+    const emailInput = document.getElementById('emailInput');
+    const passwordInput = document.getElementById('passwordInput');
+
+    function showToast(msg, type) {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.className = 'toast show ' + (type||'');
+      setTimeout(() => t.classList.remove('show'), 4000);
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      err.textContent = '';
+      btn.classList.add('loading');
+      btn.disabled = true;
+
+      try {
+        const loginRes = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: emailInput.value, password: passwordInput.value })
+        });
+        const loginData = await loginRes.json();
+
+        if (loginData.mfaRequired) {
+          err.textContent = 'Multi-factor authentication required. Please use a passkey.';
+          btn.classList.remove('loading');
+          btn.disabled = false;
+          return;
+        }
+
+        if (loginData.token && loginData.user?.role === 'admin') {
+          // Try admin-login as fallback
+          const adminRes = await fetch('/api/auth/admin-login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: emailInput.value, password: passwordInput.value })
+          });
+          const adminData = await adminRes.json();
+
+          if (adminData.token) {
+            // Store in sessionStorage for admin panel
+            sessionStorage.setItem('adminToken', adminData.token);
+            sessionStorage.setItem('adminUser', JSON.stringify(adminData.user));
+            showToast('Authentication successful! Redirecting...', 'success');
+            setTimeout(() => window.location.href = '/admin', 800);
+          } else {
+            // Fallback: try the regular token
+            const userRes = await fetch('/api/auth/me', {
+              headers: { 'Authorization': 'Bearer ' + loginData.token }
+            });
+            const userData = await userRes.json();
+            if (userData.role === 'admin') {
+              sessionStorage.setItem('adminToken', loginData.token);
+              sessionStorage.setItem('adminUser', JSON.stringify(userData));
+              showToast('Authentication successful! Redirecting...', 'success');
+              setTimeout(() => window.location.href = '/admin', 800);
+            } else {
+              err.textContent = 'Access denied. This account does not have admin privileges.';
+            }
+          }
+        } else {
+          const adminRes = await fetch('/api/auth/admin-login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: emailInput.value, password: passwordInput.value })
+          });
+          const adminData = await adminRes.json();
+          if (adminData.token && adminData.user?.role === 'admin') {
+            sessionStorage.setItem('adminToken', adminData.token);
+            sessionStorage.setItem('adminUser', JSON.stringify(adminData.user));
+            showToast('Authentication successful! Redirecting...', 'success');
+            setTimeout(() => window.location.href = '/admin', 800);
+          } else {
+            err.textContent = adminData.error || 'Invalid admin credentials';
+          }
+        }
+      } catch (error) {
+        err.textContent = 'Connection error. Is the server running?';
+      }
+
+      btn.classList.remove('loading');
+      btn.disabled = false;
+    });
+  </script>
+<script>navigator.serviceWorker.register('/sw.js').catch(function(e){console.error('SW registration failed:',e)});</script>
+</body>
+</html>

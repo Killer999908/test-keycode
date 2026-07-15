@@ -1,0 +1,9 @@
+node_modules
+.git
+*.log
+.env
+.env.local
+uploads/
+generated/
+deployments/
+data/
