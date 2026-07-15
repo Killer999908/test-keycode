@@ -23,3 +23,7 @@ server/data/
 generated/
 deployments/
 ChatGPT Image*.png
+server/node_modules/
+server/.env
+node_modules/
+.env
