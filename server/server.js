@@ -1142,7 +1142,7 @@ const MONGODB_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/keycod
 async function connectDB(retries = 5, delay = 3000) {
   for (let i = 0; i < retries; i++) {
     try {
-      await mongoose.connect(MONGODB_URI);
+      await mongoose.connect(MONGODB_URI, { serverSelectionTimeoutMS: 10000 });
       console.log("✅ MongoDB connected");
       return;
     } catch (err) {
@@ -1152,7 +1152,7 @@ async function connectDB(retries = 5, delay = 3000) {
   }
   console.error('❌ All MongoDB connection attempts failed');
 }
-await connectDB();
+connectDB();
 
 // MongoDB Connection Event Handlers
 mongoose.connection.on("connected", () => {

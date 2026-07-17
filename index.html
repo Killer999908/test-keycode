@@ -70,568 +70,332 @@
   <script src="https://js.stripe.com/v3/" defer></script>
   
 <link rel="stylesheet" href="/public/index.css">
+<link rel="stylesheet" href="/public/z-alche.css">
+<style>
+.hero-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  z-index: 2;
+  pointer-events: none;
+}
+.hero-logo-3d {
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 32px;
+  position: relative;
+}
+.hero-logo-3d canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+.hero-main-title {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(48px, 10vw, 120px);
+  font-weight: 800;
+  letter-spacing: .15em;
+  color: #fff;
+  line-height: 1;
+  margin-bottom: 16px;
+}
+.hero-subtitle {
+  font-size: clamp(14px, 2vw, 18px);
+  color: #7E7E7E;
+  letter-spacing: .15em;
+  font-weight: 400;
+}
+</style>
+<script src="https://unpkg.com/lenis@1.1.18/dist/lenis.min.js" defer></script>
 </head>
 <body>
+
+
+
   <!-- Loading Screen -->
   <div class="loader-screen" id="loaderScreen">
     <div class="loader-logo">KEYCODE</div>
-    <div class="loader-spinner"></div>
-    <div class="progress-bar-container">
-      <div class="progress-bar-fill" id="progressBar"></div>
-    </div>
+    <div class="loader-tagline">Architect worlds that move hearts and spark hope.</div>
+    <div class="loading-dots"><span></span><span></span><span></span></div>
+    <div class="loader-bar"><div class="loader-bar-fill" id="progressBar"></div></div>
     <div class="loader-text">Initializing AI Systems...</div>
   </div>
-  
+
   <!-- Noise Overlay -->
   <div class="noise-overlay"></div>
-  
+
   <!-- Page Transition -->
   <div class="page-transition" id="pageTransition"></div>
-  
-  <!-- Video Background -->
-  <div id="video-bg-container">
-    <canvas id="video-canvas"></canvas>
-    <video id="video-bg" autoplay loop playsinline muted preload="auto">
-      <source src="/bg.mp4" type="video/mp4">
-    </video>
-    <div id="video-cover"></div>
-  </div>
-  
-  <!-- Sound Toggle Button -->
-  <button type="button" id="sound-toggle" class="sound-btn" title="Toggle Sound" aria-label="Toggle Sound">
-    <svg class="sound-icon-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M11 5L6 9H2v6h4l5 4V5z"/>
-      <line x1="23" y1="9" x2="17" y2="15"/>
-      <line x1="17" y1="9" x2="23" y2="15"/>
-    </svg>
-    <svg class="sound-icon-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M11 5L6 9H2v6h4l5 4V5z"/>
-      <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
-      <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
-    </svg>
-  </button>
-  
+
+  <!-- 3D Canvas Background (rendered by Three.js) -->
+
   <div class="bg-overlay"></div>
+
+  <!-- Cursor Follower -->
+  <div class="cursor-follower" id="cursorFollower"></div>
 
   <!-- Navigation -->
   <nav class="navbar" id="navbar">
-    <a href="#" class="nav-logo">
-      <img src="/logo-nav.png" alt="KEYCODE" width="120" height="36" loading="lazy">
-    </a>
+    <a href="#" class="nav-logo">KEYCODE</a>
     <ul class="nav-links" id="navLinks">
-      <li><a class="nav-link nav-link-three-d three-d-tilt" href="login.html">Build</a></li>
-      <li><a class="nav-link nav-link-three-d three-d-tilt" onclick="scrollToSection('services-section')">Services</a></li>
-      <li><a class="nav-link nav-link-three-d three-d-tilt" onclick="scrollToSection('pricing-section')">Pricing</a></li>
-      <li><a class="nav-link nav-link-three-d three-d-tilt" onclick="scrollToSection('cta-section')">Contact</a></li>
+      <li><a class="nav-link" data-scramble-text onclick="scrollToSection('works-section')">Works</a></li>
+      <li><a class="nav-link" data-scramble-text onclick="scrollToSection('mission-section')">About</a></li>
+      <li><a class="nav-link" data-scramble-text onclick="scrollToSection('services-section')">Tools</a></li>
+      <li><a class="nav-link" data-scramble-text onclick="scrollToSection('contact-footer')">Contact</a></li>
     </ul>
     <div class="nav-actions">
-      <a href="login.html" class="btn btn-secondary btn-sm three-d-btn glow-border-three-d">Sign In</a>
-      <a href="login.html" class="btn btn-primary btn-sm three-d-btn glow-border-three-d btn-micro hover-scale">Build Now</a>
+      <a href="mailto:keycode.techio@gmail.com" class="slot-btn" data-magnetic>
+        <span class="slot-btn-inner">
+          <span class="slot-btn-label">Contact</span>
+          <span class="slot-btn-hover">Contact</span>
+        </span>
+      </a>
       <button type="button" class="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="Menu">
-        <i class="fas fa-bars"></i>
+        <span></span><span></span><span></span>
       </button>
     </div>
   </nav>
 
-  <!-- 3D Background Banner -->
-  <!-- 3D background removed for performance -->
+  <!-- Side Menu -->
+  <div class="side-menu" id="sideMenu">
+    <div class="side-menu-backdrop" onclick="toggleMobileMenu()"></div>
+    <nav class="side-menu-nav">
+      <button type="button" class="side-menu-close" onclick="toggleMobileMenu()">&#x2715;</button>
+      <div class="side-menu-links">
+        <a href="#" class="side-menu-link" onclick="toggleMobileMenu()">Top</a>
+        <a href="#" class="side-menu-link" onclick="toggleMobileMenu();setTimeout(function(){scrollToSection('works-section')},100)">Works</a>
+        <a href="#" class="side-menu-link" onclick="toggleMobileMenu();setTimeout(function(){scrollToSection('mission-section')},100)">About</a>
+        <a href="#" class="side-menu-link" onclick="toggleMobileMenu();setTimeout(function(){scrollToSection('services-section')},100)">Tools</a>
+        <a href="#" class="side-menu-link" onclick="toggleMobileMenu();setTimeout(function(){scrollToSection('contact-footer')},100)">Contact</a>
+      </div>
+      <div class="side-menu-social">
+        <a href="https://x.com/keycodetechio" target="_blank" rel="noopener">X</a>
+        <a href="https://github.com/keycodetechio-a11y" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://www.youtube.com/@keycodetechio" target="_blank" rel="noopener">YouTube</a>
+        <a href="https://discord.gg/keycodetechio" target="_blank" rel="noopener">Discord</a>
+      </div>
+    </nav>
+  </div>
 
-  <!-- Hero Section -->
-  <section class="hero">
-    <div class="hero-content hero-three-d" style="margin:0!important;left:0!important;right:0!important;width:100%!important;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center!important">
-      <h1 class="text-3d main-hero-title" style="text-align:center!important;margin:0!important;width:100%!important;display:block!important;font-size:clamp(4rem,12vw,10rem)!important;font-weight:900!important;line-height:1.0!important">
-        Where <span class="text-gradient">Intelligence</span><br>
-        Meets Excellence
-      </h1>
-      <p class="hero-subtitle">
-        World's most advanced AI-powered digital transformation partner. 
-        We build extraordinary digital experiences that define the future of your business.
-      </p>
+  <!-- KV / Hero Section -->
+  <section class="hero" id="heroSection" data-parallax="0.3">
+    <div class="hero-content">
+      <div class="hero-logo-3d" id="heroLogo3d">
+        <!-- 3D logo rendered by Three.js -->
+      </div>
+      <div class="hero-title-block">
+        <h1 class="hero-main-title" data-scramble-text>KEYCODE</h1>
+        <p class="hero-subtitle">AI-Powered Digital Creation Studio</p>
+      </div>
+    </div>
+    <div class="hero-scroll-text" data-scramble-text>scroll to explore →</div>
+  </section>
+
+  <!-- News Bar -->
+  <div class="news-bar" id="news-section">
+    <div class="news-bar-label">News</div>
+    <div class="news-bar-items">
+      <div class="news-bar-item">
+        <span class="news-bar-date">2026 01.17</span>
+        <a href="/news" class="news-bar-link">KEYCODE launches AI Website Builder v2 with multi-agent system</a>
+      </div>
+      <div class="news-bar-item">
+        <span class="news-bar-date">2025 12.10</span>
+        <a href="/news" class="news-bar-link">New PCB Designer with real-time simulation and auto-routing</a>
+      </div>
+      <div class="news-bar-item">
+        <span class="news-bar-date">2025 11.05</span>
+        <a href="/news" class="news-bar-link">CAD &amp; 3D Modeling adds OpenSCAD parametric generation</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Works Section -->
+  <section class="works-section" id="works-section">
+    <div class="section-label">Selected Works</div>
+    <div class="works-content">
+      <div class="works-list">
+        <div class="works-item">
+          <div class="works-item-info">
+            <time class="works-item-date">2026<br/>01.17</time>
+          </div>
+          <h3 class="works-item-title"><a href="/open-builder?tool=website">AI Website Builder</a></h3>
+          <p class="works-item-category">Website &mdash; Full-stack generation</p>
+          <ul class="works-item-categories">
+            <li><a href="/open-builder?tool=website">ai</a></li>
+            <li><a href="/open-builder?tool=website">website</a></li>
+            <li><a href="/open-builder?tool=website">fullstack</a></li>
+          </ul>
+        </div>
+        <div class="works-item">
+          <div class="works-item-info">
+            <time class="works-item-date">2026<br/>01.10</time>
+          </div>
+          <h3 class="works-item-title"><a href="/open-builder?tool=cad">CAD &amp; 3D Modeling</a></h3>
+          <p class="works-item-category">3D Model &mdash; Parametric design</p>
+          <ul class="works-item-categories">
+            <li><a href="/open-builder?tool=cad">cad</a></li>
+            <li><a href="/open-builder?tool=cad">3d</a></li>
+            <li><a href="/open-builder?tool=cad">openscad</a></li>
+          </ul>
+        </div>
+        <div class="works-item">
+          <div class="works-item-info">
+            <time class="works-item-date">2025<br/>12.22</time>
+          </div>
+          <h3 class="works-item-title"><a href="/open-builder?tool=pcb">PCB Designer</a></h3>
+          <p class="works-item-category">Hardware &mdash; Circuit design</p>
+          <ul class="works-item-categories">
+            <li><a href="/open-builder?tool=pcb">pcb</a></li>
+            <li><a href="/open-builder?tool=pcb">electronics</a></li>
+            <li><a href="/open-builder?tool=pcb">kicad</a></li>
+          </ul>
+        </div>
+        <div class="works-item">
+          <div class="works-item-info">
+            <time class="works-item-date">2025<br/>12.15</time>
+          </div>
+          <h3 class="works-item-title"><a href="/open-builder?tool=mcu">Arduino &amp; MCU Code</a></h3>
+          <p class="works-item-category">Firmware &mdash; Embedded systems</p>
+          <ul class="works-item-categories">
+            <li><a href="/open-builder?tool=mcu">firmware</a></li>
+            <li><a href="/open-builder?tool=mcu">embedded</a></li>
+            <li><a href="/open-builder?tool=mcu">c++</a></li>
+          </ul>
+        </div>
+        <div class="works-more">
+          <a href="gallery.html" class="works-more-link"><span data-scramble-text>More Works</span> →</a>
+        </div>
+      </div>
+      <div class="works-scroll">
+        <div class="works-scroll-item"><div class="works-scroll-thumb" style="background:#1a1a2e"></div></div>
+        <div class="works-scroll-item"><div class="works-scroll-thumb" style="background:#16213e"></div></div>
+        <div class="works-scroll-item"><div class="works-scroll-thumb" style="background:#0f3460"></div></div>
+        <div class="works-scroll-item"><div class="works-scroll-thumb" style="background:#533483"></div></div>
+      </div>
     </div>
   </section>
 
-  <!-- AI Feature Tools -->
-  <section class="ai-features-section" id="ai-features">
-    <div class="section-header">
-      <div class="section-label">
-        <i class="fas fa-bolt"></i>
-        AI-Powered Tools
+  <!-- Mission Section -->
+  <section class="mission-section" id="mission-section" data-parallax="0.2">
+    <div class="mission-inner">
+      <div class="section-label" data-reveal>About</div>
+      <h2 class="mission-title" data-scramble-text>MISSION</h2>
+      <div class="mission-text" data-reveal>
+        Pioneering immersive and experiential<br/>
+        AI-powered digital experiences<br/>
+        like no other.
       </div>
-      <h2>Free AI Design <span class="text-gradient">Suite</span></h2>
-      <p>Three powerful AI tools at your fingertips — websites, 3D models, and PCBs, all generated free.</p>
+      <p class="mission-text-en" data-reveal>Pioneering immersive and experiential AI-powered digital experiences like no other. We build extraordinary tools that define the future of digital creation.</p>
     </div>
-    <div class="ai-features-grid">
-      <a href="/open-builder?tool=website" class="ai-feature-card glass-three-d three-d-tilt" style="--accent:#6366f1">
-        <div class="ai-feature-icon"><i class="fas fa-globe"></i></div>
-        <div class="ai-feature-glow" style="background:radial-gradient(circle at center, rgba(99,102,241,0.3), transparent 70%)"></div>
-        <h3>Website Builder</h3>
-        <p>Generate complete responsive websites from a text description. Multi-agent AI writes HTML, CSS, JS, and backend code in parallel.</p>
-        <div class="ai-feature-stats">
-          <span><i class="fas fa-bolt"></i> 5-15s</span>
-          <span><i class="fas fa-microchip"></i> 7 AI models</span>
-          <span><i class="fas fa-infinity"></i> Free</span>
-        </div>
-        <span class="ai-feature-cta">Open Builder <i class="fas fa-arrow-right"></i></span>
-      </a>
-      <a href="/open-builder?tool=cad" class="ai-feature-card glass-three-d three-d-tilt" style="--accent:#22d3ee">
-        <div class="ai-feature-icon"><i class="fas fa-cube"></i></div>
-        <div class="ai-feature-glow" style="background:radial-gradient(circle at center, rgba(34,211,238,0.3), transparent 70%)"></div>
-        <h3>CAD &amp; 3D Modeling</h3>
-        <p>Describe a mechanical part or product — AI generates parametric OpenSCAD code with SVG preview, dimensions, and materials.</p>
-        <div class="ai-feature-stats">
-          <span><i class="fas fa-bolt"></i> 10-30s</span>
-          <span><i class="fas fa-cog"></i> OpenSCAD</span>
-          <span><i class="fas fa-infinity"></i> Free</span>
-        </div>
-        <span class="ai-feature-cta">Design in 3D <i class="fas fa-arrow-right"></i></span>
-      </a>
-      <a href="/open-builder?tool=pcb" class="ai-feature-card glass-three-d three-d-tilt" style="--accent:#10b981">
-        <div class="ai-feature-icon"><i class="fas fa-microchip"></i></div>
-        <div class="ai-feature-glow" style="background:radial-gradient(circle at center, rgba(16,185,129,0.3), transparent 70%)"></div>
-        <h3>PCB Designer</h3>
-        <p>Design custom PCBs in seconds. AI generates BOM, netlist, and routing diagram. Auto-suggests all required components.</p>
-        <div class="ai-feature-stats">
-          <span><i class="fas fa-bolt"></i> 10-30s</span>
-          <span><i class="fas fa-list"></i> BOM + Netlist</span>
-          <span><i class="fas fa-infinity"></i> Free</span>
-        </div>
-        <span class="ai-feature-cta">Design PCB <i class="fas fa-arrow-right"></i></span>
-      </a>
-      <a href="/open-builder?tool=mcu" class="ai-feature-card glass-three-d three-d-tilt" style="--accent:#00979d">
-        <div class="ai-feature-icon"><i class="fas fa-microchip"></i></div>
-        <div class="ai-feature-glow" style="background:radial-gradient(circle at center, rgba(0,151,157,0.3), transparent 70%)"></div>
-        <h3>Arduino &amp; MCU Code</h3>
-        <p>Generate firmware for Arduino, ESP32, STM32, PIC, RISC-V and 10+ microcontrollers. AI writes production-ready embedded C/C++ code.</p>
-        <div class="ai-feature-stats">
-          <span><i class="fas fa-bolt"></i> 5-15s</span>
-          <span><i class="fas fa-cog"></i> 10+ MCUs</span>
-          <span><i class="fas fa-infinity"></i> Free</span>
-        </div>
-        <span class="ai-feature-cta">Generate Code <i class="fas fa-arrow-right"></i></span>
-      </a>
+  </section>
+
+  <!-- Vision Section -->
+  <section class="vision-section" id="vision-section" data-parallax="0.15">
+    <div class="vision-inner">
+      <div class="section-label" data-reveal>Vision</div>
+      <h2 class="vision-title" data-scramble-text>VISION</h2>
+      <div class="vision-text" data-reveal>
+        Architect worlds that move hearts<br/>
+        and spark hope.
+      </div>
+      <p class="vision-text-en" data-reveal>Architect worlds that move hearts and spark hope. Every line of code, every design decision serves a single purpose: to create meaningful digital experiences.</p>
+    </div>
+  </section>
+
+  <!-- Stats Section -->
+  <section class="mission-section" id="stats-section" data-parallax="0.1" style="border-top:1px solid rgba(255,255,255,.05);padding:100px 40px;">
+    <div class="mission-inner" style="text-align:center;">
+      <div class="section-label" data-reveal>Impact</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:40px;margin-top:40px;">
+        <div><div class="vision-title" style="font-size:clamp(36px,5vw,56px)" data-counter="500">0</div><div style="color:#7E7E7E;font-size:14px;margin-top:8px;">Projects Delivered</div></div>
+        <div><div class="vision-title" style="font-size:clamp(36px,5vw,56px)" data-counter="98">0</div><div style="color:#7E7E7E;font-size:14px;margin-top:8px;">Client Satisfaction %</div></div>
+        <div><div class="vision-title" style="font-size:clamp(36px,5vw,56px)" data-counter="50">0</div><div style="color:#7E7E7E;font-size:14px;margin-top:8px;">AI Models</div></div>
+        <div><div class="vision-title" style="font-size:clamp(36px,5vw,56px)" data-counter="3">0</div><div style="color:#7E7E7E;font-size:14px;margin-top:8px;">Min Avg Build Time</div></div>
+        <div><div class="vision-title" style="font-size:clamp(36px,5vw,56px)" data-counter="24">0</div><div style="color:#7E7E7E;font-size:14px;margin-top:8px;">/7 Support</div></div>
+      </div>
     </div>
   </section>
 
   <!-- Services Section -->
-  <section class="services-section" id="services-section">
-    <div class="section-header">
-      <div class="section-label">
-        <i class="fas fa-layer-group"></i>
-        Our Services
+  <section class="services-section" id="services-section" data-parallax="0.1">
+    <div class="section-label" data-reveal>Services</div>
+    <div class="services-inner" data-stagger>
+      <div class="service-card" data-tilt>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+          </svg>
+        </div>
+        <h3 class="service-title">AI Website Builder</h3>
+        <p class="service-desc">Generate complete responsive websites from text descriptions using parallel multi-agent AI. HTML, CSS, JS, and backend in minutes.</p>
       </div>
-      <h2>Everything You Need to <span class="text-gradient">Succeed Online</span></h2>
-      <p>End-to-end digital solutions crafted with precision and powered by innovation.</p>
-    </div>
-
-    <div class="services-grid">
-      <div class="service-card glass-three-d three-d-tilt">
-        <div class="service-icon feature-icon-3d"><i class="fas fa-globe"></i></div>
-        <h3>Web Development</h3>
-        <p>Custom websites built with cutting-edge technologies for exceptional performance.</p>
-        <ul class="service-features">
-          <li><i class="fas fa-check"></i> Responsive Design</li>
-          <li><i class="fas fa-check"></i> SEO Optimized</li>
-          <li><i class="fas fa-check"></i> Fast Loading</li>
-          <li><i class="fas fa-check"></i> CMS Integration</li>
-        </ul>
+      <div class="service-card" data-tilt>
+        <div class="service-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+            <line x1="12" y1="22.08" x2="12" y2="12"/>
+          </svg>
+        </div>
+        <h3 class="service-title">CAD &amp; 3D Modeling</h3>
+        <p class="service-desc">Parametric OpenSCAD code generation with SVG preview from text. Describe mechanical parts, enclosures, or products.</p>
       </div>
-
-      <div class="service-card glass-three-d three-d-tilt">
-        <div class="service-icon feature-icon-3d"><i class="fas fa-shopping-cart"></i></div>
-        <h3>E-Commerce</h3>
-        <p>Powerful online stores that drive sales and deliver outstanding shopping experiences.</p>
-        <ul class="service-features">
-          <li><i class="fas fa-check"></i> Secure Payments</li>
-          <li><i class="fas fa-check"></i> Inventory Management</li>
-          <li><i class="fas fa-check"></i> Mobile Optimized</li>
-          <li><i class="fas fa-check"></i> Analytics Dashboard</li>
-        </ul>
+      <div class="service-card" data-tilt>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/><line x1="12" y1="9" x2="12" y2="15"/><line x1="9" y1="12" x2="15" y2="12"/>
+          </svg>
+        </div>
+        <h3 class="service-title">PCB Designer</h3>
+        <p class="service-desc">Custom PCBs with BOM, netlist, and routing diagram. AI suggests components and generates KiCad-compatible files.</p>
       </div>
-
-      <div class="service-card glass-three-d three-d-tilt">
-        <div class="service-icon feature-icon-3d"><i class="fas fa-brain"></i></div>
-        <h3>AI Solutions</h3>
-        <p>Intelligent automation and machine learning to transform your business operations.</p>
-        <ul class="service-features">
-          <li><i class="fas fa-check"></i> Chatbots</li>
-          <li><i class="fas fa-check"></i> Predictive Analytics</li>
-          <li><i class="fas fa-check"></i> Automation</li>
-          <li><i class="fas fa-check"></i> Custom AI Models</li>
-        </ul>
+      <div class="service-card" data-tilt>
+        <div class="service-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+          </svg>
+        </div>
+        <h3 class="service-title">Arduino &amp; MCU Code</h3>
+        <p class="service-desc">Production-ready embedded C/C++ firmware for 10+ platforms including ESP32, STM32, PIC, and RISC-V.</p>
       </div>
-
-      <div class="service-card glass-three-d three-d-tilt">
-        <div class="service-icon feature-icon-3d"><i class="fas fa-mobile-alt"></i></div>
-        <h3>Mobile Apps</h3>
-        <p>Native and cross-platform apps that provide seamless user experiences.</p>
-        <ul class="service-features">
-          <li><i class="fas fa-check"></i> iOS <span class="amp">&amp;</span> Android</li>
-          <li><i class="fas fa-check"></i> PWA Support</li>
-          <li><i class="fas fa-check"></i> Offline Mode</li>
-          <li><i class="fas fa-check"></i> Push Notifications</li>
-        </ul>
-      </div>
-
-      <div class="service-card glass-three-d three-d-tilt">
-        <div class="service-icon feature-icon-3d"><i class="fas fa-chart-line"></i></div>
-        <h3>Digital Marketing</h3>
-        <p>Data-driven campaigns that amplify your brand and drive meaningful results.</p>
-        <ul class="service-features">
-          <li><i class="fas fa-check"></i> SEO</li>
-          <li><i class="fas fa-check"></i> PPC Advertising</li>
-          <li><i class="fas fa-check"></i> Social Media</li>
-          <li><i class="fas fa-check"></i> Content Strategy</li>
-        </ul>
-      </div>
-
-      <div class="service-card glass-three-d three-d-tilt">
-        <div class="service-icon feature-icon-3d"><i class="fas fa-shield-alt"></i></div>
-        <h3>Cybersecurity</h3>
-        <p>Enterprise-grade protection for your digital assets and customer data.</p>
-        <ul class="service-features">
-          <li><i class="fas fa-check"></i> SSL Certificates</li>
-          <li><i class="fas fa-check"></i> Penetration Testing</li>
-          <li><i class="fas fa-check"></i> Security Audit</li>
-          <li><i class="fas fa-check"></i> 24/7 Monitoring</li>
-        </ul>
-      </div>
-    </div>
-  </section>
-
-  <!-- Pricing Section -->
-  <section class="pricing-section" id="pricing-section">
-    <div class="section-header">
-      <div class="section-label">
-        <i class="fas fa-tag"></i>
-        Transparent Pricing
-      </div>
-      <h2>Simple, <span class="text-gradient">Transparent</span> Pricing</h2>
-      <p>No hidden fees. No surprises. Just exceptional value for your investment.</p>
-    </div>
-
-    <div class="pricing-grid">
-      <div class="pricing-card glass-three-d pricing-card-three-d three-d-tilt">
-        <div class="pricing-header">
-          <h3>Starter</h3>
-          <p>Perfect for new businesses</p>
-        </div>
-        <div class="pricing-amount">
-          <span class="pricing-currency">$</span><span class="pricing-number">999</span>
-          <span class="pricing-period">starting</span>
-        </div>
-        <ul class="pricing-features">
-          <li><i class="fas fa-check"></i> 5-Page Website</li>
-          <li><i class="fas fa-check"></i> Custom Design</li>
-          <li><i class="fas fa-check"></i> Mobile Responsive</li>
-          <li><i class="fas fa-check"></i> Basic SEO</li>
-          <li><i class="fas fa-check"></i> Contact Form</li>
-          <li><i class="fas fa-check"></i> 1 Month Support</li>
-        </ul>
-        <button type="button" class="pricing-btn pricing-btn-outline three-d-btn" onclick="window.location.href='login.html'">Get Started</button>
-      </div>
-      <div class="pricing-card pricing-card-featured pricing-popular three-d-tilt">
-            <div class="pricing-badge">Most Popular</div>
-            <h3 class="pricing-title">Professional</h3>
-            <div class="pricing-price">
-              <span class="price-amount">$999</span>
-              <span class="price-period">/project</span>
-            </div>
-            <p class="pricing-description">For growing businesses needing a powerful online presence with advanced features.</p>
-            <hr class="pricing-divider">
-            <ul class="pricing-features">
-              <li><i class="fas fa-check pricing-check"></i> Up to 20 Pages</li>
-              <li><i class="fas fa-check pricing-check"></i> Custom Animations</li>
-              <li><i class="fas fa-check pricing-check"></i> E-Commerce Ready</li>
-              <li><i class="fas fa-check pricing-check"></i> CMS Integration</li>
-              <li><i class="fas fa-check pricing-check"></i> SEO Optimization</li>
-              <li><i class="fas fa-check pricing-check"></i> Priority Support</li>
-            </ul>
-            <button type="button" class="pricing-btn pricing-btn-primary three-d-btn" onclick="window.location.href='login.html'">Get Started</button>
-      </div>
-
-      <div class="pricing-card glass-three-d pricing-card-three-d three-d-tilt">
-        <div class="pricing-header">
-          <h3>Enterprise</h3>
-          <p>For large organizations</p>
-        </div>
-        <div class="pricing-amount">
-          <span class="pricing-currency">$</span><span class="pricing-number">5,999</span>
-          <span class="pricing-period">starting</span>
-        </div>
-        <ul class="pricing-features">
-          <li><i class="fas fa-check"></i> Unlimited Pages</li>
-          <li><i class="fas fa-check"></i> Custom Web Apps</li>
-          <li><i class="fas fa-check"></i> Advanced AI Solutions</li>
-          <li><i class="fas fa-check"></i> API Integration</li>
-          <li><i class="fas fa-check"></i> Priority Support</li>
-          <li><i class="fas fa-check"></i> 12 Months Support</li>
-        </ul>
-        <button type="button" class="pricing-btn pricing-btn-outline three-d-btn" onclick="scrollToSection('cta-section')">Contact Us</button>
-      </div>
-    </div>
-  </section>
-
-  <!-- Trust Metrics Bar -->
-  <section class="trust-bar" style="padding:60px 20px;background:transparent;border-top:1px solid var(--glass-border);border-bottom:1px solid var(--glass-border);">
-    <div class="container" style="max-width:1200px;margin:0 auto;">
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:30px;text-align:center;">
-        <div class="reveal-item"><div style="font-size:2.5rem;font-weight:800;background:var(--gradient-1);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;">500+</div><div style="color:var(--ash);font-size:0.9rem;margin-top:4px;">Projects Delivered</div></div>
-        <div class="reveal-item"><div style="font-size:2.5rem;font-weight:800;background:var(--gradient-2);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;">98%</div><div style="color:var(--ash);font-size:0.9rem;margin-top:4px;">Client Satisfaction</div></div>
-        <div class="reveal-item"><div style="font-size:2.5rem;font-weight:800;background:var(--gradient-1);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;">24/7</div><div style="color:var(--ash);font-size:0.9rem;margin-top:4px;">Support Available</div></div>
-        <div class="reveal-item"><div style="font-size:2.5rem;font-weight:800;background:var(--gradient-2);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;">50+</div><div style="color:var(--ash);font-size:0.9rem;margin-top:4px;">AI Models</div></div>
-        <div class="reveal-item"><div style="font-size:2.5rem;font-weight:800;background:var(--gradient-1);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;">3min</div><div style="color:var(--ash);font-size:0.9rem;margin-top:4px;">Avg Build Time</div></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Testimonials Section -->
-  <section class="testimonials-section" style="padding:100px 20px;background:transparent;position:relative;overflow:hidden;" id="testimonials">
-    <div class="section-header">
-      <div class="section-label"><i class="fas fa-star"></i> Testimonials</div>
-      <h2>What Our <span class="text-gradient">Clients Say</span></h2>
-      <p>Trusted by businesses worldwide to deliver exceptional digital experiences.</p>
-    </div>
-    <div class="container" style="max-width:1200px;margin:0 auto;">
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px;">
-        <div class="glass-three-d three-d-tilt reveal-item" style="padding:30px;border-radius:16px;background:var(--glass);border:1px solid var(--glass-border);text-align:center;">
-          <div style="display:flex;gap:4px;margin-bottom:16px;color:#f59e0b;justify-content:center;"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
-          <p style="color:var(--pearl);font-size:0.95rem;line-height:1.7;margin-bottom:20px;">"KEYCODE transformed our online presence completely. The AI-powered design captured our brand perfectly and the site loads incredibly fast."</p>
-          <div style="display:flex;align-items:center;gap:12px;justify-content:center;">
-            <div style="width:44px;height:44px;border-radius:50%;background:var(--gradient-1);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.1rem;">SK</div>
-            <div style="text-align:left;"><strong style="color:var(--white);">Sarah Johnson</strong><br><span style="color:var(--ash);font-size:0.8rem;">CEO, TechStart Inc.</span></div>
-          </div>
-        </div>
-        <div class="glass-three-d three-d-tilt reveal-item" style="padding:30px;border-radius:16px;background:var(--glass);border:1px solid var(--glass-border);transition-delay:0.1s;text-align:center;">
-          <div style="display:flex;gap:4px;margin-bottom:16px;color:#f59e0b;justify-content:center;"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
-          <p style="color:var(--pearl);font-size:0.95rem;line-height:1.7;margin-bottom:20px;">"The multi-AI system generated a complete e-commerce platform in minutes. What used to take weeks now takes hours. Absolutely revolutionary."</p>
-          <div style="display:flex;align-items:center;gap:12px;justify-content:center;">
-            <div style="width:44px;height:44px;border-radius:50%;background:var(--gradient-2);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.1rem;">MR</div>
-            <div style="text-align:left;"><strong style="color:var(--white);">Michael Roberts</strong><br><span style="color:var(--ash);font-size:0.8rem;">Founder, Bloom Cosmetics</span></div>
-          </div>
-        </div>
-        <div class="glass-three-d three-d-tilt reveal-item" style="padding:30px;border-radius:16px;background:var(--glass);border:1px solid var(--glass-border);transition-delay:0.2s;text-align:center;">
-          <div style="display:flex;gap:4px;margin-bottom:16px;color:#f59e0b;justify-content:center;"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
-          <p style="color:var(--pearl);font-size:0.95rem;line-height:1.7;margin-bottom:20px;">"As a designer, I was skeptical about AI building websites. But KEYCODE's attention to detail and design quality blew me away. Highly recommended!"</p>
-          <div style="display:flex;align-items:center;gap:12px;justify-content:center;">
-            <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--primary));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.1rem;">AL</div>
-            <div style="text-align:left;"><strong style="color:var(--white);">Amy Liu</strong><br><span style="color:var(--ash);font-size:0.8rem;">Creative Director, DesignLab</span></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- FAQ Section -->
-  <section class="faq-section" style="padding:100px 20px;background:transparent;" id="faq">
-    <div class="section-header">
-      <div class="section-label"><i class="fas fa-question-circle"></i> FAQ</div>
-      <h2>Frequently Asked <span class="text-gradient">Questions</span></h2>
-      <p>Everything you need to know about KEYCODE and our AI-powered platform.</p>
-    </div>
-    <div class="container" style="max-width:800px;margin:0 auto;">
-      <div class="faq-item glass-three-d" style="background:var(--glass);border:1px solid var(--glass-border);border-radius:12px;margin-bottom:12px;overflow:hidden;text-align:center;">
-        <div class="faq-trigger" role="button" tabindex="0" aria-expanded="false" style="padding:20px 24px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
-          <strong style="color:var(--white);font-size:1.05rem;text-align:center;flex:1;">How does KEYCODE's AI builder work?</strong>
-          <i class="fas fa-chevron-down" style="transition:transform 0.3s;color:var(--primary);"></i>
-        </div>
-        <div class="faq-answer" style="max-height:0;overflow:hidden;transition:max-height 0.4s ease;padding:0 24px;">
-          <p style="color:var(--ash);font-size:0.95rem;line-height:1.7;padding-bottom:20px;text-align:center;">KEYCODE uses a multi-agent AI system powered by DeepSeek, GROQ, HuggingFace, and Ollama. Simply describe your project, and our AI agents generate a complete, production-ready website with HTML, CSS, and JavaScript.</p>
-        </div>
-      </div>
-      <div class="faq-item glass-three-d" style="background:var(--glass);border:1px solid var(--glass-border);border-radius:12px;margin-bottom:12px;overflow:hidden;text-align:center;">
-        <div class="faq-trigger" role="button" tabindex="0" aria-expanded="false" style="padding:20px 24px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
-          <strong style="color:var(--white);font-size:1.05rem;text-align:center;flex:1;">Is my source code protected?</strong>
-          <i class="fas fa-chevron-down" style="transition:transform 0.3s;color:var(--primary);"></i>
-        </div>
-        <div class="faq-answer" style="max-height:0;overflow:hidden;transition:max-height 0.4s ease;padding:0 24px;">
-          <p style="color:var(--ash);font-size:0.95rem;line-height:1.7;padding-bottom:20px;text-align:center;">Yes! All generated projects are encrypted with AES-256-GCM encryption. Your source code remains secure until you choose to unlock it. Even we cannot access your encrypted projects without your authorization.</p>
-        </div>
-      </div>
-      <div class="faq-item glass-three-d" style="background:var(--glass);border:1px solid var(--glass-border);border-radius:12px;margin-bottom:12px;overflow:hidden;text-align:center;">
-        <div class="faq-trigger" role="button" tabindex="0" aria-expanded="false" style="padding:20px 24px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
-          <strong style="color:var(--white);font-size:1.05rem;text-align:center;flex:1;">What payment methods do you accept?</strong>
-          <i class="fas fa-chevron-down" style="transition:transform 0.3s;color:var(--primary);"></i>
-        </div>
-        <div class="faq-answer" style="max-height:0;overflow:hidden;transition:max-height 0.4s ease;padding:0 24px;">
-          <p style="color:var(--ash);font-size:0.95rem;line-height:1.7;padding-bottom:20px;text-align:center;">We accept all major credit cards, PayPal, and cryptocurrency through our secure Stripe integration. Your payment information is never stored on our servers.</p>
-        </div>
-      </div>
-      <div class="faq-item glass-three-d" style="background:var(--glass);border:1px solid var(--glass-border);border-radius:12px;margin-bottom:12px;overflow:hidden;text-align:center;">
-        <div class="faq-trigger" role="button" tabindex="0" aria-expanded="false" style="padding:20px 24px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
-          <strong style="color:var(--white);font-size:1.05rem;text-align:center;flex:1;">Can I customize the AI-generated website?</strong>
-          <i class="fas fa-chevron-down" style="transition:transform 0.3s;color:var(--primary);"></i>
-        </div>
-        <div class="faq-answer" style="max-height:0;overflow:hidden;transition:max-height 0.4s ease;padding:0 24px;">
-          <p style="color:var(--ash);font-size:0.95rem;line-height:1.7;padding-bottom:20px;text-align:center;">Absolutely! You can refine the design through our chat interface, or download the source code and customize it further. We also offer professional customization services for enterprise clients.</p>
-        </div>
-      </div>
-      <div class="faq-item glass-three-d" style="background:var(--glass);border:1px solid var(--glass-border);border-radius:12px;margin-bottom:12px;overflow:hidden;text-align:center;">
-        <div class="faq-trigger" role="button" tabindex="0" aria-expanded="false" style="padding:20px 24px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
-          <strong style="color:var(--white);font-size:1.05rem;text-align:center;flex:1;">How long does it take to get my project?</strong>
-          <i class="fas fa-chevron-down" style="transition:transform 0.3s;color:var(--primary);"></i>
-        </div>
-        <div class="faq-answer" style="max-height:0;overflow:hidden;transition:max-height 0.4s ease;padding:0 24px;">
-          <p style="color:var(--ash);font-size:0.95rem;line-height:1.7;padding-bottom:20px;text-align:center;">AI generation takes approximately 3 minutes. After payment, there's a 1-hour security release timer before you can download your source code. This ensures secure delivery and protects both parties.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- CTA Section -->
-  <section class="cta-section" id="cta-section">
-    <div class="cta-box gradient-animate">
-      <div class="cta-content">
-        <h2>Ready to <span class="text-gradient">Transform</span> Your Business?</h2>
-        <p>Let's create something extraordinary together. Our team of experts is ready to bring your vision to life.</p>
-        <div class="cta-buttons">
-<a href="login.html" class="btn btn-primary btn-lg three-d-btn glow-border-three-d btn-micro hover-scale">
-            <i class="fas fa-rocket"></i>
-            Start Your Project
-          </a>
-           <a href="mailto:keycode.techio@gmail.com" class="btn btn-secondary btn-lg three-d-btn glow-border-three-d">
-            <i class="fas fa-calendar"></i>
-            Book Consultation
-          </a>
-        </div>
-      </div>
-      <form class="cta-contact-form" id="contactForm" onsubmit="submitContactForm(event)">
-        <div class="form-row">
-          <div class="form-group">
-            <label for="contactName">Name</label>
-            <input type="text" id="contactName" placeholder="John Doe" required>
-          </div>
-          <div class="form-group">
-            <label for="contactEmail">Email</label>
-            <input type="email" id="contactEmail" placeholder="john@example.com" required>
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label for="contactPhone">Phone</label>
-            <input type="tel" id="contactPhone" placeholder="+1 (555) 123-4567">
-          </div>
-          <div class="form-group">
-            <label for="contactProjectType">Project Type</label>
-            <select id="contactProjectType">
-              <option value="">Select a service</option>
-              <option value="website">Website Design</option>
-              <option value="webapp">Web Application</option>
-              <option value="ecommerce">E-Commerce</option>
-              <option value="mobile">Mobile App</option>
-              <option value="branding">Branding / Identity</option>
-              <option value="seo">SEO / Marketing</option>
-              <option value="consulting">Consulting</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-group">
-          <label for="contactMessage">Message</label>
-          <textarea id="contactMessage" placeholder="Tell us about your project..." required></textarea>
-        </div>
-        <button type="submit" class="submit-btn" id="contactSubmitBtn">
-          <i class="fas fa-paper-plane"></i>
-          Send Message
-        </button>
-      </form>
     </div>
   </section>
 
   <!-- Footer -->
-  <footer class="footer">
-    <div class="container">
-      <!-- Footer Main Content -->
-      <div class="footer-content">
-        <!-- Brand Section -->
-        <div class="footer-brand">
-          <div class="footer-logo">
-            <img src="/logo-nav.png" alt="KEYCODE" width="120" height="32" loading="lazy">
+  <footer class="footer" id="contact-footer">
+    <div class="footer-inner">
+      <div class="footer-top">
+        <div class="footer-links">
+          <div class="footer-column">
+            <a href="#" class="footer-page-link">Top</a>
+            <a href="#works-section" class="footer-page-link" data-scramble-text>Works</a>
+            <a href="#mission-section" class="footer-page-link" data-scramble-text>About</a>
           </div>
-          <p class="footer-tagline">World's most advanced AI-powered digital transformation partner. Building extraordinary digital experiences that define the future.</p>
-          <div class="footer-social">
-            <a href="https://www.facebook.com/share/1ESTLUK5VR/" target="_blank" rel="noopener" title="Facebook" class="social-link" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
-            <a href="https://x.com/keycodetechio" target="_blank" rel="noopener" title="Twitter / X" class="social-link" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
-            <a href="https://www.linkedin.com/in/keycode-tech-80474b40b" target="_blank" rel="noopener" title="LinkedIn" class="social-link" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
-            <a href="https://github.com/keycodetechio-a11y" target="_blank" rel="noopener" title="GitHub" class="social-link" aria-label="GitHub"><i class="fab fa-github"></i></a>
-            <a href="https://discord.gg/keycodetechio" target="_blank" rel="noopener" title="Discord" class="social-link" aria-label="Discord"><i class="fab fa-discord"></i></a>
-            <a href="https://www.instagram.com/keycode.techio" target="_blank" rel="noopener" title="Instagram" class="social-link" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-            <a href="mailto:keycode.techio@gmail.com" target="_blank" rel="noopener" title="Email" class="social-link" aria-label="Email"><i class="fas fa-envelope"></i></a>
+          <div class="footer-column">
+            <a href="#services-section" class="footer-page-link">Tools</a>
+            <a href="#contact-footer" class="footer-page-link">Contact</a>
           </div>
-          <div class="footer-newsletter">
-            <p class="newsletter-label">Subscribe to our newsletter</p>
-            <form class="newsletter-form" action="#" method="post" onsubmit="event.preventDefault(); var e=this.querySelector('input').value; if(e){var btn=this.querySelector('.newsletter-btn'); var orig=btn.innerHTML; btn.innerHTML='<i class=\\'fas fa-spinner fa-spin\\'></i>'; btn.disabled=true; fetch('/api/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:e})}).then(function(r){return r.json()}).then(function(d){btn.innerHTML=orig; btn.disabled=false; if(d.success){ showToast('Subscribed! Check your inbox.','success'); }else{ showToast('Error: '+(d.error||'try again'),'error'); } }).catch(function(err){btn.innerHTML=orig; btn.disabled=false; showToast('Error: '+err.message,'error'); })}">
-              <input type="email" placeholder="Enter your email" class="newsletter-input" required>
-              <button type="submit" class="newsletter-btn" aria-label="Subscribe"><i class="fas fa-arrow-right"></i></button>
-            </form>
+          <div class="footer-column">
+            <h3 class="footer-links-title">Links</h3>
+            <div class="footer-social-links">
+              <a href="https://x.com/keycodetechio" target="_blank" rel="noopener">X</a>
+              <a href="https://github.com/keycodetechio-a11y" target="_blank" rel="noopener">GitHub</a>
+              <a href="https://www.youtube.com/@keycodetechio" target="_blank" rel="noopener">YouTube</a>
+              <a href="https://discord.gg/keycodetechio" target="_blank" rel="noopener">Discord</a>
+            </div>
           </div>
         </div>
-
-        <!-- Links Section -->
-        <div class="footer-links-grid">
-          <!-- Product -->
-          <div class="footer-section">
-            <h4 class="section-title">Product</h4>
-            <ul class="section-links">
-              <li><a href="/ai-builder.html"><i class="fas fa-wand-magic-sparkles"></i> AI Builder</a></li>
-              <li><a href="/control-panel.html"><i class="fas fa-chart-line"></i> Dashboard</a></li>
-              <li><a href="/shop.html"><i class="fas fa-store"></i> Shop</a></li>
-              <li><a href="#pricing-section"><i class="fas fa-tag"></i> Pricing</a></li>
-              <li><a href="/viewer.html"><i class="fas fa-cube"></i> 3D Viewer</a></li>
-            </ul>
-          </div>
-
-          <!-- Company -->
-          <div class="footer-section">
-            <h4 class="section-title">Company</h4>
-            <ul class="section-links">
-              <li><a href="/"><i class="fas fa-info-circle"></i> About Us</a></li>
-              <li><a href="https://github.com/keycodetechio-a11y" target="_blank" rel="noopener"><i class="fas fa-newspaper"></i> Blog</a></li>
-              <li><a href="#cta-section"><i class="fas fa-briefcase"></i> Careers</a></li>
-              <li><a href="mailto:keycode.techio@gmail.com"><i class="fas fa-envelope"></i> Contact</a></li>
-              <li><a href="https://x.com/keycodetechio" target="_blank" rel="noopener"><i class="fas fa-microphone"></i> Press</a></li>
-            </ul>
-          </div>
-
-          <!-- Support & Resources -->
-          <div class="footer-section">
-            <h4 class="section-title">Support</h4>
-            <ul class="section-links">
-              <li><a href="mailto:keycode.techio@gmail.com"><i class="fas fa-question-circle"></i> Help Center</a></li>
-              <li><a href="/ai-builder.html"><i class="fas fa-book"></i> Documentation</a></li>
-              <li><a href="/login.html"><i class="fas fa-user-circle"></i> My Account</a></li>
-              <li><a href="https://discord.gg/keycodetechio" target="_blank" rel="noopener"><i class="fas fa-users"></i> Community</a></li>
-              <li><a href="mailto:keycode.techio@gmail.com"><i class="fas fa-headset"></i> Support</a></li>
-            </ul>
-          </div>
-
-          <!-- Legal & Security -->
-          <div class="footer-section">
-            <h4 class="section-title">Legal</h4>
-            <ul class="section-links">
-              <li><a href="/privacy.html"><i class="fas fa-shield-alt"></i> Privacy Policy</a></li>
-              <li><a href="/terms.html"><i class="fas fa-file-contract"></i> Terms of Service</a></li>
-              <li><a href="/cookies.html"><i class="fas fa-cookie"></i> Cookie Policy</a></li>
-              <li><a href="/privacy.html"><i class="fas fa-lock"></i> Security</a></li>
-              <li><a href="/terms.html"><i class="fas fa-check-double"></i> Compliance</a></li>
-            </ul>
+        <div class="footer-contact">
+          <a href="mailto:keycode.techio@gmail.com" class="footer-contact-btn">Contact</a>
+          <a href="mailto:keycode.techio@gmail.com?subject=Recruitment" class="footer-contact-btn">Recruit</a>
+          <div class="footer-privacy">
+            <a href="/privacy.html">Privacy Policy</a>
+            <a href="/terms.html">Terms</a>
           </div>
         </div>
       </div>
-
-      <!-- Footer Divider -->
-      <div class="footer-divider"></div>
-
-      <!-- Footer Bottom -->
-      <div class="footer-bottom">
-        <div class="footer-copyright">
-          <p>&copy; 2026 KEYCODE. All rights reserved. <span class="developer-credit">| Developed by <strong>Vaibhav</strong></span> <span class="ai-badge"><i class="fas fa-sparkles"></i> Powered by KEYCODE Studio</span></p>
-        </div>
-        <div class="footer-meta">
-          <span class="meta-item"><i class="fas fa-globe"></i> Global</span>
-          <span class="meta-item"><i class="fas fa-shield-alt"></i> Secure</span>
-          <span class="meta-item"><i class="fas fa-lightning-bolt"></i> Fast</span>
-        </div>
-      </div>
+      <div class="footer-copyright">&copy;2026 KEYCODE Studio</div>
+      <div class="footer-logo">KEYCODE</div>
     </div>
   </footer>
 
@@ -1006,17 +770,21 @@
     }
 
     function toggleMobileMenu() {
-      const navLinks = document.getElementById('navLinks');
-      navLinks.classList.toggle('active');
+      const menu = document.getElementById('sideMenu');
+      if (menu) {
+        menu.classList.toggle('active');
+        document.body.style.overflow = menu.classList.contains('active') ? 'hidden' : '';
+      }
     }
 
     // Close mobile menu when clicking outside
     document.addEventListener('click', function(e) {
-      const navLinks = document.getElementById('navLinks');
+      const menu = document.getElementById('sideMenu');
       const menuBtn = document.querySelector('.mobile-menu-btn');
-      if (navLinks && navLinks.classList.contains('active')) {
-        if (!navLinks.contains(e.target) && !menuBtn.contains(e.target)) {
-          navLinks.classList.remove('active');
+      if (menu && menu.classList.contains('active')) {
+        if (!menu.contains(e.target) && !menuBtn.contains(e.target)) {
+          menu.classList.remove('active');
+          document.body.style.overflow = '';
         }
       }
     });
@@ -1036,9 +804,9 @@
     
     // Hero animations - just play once on load
     if (typeof gsap !== 'undefined') {
-      gsap.from('.hero-badge', { 
+      gsap.from('.hero-main-title', { 
         opacity: 0, 
-        y: 20, 
+        y: 30, 
         duration: 0.8, 
         delay: 0.2,
         ease: 'power3.out'
@@ -1047,7 +815,7 @@
     
     // Fade in hero heading
     (function() {
-      var heroTitle = document.querySelector('.hero h1');
+      var heroTitle = document.querySelector('.hero-main-title');
       if (heroTitle) {
         heroTitle.style.opacity = '0';
         heroTitle.style.transition = 'opacity 0.8s ease';
@@ -1062,21 +830,7 @@
         opacity: 0, 
         y: 20, 
         duration: 0.8, 
-        delay: 1.2,
-        ease: 'power3.out'
-      });
-      gsap.from('.hero-ai-input', { 
-        opacity: 0, 
-        y: 20, 
-        duration: 0.8, 
-        delay: 1.4,
-        ease: 'power3.out'
-      });
-      gsap.from('.hero-stats', { 
-        opacity: 0, 
-        y: 20, 
-        duration: 0.8, 
-        delay: 1.6,
+        delay: 0.6,
         ease: 'power3.out'
       });
     }
@@ -1085,7 +839,7 @@
       // Animate progress bar
       const progressBar = document.getElementById('progressBar');
       if (progressBar) {
-        progressBar.style.transform = 'scaleX(1)';
+        progressBar.style.width = '100%';
       }
       
       // Update loader text
@@ -2317,98 +2071,7 @@
       closeBuilder();
     }
 
-    // Sound Toggle
-    const video = document.getElementById('video-bg');
-    const soundBtn = document.getElementById('sound-toggle');
-    const canvas = document.getElementById('video-canvas');
-
-    if (!video) {
-      console.warn('Video element #video-bg not found. Sound toggle and auto-play are disabled.');
-    } else {
-      if (soundBtn) {
-        soundBtn.classList.add('muted');
-      }
-      video.muted = true;
-
-      // Force play video with error handling
-      const playVideo = () => {
-        video.play().then(() => {
-          if (canvas) canvas.style.display = 'none'; // Hide canvas when video plays
-        }).catch(err => {
-          console.log('Video auto-play blocked, showing animated background');
-          if (canvas) canvas.style.display = 'block';
-        });
-      };
-
-      // Try to play immediately and on user interaction
-      playVideo();
-      document.addEventListener('click', playVideo, { once: true });
-      document.addEventListener('touchstart', playVideo, { once: true });
-
-      if (soundBtn) {
-        soundBtn.addEventListener('click', function() {
-          if (video.muted) {
-            video.muted = false;
-            video.play().catch(() => {});
-            soundBtn.classList.remove('muted');
-            if (canvas) canvas.style.display = 'none';
-          } else {
-            video.muted = true;
-            soundBtn.classList.add('muted');
-          }
-        });
-      }
-    }
-
-    // Canvas Fallback Animation (when video doesn't play)
-    if (canvas) {
-      const ctx = canvas.getContext('2d');
-      let animationId;
-      
-      const animateCanvas = () => {
-        const width = canvas.width = window.innerWidth;
-        const height = canvas.height = window.innerHeight;
-        
-        // Create animated gradient background
-        const time = Date.now() * 0.001;
-        const gradient = ctx.createLinearGradient(0, 0, width, height);
-        gradient.addColorStop(0, `hsl(${(time * 20) % 360}, 70%, 20%)`);
-        gradient.addColorStop(0.5, `hsl(${(time * 20 + 120) % 360}, 70%, 15%)`);
-        gradient.addColorStop(1, `hsl(${(time * 20 + 240) % 360}, 70%, 10%)`);
-        
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, width, height);
-        
-        // Add some floating particles
-        for (let i = 0; i < 50; i++) {
-          const x = (Math.sin(time + i) * 0.5 + 0.5) * width;
-          const y = (Math.cos(time * 0.5 + i) * 0.5 + 0.5) * height;
-          ctx.beginPath();
-          ctx.arc(x, y, 2, 0, Math.PI * 2);
-          ctx.fillStyle = `hsla(${(time * 50 + i * 10) % 360}, 70%, 60%, 0.6)`;
-          ctx.fill();
-        }
-        
-        animationId = requestAnimationFrame(animateCanvas);
-      };
-      
-      // Start animation if canvas is visible
-      const checkCanvasVisibility = () => {
-        if (canvas.style.display === 'block') {
-          animateCanvas();
-        } else {
-          if (animationId) {
-            cancelAnimationFrame(animationId);
-            animationId = null;
-          }
-        }
-      };
-      
-      // Check initially and on display change
-      checkCanvasVisibility();
-      const observer = new MutationObserver(checkCanvasVisibility);
-      observer.observe(canvas, { attributes: true, attributeFilter: ['style'] });
-    }
+    // 3D Scene initialized by three-scroll-canvas
 
     // ================================================
     // WORLD-CLASS 3D EFFECTS
@@ -2419,7 +2082,7 @@
       // Avoid expensive DOM queries per scroll event
       parallaxTargets.forEach(el => {
         if (!el) return;
-        const speed = el.id === 'video-bg-container' ? 0 : 0.12;
+        const speed = 0.12;
         el.style.transform = `translate3d(0, ${scrollPosition * speed}px, 0)`;
       });
     };
@@ -2513,12 +2176,6 @@
     // ================================================
     // ENHANCED SCROLL-TRIGGERED ANIMATIONS
     // ================================================
-    
-    // Video Background - SIMPLIFIED (no scroll processing)
-    const videoBgContainer = document.getElementById('video-bg-container');
-    if (videoBgContainer) {
-      // no will-change (keeps GPU usage low)
-    }
     
     // Use passive scroll listeners for better performance
     let ticking = false;
@@ -3356,6 +3013,35 @@
   };
   </script>
 
+<script src="/public/three.min.js" defer></script>
+<script>
+// Three.js addons - inject after THREE is loaded
+window.THREE_READY = new Promise(function(resolve) {
+  var check = function() {
+    if (typeof THREE !== 'undefined') {
+      var s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js';
+      s.onload = function() {
+        var s2 = document.createElement('script');
+        s2.src = 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js';
+        s2.onload = function() {
+          var s3 = document.createElement('script');
+          s3.src = 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js';
+          s3.onload = function() { resolve(); };
+          document.head.appendChild(s3);
+        };
+        document.head.appendChild(s2);
+      };
+      document.head.appendChild(s);
+    } else {
+      setTimeout(check, 100);
+    }
+  };
+  check();
+});
+</script>
+<script src="/public/3d-scroll.js" defer></script>
+
 <script>
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations().then(function(regs) {
@@ -3373,6 +3059,24 @@ if ('serviceWorker' in navigator) {
 </div>
 <script>
 (function(){var c=document.getElementById('cookieConsent');if(localStorage.getItem('cookieConsent')){c.style.display='none';}document.getElementById('cookieAccept').onclick=function(){localStorage.setItem('cookieConsent','accepted');c.style.display='none';};document.getElementById('cookieDecline').onclick=function(){localStorage.setItem('cookieConsent','declined');c.style.display='none';};})();
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  if (typeof Lenis !== 'undefined') {
+    var lenis = new Lenis({
+      duration: 1.2,
+      easing: function(t) { return Math.min(1, 1.001 - Math.pow(2, -10 * t)) },
+      orientation: 'vertical',
+      smoothWheel: true
+    });
+    function raf(time) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+    requestAnimationFrame(raf);
+    window.lenis = lenis;
+  }
+});
 </script>
 </body>
 </html>

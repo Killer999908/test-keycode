@@ -13,7 +13,9 @@ RUN npx vite build
 FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup && \
+    mkdir -p /app/exports /app/generated /app/server/data && \
+    chown -R appuser:appgroup /app
 COPY --from=builder /app/server/node_modules ./server/node_modules
 COPY --from=frontend-builder /app/dist ./dist
 COPY server/ ./server/
