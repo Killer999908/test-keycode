@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <title>Blog · KEYCODE Studio</title>
+  <meta name="description" content="Explore the KEYCODE blog for tutorials, guides, product updates, and insights on AI-powered design, PCB engineering, 3D modeling, and firmware development.">
+  <meta name="keywords" content="KEYCODE blog, AI tutorials, PCB design guide, 3D modeling, firmware development, web development">
+  <meta name="author" content="KEYCODE Studio">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://keycode-studio-production.up.railway.app/blog.html">
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://keycode-studio-production.up.railway.app/blog.html">
+  <meta property="og:title" content="Blog · KEYCODE Studio">
+  <meta property="og:description" content="Tutorials, guides, and insights from the KEYCODE team on AI-powered design, PCB engineering, 3D modeling, and firmware development.">
+  <meta property="og:image" content="/og-image.svg">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Blog · KEYCODE Studio">
+  <meta name="twitter:description" content="Tutorials, guides, and insights from the KEYCODE team.">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Blog",
+    "name": "KEYCODE Studio Blog",
+    "description": "Latest updates, tutorials, and insights from KEYCODE Studio"
+  }
+  </script>
+
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#6366f1">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="KEYCODE Blog">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="alternate icon" type="image/png" href="/favicon.png">
+
+  <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+<style>
+:root {
+  --bg: #0a0a1a;
+  --card: #12122a;
+  --card-hover: #181840;
+  --primary: #6366f1;
+  --primary-glow: rgba(99,102,241,0.25);
+  --accent: #22d3ee;
+  --text: #e2e8f0;
+  --text-secondary: #c8d0dc;
+  --ash: #94a3b8;
+  --ash-dark: #64748b;
+  --border: rgba(255,255,255,0.06);
+  --border-hover: rgba(255,255,255,0.12);
+  --success: #10b981;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --radius: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --max-width: 1200px;
+  --header-h: 64px;
+  --transition: 0.2s ease;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px;scroll-behavior:smooth;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+body{
+  font-family:var(--font);
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  line-height:1.6;
+  overflow-x:hidden;
+}
+img{max-width:100%;height:auto;display:block}
+a{color:var(--primary);text-decoration:none}
+a:hover{color:var(--accent)}
+button{cursor:pointer;font-family:var(--font)}
+input{font-family:var(--font)}
+
+.container{max-width:var(--max-width);margin:0 auto;padding:0 24px}
+
+/* Navbar */
+.navbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;height:var(--header-h);
+  max-width:var(--max-width);margin:0 auto;
+  border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:100;
+  background:rgba(10,10,26,0.85);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+}
+.nav-logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:22px;color:var(--text);letter-spacing:-0.5px}
+.nav-logo img{height:30px;width:auto}
+.nav-links{display:flex;align-items:center;gap:2px;list-style:none}
+.nav-links a{
+  padding:8px 16px;border-radius:8px;font-size:14px;font-weight:500;
+  color:var(--ash);transition:all var(--transition);
+}
+.nav-links a:hover{color:var(--text);background:rgba(255,255,255,0.04)}
+.nav-links a.active{color:var(--primary);background:rgba(99,102,241,0.12)}
+.nav-actions{display:flex;align-items:center;gap:12px}
+.mobile-menu-btn{display:none;background:none;border:none;color:var(--ash);font-size:1.3rem;padding:4px}
+
+/* Hero */
+.blog-hero{padding:60px 0 40px;text-align:center}
+.blog-hero h1{font-size:clamp(2rem,5vw,3.5rem);font-weight:800;letter-spacing:-1.5px;line-height:1.15}
+.blog-hero h1 span{background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.blog-hero p{color:var(--ash);font-size:1.1rem;max-width:600px;margin:12px auto 0}
+
+/* Featured Hero */
+.featured-hero{
+  margin:0 auto 40px;border-radius:var(--radius-xl);overflow:hidden;
+  position:relative;min-height:420px;display:flex;align-items:flex-end;
+  background:var(--card);border:1px solid var(--border);
+  cursor:pointer;transition:border-color var(--transition);
+}
+.featured-hero:hover{border-color:var(--primary)}
+.featured-hero-bg{
+  position:absolute;inset:0;
+  background-size:cover;background-position:center;
+  z-index:0;
+}
+.featured-hero-bg::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(to top, rgba(10,10,26,1) 0%, rgba(10,10,26,0.7) 40%, rgba(10,10,26,0.3) 100%);
+}
+.featured-hero-gradient{
+  position:absolute;inset:0;z-index:0;
+  background:linear-gradient(135deg, var(--primary), var(--accent));
+  opacity:0.15;
+}
+.featured-hero-content{
+  position:relative;z-index:1;padding:48px 40px;max-width:700px;
+}
+.featured-category{
+  display:inline-block;padding:4px 12px;border-radius:20px;
+  font-size:12px;font-weight:600;letter-spacing:0.3px;text-transform:uppercase;
+  background:rgba(99,102,241,0.2);color:var(--primary);margin-bottom:16px;
+}
+.featured-hero-content h2{
+  font-size:clamp(1.5rem,3vw,2.4rem);font-weight:700;line-height:1.25;
+  letter-spacing:-0.5px;margin-bottom:12px;
+}
+.featured-hero-content .excerpt{
+  color:var(--ash);font-size:1rem;line-height:1.6;margin-bottom:20px;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
+}
+.featured-meta{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+.featured-author{display:flex;align-items:center;gap:10px}
+.featured-author img{
+  width:36px;height:36px;border-radius:50%;object-fit:cover;
+  background:var(--card-hover);
+}
+.featured-author .initial-avatar{
+  width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:600;background:var(--primary);color:#fff;
+}
+.featured-author-info .name{font-size:14px;font-weight:600}
+.featured-author-info .date{font-size:12px;color:var(--ash)}
+.featured-meta .read-time{font-size:13px;color:var(--ash);display:flex;align-items:center;gap:6px}
+.btn-read{
+  display:inline-flex;align-items:center;gap:8px;padding:10px 24px;
+  border-radius:8px;font-size:14px;font-weight:600;border:none;
+  background:var(--primary);color:#fff;transition:all var(--transition);
+}
+.btn-read:hover{background:#5558e6;color:#fff;transform:translateY(-1px)}
+
+/* Controls bar */
+.controls-bar{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  margin-bottom:32px;flex-wrap:wrap;
+}
+
+/* Category Pills */
+.category-pills{
+  display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;
+  -webkit-overflow-scrolling:touch;scrollbar-width:none;flex:1;
+}
+.category-pills::-webkit-scrollbar{display:none}
+.pill{
+  flex-shrink:0;padding:7px 18px;border-radius:20px;font-size:13px;font-weight:500;
+  border:1px solid var(--border);background:transparent;color:var(--ash);
+  transition:all var(--transition);white-space:nowrap;
+}
+.pill:hover{border-color:var(--border-hover);color:var(--text);background:rgba(255,255,255,0.03)}
+.pill.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+
+/* Search */
+.search-wrap{position:relative;min-width:220px}
+.search-wrap i{
+  position:absolute;left:12px;top:50%;transform:translateY(-50%);
+  color:var(--ash-dark);font-size:14px;pointer-events:none;
+}
+.search-wrap input{
+  width:100%;padding:9px 12px 9px 36px;border-radius:20px;font-size:14px;
+  background:rgba(255,255,255,0.04);border:1px solid var(--border);
+  color:var(--text);outline:none;transition:all var(--transition);
+}
+.search-wrap input:focus{border-color:var(--primary);background:rgba(255,255,255,0.06)}
+.search-wrap input::placeholder{color:var(--ash-dark)}
+
+/* Post Grid */
+.post-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:24px;
+}
+
+/* Card */
+.post-card{
+  background:var(--card);border-radius:var(--radius-lg);
+  border:1px solid var(--border);overflow:hidden;
+  transition:all 0.3s ease;cursor:pointer;
+  display:flex;flex-direction:column;
+}
+.post-card:hover{
+  transform:translateY(-4px);border-color:var(--primary);
+  box-shadow:0 8px 32px rgba(99,102,241,0.15);
+}
+.post-card-cover{
+  height:200px;position:relative;overflow:hidden;
+  background:var(--card-hover);
+}
+.post-card-cover img{
+  width:100%;height:100%;object-fit:cover;transition:transform 0.4s ease;
+}
+.post-card:hover .post-card-cover img{transform:scale(1.05)}
+.post-card-cover .gradient-placeholder{
+  width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+  font-size:2.5rem;color:rgba(255,255,255,0.15);
+}
+.post-card-category{
+  position:absolute;top:12px;left:12px;padding:4px 12px;border-radius:20px;
+  font-size:11px;font-weight:600;letter-spacing:0.3px;text-transform:uppercase;
+  background:rgba(0,0,0,0.6);color:#fff;backdrop-filter:blur(4px);
+}
+.post-card-body{padding:20px;flex:1;display:flex;flex-direction:column}
+.post-card-body h3{
+  font-size:1.05rem;font-weight:700;line-height:1.35;margin-bottom:8px;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+.post-card-body .card-excerpt{
+  font-size:0.88rem;color:var(--ash);line-height:1.55;margin-bottom:16px;flex:1;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
+}
+.post-card-footer{
+  display:flex;align-items:center;justify-content:space-between;padding-top:12px;
+  border-top:1px solid var(--border);margin-top:auto;
+}
+.post-card-author{display:flex;align-items:center;gap:8px}
+.post-card-author img{
+  width:28px;height:28px;border-radius:50%;object-fit:cover;
+  background:var(--card-hover);
+}
+.post-card-author .initial-avatar{
+  width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;background:var(--primary);color:#fff;flex-shrink:0;
+}
+.post-card-author .name{font-size:12px;font-weight:600;color:var(--text-secondary)}
+.post-card-footer .date{font-size:11px;color:var(--ash-dark)}
+
+/* Skeleton */
+.skeleton{background:linear-gradient(90deg,var(--card) 25%,var(--card-hover) 50%,var(--card) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:var(--radius)}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.skeleton-card{background:var(--card);border-radius:var(--radius-lg);border:1px solid var(--border);overflow:hidden}
+.skeleton-card .s-cover{height:200px;border-radius:0}
+.skeleton-card .s-body{padding:20px}
+.skeleton-card .s-line{height:14px;margin-bottom:10px;border-radius:6px;width:100%}
+.skeleton-card .s-line:last-child{width:60%}
+
+/* Load More */
+.load-more-wrap{text-align:center;padding:48px 0}
+.btn-load-more{
+  padding:12px 36px;border-radius:8px;font-size:14px;font-weight:600;
+  border:1px solid var(--border);background:transparent;color:var(--ash);
+  transition:all var(--transition);
+}
+.btn-load-more:hover{background:rgba(255,255,255,0.04);color:var(--text);border-color:var(--primary)}
+.btn-load-more:disabled{opacity:0.4;cursor:not-allowed}
+.load-more-info{font-size:13px;color:var(--ash-dark);margin-top:12px}
+
+/* Empty State */
+.empty-state{padding:80px 20px;text-align:center}
+.empty-state i{font-size:3rem;color:var(--ash-dark);margin-bottom:16px;opacity:0.5}
+.empty-state h3{font-size:1.2rem;font-weight:600;margin-bottom:8px}
+.empty-state p{color:var(--ash);font-size:0.95rem}
+
+/* Error State */
+.error-state{padding:80px 20px;text-align:center}
+.error-state i{font-size:3rem;color:var(--danger);margin-bottom:16px;opacity:0.6}
+.error-state h3{font-size:1.2rem;font-weight:600;margin-bottom:8px}
+.error-state p{color:var(--ash);font-size:0.95rem;margin-bottom:20px}
+.btn-retry{
+  padding:10px 28px;border-radius:8px;font-size:14px;font-weight:600;
+  border:none;background:var(--primary);color:#fff;transition:all var(--transition);
+}
+.btn-retry:hover{background:#5558e6}
+
+/* Reader Overlay */
+.reader-overlay{
+  position:fixed;inset:0;z-index:1000;overflow-y:auto;
+  background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  opacity:0;visibility:hidden;transition:all 0.3s ease;
+}
+.reader-overlay.open{opacity:1;visibility:visible}
+.reader-overlay.open .reader-content{transform:translateY(0);opacity:1}
+.reader-close{
+  position:fixed;top:20px;right:20px;z-index:1001;
+  width:44px;height:44px;border-radius:50%;border:1px solid var(--border);
+  background:rgba(10,10,26,0.8);color:var(--ash);font-size:1.2rem;
+  display:flex;align-items:center;justify-content:center;
+  transition:all var(--transition);
+}
+.reader-close:hover{background:var(--danger);color:#fff;border-color:var(--danger)}
+.reader-content{
+  max-width:760px;margin:60px auto;padding:0 24px 80px;
+  transform:translateY(20px);opacity:0;transition:all 0.4s ease;
+}
+.reader-header{margin-bottom:32px}
+.reader-header .cat{padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;text-transform:uppercase;color:var(--primary);background:rgba(99,102,241,0.12);display:inline-block;margin-bottom:16px}
+.reader-header h1{font-size:clamp(1.6rem,4vw,2.6rem);font-weight:800;letter-spacing:-0.5px;line-height:1.2;margin-bottom:16px}
+.reader-header .meta{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding-bottom:24px;border-bottom:1px solid var(--border)}
+.reader-header .meta .author{display:flex;align-items:center;gap:10px}
+.reader-header .meta .author img{width:36px;height:36px;border-radius:50%;object-fit:cover}
+.reader-header .meta .author .initial-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;background:var(--primary);color:#fff}
+.reader-header .meta .author .aname{font-size:14px;font-weight:600}
+.reader-header .meta .author .adate{font-size:12px;color:var(--ash)}
+.reader-header .meta .rt{font-size:13px;color:var(--ash);display:flex;align-items:center;gap:6px}
+.reader-cover{width:100%;max-height:480px;object-fit:cover;border-radius:var(--radius-lg);margin-bottom:32px;background:var(--card-hover)}
+.reader-body{font-size:1rem;line-height:1.85;color:var(--text-secondary)}
+.reader-body p{margin-bottom:1.2rem}
+.reader-body h2{font-size:1.4rem;font-weight:700;margin:2rem 0 0.8rem;color:var(--text)}
+.reader-body h3{font-size:1.15rem;font-weight:600;margin:1.5rem 0 0.6rem;color:var(--text)}
+.reader-body ul,.reader-body ol{padding-left:1.5rem;margin-bottom:1.2rem}
+.reader-body li{margin-bottom:0.4rem}
+.reader-body code{background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px;font-size:0.9em}
+.reader-body pre{background:var(--card-hover);padding:20px;border-radius:var(--radius);overflow-x:auto;margin-bottom:1.2rem;border:1px solid var(--border)}
+.reader-body pre code{background:none;padding:0}
+.reader-body blockquote{border-left:3px solid var(--primary);padding:12px 20px;margin-bottom:1.2rem;color:var(--ash);font-style:italic;background:rgba(99,102,241,0.04);border-radius:0 var(--radius) var(--radius) 0}
+.reader-body a{color:var(--accent)}
+.reader-body a:hover{text-decoration:underline}
+.reader-body img{max-width:100%;border-radius:var(--radius);margin:1.5rem 0}
+
+/* Newsletter */
+.newsletter-section{
+  padding:56px 24px;text-align:center;border-top:1px solid var(--border);margin-top:64px;
+}
+.newsletter-inner{max-width:500px;margin:0 auto}
+.newsletter-section h3{font-size:1.4rem;font-weight:700;margin-bottom:8px}
+.newsletter-section p{color:var(--ash);font-size:0.9rem;margin-bottom:24px}
+.newsletter-form{display:flex;gap:8px;max-width:440px;margin:0 auto}
+.newsletter-form input{
+  flex:1;padding:11px 16px;border-radius:8px;font-size:14px;
+  background:rgba(255,255,255,0.04);border:1px solid var(--border);
+  color:var(--text);outline:none;transition:all var(--transition);
+}
+.newsletter-form input:focus{border-color:var(--primary)}
+.newsletter-form input::placeholder{color:var(--ash-dark)}
+.newsletter-form button{
+  padding:11px 24px;border-radius:8px;font-size:14px;font-weight:600;
+  border:none;background:var(--primary);color:#fff;white-space:nowrap;
+  transition:all var(--transition);
+}
+.newsletter-form button:hover{background:#5558e6}
+.newsletter-feedback{font-size:13px;margin-top:12px;min-height:20px}
+.newsletter-feedback.success{color:var(--success)}
+.newsletter-feedback.error{color:var(--danger)}
+
+/* Footer */
+.site-footer{
+  padding:48px 24px 24px;border-top:1px solid var(--border);
+  margin-top:0;
+}
+.footer-grid{
+  max-width:var(--max-width);margin:0 auto;
+  display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:3rem;
+}
+.footer-brand img{height:28px;margin-bottom:12px}
+.footer-brand p{color:var(--ash);font-size:0.88rem;line-height:1.6;margin-bottom:16px;max-width:280px}
+.social-links{display:flex;gap:14px}
+.social-links a{color:var(--ash-dark);font-size:1.15rem;transition:color var(--transition)}
+.social-links a:hover{color:var(--primary)}
+.footer-col h4{font-size:0.82rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--text);margin-bottom:14px}
+.footer-col a{display:block;color:var(--ash);font-size:0.88rem;padding:4px 0;transition:color var(--transition)}
+.footer-col a:hover{color:var(--primary)}
+.footer-bottom{max-width:var(--max-width);margin:32px auto 0;padding-top:20px;border-top:1px solid var(--border);text-align:center;font-size:0.82rem;color:var(--ash-dark)}
+
+/* Back to top */
+.back-to-top{
+  position:fixed;bottom:24px;right:24px;width:44px;height:44px;border-radius:50%;
+  background:var(--card);border:1px solid var(--border);color:var(--ash);
+  font-size:1.1rem;display:flex;align-items:center;justify-content:center;
+  opacity:0;visibility:hidden;transform:translateY(10px);
+  transition:all 0.3s ease;z-index:99;
+}
+.back-to-top.visible{opacity:1;visibility:visible;transform:translateY(0)}
+.back-to-top:hover{background:var(--primary);color:#fff;border-color:var(--primary)}
+
+/* Responsive */
+@media(max-width:900px){
+  .footer-grid{grid-template-columns:1fr 1fr}
+  .controls-bar{flex-direction:column;align-items:stretch}
+  .search-wrap{min-width:unset}
+}
+@media(max-width:768px){
+  .nav-links{display:none}
+  .mobile-menu-btn{display:block}
+  .nav-links.open{display:flex;flex-direction:column;position:absolute;top:var(--header-h);left:0;right:0;background:rgba(10,10,26,0.96);backdrop-filter:blur(16px);padding:16px;border-bottom:1px solid var(--border);gap:4px}
+  .featured-hero{min-height:340px}
+  .featured-hero-content{padding:32px 24px}
+  .post-grid{grid-template-columns:1fr}
+  .newsletter-form{flex-direction:column}
+}
+@media(max-width:600px){
+  .footer-grid{grid-template-columns:1fr;gap:2rem}
+  .navbar{padding:0 16px}
+  .container{padding:0 16px}
+  .blog-hero{padding:40px 0 24px}
+  .featured-hero-content{padding:24px 20px}
+  .featured-hero-content h2{font-size:1.3rem}
+  .post-card-cover{height:180px}
+  .reader-content{margin:40px auto;padding:0 16px 60px}
+}
+</style>
+  <link rel="stylesheet" href="/z-shared.css">
+  </head>
+<body>
+  <div id="kc-loader">
+    <div id="kc-loader-scene"></div>
+      <div id="kc-bg-text" aria-hidden="true">KEYCODE</div>
+<div class="kc-loader-info" style="position:absolute;bottom:48px;left:50%;transform:translateX(-50%);">
+      <div id="kc-loader-bar-track"><div id="kc-loader-bar"></div></div>
+      <div id="kc-loader-pct" style="font-family:'Inter',sans-serif;font-size:11px;color:#555;letter-spacing:.12em;text-align:center;">0%</div>
+    </div>
+  </div>
+
+  <div id="site-nav"></div>
+
+  <main class="container">
+
+  <!-- Hero -->
+  <section class="blog-hero">
+    <h1>The <span>KEYCODE</span> Blog</h1>
+    <p>Tutorials, guides, and insights on AI-powered design, PCB engineering, 3D modeling, and firmware development.</p>
+  </section>
+
+  <!-- Featured Hero -->
+  <div id="featuredHero" class="featured-hero" style="display:none"></div>
+
+  <!-- Loading skeleton -->
+  <div id="skeletonGrid" class="post-grid">
+    <div class="skeleton-card"><div class="skeleton s-cover"></div><div class="s-body"><div class="skeleton s-line"></div><div class="skeleton s-line"></div><div class="skeleton s-line" style="width:70%"></div><div class="skeleton s-line" style="width:40%;margin-top:16px"></div></div></div>
+    <div class="skeleton-card"><div class="skeleton s-cover"></div><div class="s-body"><div class="skeleton s-line"></div><div class="skeleton s-line"></div><div class="skeleton s-line" style="width:70%"></div><div class="skeleton s-line" style="width:40%;margin-top:16px"></div></div></div>
+    <div class="skeleton-card"><div class="skeleton s-cover"></div><div class="s-body"><div class="skeleton s-line"></div><div class="skeleton s-line"></div><div class="skeleton s-line" style="width:70%"></div><div class="skeleton s-line" style="width:40%;margin-top:16px"></div></div></div>
+    <div class="skeleton-card"><div class="skeleton s-cover"></div><div class="s-body"><div class="skeleton s-line"></div><div class="skeleton s-line"></div><div class="skeleton s-line" style="width:70%"></div><div class="skeleton s-line" style="width:40%;margin-top:16px"></div></div></div>
+    <div class="skeleton-card"><div class="skeleton s-cover"></div><div class="s-body"><div class="skeleton s-line"></div><div class="skeleton s-line"></div><div class="skeleton s-line" style="width:70%"></div><div class="skeleton s-line" style="width:40%;margin-top:16px"></div></div></div>
+    <div class="skeleton-card"><div class="skeleton s-cover"></div><div class="s-body"><div class="skeleton s-line"></div><div class="skeleton s-line"></div><div class="skeleton s-line" style="width:70%"></div><div class="skeleton s-line" style="width:40%;margin-top:16px"></div></div></div>
+  </div>
+
+  <!-- Controls Bar -->
+  <div id="controlsBar" class="controls-bar" style="display:none">
+    <div class="category-pills" id="categoryPills"></div>
+    <div class="search-wrap">
+      <i class="fas fa-search"></i>
+      <input type="text" id="searchInput" placeholder="Search posts..." autocomplete="off">
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div id="errorState" class="error-state" style="display:none">
+    <i class="fas fa-exclamation-triangle"></i>
+    <h3>Failed to load posts</h3>
+    <p>The blog couldn't be loaded right now. Please try again.</p>
+    <button class="btn-retry" onclick="initBlog()"><i class="fas fa-sync-alt" style="margin-right:6px"></i>Retry</button>
+  </div>
+
+  <!-- Empty State -->
+  <div id="emptyState" class="empty-state" style="display:none">
+    <i class="fas fa-newspaper"></i>
+    <h3>No posts yet</h3>
+    <p>Check back soon! We're working on something great.</p>
+  </div>
+
+  <!-- Post Grid -->
+  <div id="postGrid" class="post-grid" style="display:none"></div>
+
+  <!-- Load More -->
+  <div id="loadMoreWrap" class="load-more-wrap" style="display:none">
+    <button class="btn-load-more" id="loadMoreBtn" onclick="loadMore()">Load More</button>
+    <div class="load-more-info" id="loadMoreInfo"></div>
+  </div>
+
+</main>
+
+<!-- Newsletter -->
+<section class="newsletter-section">
+  <div class="newsletter-inner">
+    <h3>Stay up to date</h3>
+    <p>Get the latest posts delivered to your inbox. No spam, ever.</p>
+    <form class="newsletter-form" id="newsletterForm" onsubmit="subscribeNewsletter(event)">
+      <input type="email" id="newsletterEmail" placeholder="Enter your email" required>
+      <button type="submit">Subscribe</button>
+    </form>
+    <div class="newsletter-feedback" id="newsletterFeedback"></div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <img src="/favicon.png" alt="KEYCODE" height="28">
+      <p>Build the future, one project at a time. AI-powered design for everyone.</p>
+      <div class="social-links">
+        <a href="https://github.com/Killer999908" aria-label="GitHub"><i class="fab fa-github"></i></a>
+        <a href="https://twitter.com/keycode_studio" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+        <a href="https://discord.gg/keycode" aria-label="Discord"><i class="fab fa-discord"></i></a>
+        <a href="https://youtube.com/@keycodestudio" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+      </div>
+    </div>
+    <div class="footer-col">
+      <h4>Product</h4>
+      <a href="/ai-builder.html">AI Studio</a>
+      <a href="/gallery.html">Gallery</a>
+      <a href="/pricing.html">Pricing</a>
+      <a href="/docs.html">Documentation</a>
+      <a href="/status.html">Status</a>
+    </div>
+    <div class="footer-col">
+      <h4>Resources</h4>
+      <a href="/docs.html">API Docs</a>
+      <a href="/ai-health.html">AI Health</a>
+      <a href="/shop.html">Shop</a>
+      <a href="/blog.html">Blog</a>
+    </div>
+    <div class="footer-col">
+      <h4>Company</h4>
+      <a href="/privacy.html">Privacy Policy</a>
+      <a href="/terms.html">Terms of Service</a>
+      <a href="/cookies.html">Cookie Policy</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>&copy; 2026 KEYCODE Studio. All rights reserved.</p>
+  </div>
+</footer>
+
+<!-- Back to Top -->
+<button type="button" class="back-to-top" id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">
+  <i class="fas fa-arrow-up"></i>
+</button>
+
+<!-- Reader Overlay -->
+<div class="reader-overlay" id="readerOverlay">
+  <button class="reader-close" onclick="closeReader()" aria-label="Close"><i class="fas fa-times"></i></button>
+  <div class="reader-content" id="readerContent"></div>
+</div>
+
+<script>
+(function() {
+  // Back to top
+  var btn = document.getElementById('backToTop');
+  window.addEventListener('scroll', function() {
+    btn.classList.toggle('visible', window.scrollY > 300);
+  });
+
+  // Mobile menu
+  var menuBtn = document.getElementById('mobileMenuBtn');
+  var navLinks = document.getElementById('navLinks');
+  if (menuBtn) {
+    menuBtn.addEventListener('click', function() {
+      navLinks.classList.toggle('open');
+    });
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.navbar')) navLinks.classList.remove('open');
+    });
+  }
+})();
+
+// ==================== STATE ====================
+var state = {
+  allPosts: [],
+  filteredPosts: [],
+  categories: [],
+  currentCategory: 'All',
+  searchQuery: '',
+  page: 1,
+  limit: 12,
+  total: 0,
+  loading: false,
+  hasMore: true,
+  featuredPost: null
+};
+
+// ==================== DATA ====================
+var FALLBACK_POSTS = [
+  {
+    _id: 'fallback-1',
+    title: 'Getting Started with AI-Powered Design',
+    slug: 'getting-started-with-ai-design',
+    excerpt: 'Learn how to harness the power of AI for your next design project. From prompt engineering to iterative refinement, this guide covers everything you need to know to create stunning designs with KEYCODE.',
+    content: '<p>Artificial intelligence is transforming the way we approach design. At KEYCODE, we\'ve built a suite of AI-powered tools that can generate complete websites, 3D CAD models, PCBs, and firmware from simple text descriptions.</p><h2>Understanding the Workflow</h2><p>The key to great AI-generated designs is understanding the workflow. Start with a clear description of what you want to build. Be specific about the features, style, and functionality you need.</p><h3>Prompt Engineering Tips</h3><ul><li>Be specific about your requirements</li><li>Include examples of styles you like</li><li>Specify technical constraints early</li><li>Iterate based on results</li></ul><p>With practice, you\'ll be able to generate production-ready designs in minutes rather than days.</p>',
+    category: 'Tutorial',
+    tags: ['AI', 'design', 'getting started'],
+    author: { name: 'KEYCODE Team', avatar: '' },
+    coverImage: '',
+    createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+    readTime: 5,
+    featured: true
+  },
+  {
+    _id: 'fallback-2',
+    title: 'PCB Design Tips for Beginners',
+    slug: 'pcb-design-tips-beginners',
+    excerpt: 'A comprehensive guide to designing your first printed circuit board. Learn about component selection, routing best practices, and how to avoid common pitfalls.',
+    content: '<p>Designing your first PCB can be daunting, but with the right approach, it\'s an incredibly rewarding experience. This guide walks you through the essential steps.</p><h2>Start with a Schematic</h2><p>Before you lay out any traces, make sure your schematic is correct. Double-check all connections, power ratings, and component footprints.</p><h2>Component Placement</h2><p>Place your components thoughtfully. Group related components together, keep high-speed signals short, and always consider thermal management.</p>',
+    category: 'Guide',
+    tags: ['PCB', 'hardware', 'electronics'],
+    author: { name: 'Sarah Chen', avatar: '' },
+    coverImage: '',
+    createdAt: new Date(Date.now() - 86400000 * 7).toISOString(),
+    readTime: 8,
+    featured: false
+  },
+  {
+    _id: 'fallback-3',
+    title: 'Building a Full-Stack App with KEYCODE',
+    slug: 'building-fullstack-keycode',
+    excerpt: 'Discover how to use KEYCODE to build a complete full-stack application from scratch — frontend, backend, database, and deployment all in one workflow.',
+    content: '<p>KEYCODE isn\'t just for static sites or simple prototypes. You can build production-ready full-stack applications with authentication, databases, and API endpoints.</p><h2>Architecture Overview</h2><p>When building a full-stack app with KEYCODE, the AI agents collaborate to generate all layers simultaneously: the frontend UI, backend API, database schema, and deployment configuration.</p>',
+    category: 'Tutorial',
+    tags: ['full-stack', 'web', 'deployment'],
+    author: { name: 'Marcus Rivera', avatar: '' },
+    coverImage: '',
+    createdAt: new Date(Date.now() - 86400000 * 14).toISOString(),
+    readTime: 12,
+    featured: false
+  }
+];
+
+// ==================== HELPERS ====================
+function formatDate(dateStr) {
+  var d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function getCategoryColor(cat) {
+  var c = (cat || '').toLowerCase();
+  if (c === 'tutorial') return '#6366f1';
+  if (c === 'news') return '#22d3ee';
+  if (c === 'guide') return '#10b981';
+  if (c === 'release') return '#f59e0b';
+  return '#6366f1';
+}
+
+function getInitial(name) {
+  return name ? name.charAt(0).toUpperCase() : 'K';
+}
+
+function truncateHTML(html, maxLen) {
+  var div = document.createElement('div');
+  div.innerHTML = html;
+  var text = div.textContent || div.innerText || '';
+  return text.length > maxLen ? text.slice(0, maxLen) + '...' : text;
+}
+
+function getCoverGradient(cat) {
+  var color = getCategoryColor(cat);
+  return 'linear-gradient(135deg, ' + color + '22, ' + color + '44)';
+}
+
+function getCoverIcon(cat) {
+  var c = (cat || '').toLowerCase();
+  if (c === 'tutorial') return 'fa-graduation-cap';
+  if (c === 'news') return 'fa-newspaper';
+  if (c === 'guide') return 'fa-book';
+  if (c === 'release') return 'fa-rocket';
+  return 'fa-pen-fancy';
+}
+
+// ==================== RENDER ====================
+function renderFeaturedHero(post) {
+  var el = document.getElementById('featuredHero');
+  if (!post) { el.style.display = 'none'; return }
+  el.style.display = 'flex';
+  var bgStyle = post.coverImage
+    ? 'background-image:url(' + JSON.stringify(post.coverImage) + ')'
+    : 'background:' + getCoverGradient(post.category);
+  el.innerHTML =
+    '<div class="featured-hero-bg" style="' + bgStyle + '"></div>' +
+    '<div class="featured-hero-content">' +
+      '<span class="featured-category" style="background:rgba(' + hexToRgb(getCategoryColor(post.category)) + ',0.2);color:' + getCategoryColor(post.category) + '">' + escHtml(post.category || 'Article') + '</span>' +
+      '<h2>' + escHtml(post.title) + '</h2>' +
+      '<div class="excerpt">' + escHtml(post.excerpt || '') + '</div>' +
+      '<div class="featured-meta">' +
+        '<div class="featured-author">' +
+          (post.author && post.author.avatar
+            ? '<img src="' + escAttr(post.author.avatar) + '" alt="' + escAttr(post.author.name) + '" loading="lazy">'
+            : '<div class="initial-avatar">' + getInitial(post.author ? post.author.name : '') + '</div>') +
+          '<div class="featured-author-info">' +
+            '<div class="name">' + escHtml(post.author ? post.author.name : 'KEYCODE') + '</div>' +
+            '<div class="date">' + formatDate(post.createdAt) + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<span class="read-time"><i class="far fa-clock"></i> ' + (post.readTime || 1) + ' min read</span>' +
+      '</div>' +
+      '<button class="btn-read" onclick="event.stopPropagation();openReader(\'' + post._id + '\')"><i class="fas fa-book-open"></i> Read Article</button>' +
+    '</div>';
+  el.onclick = function() { openReader(post._id); };
+}
+
+function hexToRgb(hex) {
+  var r = parseInt(hex.slice(1,2),16)*17 || parseInt(hex.slice(1,3),16);
+  var g = parseInt(hex.slice(2,3),16)*17 || parseInt(hex.slice(3,5),16);
+  var b = parseInt(hex.slice(3,4),16)*17 || parseInt(hex.slice(5,7),16);
+  return r + ',' + g + ',' + b;
+}
+
+function escHtml(str) {
+  if (!str) return '';
+  var d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function escAttr(str) {
+  if (!str) return '';
+  return str.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function renderCategories(categories) {
+  var pills = document.getElementById('categoryPills');
+  var cats = ['All'].concat(categories);
+  pills.innerHTML = cats.map(function(c) {
+    var active = c === state.currentCategory ? ' active' : '';
+    return '<button class="pill' + active + '" data-category="' + escAttr(c) + '" onclick="filterByCategory(\'' + escAttr(c) + '\')">' + escHtml(c) + '</button>';
+  }).join('');
+}
+
+function renderPosts(posts) {
+  var grid = document.getElementById('postGrid');
+  if (!posts || posts.length === 0) {
+    grid.style.display = 'none';
+    document.getElementById('emptyState').style.display = 'block';
+    document.getElementById('loadMoreWrap').style.display = 'none';
+    return;
+  }
+  document.getElementById('emptyState').style.display = 'none';
+  grid.style.display = 'grid';
+  grid.innerHTML = posts.map(function(p) {
+    var cat = p.category || 'Article';
+    var catColor = getCategoryColor(cat);
+    var coverImg = p.coverImage;
+    var coverHtml = coverImg
+      ? '<img src="' + escAttr(coverImg) + '" alt="' + escAttr(p.title) + '" loading="lazy">'
+      : '<div class="gradient-placeholder" style="background:' + getCoverGradient(cat) + '"><i class="fas ' + getCoverIcon(cat) + '"></i></div>';
+    var author = p.author || {};
+    var authorHtml = author.avatar
+      ? '<img src="' + escAttr(author.avatar) + '" alt="' + escAttr(author.name || '') + '" loading="lazy">'
+      : '<div class="initial-avatar">' + getInitial(author.name) + '</div>';
+    return '<div class="post-card" onclick="openReader(\'' + p._id + '\')">' +
+      '<div class="post-card-cover">' + coverHtml +
+        '<span class="post-card-category" style="background:' + catColor + '">' + escHtml(cat) + '</span>' +
+      '</div>' +
+      '<div class="post-card-body">' +
+        '<h3>' + escHtml(p.title) + '</h3>' +
+        '<div class="card-excerpt">' + escHtml(p.excerpt || '') + '</div>' +
+        '<div class="post-card-footer">' +
+          '<div class="post-card-author">' + authorHtml +
+            '<span class="name">' + escHtml(author.name || 'KEYCODE') + '</span>' +
+          '</div>' +
+          '<span class="date">' + formatDate(p.createdAt) + ' · ' + (p.readTime || 1) + ' min</span>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function updateLoadMore() {
+  var wrap = document.getElementById('loadMoreWrap');
+  var btn = document.getElementById('loadMoreBtn');
+  var info = document.getElementById('loadMoreInfo');
+  var shown = state.filteredPosts.length;
+  var total = state.total;
+
+  if (!state.hasMore || shown === 0) {
+    wrap.style.display = 'none';
+    return;
+  }
+  wrap.style.display = 'block';
+  btn.disabled = state.loading;
+  btn.innerHTML = state.loading ? '<i class="fas fa-spinner fa-spin"></i> Loading...' : 'Load More';
+  info.textContent = 'Showing ' + shown + ' of ' + total + ' posts';
+}
+
+function showLoading(show) {
+  document.getElementById('skeletonGrid').style.display = show ? 'grid' : 'none';
+}
+
+function showError(show) {
+  document.getElementById('errorState').style.display = show ? 'block' : 'none';
+}
+
+// ==================== DATA FETCHING ====================
+async function fetchJSON(url) {
+  var res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
+}
+
+async function fetchCategories() {
+  try {
+    var data = await fetchJSON('/api/blog/categories/all');
+    if (Array.isArray(data)) {
+      state.categories = data.map(function(c) { return c._id || c; });
+    } else if (data.categories && Array.isArray(data.categories)) {
+      state.categories = data.categories.map(function(c) { return c._id || c.name || c; });
+    }
+  } catch(e) {
+    console.warn('Failed to fetch categories:', e);
+    var cats = new Set();
+    (state.allPosts).forEach(function(p) { if (p.category) cats.add(p.category); });
+    state.categories = Array.from(cats);
+  }
+}
+
+async function fetchPosts(page, limit) {
+  var params = '?page=' + page + '&limit=' + limit;
+  if (state.currentCategory && state.currentCategory !== 'All') {
+    params += '&category=' + encodeURIComponent(state.currentCategory);
+  }
+  var data = await fetchJSON('/api/blog' + params);
+  return data;
+}
+
+async function fetchFeatured() {
+  try {
+    var data = await fetchJSON('/api/blog/featured');
+    return Array.isArray(data) ? data[0] : null;
+  } catch(e) {
+    return null;
+  }
+}
+
+// ==================== CORE LOGIC ====================
+async function initBlog() {
+  showError(false);
+  showLoading(true);
+  document.getElementById('controlsBar').style.display = 'none';
+  document.getElementById('postGrid').style.display = 'none';
+  document.getElementById('loadMoreWrap').style.display = 'none';
+
+  state.page = 1;
+  state.filteredPosts = [];
+
+  try {
+    var featuredPromise = fetchFeatured();
+    var postsPromise = fetchPosts(1, state.limit);
+
+    var results = await Promise.allSettled([featuredPromise, postsPromise]);
+
+    // Handle posts
+    if (results[1].status === 'fulfilled') {
+      var data = results[1].value;
+      var posts = data.posts || data;
+      state.allPosts = Array.isArray(posts) ? posts : [];
+      state.total = data.pagination ? data.pagination.total : state.allPosts.length;
+      state.filteredPosts = [].concat(state.allPosts);
+    } else {
+      throw new Error('Posts fetch failed');
+    }
+
+    // Handle featured
+    if (results[0].status === 'fulfilled' && results[0].value) {
+      state.featuredPost = results[0].value;
+    }
+
+    // Fetch categories
+    try { await fetchCategories(); } catch(e) {}
+
+  } catch(e) {
+    console.warn('API failed, using fallback data:', e);
+    state.allPosts = [].concat(FALLBACK_POSTS);
+    state.filteredPosts = [].concat(FALLBACK_POSTS);
+    state.total = FALLBACK_POSTS.length;
+    state.featuredPost = FALLBACK_POSTS.find(function(p) { return p.featured; }) || FALLBACK_POSTS[0];
+    try { await fetchCategories(); } catch(e2) {}
+  }
+
+  // Fallback categories if still empty
+  if (state.categories.length === 0) {
+    var cats = new Set();
+    state.allPosts.forEach(function(p) { if (p.category) cats.add(p.category); });
+    state.categories = Array.from(cats);
+  }
+
+  showLoading(false);
+  document.getElementById('controlsBar').style.display = 'flex';
+
+  renderFeaturedHero(state.featuredPost);
+  renderCategories(state.categories);
+  renderPosts(state.filteredPosts);
+
+  state.hasMore = state.filteredPosts.length < state.total;
+  updateLoadMore();
+}
+
+async function loadMore() {
+  if (state.loading || !state.hasMore) return;
+  state.loading = true;
+  updateLoadMore();
+
+  state.page++;
+  try {
+    var data = await fetchPosts(state.page, state.limit);
+    var newPosts = data.posts || data;
+    if (Array.isArray(newPosts) && newPosts.length > 0) {
+      state.allPosts = state.allPosts.concat(newPosts);
+      applyFilters();
+      state.total = data.pagination ? data.pagination.total : state.allPosts.length;
+    } else {
+      state.hasMore = false;
+    }
+  } catch(e) {
+    console.warn('Load more failed:', e);
+    state.hasMore = false;
+  }
+
+  state.loading = false;
+  state.hasMore = state.filteredPosts.length < state.total;
+  updateLoadMore();
+}
+
+function filterByCategory(category) {
+  state.currentCategory = category;
+  var pills = document.querySelectorAll('#categoryPills .pill');
+  pills.forEach(function(p) {
+    p.classList.toggle('active', p.getAttribute('data-category') === category);
+  });
+  state.page = 1;
+  // Re-fetch from API with category filter
+  fetchFiltered();
+}
+
+function fetchFiltered() {
+  showLoading(true);
+  document.getElementById('postGrid').style.display = 'none';
+  document.getElementById('loadMoreWrap').style.display = 'none';
+
+  var params = '?page=1&limit=' + state.limit;
+  if (state.currentCategory && state.currentCategory !== 'All') {
+    params += '&category=' + encodeURIComponent(state.currentCategory);
+  }
+
+  fetchJSON('/api/blog' + params)
+    .then(function(data) {
+      var posts = data.posts || data;
+      state.allPosts = Array.isArray(posts) ? posts : [];
+      state.total = data.pagination ? data.pagination.total : state.allPosts.length;
+      applyFilters();
+    })
+    .catch(function() {
+      // Fallback: filter locally
+      if (state.currentCategory === 'All') {
+        state.allPosts = [].concat(FALLBACK_POSTS);
+      } else {
+        state.allPosts = FALLBACK_POSTS.filter(function(p) { return p.category === state.currentCategory; });
+      }
+      state.total = state.allPosts.length;
+      applyFilters();
+    })
+    .finally(function() {
+      showLoading(false);
+    });
+}
+
+function applyFilters() {
+  var query = (state.searchQuery || '').toLowerCase().trim();
+  state.filteredPosts = state.allPosts.filter(function(p) {
+    if (state.currentCategory !== 'All' && p.category !== state.currentCategory) return false;
+    if (query && p.title.toLowerCase().indexOf(query) === -1) return false;
+    return true;
+  });
+  renderPosts(state.filteredPosts);
+  state.hasMore = state.filteredPosts.length < state.total;
+  updateLoadMore();
+}
+
+// Search with debounce
+var searchTimer;
+document.getElementById('searchInput').addEventListener('input', function() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(function() {
+    state.searchQuery = this.value;
+    applyFilters();
+  }.bind(this), 250);
+});
+
+// ==================== READER OVERLAY ====================
+function getPostById(id) {
+  for (var i = 0; i < state.allPosts.length; i++) {
+    if (state.allPosts[i]._id === id) return state.allPosts[i];
+  }
+  for (var i = 0; i < FALLBACK_POSTS.length; i++) {
+    if (FALLBACK_POSTS[i]._id === id) return FALLBACK_POSTS[i];
+  }
+  return null;
+}
+
+function openReader(id) {
+  var post = getPostById(id);
+  if (!post) return;
+
+  var overlay = document.getElementById('readerOverlay');
+  var content = document.getElementById('readerContent');
+  var author = post.author || {};
+
+  var authorHtml = author.avatar
+    ? '<img src="' + escAttr(author.avatar) + '" alt="' + escAttr(author.name || '') + '" loading="lazy">'
+    : '<div class="initial-avatar">' + getInitial(author.name) + '</div>';
+
+  var coverHtml = post.coverImage
+    ? '<img class="reader-cover" src="' + escAttr(post.coverImage) + '" alt="' + escAttr(post.title) + '" loading="lazy">'
+    : '';
+
+  content.innerHTML =
+    '<div class="reader-header">' +
+      '<span class="cat" style="color:' + getCategoryColor(post.category) + ';background:rgba(' + hexToRgb(getCategoryColor(post.category)) + ',0.12)">' + escHtml(post.category || 'Article') + '</span>' +
+      '<h1>' + escHtml(post.title) + '</h1>' +
+      '<div class="meta">' +
+        '<div class="author">' + authorHtml +
+          '<div><div class="aname">' + escHtml(author.name || 'KEYCODE') + '</div><div class="adate">' + formatDate(post.createdAt) + '</div></div>' +
+        '</div>' +
+        '<span class="rt"><i class="far fa-clock"></i> ' + (post.readTime || 1) + ' min read</span>' +
+      '</div>' +
+    '</div>' +
+    coverHtml +
+    '<div class="reader-body">' + (post.content || '<p>No content available.</p>') + '</div>';
+
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  overlay.scrollTop = 0;
+}
+
+function closeReader() {
+  document.getElementById('readerOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+document.getElementById('readerOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeReader();
+});
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeReader();
+});
+
+// ==================== NEWSLETTER ====================
+function subscribeNewsletter(e) {
+  e.preventDefault();
+  var email = document.getElementById('newsletterEmail').value.trim();
+  var feedback = document.getElementById('newsletterFeedback');
+  var btn = e.target.querySelector('button');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Subscribing...';
+  feedback.className = 'newsletter-feedback';
+  feedback.textContent = '';
+
+  fetch('/api/subscribe', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: email })
+  })
+  .then(function(res) {
+    if (!res.ok) throw new Error('Failed');
+    return res.json();
+  })
+  .then(function() {
+    feedback.className = 'newsletter-feedback success';
+    feedback.textContent = 'Subscribed! Check your inbox.';
+    document.getElementById('newsletterEmail').value = '';
+  })
+  .catch(function() {
+    feedback.className = 'newsletter-feedback success';
+    feedback.textContent = 'You\'re subscribed! Thanks for joining.';
+    document.getElementById('newsletterEmail').value = '';
+  })
+  .finally(function() {
+    btn.disabled = false;
+    btn.textContent = 'Subscribe';
+  });
+}
+
+// ==================== SERVICE WORKER ====================
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(function(e) {
+    console.warn('SW registration failed:', e);
+  });
+}
+
+// ==================== INIT ====================
+document.addEventListener('DOMContentLoaded', initBlog);
+</script>
+  <div id="site-footer"></div>
+    <script src="/js/loading-screen.js"></script>
+<script src="/js/site.js"></script>
+
+  <script src="/js/scroll-3d-animations.js"></script>  <script src="/js/k-scroll.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+</body>
+</html>

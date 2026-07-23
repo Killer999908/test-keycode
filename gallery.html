@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project Gallery - KEYCODE Studio</title>
+  <meta name="description" content="Browse all AI-generated projects - websites, PCBs, CAD models, and MCU firmware created with KEYCODE AI.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://keycode-studio-production.up.railway.app/gallery.html">
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://keycode-studio-production.up.railway.app/gallery.html">
+  <meta property="og:title" content="Project Gallery - KEYCODE Studio">
+  <meta property="og:description" content="Browse all AI-generated projects - websites, PCBs, CAD models, and MCU firmware.">
+  <meta property="og:image" content="/og-image.svg">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Project Gallery - KEYCODE Studio">
+  <meta name="twitter:description" content="Browse all AI-generated projects.">
+  <meta name="twitter:image" content="/og-image.svg">
+
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="KEYCODE">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="alternate icon" type="image/png" href="/favicon.png">
+
+  <link rel="stylesheet" href="/z-alche.css">
+  <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+  <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha384-/o6I2CkkWC//PSjvWC/eYN7l3xM3tJm8ZzVkCOfp//W05QcE3mlGskpoHB6XqI+B" crossorigin="anonymous" media="print" onload="this.media='all'">
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&display=swap');
+    :root {
+      --bg: #000;
+      --card: #0a0a0a;
+      --primary: #fff;
+      --accent: #fff;
+      --text: #fff;
+      --ash: #7E7E7E;
+      --void: #000;
+      --obsidian: #000;
+      --graphite: #0a0a0a;
+      --slate: #111;
+      --danger: #fff;
+      --success: #fff;
+      --warning: #fff;
+      --white: #ffffff;
+      --glass: rgba(255,255,255,.05);
+      --glass-border: rgba(255,255,255,.1);
+      --font-body: 'Inter', sans-serif;
+      --font-display: 'Syne', sans-serif;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+    a { color: inherit; text-decoration: none; }
+
+    .gallery-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      background: var(--card);
+      border-bottom: 1px solid var(--glass-border);
+    }
+    .gallery-header .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .gallery-header .logo-area img {
+      height: 32px;
+      width: auto;
+    }
+    .gallery-header .logo-area h1 {
+      font-size: 18px;
+      font-weight: 700;
+      font-family: var(--font-display);
+      color: var(--white);
+    }
+    .gallery-header .logo-area h1 span {
+      color: var(--white);
+    }
+    .gallery-header .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .gallery-header .header-actions a {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ash);
+      transition: .3s;
+    }
+    .gallery-header .header-actions a:hover {
+      color: var(--white);
+      background: rgba(255,255,255,0.06);
+    }
+    .gallery-header .header-actions .btn-primary {
+      background: var(--white);
+      color: #000;
+      padding: 8px 20px;
+      border-radius: 10px;
+      font-weight: 600;
+      border: 1px solid var(--white);
+    }
+    .gallery-header .header-actions .btn-primary:hover {
+      opacity: 0.85;
+      transform: translateY(-1px);
+    }
+
+    .gallery-main {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 32px 24px;
+    }
+
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 32px;
+    }
+    .filter-bar .filter-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .filter-btn {
+      padding: 8px 18px;
+      border-radius: 100px;
+      border: 1px solid var(--glass-border);
+      background: transparent;
+      color: var(--ash);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: .3s;
+      font-family: var(--font-body);
+      white-space: nowrap;
+    }
+    .filter-btn:hover {
+      border-color: rgba(255,255,255,0.3);
+      color: var(--white);
+    }
+    .filter-btn.active {
+      background: var(--white);
+      border-color: var(--white);
+      color: #000;
+    }
+    .filter-btn.active:hover {
+      opacity: 0.85;
+    }
+    .filter-search {
+      margin-left: auto;
+      position: relative;
+    }
+    .filter-search input {
+      padding: 8px 16px 8px 38px;
+      border-radius: 100px;
+      border: 1px solid var(--glass-border);
+      background: var(--card);
+      color: var(--text);
+      font-size: 13px;
+      font-family: var(--font-body);
+      outline: none;
+      transition: .3s;
+      width: 240px;
+    }
+    .filter-search input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(255,255,255,0.1);
+    }
+    .filter-search input::placeholder { color: var(--ash); }
+    .filter-search i {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--ash);
+      font-size: 14px;
+    }
+
+    .project-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    .project-card {
+      background: var(--card);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 20px;
+      transition: .3s;
+      display: flex;
+      flex-direction: column;
+    }
+    .project-card:hover {
+      border-color: rgba(255,255,255,0.2);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+    }
+    .project-card .card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .project-card .card-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: #fff;
+      flex-shrink: 0;
+      background: #7E7E7E !important;
+    }
+    .project-card .badge {
+      padding: 4px 12px;
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+      background: rgba(255,255,255,.1) !important;
+      color: #fff !important;
+    }
+    .project-card .card-body {
+      flex: 1;
+    }
+    .project-card .card-desc {
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.6;
+      margin-bottom: 14px;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .project-card .card-meta {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 16px;
+      padding-top: 14px;
+      border-top: 1px solid var(--glass-border);
+    }
+    .project-card .card-meta .meta-item {
+      display: flex;
+      flex-direction: column;
+    }
+    .project-card .card-meta .meta-item .meta-label {
+      font-size: 11px;
+      color: var(--ash);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      margin-bottom: 2px;
+    }
+    .project-card .card-meta .meta-item .meta-value {
+      font-size: 13px;
+      color: var(--text);
+      font-weight: 500;
+      word-break: break-all;
+    }
+    .project-card .card-meta .meta-item .meta-value.file-id {
+      font-family: monospace;
+      font-size: 12px;
+      color: var(--ash);
+    }
+    .project-card .card-actions {
+      margin-top: auto;
+    }
+    .project-card .view-btn {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid var(--white);
+      background: var(--white);
+      color: #000;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: .3s;
+      text-align: center;
+      font-family: var(--font-body);
+    }
+    .project-card .view-btn:hover {
+      opacity: 0.85;
+      transform: translateY(-1px);
+    }
+
+    .state-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 20px;
+      text-align: center;
+    }
+    .state-container i {
+      font-size: 48px;
+      color: var(--ash);
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+    .state-container h3 {
+      font-size: 20px;
+      font-weight: 600;
+      font-family: var(--font-display);
+      color: var(--white);
+      margin-bottom: 8px;
+    }
+    .state-container p {
+      font-size: 14px;
+      color: var(--ash);
+      max-width: 400px;
+      line-height: 1.6;
+    }
+    .state-container .retry-btn {
+      margin-top: 20px;
+      padding: 10px 24px;
+      border-radius: 10px;
+      border: 1px solid var(--white);
+      background: var(--white);
+      color: #000;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: .3s;
+      font-family: var(--font-body);
+    }
+    .state-container .retry-btn:hover {
+      opacity: 0.85;
+    }
+    .state-container .action-link {
+      margin-top: 16px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 24px;
+      border-radius: 10px;
+      border: 1px solid var(--white);
+      background: var(--white);
+      color: #000;
+      font-size: 14px;
+      font-weight: 600;
+      transition: .3s;
+    }
+    .state-container .action-link:hover {
+      opacity: 0.85;
+      transform: translateY(-1px);
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--glass-border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .result-count {
+      font-size: 13px;
+      color: var(--ash);
+      margin-bottom: 16px;
+    }
+
+    @media (max-width: 768px) {
+      .gallery-header {
+        padding: 12px 16px;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .gallery-header .logo-area h1 { font-size: 15px; }
+      .gallery-header .header-actions a { font-size: 12px; padding: 6px 12px; }
+      .gallery-main { padding: 20px 16px; }
+      .filter-bar { flex-direction: column; align-items: stretch; }
+      .filter-bar .filter-group { justify-content: center; }
+      .filter-search { margin-left: 0; }
+      .filter-search input { width: 100%; }
+      .project-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "Project Gallery - KEYCODE Studio",
+  "description": "Browse all AI-generated projects - websites, PCBs, CAD models, and MCU firmware created with KEYCODE AI.",
+  "publisher": {
+    "@type": "Organization",
+    "name": "KEYCODE Studio"
+  }
+}
+</script>
+  <link rel="stylesheet" href="/z-shared.css">
+  </head>
+<body>
+  <div id="kc-loader">
+    <div id="kc-loader-scene"></div>
+      <div id="kc-bg-text" aria-hidden="true">KEYCODE</div>
+<div class="kc-loader-info" style="position:absolute;bottom:48px;left:50%;transform:translateX(-50%);">
+      <div id="kc-loader-bar-track"><div id="kc-loader-bar"></div></div>
+      <div id="kc-loader-pct" style="font-family:'Inter',sans-serif;font-size:11px;color:#555;letter-spacing:.12em;text-align:center;">0%</div>
+    </div>
+  </div>
+
+  <div id="site-nav"></div>
+
+  <header class="gallery-header">
+    <div class="logo-area">
+      <a href="/"><img src="/logo-nav.png" alt="KEYCODE" loading="lazy"></a>
+      <h1><span>Project</span> Gallery</h1>
+    </div>
+    <div class="header-actions">
+      <a href="/ai-builder.html"><i class="fas fa-wand-magic-sparkles"></i> AI Builder</a>
+      <a href="/dashboard.html"><i class="fas fa-chart-line"></i> Dashboard</a>
+      <a href="/ai-builder.html" class="btn-primary"><i class="fas fa-plus"></i> New Project</a>
+    </div>
+  </header>
+
+  <main class="gallery-main">
+    <div class="filter-bar">
+      <div class="filter-group" id="filterGroup">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="web">Websites</button>
+        <button class="filter-btn" data-filter="pcb">PCBs</button>
+        <button class="filter-btn" data-filter="cad">CAD</button>
+        <button class="filter-btn" data-filter="mcu">Firmware</button>
+        <button class="filter-btn" data-filter="circ">Circuits</button>
+      </div>
+      <div class="filter-search">
+        <i class="fas fa-search"></i>
+        <input type="text" id="searchInput" placeholder="Search projects..." autocomplete="off">
+      </div>
+    </div>
+
+    <div id="resultCount" class="result-count"></div>
+
+    <div id="projectGrid" class="project-grid"></div>
+
+    <div id="stateContainer" class="state-container" style="display:none"></div>
+  </main>
+
+  <script>
+    (function() {
+      const filterGroup = document.getElementById('filterGroup');
+      const searchInput = document.getElementById('searchInput');
+      const projectGrid = document.getElementById('projectGrid');
+      const stateContainer = document.getElementById('stateContainer');
+      const resultCount = document.getElementById('resultCount');
+
+      let allProjects = [];
+      let activeFilter = 'all';
+      let searchQuery = '';
+
+      const TOOL_CONFIG = {
+        web:  { icon: 'fa-globe',   color: '#22d3ee', label: 'Website' },
+        pcb:  { icon: 'fa-microchip', color: '#10b981', label: 'PCB' },
+        cad:  { icon: 'fa-cube',     color: '#f59e0b', label: 'CAD' },
+        mcu:  { icon: 'fa-code',     color: '#ef4444', label: 'Firmware' },
+        circ: { icon: 'fa-bolt',     color: '#a855f7', label: 'Circuit' },
+        orch: { icon: 'fa-robot',    color: '#6366f1', label: 'Orchestrated' },
+        gen:  { icon: 'fa-wand-magic-sparkles', color: '#6366f1', label: 'Generated' },
+      };
+
+      function getToolConfig(tool) {
+        return TOOL_CONFIG[tool] || { icon: 'fa-cog', color: '#6366f1', label: tool || 'Project' };
+      }
+
+      function formatDate(dateStr) {
+        if (!dateStr) return '—';
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return dateStr;
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        return months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+      }
+
+      function formatSize(bytes) {
+        if (!bytes && bytes !== 0) return '—';
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / 1048576).toFixed(1) + ' MB';
+      }
+
+      function truncate(text, max) {
+        if (!text) return 'No description';
+        return text.length > max ? text.slice(0, max) + '…' : text;
+      }
+
+      function showLoading() {
+        projectGrid.innerHTML = '';
+        stateContainer.style.display = 'flex';
+        stateContainer.innerHTML = '<div class="spinner"></div><h3>Loading projects...</h3><p>Fetching your AI-generated projects</p>';
+        resultCount.textContent = '';
+      }
+
+      function showError(msg) {
+        stateContainer.style.display = 'flex';
+        stateContainer.innerHTML = '<i class="fas fa-exclamation-triangle"></i><h3>Failed to load projects</h3><p>' + (msg || 'An unexpected error occurred. Please try again.') + '</p><button class="retry-btn" onclick="window.__galleryFetch()"><i class="fas fa-sync-alt"></i> Retry</button>';
+        projectGrid.innerHTML = '';
+        resultCount.textContent = '';
+      }
+
+      function showEmpty() {
+        stateContainer.style.display = 'flex';
+        stateContainer.innerHTML = '<i class="fas fa-folder-open"></i><h3>No projects yet</h3><p>Generate your first project with KEYCODE AI!</p><a href="/ai-builder.html" class="action-link"><i class="fas fa-wand-magic-sparkles"></i> Create a Project</a>';
+        projectGrid.innerHTML = '';
+        resultCount.textContent = '';
+      }
+
+      function showNoResults() {
+        stateContainer.style.display = 'flex';
+        stateContainer.innerHTML = '<i class="fas fa-search"></i><h3>No matching projects</h3><p>Try a different filter or search term.</p>';
+        projectGrid.innerHTML = '';
+        resultCount.textContent = '';
+      }
+
+      function renderCards(projects) {
+        if (projects.length === 0) {
+          if (activeFilter !== 'all' || searchQuery) {
+            showNoResults();
+          } else {
+            showEmpty();
+          }
+          return;
+        }
+
+        stateContainer.style.display = 'none';
+        resultCount.textContent = projects.length + ' project' + (projects.length !== 1 ? 's' : '') + ' found';
+
+        let html = '';
+        for (let i = 0; i < projects.length; i++) {
+          const p = projects[i];
+          const cfg = getToolConfig(p.tool);
+          const desc = truncate(p.description || 'No description', 120);
+          const date = formatDate(p.createdAt);
+          const size = formatSize(p.size);
+
+          html += '<div class="project-card">';
+          html += '  <div class="card-top">';
+          html += '    <div class="card-icon" style="background:' + cfg.color + '"><i class="fas ' + cfg.icon + '"></i></div>';
+          html += '    <span class="badge" style="background:' + cfg.color + '22;color:' + cfg.color + '">' + cfg.label + '</span>';
+          html += '  </div>';
+          html += '  <div class="card-body">';
+          html += '    <div class="card-desc">' + escHtml(desc) + '</div>';
+          html += '    <div class="card-meta">';
+          html += '      <div class="meta-item"><span class="meta-label">File ID</span><span class="meta-value file-id">' + escHtml(p.fileId || p.id || '—') + '</span></div>';
+          html += '      <div class="meta-item"><span class="meta-label">Created</span><span class="meta-value">' + date + '</span></div>';
+          html += '      <div class="meta-item"><span class="meta-label">Size</span><span class="meta-value">' + size + '</span></div>';
+          html += '    </div>';
+          html += '  </div>';
+          html += '  <div class="card-actions">';
+          const dlId = p.fileId || p.id;
+          html += '    <a href="/api/ai/download/' + encodeURIComponent(dlId) + '" class="view-btn" target="_blank"><i class="fas fa-download"></i> View Project</a>';
+          html += '  </div>';
+          html += '</div>';
+        }
+        projectGrid.innerHTML = html;
+      }
+
+      function escHtml(s) {
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      }
+
+      function filterAndRender() {
+        let filtered = allProjects;
+
+        if (activeFilter !== 'all') {
+          filtered = filtered.filter(function(p) { return p.tool === activeFilter; });
+        }
+
+        if (searchQuery) {
+          const q = searchQuery.toLowerCase();
+          filtered = filtered.filter(function(p) {
+            return (p.description && p.description.toLowerCase().includes(q)) ||
+                   (p.tool && p.tool.toLowerCase().includes(q)) ||
+                   (p.fileId && p.fileId.toLowerCase().includes(q)) ||
+                   (p.id && p.id.toLowerCase().includes(q));
+          });
+        }
+
+        renderCards(filtered);
+      }
+
+      function fetchProjects() {
+        showLoading();
+
+        fetch('/api/ai/projects')
+          .then(function(res) {
+            if (!res.ok) throw new Error('Server returned ' + res.status);
+            return res.json();
+          })
+          .then(function(data) {
+            if (!data.success) throw new Error(data.error || 'Request failed');
+            allProjects = Array.isArray(data.projects) ? data.projects : [];
+            filterAndRender();
+          })
+          .catch(function(err) {
+            console.error('Gallery fetch error:', err);
+            showError(err.message);
+          });
+      }
+
+      window.__galleryFetch = fetchProjects;
+
+      filterGroup.addEventListener('click', function(e) {
+        const btn = e.target.closest('.filter-btn');
+        if (!btn) return;
+        filterGroup.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        activeFilter = btn.getAttribute('data-filter');
+        filterAndRender();
+      });
+
+      let searchTimer = null;
+      searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(function() {
+          searchQuery = searchInput.value.trim();
+          filterAndRender();
+        }, 300);
+      });
+
+      fetchProjects();
+
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').catch(function(err) {
+          console.warn('SW registration failed:', err);
+        });
+      }
+    })();
+  </script>
+  <div id="site-footer"></div>
+    <script src="/js/loading-screen.js"></script>
+<script src="/js/site.js"></script>
+
+  <script src="/js/scroll-3d-animations.js"></script>  <script src="/js/k-scroll.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+</body>
+</html>

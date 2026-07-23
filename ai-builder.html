@@ -8,20 +8,20 @@
   <meta name="keywords" content="AI website builder, CAD generator, PCB design AI, firmware generator, free AI tools">
   <meta name="author" content="KEYCODE Studio">
   <meta name="robots" content="index, follow">
-  <link rel="canonical" href="https://keycode.studio/ai-builder.html">
+  <link rel="canonical" href="https://keycode-studio-production.up.railway.app/ai-builder.html">
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://keycode.studio/ai-builder.html">
+  <meta property="og:url" content="https://keycode-studio-production.up.railway.app/ai-builder.html">
   <meta property="og:title" content="KEYCODE AI - Free AI Design Studio">
   <meta property="og:description" content="Generate responsive websites, 3D CAD models, PCBs, and MCU firmware from text. Powered by parallel AI specialists.">
-  <meta property="og:image" content="https://keycode.studio/og-image.png">
+  <meta property="og:image" content="https://keycode-studio-production.up.railway.app/og-image.png">
 
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="KEYCODE AI - Free AI Design Studio">
   <meta name="twitter:description" content="Generate websites, CAD, PCBs, and firmware with AI. 100% free.">
-  <meta name="twitter:image" content="https://keycode.studio/og-image.png">
+  <meta name="twitter:image" content="https://keycode-studio-production.up.railway.app/og-image.png">
 
   <!-- JSON-LD Structured Data -->
   <script type="application/ld+json">
@@ -29,7 +29,7 @@
     "@context": "https://schema.org",
     "@type": "WebApplication",
     "name": "KEYCODE AI Design Studio",
-    "url": "https://keycode.studio/",
+    "url": "https://keycode-studio-production.up.railway.app/",
     "description": "Generate responsive websites, 3D CAD models, PCBs, and MCU firmware from text descriptions using parallel AI specialists.",
     "applicationCategory": "DesignApplication",
     "operatingSystem": "All",
@@ -201,8 +201,18 @@
     .code-viewer-footer button { background:var(--slate); border:1px solid var(--glass-border); color:var(--ash); padding:5px 12px; border-radius:6px; cursor:pointer; font-size:11px; transition:.2s; }
     .code-viewer-footer button:hover { background:rgba(255,255,255,0.1); color:var(--white); }
   </style>
-</head>
+  <link rel="stylesheet" href="/z-shared.css">
+  </head>
 <body>
+  <div id="kc-loader">
+    <div id="kc-loader-scene"></div>
+      <div id="kc-bg-text" aria-hidden="true">KEYCODE</div>
+<div class="kc-loader-info" style="position:absolute;bottom:48px;left:50%;transform:translateX(-50%);">
+      <div id="kc-loader-bar-track"><div id="kc-loader-bar"></div></div>
+      <div id="kc-loader-pct" style="font-family:'Inter',sans-serif;font-size:11px;color:#555;letter-spacing:.12em;text-align:center;">0%</div>
+    </div>
+  </div>
+
     <div class="ai-builder-header-bar">
       <div style="display:flex;align-items:center;gap:12px;">
         <div class="logo"><i class="fas fa-bolt"></i> KEYCODE AI</div>
@@ -212,7 +222,9 @@
       </div>
     <div class="nav-links">
       <a href="/"><i class="fas fa-home"></i> Home</a>
-      <a href="control-panel.html" class="dashboard-link"><i class="fas fa-th-large"></i> Dashboard</a>
+      <a href="game-builder.html"><i class="fas fa-gamepad"></i> Games</a>
+      <a href="scan-3d.html"><i class="fas fa-camera"></i> 3D Scan</a>
+      <a href="dashboard.html" class="dashboard-link"><i class="fas fa-th-large"></i> Dashboard</a>
     </div>
   </div>
   <div class="ai-builder-body">
@@ -399,7 +411,7 @@
   </div>
   <script>
     var authToken = localStorage.getItem('keycode_token') || localStorage.getItem('token');
-    if (!authToken) { window.location.href = 'login.html?redirect=open-builder'; }
+    if (!authToken) { window.location.href = 'login.html?redirect=/ai-builder.html'; }
 
     var aiCurrentProjectId = null;
     var aiProjectStatus = null;
@@ -672,8 +684,10 @@
 
       responseText += `<div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.06)">`;
       responseText += `<span style="color:var(--ash);font-size:12px">${genData.components ? genData.components.length + ' components · ' : ''}${genData.netlist ? genData.netlist.length + ' nets' : ''}${genData.fileCount ? genData.fileCount + ' files' : ''}</span>`;
+      responseText += `<div style="display:flex;gap:8px">`;
+      responseText += `<button onclick="saveToDashboard()" style="padding:10px 20px;background:var(--slate);color:var(--ash);border:1px solid var(--glass-border);border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;transition:.3s"><i class="fas fa-save"></i> Save to Dashboard</button>`;
       responseText += `<button onclick="proceedToPayment('${taskType}')" class="glow-border-three-d" style="padding:10px 24px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:.3s"><i class="fas fa-lock"></i> Unlock & Get Project</button>`;
-      responseText += `</div></div>`;
+      responseText += `</div></div></div>`;
 
       addMessage(responseText, 'bot');
       aiChatHistory.push({ role: 'assistant', content: responseText });
@@ -682,9 +696,30 @@
       document.getElementById('aiPreviewUrl').textContent = window.location.origin + '/client-panel.html#orders';
     }
 
+    async function saveToDashboard() {
+      var token = localStorage.getItem('keycode_token') || localStorage.getItem('token');
+      if (!token) { window.location.href = 'login.html?redirect=/ai-builder.html'; return; }
+      var genData = _pendingGenData;
+      if (!genData) return;
+      try {
+        await fetch('/api/ai/generate-and-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({
+            description: genData.summary || genData.description || 'AI Generated Project',
+            taskType: genData.taskType || 'general',
+            projectData: genData
+          })
+        });
+        window.location.href = 'dashboard.html';
+      } catch(err) {
+        showToast('Error saving project: ' + err.message, 'error');
+      }
+    }
+
     async function proceedToPayment(taskType) {
       var token = localStorage.getItem('keycode_token') || localStorage.getItem('token');
-      if (!token) { window.location.href = 'login.html?redirect=ai-builder.html'; return; }
+      if (!token) { window.location.href = 'login.html?redirect=/ai-builder.html'; return; }
 
       var genData = _pendingGenData;
       if (!genData) return;
@@ -1377,10 +1412,63 @@
       headerTabs.parentNode.insertBefore(histBtn, headerTabs.nextSibling);
     }
 
-    // Auto-open welcome message
-    addMessage('👋 Welcome to <strong>KEYCODE AI</strong>! Describe the full-stack project you want to build.', 'bot');
-    addMessage('Try: <em>"Build a SaaS dashboard with user authentication and a pricing page"</em>', 'bot');
-    document.getElementById('aiChatInput').focus();
+    // Auto-open welcome message (customized by service param if present)
+    var urlParams = new URLSearchParams(window.location.search);
+    var serviceParam = urlParams.get('service');
+    var serviceMessages = {
+      'fullstack-web': ['👋 Ready to build a <strong>full-stack web application</strong>? Tell me what kind of app you need.', 'Try: <em>"Build a SaaS dashboard with Stripe payments, user auth, and a pricing page"</em>'],
+      'game-development': ['🎮 Let\'s create an <strong>HTML5 game</strong>! Describe the game mechanics and style.', 'Try: <em>"A 2D platformer where you collect gems, avoid spikes, and defeat a boss"</em>'],
+      'ui-ux-design': ['🎨 Let\'s design a <strong>beautiful UI/UX</strong> for your project. What are you building?', 'Try: <em>"A dark-mode dashboard for a crypto trading platform with interactive charts"</em>'],
+      'software-dev': ['💻 Let\'s build a <strong>software application</strong>. Describe what it should do.', 'Try: <em>"A desktop note-taking app with markdown support, tags, and cloud sync"</em>'],
+      'cad-modeling': ['⚙️ Let\'s create a <strong>3D CAD model</strong>. Describe the part or object you need.', 'Try: <em>"A custom enclosure for a Raspberry Pi with ventilation slots and mounting holes"</em>'],
+      '3d-scan-to-cad': ['📷 Turn a real object into a <strong>3D CAD model</strong>! Use our 3D Scanner or describe the object.', 'Try: <em>"I want to scan a mechanical gear and convert it to a precise CAD model"</em>'],
+      '3d-printing': ['🖨️ Let\'s design something <strong>3D printable</strong>. What do you want to make?', 'Try: <em>"A articulated dragon figure that prints without supports"</em>'],
+      'pcb-fabrication': ['🔌 Let\'s design a <strong>PCB</strong>. Describe the circuit or device.', 'Try: <em>"An ESP32-based IoT sensor board with temperature, humidity, and MQTT"</em>'],
+      'mcu-coding': ['🤖 Let\'s write <strong>firmware</strong> for a microcontroller. What should it do?', 'Try: <em>"ESP32 firmware that reads a DHT22 sensor, publishes to MQTT, and has OTA updates"</em>'],
+      'os-development': ['🖥️ Let\'s develop an <strong>operating system component</strong>. What are you building?', 'Try: <em>"A simple bootloader that loads a kernel from disk in 32-bit protected mode"</em>'],
+      'mobile-apps': ['📱 Let\'s build a <strong>mobile app</strong>. Describe what it should do.', 'Try: <em>"A React Native fitness tracker with GPS, workout logs, and progress charts"</em>'],
+      'api-backend': ['🔗 Let\'s build a <strong>backend API</strong>. Describe the endpoints and data model.', 'Try: <em>"A RESTful API for a real estate platform with property listings, search, and bookings"</em>'],
+      'database-design': ['🗄️ Let\'s design a <strong>database schema</strong>. Tell me about your application.', 'Try: <em>"A PostgreSQL schema for an e-commerce platform with products, orders, inventory, and reviews"</em>'],
+      'devops-cloud': ['☁️ Let\'s set up <strong>DevOps & cloud infrastructure</strong>. What are you deploying?', 'Try: <em>"A CI/CD pipeline for a Node.js app with Docker, GitHub Actions, and AWS ECS"</em>'],
+      'ai-ml': ['🧠 Let\'s integrate <strong>AI/ML</strong> into your project. What problem are you solving?', 'Try: <em>"A RAG chatbot that answers questions from a knowledge base using OpenAI embeddings"</em>'],
+      'cybersecurity': ['🔒 Let\'s run a <strong>security audit</strong>. What system are you protecting?', 'Try: <em>"A web application penetration test — check for OWASP Top 10 vulnerabilities"</em>'],
+      'blockchain-web3': ['⛓️ Let\'s build something on the <strong>blockchain</strong>. What\'s your dApp idea?', 'Try: <em>"An NFT marketplace with smart contract minting, bidding, and royalty system"</em>'],
+      'data-science': ['📊 Let\'s build a <strong>data pipeline</strong>. What data are you working with?', 'Try: <em>"A real-time analytics dashboard that ingests Kafka streams and shows live metrics"</em>'],
+      'ar-vr': ['🥽 Let\'s create an <strong>AR/VR experience</strong>. What world are you building?', 'Try: <em>"A WebXR showroom where users can view 3D furniture models in their living room"</em>'],
+      'ecommerce': ['🛒 Let\'s build an <strong>e-commerce platform</strong>. What are you selling?', 'Try: <em>"A multi-vendor marketplace with shopping cart, Stripe payments, and seller dashboards"</em>'],
+      'chatbot-dev': ['💬 Let\'s build a <strong>chatbot</strong>. What should it help with?', 'Try: <em>"A customer support chatbot that answers FAQs, creates tickets, and escalates to humans"</em>'],
+      'automation': ['⚡ Let\'s automate a <strong>workflow</strong>. What process needs automation?', 'Try: <em>"An invoice processing pipeline that extracts data from PDFs and syncs with QuickBooks"</em>'],
+      'cms': ['📝 Let\'s build a <strong>content management system</strong>. What content do you manage?', 'Try: <em>"A headless CMS for a blog with markdown editor, image optimization, and team roles"</em>'],
+      'testing-qa': ['🧪 Let\'s set up <strong>automated testing</strong>. What are we testing?', 'Try: <em>"A full test suite for a React app with unit tests, integration tests, and Cypress E2E"</em>'],
+      'documentation': ['📖 Let\'s create <strong>technical documentation</strong>. What needs documenting?', 'Try: <em>"Interactive API documentation with OpenAPI spec, code examples, and try-it-out console"</em>'],
+      'animation': ['✨ Let\'s add <strong>animations</strong> to your project. What\'s the vibe?', 'Try: <em>"A GSAP-powered landing page with scroll-triggered animations, parallax, and 3D flips"</em>'],
+      'pwa': ['📲 Let\'s turn this into a <strong>Progressive Web App</strong>. What features do you need?', 'Try: <em>"An offline-first PWA with service worker caching, push notifications, and install prompt"</em>'],
+      'voice-assistant': ['🎤 Let\'s build a <strong>voice assistant</strong>. What should it do?', 'Try: <em>"A custom voice assistant that controls smart home devices, plays music, and answers queries"</em>'],
+      'iot': ['📡 Let\'s design an <strong>IoT system</strong>. What devices are you connecting?', 'Try: <em>"A smart agriculture system with soil sensors, MQTT relay, and a real-time dashboard"</em>'],
+      'elearning': ['🎓 Let\'s build an <strong>e-learning platform</strong>. What will you teach?', 'Try: <em>"A course platform with video lessons, quizzes, certificates, and student progress tracking"</em>'],
+      'social-integration': ['🔗 Let\'s add <strong>social features</strong>. What integrations do you need?', 'Try: <em>"Social login with Google/GitHub, share buttons, and activity feeds"</em>'],
+      'payments': ['💳 Let\'s integrate <strong>payments</strong>. What\'s your business model?', 'Try: <em>"A subscription billing system with Stripe, free trials, proration, and invoicing"</em>'],
+      'realtime-apps': ['⚡ Let\'s build something <strong>real-time</strong>. What needs live updates?', 'Try: <em>"A collaborative whiteboard app with WebSocket sync, cursors, and undo/redo"</em>'],
+      'image-processing': ['🖼️ Let\'s process <strong>images or video</strong>. What\'s the use case?', 'Try: <em>"A face detection and blurring pipeline for privacy-compliant CCTV footage"</em>'],
+      'nlp': ['📄 Let\'s analyze <strong>text</strong>. What language task are you solving?', 'Try: <em>"A multilingual sentiment analysis system that processes customer reviews in 10 languages"</em>'],
+      'robotics': ['🦾 Let\'s program a <strong>robot</strong>. What should it do?', 'Try: <em>"ROS-based autonomous navigation for a differential-drive robot with LiDAR and IMU"</em>'],
+      'scraping': ['🕸️ Let\'s extract <strong>web data</strong>. What site needs scraping?', 'Try: <em>"A distributed web scraper that crawls e-commerce sites and normalizes product data"</em>'],
+      'maps-location': ['📍 Let\'s add <strong>maps & location</strong> features. What\'s the use case?', 'Try: <em>"A delivery route optimization system with Mapbox, real-time tracking, and geofencing"</em>'],
+      'analytics': ['📈 Let\'s build an <strong>analytics dashboard</strong>. What metrics matter?', 'Try: <em>"A product analytics dashboard tracking user events, retention, conversion funnels, and cohorts"</em>'],
+      'migration': ['🔄 Let\'s plan a <strong>system migration</strong>. What are you migrating?', 'Try: <em>"A legacy monolith to microservices migration plan with DB splitting and API gateway"</em>']
+    };
+    if (serviceParam && serviceMessages[serviceParam]) {
+      var msgs = serviceMessages[serviceParam];
+      addMessage(msgs[0], 'bot');
+      addMessage(msgs[1], 'bot');
+      // Pre-fill the input with a context hint
+      var ta = document.getElementById('aiChatInput');
+      if (ta) { ta.placeholder = 'Describe your ' + serviceParam.replace(/-/g, ' ') + ' project...'; ta.focus(); }
+    } else {
+      addMessage('👋 Welcome to <strong>KEYCODE AI</strong>! Describe the full-stack project you want to build.', 'bot');
+      addMessage('Try: <em>"Build a SaaS dashboard with user authentication and a pricing page"</em>', 'bot');
+      document.getElementById('aiChatInput').focus();
+    }
 
     // Handle Stripe return (hosting payment success)
     var urlParams = new URLSearchParams(window.location.search);
@@ -1627,6 +1715,14 @@ function showLaunchError(msg) {
     '<p style="margin:8px 0 0">Error: ' + msg + '</p></div>';
 }
 </script>
+  <div id="site-footer"></div>
+    <script src="/js/loading-screen.js"></script>
+<script src="/js/site.js"></script>
+
+  <script src="/js/scroll-3d-animations.js"></script>  <script src="/js/k-scroll.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
 </body>
 
 <!-- Launch Modal -->

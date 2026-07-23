@@ -5,7 +5,12 @@
   <link rel="manifest" href="/manifest.json">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Secure checkout - Purchase KEYCODE Studio plans and services.">
-  <title>Checkout - KEYCODE Studio</title>
+  <meta property="og:title" content="Checkout - KEYCODE Studio">
+<meta property="og:description" content="Secure checkout - Purchase KEYCODE Studio plans and services.">
+<meta property="og:image" content="https://keycode.studio/og-image.png">
+<meta property="og:url" content="https://keycode.studio/checkout.html">
+<meta name="twitter:card" content="summary_large_image">
+<title>Checkout - KEYCODE Studio</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha384-/o6I2CkkWC//PSjvWC/eYN7l3xM3tJm8ZzVkCOfp//W05QcE3mlGskpoHB6XqI+B" crossorigin="anonymous">
@@ -346,8 +351,18 @@
     }
     .back-link:hover { color: var(--ash); }
   </style>
+    <link rel="stylesheet" href="/z-shared.css">
 </head>
 <body>
+  <div id="kc-loader">
+    <div id="kc-loader-scene"></div>
+      <div id="kc-bg-text" aria-hidden="true">KEYCODE</div>
+<div class="kc-loader-info" style="position:absolute;bottom:48px;left:50%;transform:translateX(-50%);">
+      <div id="kc-loader-bar-track"><div id="kc-loader-bar"></div></div>
+      <div id="kc-loader-pct" style="font-family:'Inter',sans-serif;font-size:11px;color:#555;letter-spacing:.12em;text-align:center;">0%</div>
+    </div>
+  </div>
+
   <div class="checkout-container">
     <a href="index.html" class="back-link">
       <i class="fas fa-arrow-left"></i> Back to Services
@@ -656,5 +671,13 @@
     });
   </script>
 <script>navigator.serviceWorker.register('/sw.js').catch(function(e){console.error('SW registration failed:',e)});</script>
+
+  <script src="/js/scroll-3d-animations.js"></script>  <script src="/js/k-scroll.js" defer></script>
+
+  <div id="site-footer"></div>
+    <script src="/js/loading-screen.js"></script>
+<script src="/js/site.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
 </body>
 </html>

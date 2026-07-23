@@ -238,8 +238,17 @@ tr:hover td{background:rgba(255,255,255,0.015)}
   .bot-panel{width:calc(100vw - 32px);right:16px;bottom:80px;height:50vh}
 }
 </style>
-</head>
+  <link rel="stylesheet" href="/z-shared.css">
+  </head>
 <body>
+  <div id="kc-loader">
+    <div id="kc-loader-scene"></div>
+      <div id="kc-bg-text" aria-hidden="true">KEYCODE</div>
+<div class="kc-loader-info" style="position:absolute;bottom:48px;left:50%;transform:translateX(-50%);">
+      <div id="kc-loader-bar-track"><div id="kc-loader-bar"></div></div>
+      <div id="kc-loader-pct" style="font-family:'Inter',sans-serif;font-size:11px;color:#555;letter-spacing:.12em;text-align:center;">0%</div>
+    </div>
+  </div>
 
 <!-- SIDEBAR -->
 <aside class="sidebar" id="sidebar">
@@ -261,6 +270,8 @@ tr:hover td{background:rgba(255,255,255,0.015)}
     <div class="sidebar-label" id="adminLabel" style="display:none">Admin</div>
     <a class="nav-item" id="adminSvcOrders" data-page="service-orders" href="#" style="display:none"><i class="fas fa-clipboard-list"></i><span>Service Orders</span></a>
     <a class="nav-item" href="/ai-builder.html"><i class="fas fa-wand-magic-sparkles"></i><span>AI Builder</span></a>
+    <a class="nav-item" href="/game-builder.html"><i class="fas fa-gamepad"></i><span>Game Builder</span></a>
+    <a class="nav-item" href="/scan-3d.html"><i class="fas fa-camera"></i><span>3D Scanner</span></a>
     <a class="nav-item" href="/shop"><i class="fas fa-store"></i><span>Marketplace</span></a>
     <a class="nav-item" href="#" onclick="logout()"><i class="fas fa-right-from-bracket"></i><span>Logout</span></a>
   </nav>
@@ -287,10 +298,12 @@ tr:hover td{background:rgba(255,255,255,0.015)}
 <!-- OVERVIEW -->
 <div class="page active" id="page-overview">
   <div class="quick-actions">
-    <a class="qa-card" href="/ai-builder.html"><div class="qa-icon" style="background:rgba(99,102,241,0.12);color:var(--primary)"><i class="fas fa-wand-magic-sparkles"></i></div><div class="qa-title">New Project</div><div class="qa-desc">Generate with AI</div></a>
+    <a class="qa-card" href="/ai-builder.html"><div class="qa-icon" style="background:rgba(99,102,241,0.12);color:var(--primary)"><i class="fas fa-wand-magic-sparkles"></i></div><div class="qa-title">AI Builder</div><div class="qa-desc">Generate with AI</div></a>
+    <a class="qa-card" href="/game-builder.html"><div class="qa-icon" style="background:rgba(236,72,153,0.12);color:var(--secondary)"><i class="fas fa-gamepad"></i></div><div class="qa-title">Game Builder</div><div class="qa-desc">Create HTML5 games</div></a>
+    <a class="qa-card" href="/scan-3d.html"><div class="qa-icon" style="background:rgba(6,182,212,0.12);color:#06b6d4"><i class="fas fa-camera"></i></div><div class="qa-title">3D Scanner</div><div class="qa-desc">Scan objects to 3D</div></a>
     <div class="qa-card" onclick="navigate('manufacturing')"><div class="qa-icon" style="background:rgba(245,158,11,0.12);color:var(--warning)"><i class="fas fa-microchip"></i></div><div class="qa-title">Order PCB</div><div class="qa-desc">From your design</div></div>
     <div class="qa-card" onclick="navigate('manufacturing')"><div class="qa-icon" style="background:rgba(16,185,129,0.12);color:var(--success)"><i class="fas fa-cube"></i></div><div class="qa-title">3D Print</div><div class="qa-desc">Order a print</div></div>
-    <div class="qa-card" onclick="navigate('products')"><div class="qa-icon" style="background:rgba(236,72,153,0.12);color:var(--secondary)"><i class="fas fa-store"></i></div><div class="qa-title">Products</div><div class="qa-desc">Manage your shop</div></div>
+    <div class="qa-card" onclick="navigate('products')"><div class="qa-icon" style="background:rgba(236,72,153,0.12);color:var(--secondary)"><i class="fas fa-store"></i></div><div class="qa-title">Products</div><div class="qa-desc">Manage shop</div></div>
   </div>
 
   <div class="stats-grid" id="statsGrid"><div class="loading"><i class="fas fa-spinner fa-spin"></i><p style="margin-top:8px">Loading stats...</p></div></div>
@@ -1110,5 +1123,13 @@ function fetchCodePenEmbed() {
 }
 </script>
 <script>navigator.serviceWorker.register('/sw.js').catch(function(e){console.error('SW registration failed:',e)});</script>
+  <div id="site-footer"></div>
+    <script src="/js/loading-screen.js"></script>
+<script src="/js/site.js"></script>
+
+  <script src="/js/scroll-3d-animations.js"></script>  <script src="/js/k-scroll.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
 </body>
 </html>

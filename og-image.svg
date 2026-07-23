@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#0a0a1a"/>
+  <rect x="0" y="0" width="1200" height="630" fill="url(#g)" opacity="0.15"/>
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="50%" stop-color="#22d3ee"/>
+      <stop offset="100%" stop-color="#6366f1"/>
+    </linearGradient>
+  </defs>
+  <text x="600" y="270" font-family="Inter, system-ui, sans-serif" font-size="96" font-weight="700" fill="#ffffff" text-anchor="middle" letter-spacing="-2">KEYCODE</text>
+  <text x="600" y="340" font-family="Inter, system-ui, sans-serif" font-size="28" fill="#22d3ee" text-anchor="middle" letter-spacing="4" font-weight="300">AI-POWERED STUDIO</text>
+  <rect x="540" y="370" width="120" height="3" rx="1.5" fill="url(#g)"/>
+  <text x="600" y="410" font-family="Inter, system-ui, sans-serif" font-size="18" fill="#94a3b8" text-anchor="middle">Build the future, one project at a time.</text>
+</svg>

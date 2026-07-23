@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="KEYCODE Studio - AI-powered development platform">
+<meta property="og:title" content="Project Preview - KEYCODE">
+<meta property="og:description" content="KEYCODE Studio - AI-powered development platform">
+<meta property="og:image" content="https://keycode.studio/og-image.png">
+<meta property="og:url" content="https://keycode.studio/project-preview.html">
+<meta name="twitter:card" content="summary_large_image">
 <title>Project Preview - KEYCODE</title>
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -103,8 +108,17 @@ body { font-family: var(--font-body); background: var(--void); color: var(--whit
 .toast.error i { color: var(--danger); }
 @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 </style>
+    <link rel="stylesheet" href="/z-shared.css">
 </head>
 <body>
+  <div id="kc-loader">
+    <div id="kc-loader-scene"></div>
+      <div id="kc-bg-text" aria-hidden="true">KEYCODE</div>
+<div class="kc-loader-info" style="position:absolute;bottom:48px;left:50%;transform:translateX(-50%);">
+      <div id="kc-loader-bar-track"><div id="kc-loader-bar"></div></div>
+      <div id="kc-loader-pct" style="font-family:'Inter',sans-serif;font-size:11px;color:#555;letter-spacing:.12em;text-align:center;">0%</div>
+    </div>
+  </div>
 
 <div class="header">
   <div class="header-left">
@@ -364,5 +378,13 @@ async function orderAll() {
   await order3D();
 }
 </script>
+
+  <script src="/js/scroll-3d-animations.js"></script>  <script src="/js/k-scroll.js" defer></script>
+
+  <div id="site-footer"></div>
+    <script src="/js/loading-screen.js"></script>
+<script src="/js/site.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
 </body>
 </html>

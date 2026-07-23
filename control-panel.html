@@ -302,8 +302,18 @@
     .skeleton-load { background:linear-gradient(90deg,var(--slate) 25%,var(--graphite) 50%,var(--slate) 75%);background-size:200% 100%;animation:skeleton 1.5s ease-in-out infinite;border-radius:8px;color:transparent!important;user-select:none;pointer-events:none;min-height:20px }
     @keyframes skeleton { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
   </style>
-</head>
+  <link rel="stylesheet" href="/z-shared.css">
+  </head>
 <body>
+  <div id="kc-loader">
+    <div id="kc-loader-scene"></div>
+      <div id="kc-bg-text" aria-hidden="true">KEYCODE</div>
+<div class="kc-loader-info" style="position:absolute;bottom:48px;left:50%;transform:translateX(-50%);">
+      <div id="kc-loader-bar-track"><div id="kc-loader-bar"></div></div>
+      <div id="kc-loader-pct" style="font-family:'Inter',sans-serif;font-size:11px;color:#555;letter-spacing:.12em;text-align:center;">0%</div>
+    </div>
+  </div>
+
   <div id="loginPrompt" class="login-prompt" style="display:none;">
     <i class="fas fa-lock"></i>
     <h2>Authentication Required</h2>
@@ -333,6 +343,10 @@
         <div class="nav-item" data-page="ai-projects">
           <i class="fas fa-robot"></i>
           <span>AI Projects</span>
+        </div>
+        <div class="nav-item" data-page="games">
+          <i class="fas fa-gamepad"></i>
+          <span>Games</span>
         </div>
         <div class="nav-item" data-page="profile">
           <i class="fas fa-user"></i>
@@ -520,6 +534,32 @@
         </div>
       </div>
 
+      <div id="games" class="page-section">
+        <div class="page-header">
+          <h1 class="page-title"><i class="fas fa-gamepad" style="margin-right:8px"></i> Game Engine</h1>
+          <a href="game.html" class="btn-primary" style="text-decoration:none"><i class="fas fa-play"></i> Open Game Engine</a>
+        </div>
+        <div style="background:linear-gradient(135deg,rgba(99,102,241,0.12),rgba(34,211,238,0.08));border:1px solid rgba(99,102,241,0.2);border-radius:16px;padding:24px;margin-bottom:24px;display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+          <div style="flex:1;min-width:200px">
+            <h3 style="font-size:18px;font-weight:600;margin-bottom:6px">Free Phaser.js Game Engine</h3>
+            <p style="color:var(--ash);font-size:14px;line-height:1.6">Generate playable HTML5 games with AI — platformers, shooters, puzzles, runners &amp; more. All games run in the browser with the free Phaser.js engine.</p>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <a href="ai-builder.html" class="btn-primary" style="text-decoration:none"><i class="fas fa-magic"></i> Create with AI</a>
+            <a href="game.html" class="btn-primary" style="text-decoration:none;background:transparent;border:1px solid var(--primary);color:var(--primary)"><i class="fas fa-folder-open"></i> Open Engine</a>
+          </div>
+        </div>
+        <div class="section-card">
+          <div class="section-header">
+            <h2 class="section-title"><i class="fas fa-robot" style="margin-right:8px"></i> My Games</h2>
+            <a href="ai-builder.html" class="btn-primary" style="text-decoration:none">New Game</a>
+          </div>
+          <div id="gameProjectsContainer">
+            <p style="color: var(--ash); text-align: center; padding: 20px;">Loading game projects...</p>
+          </div>
+        </div>
+      </div>
+
       <div id="profile" class="page-section">
         <div class="page-header">
           <h1 class="page-title">Profile Settings</h1>
@@ -679,6 +719,7 @@
       await loadStats();
       await loadRecentOrders();
       await loadOverviewAiProjects();
+      await loadGameProjects();
     }
 
     async function loadStats() {
@@ -921,6 +962,46 @@
       document.getElementById('aiProjectsContainer').innerHTML = html;
     }
 
+    async function loadGameProjects() {
+      try {
+        const resp = await fetch('/api/ai/list-projects');
+        const data = await resp.json();
+        const projects = (data.projects || []).filter(function(p) { return p.type === 'game' || p.fileId?.startsWith('game_'); });
+        const container = document.getElementById('gameProjectsContainer');
+
+        if (!projects.length) {
+          container.innerHTML = '<p style="color: var(--ash); text-align: center; padding: 30px;">No games created yet. <a href="ai-builder.html" style="color: var(--primary);">Create your first game with AI!</a></p>';
+          return;
+        }
+
+        let html = '<div class="table-wrapper"><table><thead><tr>';
+        html += '<th>Title</th><th>Type</th><th>Status</th><th>Created</th><th>Actions</th>';
+        html += '</tr></thead><tbody>';
+
+        projects.forEach(function(p) {
+          var created = p.createdAt ? new Date(p.createdAt).toLocaleDateString() : 'N/A';
+          var title = p.summary || p.title || p.fileId || 'Untitled Game';
+          var type = p.type || 'game';
+
+          html += '<tr>';
+          html += '<td><strong>' + title + '</strong></td>';
+          html += '<td><span class="status-badge" style="background:rgba(99,102,241,0.2);color:var(--primary-glow)">' + type + '</span></td>';
+          html += '<td><span class="status-badge status-completed">Ready</span></td>';
+          html += '<td>' + created + '</td>';
+          html += '<td>';
+          html += '<a href="/game.html?game=' + (p.fileId || '') + '" target="_blank" class="action-btn" style="margin-right:4px;"><i class="fas fa-play"></i> Play</a>';
+          html += '<a href="/preview/' + (p.fileId || '') + '/" target="_blank" class="action-btn"><i class="fas fa-eye"></i> Source</a>';
+          html += '</td>';
+          html += '</tr>';
+        });
+
+        html += '</tbody></table></div>';
+        container.innerHTML = html;
+      } catch (e) {
+        document.getElementById('gameProjectsContainer').innerHTML = '<p style="color: var(--ash); text-align: center;">Could not load games</p>';
+      }
+    }
+
     document.querySelectorAll('.nav-item').forEach(item => {
       item.addEventListener('click', () => {
         const page = item.dataset.page;
@@ -930,6 +1011,7 @@
         if (page === 'users') loadUsers();
         if (page === 'inquiries') loadInquiries();
         if (page === 'ai-projects') loadAiProjects();
+        if (page === 'games') loadGameProjects();
       });
     });
 
@@ -966,5 +1048,13 @@
   })();
   </script>
 <script>navigator.serviceWorker.register('/sw.js').catch(function(e){console.error('SW registration failed:',e)});</script>
+  <div id="site-footer"></div>
+    <script src="/js/loading-screen.js"></script>
+<script src="/js/site.js"></script>
+
+  <script src="/js/scroll-3d-animations.js"></script>  <script src="/js/k-scroll.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
 </body>
 </html>

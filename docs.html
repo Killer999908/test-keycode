@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <title>Documentation - KEYCODE Studio</title>
+  <meta name="description" content="KEYCODE Studio documentation — API reference, guides, tutorials, and SDK docs for AI-powered website generation, PCB design, CAD modeling, and MCU programming.">
+  <meta name="keywords" content="KEYCODE docs, API reference, AI documentation, website generation API, PCB design docs, CAD modeling, MCU programming, developer guide">
+  <meta name="author" content="KEYCODE Studio">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://keycode-studio-production.up.railway.app/docs.html">
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://keycode-studio-production.up.railway.app/docs.html">
+  <meta property="og:title" content="Documentation - KEYCODE Studio">
+  <meta property="og:description" content="Comprehensive documentation for the KEYCODE AI platform — API reference, guides, and tutorials.">
+  <meta property="og:image" content="/og-image.svg">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Documentation - KEYCODE Studio">
+  <meta name="twitter:description" content="Comprehensive documentation for the KEYCODE AI platform — API reference, guides, and tutorials.">
+  <meta name="twitter:image" content="/og-image.svg">
+
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#6366f1">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="KEYCODE Docs">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" href="/favicon.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+  <style>
+    :root {
+      --bg: #0a0a1a;
+      --sidebar-bg: #0d0d24;
+      --card: #12122a;
+      --primary: #6366f1;
+      --accent: #22d3ee;
+      --text: #e2e8f0;
+      --ash: #94a3b8;
+      --code-bg: #1a1a2e;
+      --border: rgba(255, 255, 255, 0.06);
+      --radius: 10px;
+      --sidebar-w: 280px;
+      --toc-w: 220px;
+      --header-h: 80px;
+    }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; font-size: 16px; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      display: flex;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    ::selection { background: var(--primary); color: #fff; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.3); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.5); }
+    a { color: var(--primary); text-decoration: none; }
+    a:hover { color: var(--accent); }
+
+    /* Header */
+    .header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: var(--header-h);
+      background: rgba(10, 10, 26, 0.85);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center;
+      padding: 0 20px;
+    }
+    .header-logo {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 700; font-size: 1.1rem; color: var(--text);
+    }
+    .header-logo img { height: 28px; width: auto; }
+    .header-logo span { color: var(--primary); }
+    .header-links { margin-left: auto; display: flex; gap: 24px; align-items: center; }
+    .header-links a { font-size: 0.875rem; color: var(--ash); transition: color 0.2s; }
+    .header-links a:hover { color: var(--text); }
+    .hamburger {
+      display: none; background: none; border: none; color: var(--text);
+      font-size: 1.25rem; cursor: pointer; padding: 6px; margin-left: auto;
+    }
+    .hamburger:focus { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 4px; }
+
+    /* Sidebar */
+    .sidebar {
+      position: fixed; top: var(--header-h); left: 0; bottom: 0;
+      width: var(--sidebar-w);
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      z-index: 50;
+      transition: transform 0.3s ease;
+      display: flex; flex-direction: column;
+    }
+    .sidebar-inner { padding: 16px 12px 32px; flex: 1; }
+
+    .sidebar-search {
+      position: relative; margin-bottom: 16px;
+    }
+    .sidebar-search .fa-magnifying-glass {
+      position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+      color: var(--ash); font-size: 0.8rem; pointer-events: none;
+    }
+    .sidebar-search input {
+      width: 100%; padding: 10px 12px 10px 34px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); color: var(--text);
+      font-family: 'Inter', sans-serif; font-size: 0.85rem;
+      outline: none; transition: border-color 0.2s;
+    }
+    .sidebar-search input:focus { border-color: var(--primary); }
+    .sidebar-search input::placeholder { color: var(--ash); }
+
+    .nav-section { margin-bottom: 4px; }
+    .nav-section-title {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 12px; font-size: 0.72rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--ash); cursor: default;
+    }
+    .nav-section-title i { width: 16px; text-align: center; font-size: 0.7rem; color: var(--primary); }
+    .nav-item {
+      display: block; padding: 7px 12px 7px 36px;
+      font-size: 0.85rem; color: var(--ash);
+      border-radius: 6px; cursor: pointer; transition: all 0.15s;
+      text-decoration: none; position: relative;
+    }
+    .nav-item:hover { color: var(--text); background: rgba(99, 102, 241, 0.08); }
+    .nav-item.active {
+      color: #fff; background: rgba(99, 102, 241, 0.15);
+    }
+    .nav-item.active::before {
+      content: ''; position: absolute; left: 0; top: 4px; bottom: 4px;
+      width: 3px; background: var(--primary); border-radius: 0 3px 3px 0;
+    }
+    .nav-item[style*="display: none"] + .nav-item[style*="display: none"] { display: none; }
+
+    /* Main */
+    .main-wrap {
+      display: flex; margin-left: 280px;
+      min-height: calc(100vh - 80px);
+    }
+    .main-content {
+      flex: 1; max-width: 860px;
+      padding: 40px 48px 80px;
+      min-width: 0;
+    }
+
+    /* Right TOC */
+    .toc {
+      width: var(--toc-w);
+      position: sticky; top: var(--header-h);
+      align-self: flex-start;
+      padding: 40px 16px 40px 0;
+      flex-shrink: 0;
+      max-height: calc(100vh - var(--header-h));
+      overflow-y: auto;
+    }
+    .toc-label {
+      font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.06em; color: var(--ash); margin-bottom: 12px;
+      padding-left: 12px;
+    }
+    .toc-link {
+      display: block; padding: 4px 12px; font-size: 0.8rem;
+      color: var(--ash); border-left: 2px solid transparent;
+      transition: all 0.15s; text-decoration: none;
+      line-height: 1.5;
+    }
+    .toc-link:hover { color: var(--text); border-color: var(--ash); }
+    .toc-link.active { color: var(--primary); border-color: var(--primary); }
+    .toc-link.toc-h3 { padding-left: 24px; font-size: 0.75rem; }
+
+    /* Typography in content */
+    .content h1 {
+      font-size: 2rem; font-weight: 800; margin-bottom: 8px;
+      letter-spacing: -0.02em; line-height: 1.3;
+    }
+    .content h1 + p { color: var(--ash); font-size: 1.1rem; margin-bottom: 32px; }
+    .content h2 {
+      font-size: 1.4rem; font-weight: 700; margin: 40px 0 12px;
+      letter-spacing: -0.01em; padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .content h3 {
+      font-size: 1.1rem; font-weight: 600; margin: 28px 0 10px;
+      color: var(--accent);
+    }
+    .content p { margin-bottom: 16px; color: var(--ash); line-height: 1.8; }
+    .content strong { color: var(--text); font-weight: 600; }
+    .content ul, .content ol { margin: 0 0 16px 20px; color: var(--ash); }
+    .content li { margin-bottom: 6px; }
+    .content hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+
+    /* Code blocks */
+    .code-wrap {
+      margin: 16px 0 24px; border-radius: var(--radius);
+      overflow: hidden; background: var(--code-bg);
+      border: 1px solid var(--border);
+    }
+    .code-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 6px 14px; background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid var(--border);
+      font-size: 0.75rem; color: var(--ash);
+    }
+    .code-header .lang-label { font-weight: 500; }
+    .code-header .copy-btn {
+      background: none; border: none; color: var(--ash); cursor: pointer;
+      font-size: 0.8rem; padding: 4px 8px; border-radius: 4px;
+      transition: all 0.15s; font-family: inherit;
+      display: flex; align-items: center; gap: 5px;
+    }
+    .code-header .copy-btn:hover { color: var(--text); background: rgba(255,255,255,0.06); }
+    .code-header .copy-btn.copied { color: #22c55e; }
+    .code-wrap pre {
+      padding: 16px 18px; overflow-x: auto; margin: 0;
+      font-family: 'JetBrains Mono', monospace; font-size: 0.82rem;
+      line-height: 1.6; color: #e2e8f0;
+      tab-size: 2;
+    }
+    .code-wrap code { font-family: inherit; }
+
+    /* Cards */
+    .card {
+      background: var(--card); border-radius: var(--radius);
+      border: 1px solid var(--border); padding: 20px 24px;
+      margin: 16px 0 24px;
+    }
+    .card-title { font-weight: 600; font-size: 1rem; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+    .card-title i { color: var(--primary); }
+
+    /* Step cards */
+    .step { display: flex; gap: 16px; margin-bottom: 24px; }
+    .step-num {
+      flex-shrink: 0; width: 32px; height: 32px;
+      background: var(--primary); color: #fff;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.85rem; margin-top: 2px;
+    }
+    .step-body { flex: 1; }
+    .step-body h3 { margin-top: 0; }
+    .step-body p { margin-bottom: 8px; }
+
+    /* Method badges */
+    .method {
+      display: inline-block; font-size: 0.7rem; font-weight: 700;
+      padding: 2px 8px; border-radius: 4px; text-transform: uppercase;
+      letter-spacing: 0.03em; font-family: 'JetBrains Mono', monospace;
+    }
+    .method.get { background: rgba(34, 211, 238, 0.15); color: #22d3ee; }
+    .method.post { background: rgba(99, 102, 241, 0.15); color: #818cf8; }
+    .method.put { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
+    .method.delete { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+    .method.patch { background: rgba(251, 146, 60, 0.15); color: #fb923c; }
+
+    .endpoint {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 6px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;
+    }
+    .endpoint-path { color: var(--text); word-break: break-all; }
+
+    .api-item {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); margin-bottom: 12px;
+      overflow: hidden; transition: border-color 0.2s;
+    }
+    .api-item:hover { border-color: rgba(99, 102, 241, 0.3); }
+    .api-summary {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 18px; cursor: pointer;
+      user-select: none;
+    }
+    .api-summary .chevron { margin-left: auto; color: var(--ash); transition: transform 0.2s; font-size: 0.8rem; }
+    .api-summary.open .chevron { transform: rotate(90deg); }
+    .api-detail { display: none; padding: 0 18px 18px; }
+    .api-detail.open { display: block; }
+    .api-detail h4 { font-size: 0.8rem; color: var(--ash); text-transform: uppercase; letter-spacing: 0.05em; margin: 12px 0 6px; }
+    .api-detail p { font-size: 0.85rem; margin-bottom: 8px; }
+    .param-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin: 8px 0 12px; }
+    .param-table th { text-align: left; color: var(--ash); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+    .param-table td { padding: 6px 8px; border-bottom: 1px solid var(--border); color: var(--text); }
+    .param-table .param-req { color: #ef4444; font-size: 0.7rem; }
+    .param-table .param-opt { color: var(--ash); font-size: 0.7rem; }
+    .param-table .param-type { color: var(--accent); font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; }
+
+    /* Loading states */
+    .loading-dots { display: flex; gap: 6px; align-items: center; padding: 20px 0; }
+    .loading-dots span {
+      width: 8px; height: 8px; background: var(--primary);
+      border-radius: 50%; animation: bounce 1s infinite;
+    }
+    .loading-dots span:nth-child(2) { animation-delay: 0.15s; }
+    .loading-dots span:nth-child(3) { animation-delay: 0.3s; }
+    @keyframes bounce { 0%,80%,100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
+
+    .error-msg {
+      background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2);
+      border-radius: var(--radius); padding: 16px 20px; color: #fca5a5;
+      margin: 16px 0; font-size: 0.85rem;
+    }
+    .error-msg i { margin-right: 8px; }
+
+    /* Blog card */
+    .blog-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 18px 22px; margin-bottom: 12px;
+      transition: border-color 0.2s;
+    }
+    .blog-card:hover { border-color: rgba(99,102,241,0.3); }
+    .blog-card h3 { margin: 0 0 4px; font-size: 1rem; }
+    .blog-card .blog-meta { font-size: 0.78rem; color: var(--ash); display: flex; gap: 12px; margin-bottom: 8px; }
+    .blog-card .blog-meta .cat { color: var(--accent); }
+    .blog-card p { font-size: 0.85rem; margin: 0; }
+
+    /* FAQ */
+    .faq-item { border-bottom: 1px solid var(--border); }
+    .faq-q {
+      padding: 14px 0; display: flex; justify-content: space-between;
+      align-items: center; cursor: pointer; font-weight: 500;
+      user-select: none;
+    }
+    .faq-q i { color: var(--ash); transition: transform 0.2s; font-size: 0.8rem; }
+    .faq-q.open i { transform: rotate(45deg); }
+    .faq-a { display: none; padding: 0 0 14px; color: var(--ash); font-size: 0.9rem; }
+    .faq-a.open { display: block; }
+
+    /* Contact */
+    .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+    .contact-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px; text-align: center;
+      transition: border-color 0.2s;
+    }
+    .contact-card:hover { border-color: rgba(99,102,241,0.3); }
+    .contact-card i { font-size: 1.5rem; color: var(--primary); margin-bottom: 8px; }
+    .contact-card h4 { font-size: 0.9rem; margin-bottom: 4px; }
+    .contact-card p { font-size: 0.82rem; margin: 0; }
+
+    /* Empty / no results */
+    .no-results { text-align: center; padding: 40px 20px; color: var(--ash); }
+    .no-results i { font-size: 2rem; margin-bottom: 12px; color: var(--border); }
+
+    /* Mobile overlay */
+    .sidebar-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+      z-index: 45;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .toc { display: none; }
+      .main-content { padding: 32px 28px 60px; max-width: 100%; }
+    }
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .sidebar-overlay.open { display: block; }
+      .hamburger { display: block; }
+      .main-wrap { margin-left: 0; }
+      .main-content { padding: 24px 18px 60px; }
+      .contact-grid { grid-template-columns: 1fr; }
+      .header-links { display: none; }
+      .content h1 { font-size: 1.5rem; }
+    }
+  </style>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "name": "KEYCODE Studio Documentation",
+  "description": "Comprehensive documentation for the KEYCODE AI platform \u2014 API reference, guides, and tutorials.",
+  "proficiencyLevel": "Beginner",
+  "publisher": {
+    "@type": "Organization",
+    "name": "KEYCODE Studio"
+  }
+}
+</script>
+  <link rel="stylesheet" href="/z-shared.css">
+  </head>
+<body>
+  <div id="kc-loader">
+    <div id="kc-loader-scene"></div>
+      <div id="kc-bg-text" aria-hidden="true">KEYCODE</div>
+<div class="kc-loader-info" style="position:absolute;bottom:48px;left:50%;transform:translateX(-50%);">
+      <div id="kc-loader-bar-track"><div id="kc-loader-bar"></div></div>
+      <div id="kc-loader-pct" style="font-family:'Inter',sans-serif;font-size:11px;color:#555;letter-spacing:.12em;text-align:center;">0%</div>
+    </div>
+  </div>
+
+  <div id="site-nav"></div>
+<!-- Overlay for mobile -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- Sidebar -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-inner">
+    <div class="sidebar-search">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="text" id="searchInput" placeholder="Search documentation..." aria-label="Search documentation">
+    </div>
+    <div id="navContainer"></div>
+    <div class="no-results" id="noResults" style="display:none">
+      <i class="fa-regular fa-circle-question"></i>
+      <p>No results found</p>
+    </div>
+  </div>
+</nav>
+
+<!-- Main -->
+<div class="main-wrap">
+  <main class="main-content" id="mainContent"></main>
+  <aside class="toc" id="toc">
+    <div class="toc-label">On this page</div>
+    <div id="tocLinks"></div>
+  </aside>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // --- DATA ---
+  const navSections = [
+    {
+      title: 'Getting Started', icon: 'fa-regular fa-compass',
+      items: [
+        { id: 'intro', label: 'Introduction' },
+        { id: 'quickstart', label: 'Quick Start' },
+        { id: 'auth', label: 'Authentication' }
+      ]
+    },
+    {
+      title: 'AI Studio', icon: 'fa-regular fa-wand-magic-sparkles',
+      items: [
+        { id: 'website-gen', label: 'Website Generation' },
+        { id: 'pcb-design', label: 'PCB Design' },
+        { id: 'cad-modeling', label: 'CAD Modeling' },
+        { id: 'mcu-programming', label: 'MCU Programming' }
+      ]
+    },
+    {
+      title: 'API Reference', icon: 'fa-regular fa-code',
+      items: [
+        { id: 'rest-api', label: 'REST API' },
+        { id: 'websocket', label: 'WebSocket' },
+        { id: 'sdks', label: 'SDKs' }
+      ]
+    },
+    {
+      title: 'Deployment', icon: 'fa-regular fa-rocket',
+      items: [
+        { id: 'hosting', label: 'Hosting' },
+        { id: 'custom-domains', label: 'Custom Domains' },
+        { id: 'cicd', label: 'CI/CD' }
+      ]
+    },
+    {
+      title: 'Guides', icon: 'fa-regular fa-newspaper',
+      items: [
+        { id: 'guides', label: 'Tutorials & Guides' }
+      ]
+    },
+    {
+      title: 'Support', icon: 'fa-regular fa-circle-question',
+      items: [
+        { id: 'faq', label: 'FAQ' },
+        { id: 'contact', label: 'Contact' }
+      ]
+    }
+  ];
+
+  // --- Hardcoded content for non-API sections ---
+  const staticContent = {
+    'intro': `
+      <h1>Introduction</h1>
+      <p>Welcome to the KEYCODE platform documentation. KEYCODE is an AI-powered digital design studio that lets you generate responsive websites, 3D CAD models, printed circuit boards (PCBs), and microcontroller firmware — all from natural language descriptions.</p>
+      <p>Our platform uses a suite of specialized AI models working in parallel to understand your requirements and produce production-ready output. Whether you're a developer, designer, or hobbyist, KEYCODE gives you the tools to create at the speed of thought.</p>
+      <h2>Platform Overview</h2>
+      <p>KEYCODE combines four powerful AI engines into one seamless experience. Describe what you want in natural language, and our models handle the rest — from architecture to deployment.</p>
+      <div class="card">
+        <div class="card-title"><i class="fa-regular fa-bolt"></i> Quick Example</div>
+        <p style="margin:0">Generate a website with a single curl command:</p>
+      </div>
+      <div class="code-wrap">
+        <div class="code-header"><span class="lang-label">curl</span><button class="copy-btn" data-code="curl"><i class="fa-regular fa-copy"></i> Copy</button></div>
+        <pre><code>curl -X POST https://api.keycode.ai/v1/generate \\n  -H "Authorization: Bearer YOUR_API_KEY" \\n  -H "Content-Type: application/json" \\n  -d '{"prompt": "A modern SaaS landing page"}'</code></pre>
+      </div>
+      <p>Ready to dive deeper? Head over to <a href="#" onclick="navigate('quickstart');return false">Quick Start</a> to get up and running in minutes.</p>
+    `,
+    'quickstart': `
+      <h1>Quick Start</h1>
+      <p>Get started with KEYCODE in just a few minutes. Follow these steps to create your first AI-generated project.</p>
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h3>Create an Account</h3>
+          <p>Sign up at <a href="https://keycode-studio-production.up.railway.app/register">keycode.studio/register</a>. You'll receive a free API key upon email verification.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h3>Get Your API Key</h3>
+          <p>Navigate to your <strong>Dashboard</strong> and copy your API key from the <strong>API Keys</strong> section. Keep it secret — it's your identity when making API calls.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h3>Make Your First Request</h3>
+          <p>Use your API key to generate a website:</p>
+          <div class="code-wrap">
+            <div class="code-header"><span class="lang-label">curl</span><button class="copy-btn" data-code="curl"><i class="fa-regular fa-copy"></i> Copy</button></div>
+            <pre><code>curl -X POST https://api.keycode.ai/v1/generate \\n  -H "Authorization: Bearer YOUR_API_KEY" \\n  -H "Content-Type: application/json" \\n  -d '{"prompt": "A dark-themed portfolio for a photographer", "type": "website"}'</code></pre>
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h3>Check Your Output</h3>
+          <p>The API returns a JSON response containing the generated asset. For websites, you'll receive HTML/CSS/JS files ready to deploy. For CAD and PCB, you'll get downloadable file URLs.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <h3>Explore Further</h3>
+          <p>Try different prompts and experiment with our <a href="#" onclick="navigate('rest-api');return false">REST API</a>. Check the <a href="#" onclick="navigate('faq');return false">FAQ</a> for common questions.</p>
+        </div>
+      </div>
+    `,
+    'auth': `
+      <h1>Authentication</h1>
+      <p>KEYCODE uses three authentication methods. Choose the one that fits your workflow.</p>
+      <h2>API Keys</h2>
+      <p>The simplest way to authenticate. Pass your API key in the <code>Authorization</code> header as <code>Bearer YOUR_API_KEY</code>.</p>
+      <div class="code-wrap">
+        <div class="code-header"><span class="lang-label">curl</span><button class="copy-btn" data-code="curl"><i class="fa-regular fa-copy"></i> Copy</button></div>
+        <pre><code>curl -H "Authorization: Bearer kc_live_abc123def456" https://api.keycode.ai/v1/me</code></pre>
+      </div>
+      <div class="code-wrap">
+        <div class="code-header"><span class="lang-label">JavaScript</span><button class="copy-btn" data-code="js"><i class="fa-regular fa-copy"></i> Copy</button></div>
+        <pre><code>const res = await fetch('https://api.keycode.ai/v1/me', {\\n  headers: { 'Authorization': 'Bearer kc_live_abc123def456' }\\n});\\nconst data = await res.json();</code></pre>
+      </div>
+      <div class="code-wrap">
+        <div class="code-header"><span class="lang-label">Python</span><button class="copy-btn" data-code="python"><i class="fa-regular fa-copy"></i> Copy</button></div>
+        <pre><code>import requests\\n\\nheaders = {"Authorization": "Bearer kc_live_abc123def456"}\\nres = requests.get("https://api.keycode.ai/v1/me", headers=headers)\\ndata = res.json()</code></pre>
+      </div>
+      <h2>JWT Tokens</h2>
+      <p>For user-authenticated sessions, obtain a JWT token via the login endpoint. Include it in the <code>Authorization</code> header.</p>
+      <div class="code-wrap">
+        <div class="code-header"><span class="lang-label">curl</span><button class="copy-btn" data-code="curl"><i class="fa-regular fa-copy"></i> Copy</button></div>
+        <pre><code>curl -X POST https://api.keycode.ai/v1/auth/login \\n  -H "Content-Type: application/json" \\n  -d '{"email": "user@example.com", "password": "your_password"}'</code></pre>
+      </div>
+      <h2>OAuth 2.0</h2>
+      <p>KEYCODE supports OAuth 2.0 for third-party integrations. Redirect users to the authorization URL, then exchange the code for a token.</p>
+      <p>Contact us at <a href="mailto:developers@keycode.ai">developers@keycode.ai</a> to register your OAuth application and receive a client ID and secret.</p>
+    `,
+    'website-gen': `
+      <h1>Website Generation</h1>
+      <p>Generate fully responsive websites from natural language descriptions. Our AI understands modern web design principles and produces clean, accessible HTML/CSS/JS.</p>
+      <h2>How It Works</h2>
+      <p>Describe the website you want in plain English — include style preferences, layout ideas, and functionality. The AI generates a complete, deployable website.</p>
+      <div class="code-wrap">
+        <div class="code-header"><span class="lang-label">curl</span><button class="copy-btn" data-code="curl"><i class="fa-regular fa-copy"></i> Copy</button></div>
+        <pre><code>curl -X POST https://api.keycode.ai/v1/generate \\n  -H "Authorization: Bearer YOUR_API_KEY" \\n  -H "Content-Type: application/json" \\n  -d '{ "prompt": "A clean, modern blog with a dark theme", "type": "website" }'</code></pre>
+      </div>
+      <h2>Parameters</h2>
+      <div class="card">
+        <table class="param-table">
+          <tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr>
+          <tr><td><code>prompt</code></td><td><span class="param-type">string</span></td><td><span class="param-req">required</span></td><td>Describe the website you want</td></tr>
+          <tr><td><code>type</code></td><td><span class="param-type">string</span></td><td><span class="param-opt">optional</span></td><td><code>website</code> (default), <code>landing</code>, <code>blog</code>, <code>dashboard</code></td></tr>
+          <tr><td><code>theme</code></td><td><span class="param-type">string</span></td><td><span class="param-opt">optional</span></td><td><code>dark</code>, <code>light</code>, <code>auto</code></td></tr>
+          <tr><td><code>framework</code></td><td><span class="param-type">string</span></td><td><span class="param-opt">optional</span></td><td>Leave blank for vanilla HTML/CSS/JS. Options: <code>react</code>, <code>vue</code></td></tr>
+        </table>
+      </div>
+    `,
+    'pcb-design': `
+      <h1>PCB Design</h1>
+      <p>Generate printed circuit board layouts from circuit descriptions. Describe the components and connections, and KEYCODE produces a ready-to-fabricate PCB design.</p>
+      <h2>How PCB Generation Works</h2>
+      <p>Describe your circuit requirements — components, connectivity, power requirements, and form factor. The AI generates a complete PCB layout including copper traces, vias, silkscreen, and solder mask.</p>
+      <div class="code-wrap">
+        <div class="code-header"><span class="lang-label">curl</span><button class="copy-btn" data-code="curl"><i class="fa-regular fa-copy"></i> Copy</button></div>
+        <pre><code>curl -X POST https://api.keycode.ai/v1/generate \\n  -H "Authorization: Bearer YOUR_API_KEY" \\n  -H "Content-Type: application/json" \\n  -d '{ "prompt": "ESP32 dev board with USB-C, LED on GPIO2", "type": "pcb" }'</code></pre>
+      </div>
+      <h2>Output Formats</h2>
+      <p>Output formats include Gerber files, BOM, and pick-and-place files. You can download the design package or open it directly in your preferred EDA tool.</p>
+    `,
+    'cad-modeling': `
+      <h1>CAD Modeling</h1>
+      <p>Generate 3D CAD models from text descriptions. Use KEYCODE to create mechanical parts, enclosures, mounts, and more.</p>
+      <h2>Generating 3D Models</h2>
+      <p>Describe the object you need — dimensions, material considerations, tolerances, and functional requirements. The AI generates watertight 3D meshes ready for manufacturing.</p>
+      <div class="code-wrap">
+        <div class="code-header"><span class="lang-label">curl</span><button class="copy-btn" data-code="curl"><i class="fa-regular fa-copy"></i> Copy</button></div>
+        <pre><code>curl -X POST https://api.keycode.ai/v1/generate \\n  -H "Authorization: Bearer YOUR_API_KEY" \\n  -H "Content-Type: application/json" \\n  -d '{ "prompt": "Raspberry Pi 5 acrylic case with ventilation slots", "type": "cad" }'</code></pre>
+      </div>
+      <h2>Export Options</h2>
+      <p>Models can be exported in STL, STEP, and OBJ formats for 3D printing or CNC machining.</p>
+    `,
+    'mcu-programming': `
+      <h1>MCU Programming</h1>
+      <p>Generate microcontroller firmware from plain English descriptions. Supports Arduino, ESP-IDF, STM32 HAL, and more.</p>
+      <h2>How Firmware Generation Works</h2>
+      <p>Describe your hardware setup and desired behavior. The AI generates complete firmware with pin configurations, initialization routines, main logic, and error handling — tailored to your specific microcontroller platform.</p>
+      <div class="code-wrap">
+        <div class="code-header"><span class="lang-label">curl</span><button class="copy-btn" data-code="curl"><i class="fa-regular fa-copy"></i> Copy</button></div>
+        <pre><code>curl -X POST https://api.keycode.ai/v1/generate \\n  -H "Authorization: Bearer YOUR_API_KEY" \\n  -H "Content-Type: application/json" \\n  -d '{ "prompt": "Read DHT22 sensor and post to MQTT every 10s", "type": "firmware", "platform": "esp32" }'</code></pre>
+      </div>
+      <h2>Supported Platforms</h2>
+      <p>KEYCODE supports ESP32, ESP8266, Arduino Uno/Mega/Nano, STM32, RP2040, and more. The generated firmware includes pin configurations, initialization code, and proper error handling. Ready to compile and flash.</p>
+    `,
+    'websocket': `
+      <h1>WebSocket API</h1>
+      <p>For real-time streaming generation results, connect via WebSocket. This is ideal for live previews and progressive output.</p>
+      <h2>Connection</h2>
+      <p>Connect to <code>wss://api.keycode.ai/v1/ws</code> using any standard WebSocket client. The connection supports TLS encryption and automatic reconnection.</p>
+      <h2>Message Protocol</h2>
+      <p>WebSocket messages follow a request/response pattern. Each message includes a <code>type</code> field for routing.</p>
+      <div class="code-wrap">
+        <div class="code-header"><span class="lang-label">JavaScript</span><button class="copy-btn" data-code="js"><i class="fa-regular fa-copy"></i> Copy</button></div>
+        <pre><code>const ws = new WebSocket('wss://api.keycode.ai/v1/ws');\\n\\nws.onopen = () => {\\n  ws.send(JSON.stringify({\\n    action: 'generate',\\n    token: 'YOUR_API_KEY',\\n    prompt: 'A 3D model of a robotic arm',\\n    type: 'cad'\\n  }));\\n};\\n\\nws.onmessage = (event) => {\\n  const data = JSON.parse(event.data);\\n  console.log('Progress:', data.progress, '%');\\n  if (data.status === 'complete') {\\n    console.log('Result:', data.result);\\n  }\\n};</code></pre>
+      </div>
+      <p>WebSocket messages follow a request/response pattern. Each message includes a <code>type</code> field for routing.</p>
+    `,
+    'sdks': `
+      <h1>SDKs & Client Libraries</h1>
+      <p>Official SDKs for popular languages and platforms. All SDKs are open source and available on GitHub.</p>
+      <h2>JavaScript / TypeScript SDK</h2>
+      <div class="card">
+        <div class="card-title"><i class="fa-brands fa-js"></i> JavaScript / TypeScript</div>
+        <p><code>npm install @keycode/sdk</code></p>
+        <div class="code-wrap">
+          <div class="code-header"><span class="lang-label">JavaScript</span><button class="copy-btn" data-code="js"><i class="fa-regular fa-copy"></i> Copy</button></div>
+          <pre><code>import { KeycodeClient } from '@keycode/sdk';\\n\\nconst client = new KeycodeClient({ apiKey: 'YOUR_API_KEY' });\\nconst result = await client.generate({\\n  prompt: 'Minimalist portfolio website',\\n  type: 'website'\\n});</code></pre>
+        </div>
+      </div>
+      <h2>Python SDK</h2>
+      <div class="card">
+        <div class="card-title"><i class="fa-brands fa-python"></i> Python</div>
+        <p><code>pip install keycode-sdk</code></p>
+        <div class="code-wrap">
+          <div class="code-header"><span class="lang-label">Python</span><button class="copy-btn" data-code="python"><i class="fa-regular fa-copy"></i> Copy</button></div>
+          <pre><code>from keycode import KeycodeClient\\n\\nclient = KeycodeClient(api_key="YOUR_API_KEY")\\nresult = client.generate(\\n    prompt="ESP32 temperature logger",\\n    type="firmware"\\n)</code></pre>
+        </div>
+      </div>
+    `,
+    'hosting': `
+      <h1>Hosting</h1>
+      <p>Deploy your KEYCODE-generated projects with one click. We provide managed hosting for websites, CAD files, and firmware images.</p>
+      <h2>Static Websites</h2>
+      <p>Websites generated by KEYCODE are fully static and can be hosted on any static hosting provider. Use our built-in hosting for zero-config deployment:</p>
+      <div class="code-wrap">
+        <div class="code-header"><span class="lang-label">curl</span><button class="copy-btn" data-code="curl"><i class="fa-regular fa-copy"></i> Copy</button></div>
+        <pre><code>curl -X POST https://api.keycode.ai/v1/deploy \\n  -H "Authorization: Bearer YOUR_API_KEY" \\n  -H "Content-Type: application/json" \\n  -d '{"generation_id": "gen_abc123", "platform": "keycode"}'</code></pre>
+      </div>
+      <h2>Custom Hosting</h2>
+      <p>Export your project and deploy to Netlify, Vercel, GitHub Pages, or any S3-compatible storage. Downloads include all assets and a deploy-ready directory.</p>
+    `,
+    'custom-domains': `
+      <h1>Custom Domains</h1>
+      <p>Use your own domain with KEYCODE-hosted projects. We provide automatic SSL certificate provisioning via Let's Encrypt.</p>
+      <h2>Adding a Custom Domain</h2>
+      <ol>
+        <li>Go to your project's <strong>Settings > Domains</strong>.</li>
+        <li>Enter your domain name (e.g., <code>example.com</code>).</li>
+        <li>Add the provided CNAME or A record to your DNS provider.</li>
+        <li>Wait for DNS propagation (usually 5-30 minutes).</li>
+        <li>SSL certificate is automatically issued and renewed.</li>
+      </ol>
+    `,
+    'cicd': `
+      <h1>CI/CD Integration</h1>
+      <p>Integrate KEYCODE into your continuous deployment pipeline. Automatically generate and deploy assets on every commit.</p>
+      <h2>GitHub Actions</h2>
+      <div class="code-wrap">
+        <div class="code-header"><span class="lang-label">YAML</span><button class="copy-btn" data-code="yaml"><i class="fa-regular fa-copy"></i> Copy</button></div>
+        <pre><code># .github/workflows/deploy.yml\\nname: Deploy to KEYCODE\\n\\non:\\n  push:\\n    branches: [main]\\n\\njobs:\\n  deploy:\\n    runs-on: ubuntu-latest\\n    steps:\\n      - uses: actions/checkout@v4\\n      - run: |\\n          curl -X POST https://api.keycode.ai/v1/deploy \\\\n            -H "Authorization: Bearer \${{ secrets.KEYCODE_API_KEY }}" \\\\n            -H "Content-Type: application/json" \\\\n            -d '{"source": "./dist"}'</code></pre>
+      </div>
+    `,
+    'faq': `
+      <h1>Frequently Asked Questions</h1>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">What is KEYCODE? <i class="fa-regular fa-plus"></i></div>
+        <div class="faq-a">KEYCODE is an AI-powered design studio that generates websites, PCBs, CAD models, and MCU firmware from natural language descriptions.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">Is there a free tier? <i class="fa-regular fa-plus"></i></div>
+        <div class="faq-a">Yes. Free tier includes 50 API calls per month, community support, and access to all generation types. No credit card required.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">How do I get an API key? <i class="fa-regular fa-plus"></i></div>
+        <div class="faq-a">Sign up at keycode.studio, verify your email, and copy your API key from the Dashboard.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">What formats does CAD output support? <i class="fa-regular fa-plus"></i></div>
+        <div class="faq-a">STL, STEP, OBJ, and native source files for common CAD tools.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">Can I use KEYCODE commercially? <i class="fa-regular fa-plus"></i></div>
+        <div class="faq-a">Yes. All generated content is yours to use commercially. See our Terms of Service for details.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">What microcontrollers are supported? <i class="fa-regular fa-plus"></i></div>
+        <div class="faq-a">ESP32, ESP8266, Arduino Uno/Mega/Nano, STM32, RP2040, and more. Specify your platform in the generation request.</div>
+      </div>
+    `,
+    'contact': `
+      <h1>Contact</h1>
+      <p>Need help? Reach out to our team through any of these channels.</p>
+      <div class="contact-grid">
+        <div class="contact-card">
+          <i class="fa-regular fa-envelope"></i>
+          <h4>Email</h4>
+          <p><a href="mailto:support@keycode.ai">support@keycode.ai</a></p>
+        </div>
+        <div class="contact-card">
+          <i class="fa-brands fa-discord"></i>
+          <h4>Discord</h4>
+          <p><a href="#">Join our server</a></p>
+        </div>
+        <div class="contact-card">
+          <i class="fa-brands fa-github"></i>
+          <h4>GitHub</h4>
+          <p><a href="https://github.com/keycode-studio" target="_blank" rel="noopener">keycode-studio</a></p>
+        </div>
+        <div class="contact-card">
+          <i class="fa-regular fa-comments"></i>
+          <h4>Live Chat</h4>
+          <p>Available on the <a href="/">main site</a></p>
+        </div>
+      </div>
+    `
+  };
+
+  // --- DOM refs ---
+  const $ = s => document.querySelector(s);
+  const $$ = s => document.querySelectorAll(s);
+  const navContainer = $('#navContainer');
+  const mainContent = $('#mainContent');
+  const tocLinks = $('#tocLinks');
+  const searchInput = $('#searchInput');
+  const noResults = $('#noResults');
+  const hamburger = $('#hamburger');
+  const sidebar = $('#sidebar');
+  const overlay = $('#sidebarOverlay');
+
+  let currentPage = 'intro';
+  let allNavItems = [];
+  let apiData = null;
+
+  // --- Render sidebar ---
+  function renderNav() {
+    let html = '';
+    allNavItems = [];
+    navSections.forEach(section => {
+      html += `<div class="nav-section"><div class="nav-section-title"><i class="${section.icon}"></i> ${section.title}</div>`;
+      section.items.forEach(item => {
+        const id = item.id;
+        html += `<a class="nav-item" data-id="${id}" href="#${id}" onclick="event.preventDefault();navigate('${id}')">${item.label}</a>`;
+        allNavItems.push({ id, label: item.label, section: section.title });
+      });
+      html += `</div>`;
+    });
+    navContainer.innerHTML = html;
+    updateActiveNav();
+  }
+
+  function updateActiveNav() {
+    const items = $$('.nav-item');
+    items.forEach(el => el.classList.toggle('active', el.dataset.id === currentPage));
+  }
+
+  // --- Navigate ---
+  window.navigate = function(id) {
+    currentPage = id;
+    updateActiveNav();
+    renderContent(id);
+    updateTOC();
+    if (window.innerWidth <= 768) {
+      sidebar.classList.remove('open');
+      overlay.classList.remove('open');
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    history.replaceState(null, '', `#${id}`);
+  };
+
+  // --- Render content ---
+  function renderContent(id) {
+    if (staticContent[id]) {
+      mainContent.innerHTML = `<div class="content">${staticContent[id]}</div>`;
+      initCopyButtons();
+      initFaq();
+      return;
+    }
+
+    if (id === 'rest-api') {
+      renderAPI();
+      return;
+    }
+
+    if (id === 'guides') {
+      renderGuides();
+      return;
+    }
+
+    mainContent.innerHTML = `<div class="content"><h1>Not Found</h1><p>This section hasn't been created yet.</p></div>`;
+  }
+
+  // --- API Reference ---
+  async function renderAPI() {
+    mainContent.innerHTML = `<div class="content"><h1>REST API Reference</h1><p>Comprehensive reference for all KEYCODE API endpoints.</p><div class="loading-dots"><span></span><span></span><span></span></div></div>`;
+
+    if (apiData) {
+      renderAPIContent(apiData);
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/docs.json');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      apiData = data;
+      renderAPIContent(data);
+    } catch (e) {
+      renderHardcodedAPI();
+    }
+  }
+
+  function renderAPIContent(spec) {
+    const paths = spec.paths || {};
+    const entries = Object.entries(paths);
+    if (!entries.length) { renderHardcodedAPI(); return; }
+
+    let html = `<div class="content"><h1>REST API Reference</h1><p>Comprehensive reference for all KEYCODE API endpoints.</p>`;
+
+    entries.forEach(([path, methods]) => {
+      Object.entries(methods).forEach(([method, detail]) => {
+        const m = method.toUpperCase();
+        const desc = detail.summary || detail.description || '';
+        const params = detail.parameters || [];
+        const reqBody = detail.requestBody;
+        const responses = detail.responses || {};
+
+        html += `<div class="api-item">
+          <div class="api-summary" onclick="toggleAPI(this)">
+            <span class="method ${method}">${m}</span>
+            <span class="endpoint-path">${path}</span>
+            <span style="font-size:0.8rem;color:var(--ash);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${desc}</span>
+            <span class="chevron"><i class="fa-solid fa-chevron-right"></i></span>
+          </div>
+          <div class="api-detail">`;
+
+        if (desc) html += `<p>${desc}</p>`;
+
+        if (params.length) {
+          html += `<h4>Parameters</h4><table class="param-table"><tr><th>Name</th><th>In</th><th>Type</th><th>Required</th><th>Description</th></tr>`;
+          params.forEach(p => {
+            const req = p.required ? '<span class="param-req">required</span>' : '<span class="param-opt">optional</span>';
+            const type = p.schema ? (p.schema.type || 'string') : 'string';
+            html += `<tr><td><code>${p.name}</code></td><td>${p.in}</td><td><span class="param-type">${type}</span></td><td>${req}</td><td>${p.description || ''}</td></tr>`;
+          });
+          html += `</table>`;
+        }
+
+        if (reqBody) {
+          const content = reqBody.content || {};
+          const firstContent = Object.values(content)[0];
+          if (firstContent && firstContent.schema) {
+            html += `<h4>Request Body</h4>`;
+            const props = firstContent.schema.properties;
+            if (props) {
+              html += `<table class="param-table"><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>`;
+              const required = firstContent.schema.required || [];
+              Object.entries(props).forEach(([name, prop]) => {
+                const req = required.includes(name) ? '<span class="param-req">required</span>' : '<span class="param-opt">optional</span>';
+                html += `<tr><td><code>${name}</code></td><td><span class="param-type">${prop.type || 'string'}</span></td><td>${req}</td><td>${prop.description || ''}</td></tr>`;
+              });
+              html += `</table>`;
+            }
+          }
+        }
+
+        if (Object.keys(responses).length) {
+          html += `<h4>Responses</h4>`;
+          Object.entries(responses).forEach(([code, resp]) => {
+            html += `<p><strong>${code}</strong>: ${resp.description || ''}</p>`;
+          });
+        }
+
+        html += `</div></div>`;
+      });
+    });
+
+    html += `</div>`;
+    mainContent.innerHTML = html;
+    initCopyButtons();
+  }
+
+  function renderHardcodedAPI() {
+    const hardcoded = [
+      { method: 'get', path: '/v1/me', desc: 'Get current user and account information', params: [], responses: { '200': 'User profile object' } },
+      { method: 'get', path: '/v1/generations', desc: 'List all generations for the authenticated user', params: [{ name: 'page', in: 'query', type: 'integer', required: false, description: 'Page number' }, { name: 'limit', in: 'query', type: 'integer', required: false, description: 'Items per page (max 100)' }], responses: { '200': 'Paginated list of generations' } },
+      { method: 'post', path: '/v1/generate', desc: 'Generate a new asset (website, PCB, CAD, firmware)', params: [], reqBody: { properties: { prompt: { type: 'string', description: 'Describe what to generate' }, type: { type: 'string', description: 'website, pcb, cad, or firmware' }, platform: { type: 'string', description: 'For firmware: esp32, arduino, stm32' }, framework: { type: 'string', description: 'For websites: react, vue, or leave blank' } }, required: ['prompt'] }, responses: { '200': 'Generated asset details', '400': 'Validation error', '401': 'Unauthorized' } },
+      { method: 'get', path: '/v1/generations/{id}', desc: 'Get a specific generation by ID', params: [{ name: 'id', in: 'path', type: 'string', required: true, description: 'Generation ID' }], responses: { '200': 'Generation details' } },
+      { method: 'delete', path: '/v1/generations/{id}', desc: 'Delete a generation', params: [{ name: 'id', in: 'path', type: 'string', required: true, description: 'Generation ID' }], responses: { '200': 'Deleted successfully', '404': 'Not found' } },
+      { method: 'post', path: '/v1/deploy', desc: 'Deploy a generated website to KEYCODE hosting', params: [], reqBody: { properties: { generation_id: { type: 'string', description: 'ID of the generation to deploy' }, platform: { type: 'string', description: 'Deployment platform (keycode, vercel, netlify)' } }, required: ['generation_id'] }, responses: { '200': 'Deployment details and URL', '400': 'Validation error' } },
+      { method: 'get', path: '/v1/deployments', desc: 'List all deployments', params: [], responses: { '200': 'List of deployments' } },
+    ];
+
+    let html = `<div class="content"><h1>REST API Reference</h1><p>Comprehensive reference for all KEYCODE API endpoints. (Offline fallback — cached documentation shown.)</p>`;
+
+    hardcoded.forEach(ep => {
+      const m = ep.method.toUpperCase();
+      html += `<div class="api-item">
+        <div class="api-summary" onclick="toggleAPI(this)">
+          <span class="method ${ep.method}">${m}</span>
+          <span class="endpoint-path">${ep.path}</span>
+          <span style="font-size:0.8rem;color:var(--ash);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${ep.desc}</span>
+          <span class="chevron"><i class="fa-solid fa-chevron-right"></i></span>
+        </div>
+        <div class="api-detail">`;
+
+      if (ep.desc) html += `<p>${ep.desc}</p>`;
+
+      if (ep.params && ep.params.length) {
+        html += `<h4>Parameters</h4><table class="param-table"><tr><th>Name</th><th>In</th><th>Type</th><th>Required</th><th>Description</th></tr>`;
+        ep.params.forEach(p => {
+          const req = p.required ? '<span class="param-req">required</span>' : '<span class="param-opt">optional</span>';
+          html += `<tr><td><code>${p.name}</code></td><td>${p.in}</td><td><span class="param-type">${p.type}</span></td><td>${req}</td><td>${p.description || ''}</td></tr>`;
+        });
+        html += `</table>`;
+      }
+
+      if (ep.reqBody) {
+        html += `<h4>Request Body</h4><table class="param-table"><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>`;
+        const req = ep.reqBody.required || [];
+        Object.entries(ep.reqBody.properties).forEach(([name, prop]) => {
+          const r = req.includes(name) ? '<span class="param-req">required</span>' : '<span class="param-opt">optional</span>';
+          html += `<tr><td><code>${name}</code></td><td><span class="param-type">${prop.type}</span></td><td>${r}</td><td>${prop.description || ''}</td></tr>`;
+        });
+        html += `</table>`;
+      }
+
+      if (ep.responses) {
+        html += `<h4>Responses</h4>`;
+        Object.entries(ep.responses).forEach(([code, desc]) => {
+          html += `<p><strong>${code}</strong>: ${desc}</p>`;
+        });
+      }
+
+      html += `</div></div>`;
+    });
+
+    html += `</div>`;
+    mainContent.innerHTML = html;
+    initCopyButtons();
+  }
+
+  // --- Guides ---
+  async function renderGuides() {
+    mainContent.innerHTML = `<div class="content"><h1>Tutorials & Guides</h1><p>Community guides, tutorials, and blog posts to help you get the most out of KEYCODE.</p><div class="loading-dots"><span></span><span></span><span></span></div></div>`;
+
+    try {
+      const res = await fetch('/api/blog');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const posts = await res.json();
+      if (!Array.isArray(posts) || !posts.length) throw new Error('No posts');
+      const html = `<div class="content"><h1>Tutorials & Guides</h1><p>Community guides, tutorials, and blog posts to help you get the most out of KEYCODE.</p>${posts.map(p => `
+        <div class="blog-card">
+          <h3>${p.title || 'Untitled'}</h3>
+          <div class="blog-meta">
+            <span class="cat"><i class="fa-regular fa-tag"></i> ${p.category || 'General'}</span>
+            <span><i class="fa-regular fa-calendar"></i> ${p.createdAt ? new Date(p.createdAt).toLocaleDateString() : ''}</span>
+          </div>
+          <p>${p.content ? p.content.slice(0, 200) + (p.content.length > 200 ? '...' : '') : ''}</p>
+        </div>`).join('')}</div>`;
+      mainContent.innerHTML = html;
+    } catch (e) {
+      mainContent.innerHTML = `<div class="content"><h1>Tutorials & Guides</h1><p>Community guides, tutorials, and blog posts to help you get the most out of KEYCODE.</p>
+        <div class="blog-card">
+          <h3>Getting Started with Website Generation</h3>
+          <div class="blog-meta"><span class="cat"><i class="fa-regular fa-tag"></i> Guide</span><span><i class="fa-regular fa-calendar"></i> Jun 15, 2026</span></div>
+          <p>Learn how to create stunning websites with KEYCODE's AI website generator. This guide covers prompt engineering, customization options, and deployment strategies.</p>
+        </div>
+        <div class="blog-card">
+          <h3>Designing a Custom PCB in Minutes</h3>
+          <div class="blog-meta"><span class="cat"><i class="fa-regular fa-tag"></i> Tutorial</span><span><i class="fa-regular fa-calendar"></i> Jun 10, 2026</span></div>
+          <p>Step-by-step walkthrough of generating a USB-powered temperature sensor PCB with ESP32. From prompt to Gerber files in under 60 seconds.</p>
+        </div>
+        <div class="blog-card">
+          <h3>CAD for 3D Printing: Best Practices</h3>
+          <div class="blog-meta"><span class="cat"><i class="fa-regular fa-tag"></i> Guide</span><span><i class="fa-regular fa-calendar"></i> Jun 5, 2026</span></div>
+          <p>Tips and tricks for generating 3D-printable CAD models with KEYCODE. Learn about tolerances, supports, and material considerations.</p>
+        </div>
+        <div class="blog-card">
+          <h3>Building an IoT Dashboard with KEYCODE</h3>
+          <div class="blog-meta"><span class="cat"><i class="fa-regular fa-tag"></i> Tutorial</span><span><i class="fa-regular fa-calendar"></i> May 28, 2026</span></div>
+          <p>Combine website generation with MCU firmware to create a complete IoT solution. Real-time sensor data visualization, no coding required.</p>
+        </div>
+      </div>`;
+    }
+  }
+
+  // --- Copy buttons ---
+  function initCopyButtons() {
+    $$('.copy-btn').forEach(btn => {
+      btn.removeEventListener('click', handleCopy);
+      btn.addEventListener('click', handleCopy);
+    });
+  }
+
+  function handleCopy(e) {
+    const btn = e.currentTarget;
+    const codeBlock = btn.closest('.code-wrap').querySelector('code');
+    if (!codeBlock) return;
+    let text = codeBlock.textContent;
+    text = text.replace(/\\n/g, '\n');
+    navigator.clipboard.writeText(text).then(() => {
+      btn.innerHTML = '<i class="fa-regular fa-check"></i> Copied';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
+        btn.classList.remove('copied');
+      }, 2000);
+    }).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      btn.innerHTML = '<i class="fa-regular fa-check"></i> Copied';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
+        btn.classList.remove('copied');
+      }, 2000);
+    });
+  }
+
+  // --- FAQ toggle ---
+  window.toggleFaq = function(el) {
+    const answer = el.nextElementSibling;
+    const icon = el.querySelector('i');
+    answer.classList.toggle('open');
+    el.classList.toggle('open');
+    icon.className = answer.classList.contains('open') ? 'fa-regular fa-minus' : 'fa-regular fa-plus';
+  };
+
+  // --- API toggle ---
+  window.toggleAPI = function(el) {
+    el.classList.toggle('open');
+    const detail = el.nextElementSibling;
+    detail.classList.toggle('open');
+  };
+
+  // --- TOC ---
+  function updateTOC() {
+    const content = mainContent.querySelector('.content');
+    if (!content) { tocLinks.innerHTML = ''; return; }
+    const headings = content.querySelectorAll('h2, h3');
+    if (!headings.length) { tocLinks.innerHTML = ''; return; }
+
+    // Assign IDs if missing
+    headings.forEach(h => {
+      if (!h.id) {
+        h.id = h.textContent.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'section';
+      }
+    });
+
+    let html = '';
+    headings.forEach(h => {
+      const cls = h.tagName === 'H3' ? 'toc-link toc-h3' : 'toc-link';
+      html += `<a class="${cls}" href="#${h.id}" onclick="event.preventDefault();document.getElementById('${h.id}')?.scrollIntoView({behavior:'smooth'});return false">${h.textContent}</a>`;
+    });
+    tocLinks.innerHTML = html;
+  }
+
+  // --- Scroll spy for TOC ---
+  function initScrollSpy() {
+    let ticking = false;
+    const onScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const links = $$('.toc-link');
+          if (!links.length) { ticking = false; return; }
+          let currentId = '';
+          const headings = [];
+          links.forEach(l => {
+            const id = l.getAttribute('href').slice(1);
+            const el = document.getElementById(id);
+            if (el) headings.push({ id, el });
+          });
+          const scrollY = window.scrollY + 120;
+          for (const h of headings) {
+            if (h.el.offsetTop <= scrollY) currentId = h.id;
+          }
+          links.forEach(l => {
+            l.classList.toggle('active', l.getAttribute('href').slice(1) === currentId);
+          });
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+  }
+
+  // --- Search ---
+  function initSearch() {
+    searchInput.addEventListener('input', function() {
+      const q = this.value.toLowerCase().trim();
+      const items = $$('.nav-item');
+      let visibleCount = 0;
+
+      if (!q) {
+        items.forEach(el => { el.style.display = ''; });
+        // Show all sections
+        $$('.nav-section').forEach(s => s.style.display = '');
+        noResults.style.display = 'none';
+        return;
+      }
+
+      items.forEach(el => {
+        const label = el.textContent.toLowerCase();
+        const section = el.closest('.nav-section');
+        const sectionTitle = section ? section.querySelector('.nav-section-title')?.textContent.toLowerCase() || '' : '';
+        const match = label.includes(q) || sectionTitle.includes(q);
+        el.style.display = match ? '' : 'none';
+        if (match) visibleCount++;
+      });
+
+      // Hide empty sections
+      $$('.nav-section').forEach(s => {
+        const visible = Array.from(s.querySelectorAll('.nav-item')).some(item => item.style.display !== 'none');
+        s.style.display = visible ? '' : 'none';
+      });
+
+      noResults.style.display = visibleCount === 0 ? 'block' : 'none';
+    });
+  }
+
+  // --- Mobile ---
+  function initMobile() {
+    hamburger.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+      overlay.classList.toggle('open');
+    });
+    overlay.addEventListener('click', () => {
+      sidebar.classList.remove('open');
+      overlay.classList.remove('open');
+    });
+  }
+
+  // --- Init ---
+  function init() {
+    renderNav();
+    renderContent('intro');
+    initSearch();
+    initMobile();
+    initScrollSpy();
+
+    // Handle initial hash
+    const hash = window.location.hash.slice(1);
+    if (hash && navSections.some(s => s.items.some(i => i.id === hash))) {
+      navigate(hash);
+    }
+  }
+
+  // Register SW
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  }
+
+  document.addEventListener('DOMContentLoaded', init);
+  if (document.readyState !== 'loading') init();
+})();
+</script>
+  <div id="site-footer"></div>
+    <script src="/js/loading-screen.js"></script>
+<script src="/js/site.js"></script>
+
+  <script src="/js/scroll-3d-animations.js"></script>  <script src="/js/k-scroll.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+</body>
+</html>

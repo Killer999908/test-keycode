@@ -84,6 +84,7 @@ app.get('/health', (req, res) => {
 
 // ===== LAYER 2: HTTP Basic Authentication =====
 app.use((req, res, next) => {
+  if (req.path === '/supa-admin' || req.path.startsWith('/supa-admin/')) return next();
   const authHeader = req.headers['authorization'];
   if (!authHeader || !authHeader.startsWith('Basic ')) {
     res.setHeader('WWW-Authenticate', `Basic realm="KEYCODE Admin", charset="UTF-8"`);
@@ -113,6 +114,11 @@ app.get(ADMIN_PANEL_PATH, (req, res) => {
     res.clearCookie('adminToken');
     res.redirect('/login');
   }
+});
+
+// Supabase-powered admin panel (no JWT required — Supabase handles auth client-side)
+app.get('/supa-admin', (req, res) => {
+  res.sendFile(path.join(parentDir, 'admin-supabase', 'index.html'));
 });
 
 // Also serve admin panel at /admin-{secret}
@@ -197,7 +203,7 @@ app.post('/api/auth/admin-login', authLimiter, async (req, res) => {
 
 // Block non-admin static pages
 app.use((req, res, next) => {
-  const allowedPaths = [ADMIN_PANEL_PATH, '/login', '/admin-login.html'];
+  const allowedPaths = [ADMIN_PANEL_PATH, '/login', '/admin-login.html', '/supa-admin'];
   const isAllowed = allowedPaths.some(p => req.path === p || req.path.startsWith(p));
   const isApiCall = req.path.startsWith('/api');
   const isStatic = req.path.match(/\.(css|js|svg|png|jpg|ico|woff2?)$/);

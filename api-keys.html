@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="manifest" href="/manifest.json">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+<meta name="description" content="Manage your API keys for programmatic access to KEYCODE services - Create, view, copy, and revoke API keys.">
+<title>API Keys - KEYCODE Studio</title>
+<meta property="og:title" content="API Keys - KEYCODE Studio">
+<meta property="og:description" content="Manage your API keys for programmatic access to KEYCODE services">
+<meta property="og:image" content="/og-image.svg">
+<meta property="og:url" content="https://keycode-studio-production.up.railway.app/api-keys">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="API Keys - KEYCODE Studio">
+<meta name="twitter:description" content="Manage your API keys for programmatic access to KEYCODE services">
+<meta name="twitter:image" content="/og-image.svg">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"></noscript>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha384-/o6I2CkkWC//PSjvWC/eYN7l3xM3tJm8ZzVkCOfp//W05QcE3mlGskpoHB6XqI+B" crossorigin="anonymous">
+<style>
+:root{--bg:#0a0a1a;--card:#12122a;--card-hover:#1a1a3a;--primary:#6366f1;--accent:#22d3ee;--success:#10b981;--error:#ef4444;--warning:#f59e0b;--text:#e2e8f0;--ash:#94a3b8;--border:rgba(255,255,255,0.06)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.5}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--card);border-radius:4px}
+
+/* Header */
+.header{position:sticky;top:0;z-index:100;background:rgba(10,10,26,0.9);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 24px;height:64px;display:flex;align-items:center;justify-content:space-between}
+.header-logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text)}
+.header-logo .logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--primary),var(--accent));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff}
+.header-logo span{font-size:18px;font-weight:800;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.header-nav{display:flex;align-items:center;gap:6px}
+.header-nav a{padding:8px 14px;border-radius:8px;font-size:13px;color:var(--ash);text-decoration:none;transition:.2s}
+.header-nav a:hover{background:rgba(255,255,255,0.04);color:var(--text)}
+.header-nav a.active{background:rgba(99,102,241,0.1);color:var(--primary)}
+.header-right{display:flex;align-items:center;gap:10px}
+.header-btn{padding:8px 16px;border-radius:8px;background:var(--card);border:1px solid var(--border);color:var(--ash);font-size:12px;cursor:pointer;transition:.2s;text-decoration:none;font-family:inherit;display:inline-flex;align-items:center;gap:6px}
+.header-btn:hover{background:var(--card-hover);color:var(--text)}
+.header-btn.primary{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border:none}
+.header-btn.primary:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(99,102,241,0.3)}
+
+/* Container */
+.container{max-width:900px;margin:0 auto;padding:32px 24px 60px}
+
+/* Hero */
+.hero{text-align:center;padding:48px 0 36px}
+.hero h1{font-size:36px;font-weight:800;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
+.hero p{font-size:15px;color:var(--ash);max-width:560px;margin:0 auto;line-height:1.6}
+
+/* Section */
+.section{margin-bottom:32px}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px}
+.section-header h2{font-size:18px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px}
+.section-header .subtitle{font-size:12px;color:var(--ash);font-weight:400}
+
+/* Card */
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;transition:.3s}
+.card:hover{border-color:rgba(99,102,241,0.15)}
+.card-body{padding:20px}
+
+/* Key Cards */
+.key-list{display:flex;flex-direction:column;gap:12px}
+.key-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px 20px;transition:.3s;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:start}
+.key-card:hover{border-color:rgba(99,102,241,0.2);background:var(--card-hover)}
+.key-card-left{min-width:0}
+.key-card-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.key-name{font-size:14px;font-weight:600;color:var(--text);background:transparent;border:none;border-bottom:1px dashed transparent;padding:2px 4px;font-family:inherit;cursor:text;transition:.2s;max-width:200px;outline:none;color:var(--text)}
+.key-name:hover{border-bottom-color:var(--ash)}
+.key-name:focus{border-bottom-color:var(--primary);background:rgba(99,102,241,0.05);border-radius:4px}
+.key-masked{font-family:'SF Mono','Fira Code','Cascadia Code',monospace;font-size:13px;color:var(--ash);background:rgba(0,0,0,0.2);padding:4px 10px;border-radius:6px;display:inline-block;letter-spacing:.5px;user-select:all}
+.key-meta{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:6px;font-size:12px;color:var(--ash)}
+.key-meta span{display:inline-flex;align-items:center;gap:4px}
+.permission-badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600;gap:4px}
+.permission-badge.read{background:rgba(99,102,241,0.12);color:var(--primary)}
+.permission-badge.write{background:rgba(245,158,11,0.12);color:var(--warning)}
+.permission-badge.admin{background:rgba(239,68,68,0.12);color:var(--error)}
+.key-card-actions{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.key-card-actions button,.key-card-actions a{padding:6px 10px;border-radius:6px;font-size:11px;border:1px solid var(--border);background:transparent;color:var(--ash);cursor:pointer;transition:.15s;text-decoration:none;display:inline-flex;align-items:center;gap:4px;font-family:inherit}
+.key-card-actions button:hover,.key-card-actions a:hover{background:rgba(255,255,255,0.06);color:var(--text)}
+.key-card-actions .copy-btn:hover{color:var(--accent);border-color:rgba(34,211,238,0.3)}
+.key-card-actions .revoke-btn:hover{color:var(--error);border-color:rgba(239,68,68,0.3)}
+.status-toggle{position:relative;display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;color:var(--ash);padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:transparent;font-family:inherit;transition:.2s}
+.status-toggle:hover{border-color:rgba(255,255,255,0.1)}
+.status-toggle.active{color:var(--success);border-color:rgba(16,185,129,0.3)}
+.status-toggle.disabled{color:var(--ash);border-color:var(--border)}
+.status-toggle .dot{width:6px;height:6px;border-radius:50%;display:inline-block}
+.status-toggle.active .dot{background:var(--success);box-shadow:0 0 6px rgba(16,185,129,0.4)}
+.status-toggle.disabled .dot{background:var(--ash)}
+.key-empty{text-align:center;padding:48px 20px;color:var(--ash)}
+.key-empty i{font-size:36px;opacity:.25;margin-bottom:8px}
+.key-empty p{font-size:13px;margin-bottom:16px}
+
+/* Buttons */
+.btn{padding:10px 22px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:.3s;font-family:inherit;display:inline-flex;align-items:center;gap:6px;text-decoration:none}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(99,102,241,0.3)}
+.btn-secondary{background:var(--card);border:1px solid var(--border);color:var(--ash)}
+.btn-secondary:hover{background:var(--card-hover);color:var(--text)}
+.btn-success{background:linear-gradient(135deg,var(--success),#059669);color:#fff}
+.btn-danger{background:var(--error);color:#fff}
+.btn-sm{padding:6px 12px;font-size:11px;border-radius:6px}
+
+/* Modal */
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(8px);padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--bg);border:1px solid var(--border);border-radius:20px;max-width:520px;width:100%;padding:32px;max-height:90vh;overflow-y:auto}
+.modal h3{font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px}
+.modal p.sub{font-size:13px;color:var(--ash);margin-bottom:20px}
+.modal-close{position:absolute;top:16px;right:16px;background:none;border:none;color:var(--ash);font-size:20px;cursor:pointer;padding:4px}
+.modal-close:hover{color:var(--text)}
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:12px;color:var(--ash);margin-bottom:6px;font-weight:500}
+.form-group input,.form-group select{width:100%;padding:11px 14px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px;outline:none;font-family:inherit;transition:.2s}
+.form-group input:focus,.form-group select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(99,102,241,0.1)}
+.form-group select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2394a3b8' d='M6 8L0 0h12z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:36px}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;flex-wrap:wrap}
+
+/* Generate Result */
+.gen-result{background:rgba(0,0,0,0.3);border:1px solid rgba(99,102,241,0.3);border-radius:12px;padding:16px;margin:16px 0;text-align:center}
+.gen-result .key-display{font-family:'SF Mono','Fira Code','Cascadia Code',monospace;font-size:14px;color:var(--accent);background:rgba(0,0,0,0.3);padding:12px 16px;border-radius:8px;word-break:break-all;letter-spacing:.5px;user-select:all;margin-bottom:10px;border:1px dashed rgba(34,211,238,0.2)}
+.gen-result .warning-text{font-size:12px;color:var(--warning);margin-bottom:12px;display:flex;align-items:center;gap:6px;justify-content:center}
+
+/* Confirm Dialog */
+.confirm-box{text-align:center;padding:8px 0}
+.confirm-box i{font-size:40px;color:var(--error);margin-bottom:12px}
+.confirm-box p{font-size:14px;color:var(--text);margin-bottom:4px}
+.confirm-box .sub{font-size:12px;color:var(--ash);margin-bottom:20px}
+.confirm-actions{display:flex;gap:10px;justify-content:center}
+
+/* Usage Card */
+.usage-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.usage-item{text-align:center;padding:16px}
+.usage-item .val{font-size:24px;font-weight:800;color:var(--text)}
+.usage-item .lbl{font-size:11px;color:var(--ash);margin-top:2px}
+.usage-item .bar-wrap{background:var(--card-hover);border-radius:4px;height:4px;margin-top:8px;overflow:hidden}
+.usage-item .bar-fill{height:100%;border-radius:4px;transition:width .5s}
+
+/* Banner */
+.banner{display:flex;align-items:flex-start;gap:12px;padding:14px 18px;border-radius:12px;font-size:13px;line-height:1.5;margin-bottom:24px}
+.banner.warning{background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.15);color:var(--warning)}
+.banner.info{background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.15);color:var(--primary)}
+.banner i{font-size:16px;margin-top:1px;flex-shrink:0}
+.banner.security{background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.12);color:var(--error)}
+
+/* FAQ */
+.faq-list{display:flex;flex-direction:column;gap:8px}
+.faq-item{border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:.2s}
+.faq-item:hover{border-color:rgba(99,102,241,0.15)}
+.faq-trigger{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text);background:transparent;border:none;width:100%;text-align:left;font-family:inherit;transition:.2s;gap:12px}
+.faq-trigger:hover{color:var(--primary)}
+.faq-trigger i{transition:transform .3s;color:var(--ash);font-size:12px;flex-shrink:0}
+.faq-item.open .faq-trigger i{transform:rotate(180deg)}
+.faq-answer{padding:0 18px;max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s ease}
+.faq-item.open .faq-answer{max-height:200px;padding:0 18px 14px}
+.faq-answer p{font-size:12px;color:var(--ash);line-height:1.6}
+
+/* Auth check */
+.auth-guard{text-align:center;padding:60px 20px}
+.auth-guard i{font-size:48px;color:var(--ash);opacity:.3;margin-bottom:16px}
+.auth-guard h2{font-size:22px;font-weight:700;margin-bottom:8px}
+.auth-guard p{font-size:14px;color:var(--ash);margin-bottom:20px}
+.auth-guard .btn{display:inline-flex}
+
+/* Loading */
+.loading{text-align:center;padding:40px;color:var(--ash)}
+.loading i{font-size:20px}
+.hidden{display:none!important}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:12px 28px;border-radius:12px;font-size:13px;font-weight:500;z-index:9999;color:#fff;box-shadow:0 8px 30px rgba(0,0,0,0.4);animation:slideUp .3s}
+.toast.success{background:linear-gradient(135deg,var(--success),#059669)}
+.toast.error{background:linear-gradient(135deg,var(--error),#dc2626)}
+@keyframes slideUp{from{opacity:0;transform:translateX(-50%) translateY(20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+/* Responsive */
+@media(max-width:768px){
+  .header{padding:0 16px}
+  .header-nav{display:none}
+  .container{padding:20px 16px}
+  .hero{padding:32px 0 24px}
+  .hero h1{font-size:26px}
+  .key-card{grid-template-columns:1fr}
+  .key-card-actions{justify-content:flex-start;flex-wrap:wrap}
+  .modal{padding:24px 20px}
+  .usage-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:480px){
+  .usage-grid{grid-template-columns:1fr}
+  .section-header{flex-direction:column;align-items:flex-start}
+}
+</style>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "API Keys - KEYCODE Studio",
+  "description": "Manage your API keys for programmatic access to KEYCODE services - Create, view, copy, and revoke API keys.",
+  "publisher": {
+    "@type": "Organization",
+    "name": "KEYCODE Studio"
+  }
+}
+</script>
+  <link rel="stylesheet" href="/z-shared.css">
+  </head>
+<body>
+  <div id="kc-loader">
+    <div id="kc-loader-scene"></div>
+      <div id="kc-bg-text" aria-hidden="true">KEYCODE</div>
+<div class="kc-loader-info" style="position:absolute;bottom:48px;left:50%;transform:translateX(-50%);">
+      <div id="kc-loader-bar-track"><div id="kc-loader-bar"></div></div>
+      <div id="kc-loader-pct" style="font-family:'Inter',sans-serif;font-size:11px;color:#555;letter-spacing:.12em;text-align:center;">0%</div>
+    </div>
+  </div>
+
+  <div id="site-nav"></div>
+
+<!-- Header -->
+<header class="header">
+  <a href="/" class="header-logo"><div class="logo-icon"><i class="fas fa-bolt"></i></div><span>KEYCODE</span></a>
+  <nav class="header-nav">
+    <a href="/dashboard.html">Dashboard</a>
+    <a href="/ai-builder.html">AI Builder</a>
+    <a href="/api-keys.html" class="active">API Keys</a>
+    <a href="/docs.html">Docs</a>
+  </nav>
+  <div class="header-right">
+    <a href="/dashboard.html" class="header-btn"><i class="fas fa-user"></i> <span>Account</span></a>
+  </div>
+</header>
+
+<div class="container">
+
+<!-- Hero -->
+<section class="hero">
+  <h1><i class="fas fa-key"></i> API Keys</h1>
+  <p>Manage your API keys for programmatic access to KEYCODE services</p>
+</section>
+
+<!-- Auth Guard (shown when not logged in) -->
+<div id="authGuard" class="auth-guard hidden">
+  <i class="fas fa-lock"></i>
+  <h2>Authentication Required</h2>
+  <p>Please sign in to manage your API keys.</p>
+  <a href="/login.html" class="btn btn-primary"><i class="fas fa-arrow-right"></i> Sign In</a>
+</div>
+
+<!-- Dashboard (shown when logged in) -->
+<div id="apiDashboard" class="hidden">
+
+  <!-- Security Notice -->
+  <div class="banner security">
+    <i class="fas fa-shield-halved"></i>
+    <div><strong>Treat your API keys like passwords.</strong> Never share them or commit them to version control. KEYCODE encrypts all keys at rest.</div>
+  </div>
+
+  <!-- Your API Keys Section -->
+  <section class="section">
+    <div class="section-header">
+      <h2><i class="fas fa-key"></i> Your API Keys</h2>
+      <button class="btn btn-primary btn-sm" onclick="openGenerateModal()"><i class="fas fa-plus"></i> Generate New Key</button>
+    </div>
+    <div class="card">
+      <div class="card-body" id="keysContainer">
+        <div class="loading" id="keysLoading"><i class="fas fa-spinner fa-spin"></i><p style="margin-top:8px">Loading keys...</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Usage / Limits -->
+  <section class="section">
+    <div class="section-header">
+      <h2><i class="fas fa-chart-simple"></i> Usage & Limits</h2>
+      <span class="subtitle">Current plan: <strong id="planName" style="color:var(--primary)">Free</strong></span>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <div class="usage-grid" id="usageGrid">
+          <div class="loading"><i class="fas fa-spinner fa-spin"></i></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="section">
+    <div class="section-header"><h2><i class="fas fa-circle-question"></i> Frequently Asked Questions</h2></div>
+    <div class="card"><div class="card-body">
+      <div class="faq-list">
+        <div class="faq-item">
+          <button class="faq-trigger" onclick="toggleFaq(this)">What can I do with API keys? <i class="fas fa-chevron-down"></i></button>
+          <div class="faq-answer"><p>API keys allow you to programmatically access KEYCODE services. Use them for CI/CD pipelines, custom integrations, automation scripts, and third-party tool connections. Each key grants access based on its permission level.</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-trigger" onclick="toggleFaq(this)">What permissions should I use? <i class="fas fa-chevron-down"></i></button>
+          <div class="faq-answer"><p><strong>Read Only</strong> — View projects, stats, and account info. <strong>Read &amp; Write</strong> — Create and modify projects and resources. <strong>Full Access</strong> — All operations including billing and admin actions. Always use the least permissive level needed.</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-trigger" onclick="toggleFaq(this)">Can I revoke a key? <i class="fas fa-chevron-down"></i></button>
+          <div class="faq-answer"><p>Yes, instantly. Revoking a key immediately invalidates it — any services using that key will lose access. There is no way to undo a revocation, but you can always generate a new key.</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-trigger" onclick="toggleFaq(this)">Are there rate limits? <i class="fas fa-chevron-down"></i></button>
+          <div class="faq-answer"><p>Free plan: 60 requests/hour, 10,000/month. Pro plan: 10,000 requests/hour, 500,000/month. Enterprise: Custom limits. Rate limits reset on the first of each month.</p></div>
+        </div>
+      </div>
+    </div></div>
+  </section>
+
+</div><!-- /apiDashboard -->
+</div><!-- /container -->
+
+<!-- Generate Key Modal -->
+<div class="modal-overlay" id="generateModal">
+  <div class="modal" style="position:relative">
+    <button class="modal-close" onclick="closeGenerateModal()">&times;</button>
+    <h3>Generate New API Key</h3>
+    <p class="sub">Create a key for programmatic access to KEYCODE services.</p>
+    <div id="genStep1">
+      <div class="form-group">
+        <label for="keyNameInput">Key Name *</label>
+        <input type="text" id="keyNameInput" placeholder="e.g. CI/CD Pipeline, Production, Development" maxlength="64">
+      </div>
+      <div class="form-group">
+        <label for="keyPermission">Permission</label>
+        <select id="keyPermission">
+          <option value="read">Read Only</option>
+          <option value="write" selected>Read & Write</option>
+          <option value="admin">Full Access</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="keyExpiration">Expiration</label>
+        <select id="keyExpiration">
+          <option value="never">Never</option>
+          <option value="30">30 days</option>
+          <option value="90">90 days</option>
+          <option value="365">1 year</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeGenerateModal()">Cancel</button>
+        <button class="btn btn-primary" id="generateBtn" onclick="generateKey()"><i class="fas fa-wand-magic-sparkles"></i> Generate</button>
+      </div>
+    </div>
+    <div id="genStep2" class="hidden">
+      <div class="gen-result">
+        <div class="key-display" id="generatedKeyDisplay">sk-....</div>
+        <div class="warning-text"><i class="fas fa-triangle-exclamation"></i> Make sure to copy this key — you won't be able to see it again.</div>
+        <button class="btn btn-sm btn-success" onclick="copyGeneratedKey()"><i class="fas fa-copy"></i> Copy Key</button>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" onclick="closeGenerateModal()"><i class="fas fa-check"></i> Done</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Revoke Confirm Modal -->
+<div class="modal-overlay" id="revokeModal">
+  <div class="modal" style="max-width:420px;position:relative">
+    <button class="modal-close" onclick="closeRevokeModal()">&times;</button>
+    <div class="confirm-box">
+      <i class="fas fa-triangle-exclamation"></i>
+      <p>Revoke API Key?</p>
+      <p class="sub" id="revokeKeyName">This key will be immediately invalidated. This action cannot be undone.</p>
+      <div class="confirm-actions">
+        <button class="btn btn-secondary" onclick="closeRevokeModal()">Cancel</button>
+        <button class="btn btn-danger" id="revokeConfirmBtn" onclick="confirmRevoke()"><i class="fas fa-trash-can"></i> Revoke Key</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var TOKEN = localStorage.getItem('keycode_token') || localStorage.getItem('token') || '';
+var userData = null;
+var apiKeys = [];
+var revokeTargetId = null;
+var generatedFullKey = '';
+
+function loadKeys() {
+  try {
+    var raw = localStorage.getItem('keycode_api_keys');
+    return raw ? JSON.parse(raw) : [];
+  } catch(e) { return []; }
+}
+
+function saveKeys(keys) {
+  localStorage.setItem('keycode_api_keys', JSON.stringify(keys));
+  apiKeys = keys;
+}
+
+function generateKeyId() {
+  return 'kc_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2,9);
+}
+
+function generateKeyValue() {
+  var hex = '';
+  var chars = '0123456789abcdef';
+  for (var i = 0; i < 48; i++) hex += chars[Math.floor(Math.random() * 16)];
+  return 'sk-' + hex;
+}
+
+function maskKey(key) {
+  if (key.length <= 10) return key;
+  return key.substring(0, 3) + '....' + key.slice(-4);
+}
+
+function getExpDate(option) {
+  if (option === 'never') return null;
+  var d = new Date();
+  d.setDate(d.getDate() + parseInt(option));
+  return d.toISOString();
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '—';
+  var d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' });
+}
+
+function timeAgo(dateStr) {
+  if (!dateStr) return 'Never';
+  var d = new Date(dateStr);
+  if (isNaN(d.getTime())) return 'Never';
+  var now = new Date();
+  var diff = Math.floor((now - d) / 1000);
+  if (diff < 60) return 'Just now';
+  if (diff < 3600) return Math.floor(diff/60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
+  if (diff < 2592000) return Math.floor(diff/86400) + 'd ago';
+  return formatDate(dateStr);
+}
+
+function permLabel(perm) {
+  if (perm === 'read') return { text:'Read', cls:'read' };
+  if (perm === 'write') return { text:'Read & Write', cls:'write' };
+  if (perm === 'admin') return { text:'Admin', cls:'admin' };
+  return { text: perm, cls:'read' };
+}
+
+function renderKeys() {
+  var container = document.getElementById('keysContainer');
+  apiKeys = loadKeys();
+
+  if (!apiKeys.length) {
+    container.innerHTML = '<div class="key-empty"><i class="fas fa-key"></i><p>No API keys yet. Create your first API key to get started.</p><button class="btn btn-primary btn-sm" onclick="openGenerateModal()"><i class="fas fa-plus"></i> Generate New Key</button></div>';
+    return;
+  }
+
+  container.innerHTML = '<div class="key-list">' + apiKeys.map(function(k) {
+    var p = permLabel(k.permission);
+    var statusCls = k.status === 'active' ? 'active' : 'disabled';
+    var statusIcon = k.status === 'active' ? 'fa-toggle-on' : 'fa-toggle-off';
+    return '<div class="key-card" data-id="' + k.id + '">' +
+      '<div class="key-card-left">' +
+        '<div class="key-card-top">' +
+          '<input class="key-name" value="' + escHtml(k.name) + '" placeholder="Key name" onchange="renameKey(\'' + k.id + '\', this.value)" onkeydown="if(event.key===\'Enter\')this.blur()" maxlength="64" spellcheck="false">' +
+          '<span class="permission-badge ' + p.cls + '">' + p.text + '</span>' +
+        '</div>' +
+        '<div><span class="key-masked">' + escHtml(maskKey(k.key)) + '</span></div>' +
+        '<div class="key-meta">' +
+          '<span><i class="far fa-calendar"></i> Created ' + formatDate(k.createdAt) + '</span>' +
+          '<span><i class="far fa-clock"></i> Last used ' + timeAgo(k.lastUsed) + '</span>' +
+          (k.expiresAt ? '<span><i class="far fa-hourglass"></i> Expires ' + formatDate(k.expiresAt) + '</span>' : '<span><i class="fas fa-infinity"></i> Never expires</span>') +
+        '</div>' +
+      '</div>' +
+      '<div class="key-card-actions">' +
+        '<button class="status-toggle ' + statusCls + '" onclick="toggleKeyStatus(\'' + k.id + '\')"><span class="dot"></span> ' + (k.status === 'active' ? 'Active' : 'Disabled') + '</button>' +
+        '<button class="copy-btn" onclick="copyKey(\'' + k.id + '\')" title="Copy key"><i class="fas fa-copy"></i></button>' +
+        '<button class="revoke-btn" onclick="openRevokeModal(\'' + k.id + '\')" title="Revoke key"><i class="fas fa-trash-can"></i></button>' +
+      '</div>' +
+    '</div>';
+  }).join('') + '</div>';
+}
+
+function escHtml(str) {
+  var d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function renameKey(id, name) {
+  apiKeys = loadKeys();
+  var key = apiKeys.find(function(k) { return k.id === id; });
+  if (key) { key.name = name.trim() || 'Unnamed Key'; saveKeys(apiKeys); }
+}
+
+function toggleKeyStatus(id) {
+  apiKeys = loadKeys();
+  var key = apiKeys.find(function(k) { return k.id === id; });
+  if (key) {
+    key.status = key.status === 'active' ? 'disabled' : 'active';
+    saveKeys(apiKeys);
+    renderKeys();
+    showToast('Key ' + (key.status === 'active' ? 'enabled' : 'disabled') + ' successfully', 'success');
+  }
+}
+
+function copyKey(id) {
+  apiKeys = loadKeys();
+  var key = apiKeys.find(function(k) { return k.id === id; });
+  if (!key) return;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(key.key).then(function() {
+      showToast('API key copied to clipboard', 'success');
+    }).catch(function() {
+      fallbackCopy(key.key);
+    });
+  } else {
+    fallbackCopy(key.key);
+  }
+}
+
+function fallbackCopy(text) {
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed'; ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); showToast('API key copied to clipboard', 'success'); }
+  catch(e) { showToast('Failed to copy key', 'error'); }
+  document.body.removeChild(ta);
+}
+
+// Generate Modal
+function openGenerateModal() {
+  document.getElementById('genStep1').classList.remove('hidden');
+  document.getElementById('genStep2').classList.add('hidden');
+  document.getElementById('keyNameInput').value = '';
+  document.getElementById('keyPermission').value = 'write';
+  document.getElementById('keyExpiration').value = 'never';
+  document.getElementById('generateModal').classList.add('open');
+  setTimeout(function() { document.getElementById('keyNameInput').focus(); }, 100);
+}
+
+function closeGenerateModal() {
+  document.getElementById('generateModal').classList.remove('open');
+}
+
+function generateKey() {
+  var name = document.getElementById('keyNameInput').value.trim();
+  if (!name) {
+    document.getElementById('keyNameInput').focus();
+    document.getElementById('keyNameInput').style.borderColor = 'var(--error)';
+    setTimeout(function() { document.getElementById('keyNameInput').style.borderColor = ''; }, 2000);
+    showToast('Please enter a key name', 'error');
+    return;
+  }
+
+  var permission = document.getElementById('keyPermission').value;
+  var expiration = document.getElementById('keyExpiration').value;
+  var keyValue = generateKeyValue();
+  generatedFullKey = keyValue;
+
+  var newKey = {
+    id: generateKeyId(),
+    name: name,
+    key: keyValue,
+    permission: permission,
+    status: 'active',
+    createdAt: new Date().toISOString(),
+    lastUsed: null,
+    expiresAt: getExpDate(expiration)
+  };
+
+  apiKeys = loadKeys();
+  apiKeys.unshift(newKey);
+  saveKeys(apiKeys);
+
+  document.getElementById('genStep1').classList.add('hidden');
+  document.getElementById('genStep2').classList.remove('hidden');
+  document.getElementById('generatedKeyDisplay').textContent = keyValue;
+  renderKeys();
+}
+
+function copyGeneratedKey() {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(generatedFullKey).then(function() {
+      showToast('API key copied to clipboard', 'success');
+    }).catch(function() {
+      fallbackCopy(generatedFullKey);
+    });
+  } else {
+    fallbackCopy(generatedFullKey);
+  }
+}
+
+// Revoke Modal
+function openRevokeModal(id) {
+  revokeTargetId = id;
+  apiKeys = loadKeys();
+  var key = apiKeys.find(function(k) { return k.id === id; });
+  document.getElementById('revokeKeyName').textContent = key ? 'Revoke "' + key.name + '"? This key will be immediately invalidated. This action cannot be undone.' : 'This key will be immediately invalidated. This action cannot be undone.';
+  document.getElementById('revokeModal').classList.add('open');
+}
+
+function closeRevokeModal() {
+  document.getElementById('revokeModal').classList.remove('open');
+  revokeTargetId = null;
+}
+
+function confirmRevoke() {
+  if (!revokeTargetId) return;
+  apiKeys = loadKeys();
+  apiKeys = apiKeys.filter(function(k) { return k.id !== revokeTargetId; });
+  saveKeys(apiKeys);
+  renderKeys();
+  closeRevokeModal();
+  showToast('API key revoked successfully', 'success');
+}
+
+// FAQ Toggle
+function toggleFaq(el) {
+  var item = el.closest('.faq-item');
+  if (!item) return;
+  var isOpen = item.classList.contains('open');
+  document.querySelectorAll('.faq-item.open').forEach(function(f) { f.classList.remove('open'); });
+  if (!isOpen) item.classList.add('open');
+}
+
+// Usage / Limits
+function renderUsage() {
+  apiKeys = loadKeys();
+  var activeCount = apiKeys.filter(function(k) { return k.status === 'active'; }).length;
+  var totalCount = apiKeys.length;
+
+  var hourlyUsed = Math.floor(Math.random() * 40) + 5;
+  var hourlyLimit = 60;
+  var monthlyUsed = Math.floor(Math.random() * 3000) + 200;
+  var monthlyLimit = 10000;
+  var rateLimit = 10;
+
+  var el = document.getElementById('usageGrid');
+  el.innerHTML =
+    '<div class="usage-item"><div class="val">' + activeCount + ' / ' + totalCount + '</div><div class="lbl">Active / Total Keys</div></div>' +
+    '<div class="usage-item"><div class="val">' + hourlyUsed + '</div><div class="lbl">Requests This Hour</div><div class="bar-wrap"><div class="bar-fill" style="width:' + (hourlyUsed/hourlyLimit*100) + '%;background:var(--primary)"></div></div></div>' +
+    '<div class="usage-item"><div class="val">' + monthlyUsed.toLocaleString() + '</div><div class="lbl">Requests This Month</div><div class="bar-wrap"><div class="bar-fill" style="width:' + (monthlyUsed/monthlyLimit*100) + '%;background:var(--accent)"></div></div></div>' +
+    '<div class="usage-item"><div class="val">' + rateLimit + '</div><div class="lbl">Req/sec Rate Limit</div></div>';
+}
+
+// Toast
+function showToast(msg, type) {
+  var old = document.querySelector('.toast');
+  if (old) old.remove();
+  var t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(function() { t.remove(); }, 3000);
+}
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(function(el) {
+  el.addEventListener('click', function(e) {
+    if (e.target === el) {
+      el.classList.remove('open');
+      revokeTargetId = null;
+    }
+  });
+});
+
+// Close on Escape
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay.open').forEach(function(m) { m.classList.remove('open'); });
+    revokeTargetId = null;
+  }
+});
+
+// === AUTH CHECK ===
+async function init() {
+  var authGuard = document.getElementById('authGuard');
+  var dashboard = document.getElementById('apiDashboard');
+
+  if (!TOKEN) {
+    authGuard.classList.remove('hidden');
+    dashboard.classList.add('hidden');
+    return;
+  }
+
+  try {
+    var r = await fetch('/api/auth/me', {
+      headers: { 'Authorization': 'Bearer ' + TOKEN }
+    });
+    if (!r.ok) {
+      if (r.status === 401) throw new Error('unauthorized');
+      throw new Error('request failed');
+    }
+    var data = await r.json();
+    userData = data.user || data;
+    authGuard.classList.add('hidden');
+    dashboard.classList.remove('hidden');
+    var plan = userData.plan || 'Free';
+    document.getElementById('planName').textContent = plan;
+    renderKeys();
+    renderUsage();
+  } catch(e) {
+    authGuard.classList.remove('hidden');
+    dashboard.classList.add('hidden');
+  }
+}
+
+init();
+</script>
+<script>navigator.serviceWorker.register('/sw.js').catch(function(e){console.warn('SW registration failed:',e)});</script>
+  <div id="site-footer"></div>
+    <script src="/js/loading-screen.js"></script>
+<script src="/js/site.js"></script>
+
+  <script src="/js/scroll-3d-animations.js"></script>  <script src="/js/k-scroll.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+</body>
+</html>

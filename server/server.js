@@ -18,6 +18,17 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import sanitizeHtml from "sanitize-html";
+import * as freeTools from "./services/freeToolsService.js";
+
+// Prevent MongoDB monitor timeout from crashing the server
+process.on("unhandledRejection", (err) => {
+  if (err && (err.message?.includes("timed out") || err.name?.includes("Pool") || err.name?.includes("Timeout") || err.message?.includes("Pool"))) return;
+  console.error("[Unhandled] Rejection:", err?.message);
+});
+process.on("uncaughtException", (err) => {
+  if (err && (err.message?.includes("timed out") || err.name?.includes("Pool") || err.name?.includes("Timeout") || err.message?.includes("Pool"))) return;
+  console.error("[Unhandled] Exception:", err?.message);
+});
 import OpenAI from "openai";
 import JSZip from "jszip";
 import {
@@ -258,6 +269,12 @@ const upload = multer({
       cb(new Error('Invalid file type'));
     }
   }
+});
+
+const uploadTool = multer({
+  storage,
+  limits: { fileSize: 200 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => cb(null, true)
 });
 
 // ==================== EMAIL CONFIGURATION ====================
@@ -860,7 +877,8 @@ app.use(helmet.contentSecurityPolicy({
       "https://cdn.jsdelivr.net",
       "https://fonts.googleapis.com",
       "https://www.googletagmanager.com",
-      "https://checkout.razorpay.com"
+      "https://checkout.razorpay.com",
+      "https://unpkg.com"
     ],
     scriptSrcAttr: ["'unsafe-inline'"],
     styleSrc: [
@@ -885,7 +903,8 @@ app.use(helmet.contentSecurityPolicy({
       "https://api.deepinfra.com",
       "https://js.stripe.com",
       "https://api.stripe.com",
-      "https://api.razorpay.com"
+      "https://api.razorpay.com",
+      "https://raw.githubusercontent.com"
     ],
     imgSrc: ["'self'", "data:", "blob:", "https://*.stripe.com", "https://api.qrserver.com"],
     frameSrc: [
@@ -893,7 +912,9 @@ app.use(helmet.contentSecurityPolicy({
       "blob:",
       "https://js.stripe.com",
       "https://challenges.cloudflare.com",
-      "https://checkout.razorpay.com"
+      "https://checkout.razorpay.com",
+      "https://www.youtube.com",
+      "https://player.vimeo.com"
     ],
     mediaSrc: ["'self'"],
     objectSrc: ["'none'"],
@@ -939,6 +960,21 @@ app.use(cors({
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
+// OpenHands API proxy — forwards /api/openhands/* to http://localhost:3000/api/*
+app.use("/api/openhands", async (req, res) => {
+  try {
+    const path = req.path.replace(/^\/api\/openhands/, "");
+    const url = `http://localhost:3000/api${path}${req._parsedUrl.search || ""}`;
+    const resp = await fetch(url, {
+      method: req.method,
+      headers: { "Content-Type": "application/json" },
+      body: ["GET","HEAD"].includes(req.method) ? undefined : JSON.stringify(req.body || {}),
+    });
+    const data = await resp.text();
+    res.status(resp.status).type(resp.headers.get("content-type") || "application/json").send(data);
+  } catch { res.status(502).json({ error: "OpenHands unavailable" }); }
+});
+
 // Webhook for Stripe events — MUST register before express.json() to keep raw body
 app.post("/api/payments/webhook", express.raw({ type: 'application/json' }), async (req, res) => {
   try {
@@ -977,14 +1013,112 @@ app.use((req, res, next) => {
   }
   next();
 });
-// Static files — serve Vite-built dist/ in production, fall back to root
+
+// Next.js proxy — forwards root and _next/* to the Next.js frontend on port 3001
+let nextjsReady = false;
+(async function checkNextjs() {
+  try {
+    const resp = await fetch('http://localhost:3001/', { signal: AbortSignal.timeout(5000) });
+    nextjsReady = resp.ok;
+  } catch { nextjsReady = false; }
+  console.log('[Next.js] ' + (nextjsReady ? '✅ Ready (proxying to :3001)' : '❌ Unavailable (falling back to static)'));
+})();
+
+app.use(async (req, res, next) => {
+  if (req.path !== '/' && !req.path.startsWith('/_next/')) return next();
+  if (!nextjsReady) {
+    if (req.path === '/') {
+      const idx = path.join(parentDir, 'index.html');
+      if (fs.existsSync(idx)) return res.sendFile(idx);
+    }
+    return next();
+  }
+  try {
+    const targetUrl = `http://localhost:3001${req.originalUrl}`;
+    const controller = new AbortController();
+    const timeout = setTimeout(function() { controller.abort(); }, 10000);
+    const resp = await fetch(targetUrl, {
+      method: req.method,
+      signal: controller.signal,
+      headers: {
+        'accept': req.headers.accept || 'text/html',
+        'user-agent': 'KEYCODE-Proxy/1.0',
+        'cookie': req.headers.cookie || '',
+      },
+    });
+    clearTimeout(timeout);
+    const body = Buffer.from(await resp.arrayBuffer());
+    const contentType = resp.headers.get('content-type') || 'text/html';
+    for (const [k, v] of resp.headers) {
+      if (k === 'content-encoding' || k === 'content-length' || k === 'transfer-encoding') continue;
+      res.setHeader(k, v);
+    }
+    res.status(resp.status).send(body);
+  } catch {
+    if (req.path === '/') {
+      const idx = path.join(parentDir, 'index.html');
+      if (fs.existsSync(idx)) return res.sendFile(idx);
+      const distIdx = path.join(parentDir, 'dist', 'index.html');
+      if (fs.existsSync(distIdx)) return res.sendFile(distIdx);
+    }
+    next();
+  }
+});
+
+// Theme injection middleware — applies dark theme to all HTML pages
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/') || req.path.startsWith('/uploads/') || req.path.startsWith('/dist/') || req.path.startsWith('/_next/') || req.path.startsWith('/theme.') || req.path.startsWith('/favicon') || req.path.startsWith('/manifest')) return next();
+
+  const isHtml = req.path.endsWith('.html') || req.path === '/';
+  if (!isHtml) return next();
+
+  let filePath;
+  if (req.path === '/') {
+    const idx = path.join(parentDir, 'index.html');
+    filePath = fs.existsSync(idx) ? idx : path.join(distDir, 'index.html');
+  } else {
+    filePath = path.join(parentDir, req.path.replace(/^\//, ''));
+    if (!fs.existsSync(filePath)) filePath = path.join(distDir, req.path.replace(/^\//, ''));
+  }
+
+  if (!fs.existsSync(filePath)) return next();
+
+  try {
+    let html = fs.readFileSync(filePath, 'utf-8');
+
+    // Strip dead references to old legacy CSS/JS files
+    html = html.replace(/<link[^>]*href=["'][^"']*z-[\w-]+\.css["'][^>]*>/gi, '');
+    html = html.replace(/<script[^>]*src=["'][^"']*\/js\/[\w.-]+\.js["'][^>]*><\/script>/gi, '');
+    html = html.replace(/<script[^>]*src=["'][^"']*\/public\/js\/[\w.-]+\.js["'][^>]*><\/script>/gi, '');
+
+    var authPages = ['/login.html', '/register.html', '/otp-login.html', '/reset-password.html', '/verify-email.html', '/admin-login.html', '/admin-access.html'];
+    var isAuthPage = authPages.includes(req.path);
+    if (!html.includes('theme.js')) {
+      html = html.replace('</head>', '<link rel="stylesheet" href="/theme.css">\n<script defer src="/theme.js"></script>\n</head>');
+      if (!html.includes('padding-top') && !isAuthPage && !html.includes('data-kc-error')) {
+        html = html.replace('<body', '<body style="padding-top:64px"');
+      }
+    }
+    if (!html.includes('login-bg') && isAuthPage) {
+      html = html.replace('</head>', '<script defer src="/login-bg.js"></script>\n</head>');
+    }
+    res.type('html').send(html);
+  } catch (err) {
+    next();
+  }
+});
+
+// Static files — dist/ → root → public/ (fallback)
 const distDir = path.join(parentDir, 'dist');
 const hasDist = fs.existsSync(distDir);
 if (hasDist) {
   app.use(express.static(distDir));
-  console.log('[Static] Serving from dist/ (Vite build)');
 }
 app.use(express.static(parentDir));
+const publicDir = path.join(parentDir, 'public');
+if (fs.existsSync(publicDir)) {
+  app.use(express.static(publicDir));
+}
 app.use('/uploads', express.static(uploadsDir));
 
 // Rate limiting
@@ -1139,10 +1273,10 @@ const OAUTH = {
 // MongoDB Connection with retry
 const MONGODB_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/keycode";
 
-async function connectDB(retries = 5, delay = 3000) {
+async function connectDB(retries = 3, delay = 1000) {
   for (let i = 0; i < retries; i++) {
     try {
-      await mongoose.connect(MONGODB_URI, { serverSelectionTimeoutMS: 10000 });
+      await mongoose.connect(MONGODB_URI, { serverSelectionTimeoutMS: 5000, heartbeatFrequencyMS: 10000 });
       console.log("✅ MongoDB connected");
       return;
     } catch (err) {
@@ -1337,7 +1471,7 @@ const orderSchema = new mongoose.Schema({
     uploadedAt: { type: Date, default: Date.now }
   }],
   // AI generation fields
-  projectType: { type: String, enum: ['website', 'cad', 'pcb', 'mcu', 'circuit', 'general'] },
+  projectType: { type: String, enum: ['website', 'cad', 'pcb', 'mcu', 'circuit', 'game', 'general'] },
   projectData: { type: mongoose.Schema.Types.Mixed },
   projectFileId: String,
   pricingTier: { type: String, enum: ['basic', 'standard', 'premium'], default: 'basic' },
@@ -4620,7 +4754,8 @@ app.get("/api/orders", auth, async (req, res) => {
 
 app.use('/projects', express.static(path.join(parentDir, 'projects')));
 
-app.get("/admin-portal", (req, res) => res.sendFile(path.join(parentDir, 'admin-panel.html')));
+app.get("/admin-portal", (req, res) => res.redirect('/admin-panel.html'));
+app.get("/supa-admin", (req, res) => res.sendFile(path.join(parentDir, 'admin-supabase', 'index.html')));
 
 // ==================== ORDERS ROUTES ====================
 
@@ -7504,11 +7639,16 @@ app.post("/api/ai/project-unlock", async (req, res) => {
   }
 });
 
-// ===== CHECK PROJECT STATUS =====
-app.get("/api/ai/project-status/:projectId", async (req, res) => {
+// ===== CHECK PROJECT STATUS (owner only) =====
+app.get("/api/ai/project-status/:projectId", auth, async (req, res) => {
   try {
     const project = await AIProject.findOne({ projectId: req.params.projectId });
     if (!project) return res.status(404).json({ error: 'Project not found' });
+
+    // Ownership check
+    if (project.userId && project.userId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
 
     const now = new Date();
     let status = project.status;
@@ -7555,11 +7695,16 @@ app.get("/api/ai/project-status/:projectId", async (req, res) => {
   }
 });
 
-// ===== DOWNLOAD PROJECT - Only if released =====
-app.get("/api/ai/project-download/:projectId", async (req, res) => {
+// ===== DOWNLOAD PROJECT - Only if released + owner =====
+app.get("/api/ai/project-download/:projectId", auth, async (req, res) => {
   try {
     const project = await AIProject.findOne({ projectId: req.params.projectId });
     if (!project) return res.status(404).json({ error: 'Project not found' });
+
+    // Ownership check
+    if (project.userId && project.userId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
 
     const now = new Date();
     let status = project.status;
@@ -11080,6 +11225,266 @@ Rules:
         result = { type: 'mcu', taskType: 'mcu', fileId, ...data };
         break;
       }
+      case 'game': {
+        fileId = 'game_' + Date.now();
+        const previewDir = path.join(__dirname, '..', 'preview', fileId);
+        fs.mkdirSync(previewDir, { recursive: true });
+
+        let gameCode = '';
+        let gameTitle = description.slice(0, 60);
+        let gameType = 'game';
+        let gameControls = null;
+
+        try {
+          const aiGame = await callAI(`You are a game developer. Build a complete, production-ready HTML5 game using the Phaser.js framework for: "${description}".
+
+The game MUST be a single self-contained HTML file. Include Phaser.js from CDN: <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"><\/script>
+
+Return a VALID JSON object (no markdown, no backticks) with this structure:
+{
+  "title": "Game title",
+  "description": "Brief description of the game",
+  "type": "platformer | shooter | puzzle | rpg | arcade | clicker | runner | strategy",
+  "controls": {
+    "Arrow Keys": "Move",
+    "Space": "Jump/Action",
+    "Click": "Interact"
+  },
+  "code": "The complete HTML file as a string. Include ALL HTML, CSS, and JavaScript with Phaser game code. Must be playable immediately."
+}
+
+Guidelines:
+- Use Phaser 3.x API (Phaser.GameObjects, physics.arcade, etc.)
+- Include a proper Phaser.Game config with physics enabled
+- Make a FUN, POLISHED, PLAYABLE game with: score display, game over / restart, sound effects via Web Audio API if possible, responsive canvas sizing
+- ALL code in a single HTML file, no external dependencies besides Phaser CDN
+- Use proper game loop: preload(), create(), update()
+- Include visual assets drawn programmatically (no external images needed) — use Phaser.Graphics or colored rectangles/circles
+- Game must start immediately with instructions overlay
+- Mobile-friendly: respond to both keyboard and touch input
+- Add CSS to center the game canvas with a dark background`, 6144);
+
+          if (aiGame) {
+            const cleaned = aiGame.replace(/```(?:json)?\s*|```\s*/g, '').trim();
+            const parsed = JSON.parse(cleaned);
+            if (parsed && parsed.code) {
+              gameCode = parsed.code;
+              gameTitle = parsed.title || gameTitle;
+              gameType = parsed.type || 'game';
+              gameControls = parsed.controls || null;
+            }
+          }
+        } catch (e) { console.warn('[Game] AI generation failed:', e.message); }
+
+        // Write game file
+        if (gameCode && gameCode.length > 100) {
+          fs.writeFileSync(path.join(previewDir, 'index.html'), gameCode, 'utf8');
+        }
+
+        // Generate fallback game if AI produced nothing useful
+        if (!gameCode || gameCode.length < 100) {
+          const types = ['platformer', 'shooter', 'puzzle', 'runner', 'clicker'];
+          gameType = types[Math.floor(Math.random() * types.length)];
+          const words = description.split(' ').filter(w => w.length > 3);
+          const theme = words.length > 0 ? words[Math.floor(Math.random() * words.length)] : 'adventure';
+          gameTitle = theme.charAt(0).toUpperCase() + theme.slice(1) + ' ' + gameType.charAt(0).toUpperCase() + gameType.slice(1);
+          const colors = ['0x6366f1', '0x22d3ee', '0xec4899', '0xf59e0b', '0x10b981', '0xef4444'];
+          const pc = colors[Math.floor(Math.random() * colors.length)];
+          const sc = colors[Math.floor(Math.random() * colors.length)];
+
+          const fallbackGames = {
+            platformer: `
+var config = {
+  type: Phaser.AUTO, width: 800, height: 600,
+  physics: { default: 'arcade', arcade: { gravity: { y: 800 }, debug: false } },
+  scene: { preload: preload, create: create, update: update }
+};
+var player, platforms, cursors, stars, scoreText, score = 0, gameOver = false;
+function preload() {}
+function create() {
+  this.add.text(400, 30, '${gameTitle}', { fontSize: '28px', fill: '#fff', fontFamily: 'Arial' }).setOrigin(0.5);
+  platforms = this.physics.add.staticGroup();
+  platforms.create(400, 590, null).setDisplaySize(800, 20).refreshBody().setTint(${pc});
+  platforms.create(100, 450, null).setDisplaySize(120, 16).refreshBody().setTint(${sc});
+  platforms.create(350, 350, null).setDisplaySize(160, 16).refreshBody().setTint(${sc});
+  platforms.create(650, 250, null).setDisplaySize(140, 16).refreshBody().setTint(${sc});
+  player = this.physics.add.sprite(100, 500, null).setDisplaySize(32, 48);
+  player.setTint(${pc}); player.body.setGravityY(300); player.setCollideWorldBounds(true);
+  stars = this.physics.add.group();
+  for (let i = 0; i < 8; i++) stars.create(i * 100 + 50, 100, null).setDisplaySize(20, 20).setTint(0xf59e0b).body.setAllowGravity(false);
+  scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '20px', fill: '#fff', fontFamily: 'Arial' });
+  this.physics.add.collider(player, platforms);
+  this.physics.add.overlap(player, stars, collectStar, null, this);
+  cursors = this.input.keyboard.createCursorKeys();
+  this.add.text(400, 560, 'Arrow Keys: Move | Up: Jump', { fontSize: '12px', fill: '#666', fontFamily: 'Arial' }).setOrigin(0.5);
+  function collectStar(p, s) { s.destroy(); score += 10; scoreText.setText('Score: ' + score); if (stars.countActive() === 0) { scoreText.setText('Score: ' + score + ' - YOU WIN!'); gameOver = true; } }
+}
+function update() {
+  if (gameOver) return;
+  if (cursors.left.isDown) player.setVelocityX(-200);
+  else if (cursors.right.isDown) player.setVelocityX(200);
+  else player.setVelocityX(0);
+  if (cursors.up.isDown && player.body.touching.down) player.setVelocityY(-450);
+}`,
+            shooter: `
+var config = {
+  type: Phaser.AUTO, width: 800, height: 600,
+  physics: { default: 'arcade', arcade: { debug: false } },
+  scene: { preload: preload, create: create, update: update }
+};
+var player, bullets, enemies, scoreText, score = 0, fireRate = 300, nextFire = 0, enemyTimer;
+function preload() {}
+function create() {
+  this.add.text(400, 30, '${gameTitle}', { fontSize: '28px', fill: '#fff', fontFamily: 'Arial' }).setOrigin(0.5);
+  player = this.physics.add.sprite(400, 550, null).setDisplaySize(40, 40).setTint(${pc}); player.setCollideWorldBounds(true);
+  bullets = this.physics.add.group();
+  enemies = this.physics.add.group();
+  scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '20px', fill: '#fff', fontFamily: 'Arial' });
+  enemyTimer = this.time.addEvent({ delay: 1500, callback: spawnEnemy, callbackScope: this, loop: true });
+  this.input.on('pointermove', function(pointer) { player.x = Phaser.Math.Clamp(pointer.x, 20, 780); });
+  this.input.on('pointerdown', function() { shoot.call(this); }, this);
+  this.input.keyboard.on('keydown-SPACE', function() { shoot.call(this); }, this);
+  function spawnEnemy() {
+    var x = Phaser.Math.Between(30, 770);
+    var e = enemies.create(x, -20, null).setDisplaySize(30, 30).setTint(0xef4444);
+    e.setVelocityY(Phaser.Math.Between(100, 200));
+  }
+  function shoot() {
+    if (this.time.now < nextFire) return; nextFire = this.time.now + fireRate;
+    var b = bullets.create(player.x, player.y - 20, null).setDisplaySize(6, 14).setTint(0x22d3ee);
+    b.setVelocityY(-400);
+  }
+  this.physics.add.overlap(bullets, enemies, hitEnemy, null, this);
+  this.physics.add.overlap(player, enemies, gameOver2, null, this);
+  function hitEnemy(b, e) { b.destroy(); e.destroy(); score += 10; scoreText.setText('Score: ' + score); }
+  function gameOver2() { this.physics.pause(); scoreText.setText('GAME OVER - Score: ' + score); enemyTimer.remove(); }
+  this.add.text(400, 580, 'Mouse: Move & Click / Space: Shoot', { fontSize: '12px', fill: '#666', fontFamily: 'Arial' }).setOrigin(0.5);
+}
+function update() {}`,
+            runner: `
+var config = {
+  type: Phaser.AUTO, width: 800, height: 600,
+  physics: { default: 'arcade', arcade: { gravity: { y: 1200 }, debug: false } },
+  scene: { preload: preload, create: create, update: update }
+};
+var player, ground, obstacles, scoreText, score = 0, gameOver = false, obstacleTimer, speed = -400;
+function preload() {}
+function create() {
+  this.add.text(400, 30, '${gameTitle}', { fontSize: '28px', fill: '#fff', fontFamily: 'Arial' }).setOrigin(0.5);
+  ground = this.physics.add.staticGroup();
+  ground.create(400, 570, null).setDisplaySize(800, 20).refreshBody().setTint(${pc});
+  player = this.physics.add.sprite(150, 500, null).setDisplaySize(40, 50).setTint(${pc});
+  player.setCollideWorldBounds(true); player.body.setGravityY(600);
+  obstacles = this.physics.add.group();
+  scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '20px', fill: '#fff', fontFamily: 'Arial' });
+  this.physics.add.collider(player, ground);
+  this.physics.add.overlap(player, obstacles, hitObstacle, null, this);
+  this.input.on('pointerdown', jump, this);
+  this.input.keyboard.on('keydown-SPACE', jump, this);
+  obstacleTimer = this.time.addEvent({ delay: 1800, callback: spawnObstacle, callbackScope: this, loop: true });
+  function jump() { if (player.body.touching.down && !gameOver) player.setVelocityY(-600); }
+  function spawnObstacle() {
+    if (gameOver) return;
+    var h = Phaser.Math.Between(30, 60);
+    var o = obstacles.create(820, 570 - h/2, null).setDisplaySize(25, h).setTint(0xef4444);
+    o.setVelocityX(speed); o.body.setAllowGravity(false);
+  }
+  function hitObstacle() { gameOver = true; this.physics.pause(); scoreText.setText('GAME OVER - Score: ' + score); obstacleTimer.remove(); }
+}
+function update() {
+  if (gameOver) return;
+  score += 0.1; scoreText.setText('Score: ' + Math.floor(score));
+  speed = -400 - Math.floor(score / 50) * 20;
+  obstacles.getChildren().forEach(function(o) { if (o.x < -50) o.destroy(); });
+  obstacles.getChildren().forEach(function(o) { o.setVelocityX(speed); });
+}`,
+            clicker: `
+var config = {
+  type: Phaser.AUTO, width: 800, height: 600,
+  scene: { preload: preload, create: create, update: update }
+};
+var cookie, scoreText, autoText, score = 0, autoClickers = 0, autoCost = 50, lastTime = 0;
+function preload() {}
+function create() {
+  this.add.text(400, 40, '${gameTitle}', { fontSize: '28px', fill: '#fff', fontFamily: 'Arial' }).setOrigin(0.5);
+  cookie = this.add.circle(400, 270, 80, ${pc}).setInteractive();
+  cookie.on('pointerdown', function() { score++; updateUI(); cookie.setScale(0.9); this.scene.time.delayedCall(100, function() { cookie.setScale(1); }); }, this);
+  scoreText = this.add.text(400, 180, 'Points: 0', { fontSize: '32px', fill: '#fff', fontFamily: 'Arial' }).setOrigin(0.5);
+  autoText = this.add.text(400, 400, 'Buy Auto-Clicker: ' + autoCost + ' pts', { fontSize: '18px', fill: '#f59e0b', fontFamily: 'Arial' }).setOrigin(0.5).setInteractive();
+  autoText.on('pointerdown', function() { if (score >= autoCost) { score -= autoCost; autoClickers++; autoCost = Math.floor(autoCost * 1.5); autoText.setText('Buy Auto-Clicker: ' + autoCost + ' pts'); updateUI(); } }, this);
+  var upgradeText = this.add.text(400, 440, 'Click the circle to earn points!', { fontSize: '14px', fill: '#666', fontFamily: 'Arial' }).setOrigin(0.5);
+  var resetText = this.add.text(400, 500, 'Reset', { fontSize: '14px', fill: '#ef4444', fontFamily: 'Arial' }).setOrigin(0.5).setInteractive();
+  resetText.on('pointerdown', function() { score = 0; autoClickers = 0; autoCost = 50; autoText.setText('Buy Auto-Clicker: ' + autoCost + ' pts'); updateUI(); }, this);
+  function updateUI() { scoreText.setText('Points: ' + score); }
+  this.add.text(400, 560, 'Click to earn | Buy auto-clickers', { fontSize: '12px', fill: '#666', fontFamily: 'Arial' }).setOrigin(0.5);
+}
+function update(time) {
+  if (autoClickers > 0 && time - lastTime > 1000) { score += autoClickers; updateUI(); lastTime = time; }
+  function updateUI() { scoreText.setText('Points: ' + score); }
+}`,
+            puzzle: `
+var config = {
+  type: Phaser.AUTO, width: 800, height: 600,
+  scene: { preload: preload, create: create, update: update }
+};
+var tiles = [], emptyPos = { x: 3, y: 3 }, tileSize = 120, moves = 0, moveText;
+function preload() {}
+function create() {
+  this.add.text(400, 30, '${gameTitle}', { fontSize: '28px', fill: '#fff', fontFamily: 'Arial' }).setOrigin(0.5);
+  moveText = this.add.text(400, 65, 'Moves: 0', { fontSize: '16px', fill: '#f59e0b', fontFamily: 'Arial' }).setOrigin(0.5);
+  var offsetX = 160, offsetY = 120;
+  var nums = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,null];
+  for (let i = nums.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [nums[i], nums[j]] = [nums[j], nums[i]]; }
+  nums.forEach(function(n, idx) {
+    var col = idx % 4, row = Math.floor(idx / 4);
+    if (n === null) { emptyPos = { x: col, y: row }; return; }
+    var tile = this.add.rectangle(offsetX + col * tileSize + tileSize/2, offsetY + row * tileSize + tileSize/2, tileSize-4, tileSize-4, ${pc}).setInteractive();
+    var txt = this.add.text(offsetX + col * tileSize + tileSize/2, offsetY + row * tileSize + tileSize/2, String(n), { fontSize: '28px', fill: '#fff', fontFamily: 'Arial' }).setOrigin(0.5);
+    tile.tileData = { num: n, col: col, row: row, txt: txt };
+    tile.on('pointerdown', function() { tryMove(tile); }, this);
+    tiles.push(tile);
+  }, this);
+  function tryMove(tile) {
+    var d = tile.tileData;
+    if ((Math.abs(d.col - emptyPos.x) === 1 && d.row === emptyPos.y) || (Math.abs(d.row - emptyPos.y) === 1 && d.col === emptyPos.x)) {
+      var dx = (emptyPos.x - d.col) * tileSize, dy = (emptyPos.y - d.row) * tileSize;
+      tile.x += dx; tile.y += dy; d.txt.x += dx; d.txt.y += dy;
+      emptyPos = { x: d.col, y: d.row }; d.col = emptyPos.x; d.row = emptyPos.y;
+      moves++; moveText.setText('Moves: ' + moves);
+    }
+  }
+  this.add.text(400, 580, 'Click tiles adjacent to the empty space', { fontSize: '12px', fill: '#666', fontFamily: 'Arial' }).setOrigin(0.5);
+}
+function update() {}`
+          };
+
+          const fg = fallbackGames[gameType] || fallbackGames.platformer;
+          gameCode = '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>' + escHtml(gameTitle) + '</title><script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"><\/script><style>*{margin:0;padding:0;box-sizing:border-box}body{background:#0a0a12;display:flex;justify-content:center;align-items:center;min-height:100vh;overflow:hidden}canvas{display:block}</style></head><body><div id="game-container"></div><script>' + fg + '\nvar game = new Phaser.Game(Object.assign(config, { parent: \'game-container\' }));\n<\/script></body></html>';
+
+          fs.writeFileSync(path.join(previewDir, 'index.html'), gameCode, 'utf8');
+        }
+
+        const liveUrl = '/preview/' + fileId + '/';
+        const data = {
+          summary: gameTitle,
+          description,
+          type: gameType,
+          liveUrl,
+          hostingStatus: 'live',
+          controls: gameControls,
+        };
+        fs.writeFileSync(path.join(generatedDir, fileId + '.json'), JSON.stringify(data, null, 2));
+
+        result = {
+          type: 'game', taskType: 'game',
+          fileId,
+          ...data,
+          code: gameCode,
+          html: gameCode,
+          previewUrl: '/game.html?game=' + fileId,
+        };
+        break;
+      }
       case 'website': {
         fileId = 'web_' + Date.now();
         const previewDir = path.join(__dirname, '..', 'preview', fileId);
@@ -11218,6 +11623,207 @@ const refineHandler = async (req, res) => {
 };
 app.post("/api/ai/refine", refineHandler);
 app.post("/api/ai/refine-website", refineHandler);
+app.post("/api/ai/refine-game", refineHandler);
+
+// ===== GAME LOAD ENDPOINT =====
+app.get("/api/ai/load-game/:fileId", async (req, res) => {
+  try {
+    const { fileId } = req.params;
+    const sanitized = fileId.replace(/[^a-zA-Z0-9_-]/g, '');
+    const gameFilePath = path.join(generatedDir, sanitized + '.json');
+
+    if (!fs.existsSync(gameFilePath)) {
+      // Try to load from preview dir
+      const previewGamePath = path.join(__dirname, '..', 'preview', sanitized, 'index.html');
+      if (fs.existsSync(previewGamePath)) {
+        const code = fs.readFileSync(previewGamePath, 'utf8');
+        return res.json({ success: true, code, title: sanitized, description: '', type: 'game', controls: null });
+      }
+      // Try to load from MongoDB Game collection
+      try {
+        const game = await Game.findOne({ fileId: sanitized });
+        if (game && game.code) {
+          return res.json({ success: true, code: game.code, title: game.title || sanitized, description: '', type: game.type || 'game', controls: null });
+        }
+      } catch (e) { /* ignore */ }
+      return res.status(404).json({ success: false, error: 'Game not found' });
+    }
+
+    const data = JSON.parse(fs.readFileSync(gameFilePath, 'utf8'));
+    const previewGamePath = path.join(__dirname, '..', 'preview', sanitized, 'index.html');
+    const code = fs.existsSync(previewGamePath) ? fs.readFileSync(previewGamePath, 'utf8') : data.code || '';
+
+    res.json({
+      success: true,
+      code,
+      title: data.summary || data.title || sanitized,
+      description: data.description || '',
+      type: data.type || 'game',
+      controls: data.controls || null,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ===== PUBLIC PROJECT LISTING =====
+app.get("/api/ai/list-projects", async (req, res) => {
+  try {
+    const previewDir = path.join(__dirname, '..', 'preview');
+    const projects = [];
+
+    if (fs.existsSync(previewDir)) {
+      const dirs = fs.readdirSync(previewDir, { withFileTypes: true });
+      for (const dir of dirs) {
+        if (!dir.isDirectory()) continue;
+        const jsonPath = path.join(generatedDir, dir.name + '.json');
+        let info = { fileId: dir.name, title: dir.name, createdAt: fs.statSync(path.join(previewDir, dir.name)).birthtime };
+        if (fs.existsSync(jsonPath)) {
+          try {
+            const data = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+            info = { ...info, ...data };
+          } catch (e) { /* skip */ }
+        }
+        if (dir.name.startsWith('web_')) info.type = 'website';
+        else if (dir.name.startsWith('game_')) info.type = 'game';
+        else if (dir.name.startsWith('cad_')) info.type = 'cad';
+        else if (dir.name.startsWith('pcb_')) info.type = 'pcb';
+        else if (dir.name.startsWith('mcu_')) info.type = 'mcu';
+        else info.type = 'other';
+        info.liveUrl = info.liveUrl || `/preview/${dir.name}/`;
+        projects.push(info);
+      }
+    }
+
+    projects.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    res.json({ success: true, projects });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ===== PHOTOGRAMMETRY - 3D Scanning from Camera =====
+app.post("/api/ai/photogrammetry", async (req, res) => {
+  try {
+    const { images, cameraParams } = req.body;
+    if (!images || !Array.isArray(images) || images.length < 2) {
+      return res.status(400).json({ success: false, error: "Need at least 2 images" });
+    }
+
+    const scanId = 'scan_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+    const scanDir = path.join(parentDir, 'uploads', 'scans', scanId);
+    fs.mkdirSync(scanDir, { recursive: true });
+
+    // Save images
+    for (let i = 0; i < images.length; i++) {
+      const buf = Buffer.from(images[i].split(',')[1], 'base64');
+      fs.writeFileSync(path.join(scanDir, `img_${String(i).padStart(3, '0')}.jpg`), buf);
+    }
+
+    const outputStl = path.join(parentDir, 'exports', scanId + '.stl');
+
+    // Run Python photogrammetry
+    const pyScript = path.join(__dirname, 'services', 'photogrammetry.py');
+    const paramsJson = JSON.stringify(cameraParams || {});
+
+    const { spawn } = require('child_process');
+    const result = await new Promise((resolve, reject) => {
+      const proc = spawn('python3', [pyScript, scanDir, outputStl, paramsJson]);
+      let stdout = '', stderr = '';
+      proc.stdout.on('data', d => stdout += d.toString());
+      proc.stderr.on('data', d => stderr += d.toString());
+      proc.on('close', code => {
+        if (code !== 0) {
+          reject(new Error(stderr || 'Photogrammetry process exited with code ' + code));
+        } else {
+          try { resolve(JSON.parse(stdout)); }
+          catch (e) { reject(new Error('Invalid JSON from photogrammetry: ' + stdout.slice(0, 200))); }
+        }
+      });
+      proc.on('error', reject);
+    });
+
+    if (!result.success) {
+      return res.json(result);
+    }
+
+    res.json({
+      success: true,
+      modelId: scanId,
+      fileId: scanId,
+      stlUrl: '/api/ai/scan-view/' + scanId,
+      viewerUrl: '/viewer.html?model=/api/ai/scan-view/' + scanId,
+      pointCount: result.point_count || 0,
+      message: '3D model generated from ' + images.length + ' images'
+    });
+  } catch (e) {
+    res.json({ success: false, error: e.message });
+  }
+});
+
+app.get("/api/ai/scan-view/:fileId", (req, res) => {
+  const fileId = req.params.fileId.replace(/[^a-zA-Z0-9_-]/g, '');
+  const stlPath = path.join(parentDir, 'exports', fileId + '.stl');
+  if (!fs.existsSync(stlPath)) return res.status(404).json({ error: 'Model not found' });
+  res.set('Content-Type', 'application/sla');
+  res.sendFile(stlPath);
+});
+
+app.get("/api/ai/scan-download/:fileId", (req, res) => {
+  const fileId = req.params.fileId.replace(/[^a-zA-Z0-9_-]/g, '');
+  const stlPath = path.join(parentDir, 'exports', fileId + '.stl');
+  if (!fs.existsSync(stlPath)) return res.status(404).json({ error: 'Model not found' });
+  res.set('Content-Disposition', `attachment; filename="${fileId}.stl"`);
+  res.set('Content-Type', 'application/sla');
+  res.sendFile(stlPath);
+});
+
+// ===== GAME SAVE / LIST / DELETE =====
+const gameSchema = new mongoose.Schema({
+  fileId: { type: String, required: true, unique: true },
+  userId: mongoose.Schema.Types.ObjectId,
+  title: String,
+  type: String,
+  code: String,
+  createdAt: { type: Date, default: Date.now }
+});
+const Game = mongoose.models.Game || mongoose.model('Game', gameSchema);
+
+app.post("/api/ai/game-save", auth, async (req, res) => {
+  try {
+    const { title, type, code } = req.body;
+    if (!code) return res.status(400).json({ success: false, error: 'Game code required' });
+    const fileId = 'game_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+    const game = new Game({ fileId, userId: req.user._id, title: title || 'Untitled', type: type || 'custom', code });
+    await game.save();
+    res.json({ success: true, fileId });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+app.get("/api/ai/game-list", auth, async (req, res) => {
+  try {
+    const games = await Game.find({ userId: req.user._id }).sort({ createdAt: -1 }).select('-code');
+    res.json({ success: true, games });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+app.delete("/api/ai/game-delete/:fileId", auth, async (req, res) => {
+  try {
+    await Game.findOneAndDelete({ fileId: req.params.fileId, userId: req.user._id });
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// ===== FIX: Add phaser.min.js fallback for game.html =====
+app.get("/phaser.min.js", (req, res) => {
+  res.redirect('https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js');
+});
 
 // ==================== EXPORT ENDPOINTS ====================
 // Export generated designs to real engineering tool formats
@@ -11330,6 +11936,13 @@ app.get("/dashboard", (req, res) => {
 });
 app.get("/control-panel", (req, res) => res.redirect('/dashboard'));
 app.get("/control-panel.html", (req, res) => res.redirect('/dashboard'));
+
+// News route
+app.get("/news", (req, res) => {
+  const newsPath = path.join(parentDir, 'news.html');
+  if (fs.existsSync(newsPath)) return res.sendFile(newsPath);
+  res.redirect('/');
+});
 
 // ==================== STREAMING WEBSITE GENERATION (real-time preview) ====================
 app.post("/api/ai/stream-website", async (req, res) => {
@@ -11562,6 +12175,7 @@ app.get("/api/user/ai-projects", auth, async (req, res) => {
         info.files = files;
         // Determine type from prefix
         if (dir.name.startsWith('web_')) info.type = 'website';
+        else if (dir.name.startsWith('game_')) info.type = 'game';
         else if (dir.name.startsWith('cad_') || dir.name.startsWith('3d_')) info.type = 'cad';
         else if (dir.name.startsWith('pcb_') || dir.name.startsWith('circuit_')) info.type = 'pcb';
         else if (dir.name.startsWith('mcu_')) info.type = 'mcu';
@@ -12145,24 +12759,243 @@ app.get("/api/admin/service-orders/partners", auth, adminOnly, (req, res) => {
   res.json({ partners: MFG_PARTNERS });
 });
 
-// ==================== REAL SVG RENDERERS ====================
+// ==================== FREE TOOLS API ====================
+
+const TOOLS_EXPORTS = path.join(parentDir, 'exports');
+fs.mkdirSync(TOOLS_EXPORTS, { recursive: true });
+
+app.get("/api/tools", (req, res) => {
+  try {
+    res.json({ tools: freeTools.getAvailableTools() });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post("/api/tools/openscad/render", auth, uploadTool.single('file'), async (req, res) => {
+  try {
+    const { code } = req.body;
+    if (!code) return res.status(400).json({ error: 'OpenSCAD code required' });
+    const fileId = 'openscad_' + Date.now() + '.stl';
+    const outputPath = path.join(TOOLS_EXPORTS, fileId);
+    await freeTools.openscadRender(code, outputPath);
+    res.json({ fileId, downloadUrl: `/api/tools/download/${fileId}` });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post("/api/tools/openscad/preview", auth, async (req, res) => {
+  try {
+    const { code } = req.body;
+    if (!code) return res.status(400).json({ error: 'OpenSCAD code required' });
+    const fileId = 'openscad_preview_' + Date.now() + '.png';
+    const outputPath = path.join(TOOLS_EXPORTS, fileId);
+    await freeTools.openscadPreview(code, outputPath);
+    res.json({ fileId, downloadUrl: `/api/tools/download/${fileId}` });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post("/api/tools/ffmpeg/convert", auth, uploadTool.single('file'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'File required' });
+    const ext = req.body.format || '.mp4';
+    const fileId = 'ffmpeg_' + Date.now() + ext;
+    const outputPath = path.join(TOOLS_EXPORTS, fileId);
+    const options = {};
+    if (req.body.crf) options.crf = req.body.crf;
+    if (req.body.codec) options.codec = req.body.codec;
+    if (req.body.resolution) options.resolution = req.body.resolution;
+    if (req.body.bitrate) options.bitrate = req.body.bitrate;
+    if (req.body.fps) options.fps = req.body.fps;
+    freeTools.ffmpegConvert(req.file.path, outputPath, options);
+    res.json({ fileId, downloadUrl: `/api/tools/download/${fileId}` });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post("/api/tools/ffmpeg/extract-audio", auth, uploadTool.single('file'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'Video file required' });
+    const fmt = req.body.format || 'mp3';
+    const fileId = 'audio_' + Date.now() + '.' + fmt;
+    const outputPath = path.join(TOOLS_EXPORTS, fileId);
+    freeTools.ffmpegExtractAudio(req.file.path, outputPath, fmt);
+    res.json({ fileId, downloadUrl: `/api/tools/download/${fileId}` });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post("/api/tools/ffmpeg/thumbnail", auth, uploadTool.single('file'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'Video file required' });
+    const time = req.body.time || '00:00:01';
+    const fileId = 'thumb_' + Date.now() + '.jpg';
+    const outputPath = path.join(TOOLS_EXPORTS, fileId);
+    freeTools.ffmpegGenerateThumbnail(req.file.path, outputPath, time);
+    res.json({ fileId, downloadUrl: `/api/tools/download/${fileId}` });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post("/api/tools/ffmpeg/trim", auth, uploadTool.single('file'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'Video file required' });
+    const { start, duration } = req.body;
+    if (!start || !duration) return res.status(400).json({ error: 'start and duration required' });
+    const fileId = 'trim_' + Date.now() + path.extname(req.file.originalname);
+    const outputPath = path.join(TOOLS_EXPORTS, fileId);
+    freeTools.ffmpegTrimVideo(req.file.path, outputPath, start, duration);
+    res.json({ fileId, downloadUrl: `/api/tools/download/${fileId}` });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post("/api/tools/image/convert", auth, uploadTool.single('file'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'Image file required' });
+    const fmt = req.body.format || '.png';
+    const fileId = 'img_' + Date.now() + fmt;
+    const outputPath = path.join(TOOLS_EXPORTS, fileId);
+    const options = {};
+    if (req.body.resize) options.resize = req.body.resize;
+    if (req.body.quality) options.quality = parseInt(req.body.quality);
+    if (req.body.blur) options.blur = req.body.blur;
+    if (req.body.grayscale) options.grayscale = true;
+    if (req.body.flip) options.flip = true;
+    if (req.body.flop) options.flop = true;
+    if (req.body.rotate) options.rotate = req.body.rotate;
+    if (req.body.border) options.border = req.body.border;
+    if (req.body.borderColor) options.borderColor = req.body.borderColor;
+    freeTools.imagemagickConvert(req.file.path, outputPath, options);
+    res.json({ fileId, downloadUrl: `/api/tools/download/${fileId}` });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post("/api/tools/image/process", auth, uploadTool.single('file'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'Image file required' });
+    const fileId = 'sharp_' + Date.now() + '.jpg';
+    const outputPath = path.join(TOOLS_EXPORTS, fileId);
+    const ops = {};
+    if (req.body.width || req.body.height) ops.resize = { width: parseInt(req.body.width) || null, height: parseInt(req.body.height) || null, fit: req.body.fit || 'cover' };
+    if (req.body.quality) ops.quality = parseInt(req.body.quality);
+    if (req.body.blur) ops.blur = parseFloat(req.body.blur);
+    if (req.body.sharpen) ops.sharpen = parseFloat(req.body.sharpen);
+    if (req.body.grayscale) ops.grayscale = true;
+    if (req.body.tint) ops.tint = req.body.tint;
+    if (req.body.flip) ops.flip = true;
+    if (req.body.flop) ops.flop = true;
+    if (req.body.format) ops.format = req.body.format;
+    if (req.body.rotate) ops.rotate = parseInt(req.body.rotate);
+    await freeTools.sharpProcess(req.file.path, outputPath, ops);
+    res.json({ fileId, downloadUrl: `/api/tools/download/${fileId}` });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post("/api/tools/image/optimize", auth, uploadTool.single('file'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'Image file required' });
+    const quality = parseInt(req.body.quality) || 80;
+    const fileId = 'opt_' + Date.now() + '.jpg';
+    const outputPath = path.join(TOOLS_EXPORTS, fileId);
+    await freeTools.sharpOptimize(req.file.path, outputPath, quality);
+    res.json({ fileId, downloadUrl: `/api/tools/download/${fileId}` });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post("/api/tools/image/collage", auth, uploadTool.array('files', 20), async (req, res) => {
+  try {
+    if (!req.files || req.files.length < 2) return res.status(400).json({ error: 'At least 2 images required' });
+    const direction = req.body.direction || 'horizontal';
+    const fileId = 'collage_' + Date.now() + '.jpg';
+    const outputPath = path.join(TOOLS_EXPORTS, fileId);
+    const paths = req.files.map(f => f.path);
+    freeTools.imagemagickCollage(paths, outputPath, direction);
+    res.json({ fileId, downloadUrl: `/api/tools/download/${fileId}` });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post("/api/tools/cadquery/generate", auth, async (req, res) => {
+  try {
+    const params = req.body;
+    if (!params || !params.type) return res.status(400).json({ error: 'params.type required (enclosure, bracket, cylinder, gear)' });
+    const fileId = 'cadquery_' + Date.now() + '.stl';
+    const outputPath = path.join(TOOLS_EXPORTS, fileId);
+    freeTools.cadqueryGenerate(params, outputPath);
+    res.json({ fileId, downloadUrl: `/api/tools/download/${fileId}` });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post("/api/tools/blender/render", auth, uploadTool.single('file'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: '.blend file required' });
+    const format = req.body.format || 'png';
+    const engine = req.body.engine || 'CYCLES';
+    const fileId = 'blender_' + Date.now() + '.' + format;
+    const outputPath = path.join(TOOLS_EXPORTS, fileId);
+    await freeTools.blenderRender(req.file.path, outputPath, format, engine);
+    res.json({ fileId, downloadUrl: `/api/tools/download/${fileId}` });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post("/api/tools/blender/export-stl", auth, uploadTool.single('file'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: '3D file required' });
+    const fileId = 'blender_stl_' + Date.now() + '.stl';
+    const outputPath = path.join(TOOLS_EXPORTS, fileId);
+    const ext = path.extname(req.file.originalname).toLowerCase();
+    if (ext === '.stl') {
+      await freeTools.blenderToOBJ(req.file.path, outputPath);
+    } else {
+      await freeTools.blenderExportSTL(req.file.path, outputPath);
+    }
+    res.json({ fileId, downloadUrl: `/api/tools/download/${fileId}` });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post("/api/tools/blender/to-obj", auth, uploadTool.single('file'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'STL file required' });
+    const fileId = 'blender_obj_' + Date.now() + '.obj';
+    const outputPath = path.join(TOOLS_EXPORTS, fileId);
+    await freeTools.blenderToOBJ(req.file.path, outputPath);
+    res.json({ fileId, downloadUrl: `/api/tools/download/${fileId}` });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get("/api/tools/download/:fileId", auth, (req, res) => {
+  try {
+    const filePath = path.join(TOOLS_EXPORTS, req.params.fileId);
+    if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'File not found' });
+    res.download(filePath, req.params.fileId);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get("/tools", (req, res) => {
+  const toolsPage = path.join(parentDir, 'tools.html');
+  if (fs.existsSync(toolsPage)) return res.sendFile(toolsPage);
+  res.redirect('/tools.html');
+});
 
 // Fallback for SPA routes
 app.use((req, res, next) => {
   if (!req.path.startsWith('/api')) {
-    // If requesting a file with extension that doesn't exist, serve 404
     const ext = path.extname(req.path);
     if (ext) {
       const filePath = path.join(parentDir, req.path);
-      if (!fs.existsSync(filePath)) {
-        const notFoundPath = path.join(parentDir, 'public', '404.html');
-        if (fs.existsSync(notFoundPath)) return res.status(404).sendFile(notFoundPath);
-        return res.status(404).send('Not Found');
+      if (fs.existsSync(filePath)) {
+        return res.sendFile(filePath);
       }
+      const distPath = path.join(distDir, req.path);
+      if (fs.existsSync(distPath)) {
+        return res.sendFile(distPath);
+      }
+      const notFoundPath = path.join(parentDir, '404.html');
+      if (fs.existsSync(notFoundPath)) return res.status(404).sendFile(notFoundPath);
+      return res.status(404).send('Not Found');
     }
     const indexPath = path.join(parentDir, 'index.html');
     if (fs.existsSync(indexPath)) {
       return res.sendFile(indexPath);
+    }
+    const distIndexPath = path.join(distDir, 'index.html');
+    if (fs.existsSync(distIndexPath)) {
+      return res.sendFile(distIndexPath);
     }
   }
   res.status(404).json({ error: "Not found" });

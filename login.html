@@ -208,8 +208,18 @@
 
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
+  <link rel="stylesheet" href="/z-shared.css">
 </head>
 <body>
+  <div id="kc-loader">
+    <div id="kc-loader-scene"></div>
+      <div id="kc-bg-text" aria-hidden="true">KEYCODE</div>
+<div class="kc-loader-info" style="position:absolute;bottom:48px;left:50%;transform:translateX(-50%);">
+      <div id="kc-loader-bar-track"><div id="kc-loader-bar"></div></div>
+      <div id="kc-loader-pct" style="font-family:'Inter',sans-serif;font-size:11px;color:#555;letter-spacing:.12em;text-align:center;">0%</div>
+    </div>
+  </div>
+
   <div id="video-bg-container">
     <video id="video-bg" autoplay muted loop playsinline preload="metadata">
       <source src="bg.mp4" type="video/mp4">
@@ -370,6 +380,13 @@
     var otpTimer;
     var otpCountdown = 60;
 
+    function getRedirectUrl() {
+      var p = new URLSearchParams(window.location.search);
+      var url = p.get('redirect');
+      if (url && (url.startsWith('/') || url.startsWith(window.location.origin))) return url;
+      return '/dashboard';
+    }
+
     // Parse URL params for tab
     (function() {
       var params = new URLSearchParams(window.location.search);
@@ -396,7 +413,7 @@
         localStorage.setItem('keycode_token', token);
         localStorage.setItem('user', JSON.stringify({ name: decodeURIComponent(name), email: decodeURIComponent(email), avatar: decodeURIComponent(avatar) }));
         localStorage.setItem('keycode_user', JSON.stringify({ name: decodeURIComponent(name), email: decodeURIComponent(email), avatar: decodeURIComponent(avatar) }));
-        window.location.href = '/dashboard';
+        window.location.href = getRedirectUrl();
       }
 
       // Magic link auto-login
@@ -417,7 +434,7 @@
               if (d.refreshToken) localStorage.setItem('refreshToken', d.refreshToken);
               localStorage.setItem('user', JSON.stringify(d.user));
               localStorage.setItem('keycode_user', JSON.stringify(d.user));
-              window.location.href = '/dashboard';
+              window.location.href = getRedirectUrl();
             } else {
               showMessage('loginMessage', d.error || 'Magic link expired. Please log in normally.', 'error');
             }
@@ -467,7 +484,7 @@
           if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken);
           localStorage.setItem('user', JSON.stringify(data.user));
           localStorage.setItem('keycode_user', JSON.stringify(data.user));
-          window.location.href = '/dashboard';
+          window.location.href = getRedirectUrl();
         } else {
           showMessage('loginMessage', data.error || 'Login failed', 'error');
         }
@@ -523,7 +540,7 @@
           localStorage.setItem('keycode_token', data.token);
           localStorage.setItem('user', JSON.stringify(data.user));
           localStorage.setItem('keycode_user', JSON.stringify(data.user));
-          window.location.href = '/dashboard';
+          window.location.href = getRedirectUrl();
         } else {
           showMessage('registerMessage', data.error || 'Registration failed', 'error');
         }
@@ -603,7 +620,7 @@
           localStorage.setItem('user', JSON.stringify(data.user));
           localStorage.setItem('keycode_user', JSON.stringify(data.user));
           showMessage('otpMessage', 'Welcome, ' + (data.user.name || 'User') + '! Redirecting...', 'success');
-          setTimeout(function() { window.location.href = '/dashboard'; }, 1000);
+          setTimeout(function() { window.location.href = getRedirectUrl(); }, 1000);
         } else {
           showMessage('otpMessage', data.error || 'Invalid OTP', 'error');
         }
@@ -676,7 +693,7 @@
           localStorage.setItem('keycode_token', data.token);
           localStorage.setItem('user', JSON.stringify(data.user));
           localStorage.setItem('keycode_user', JSON.stringify(data.user));
-          window.location.href = '/dashboard';
+          window.location.href = getRedirectUrl();
         } else {
           showMessage('loginMessage', data.error||'MFA verification failed','error');
           document.getElementById('loginBtn').disabled=false;
@@ -717,7 +734,7 @@
           localStorage.setItem('keycode_token', data.token);
           localStorage.setItem('user', JSON.stringify(data.user));
           localStorage.setItem('keycode_user', JSON.stringify(data.user));
-          window.location.href = '/dashboard';
+          window.location.href = getRedirectUrl();
         } else {
           showMessage('loginMessage', data.error||'Passkey login failed','error');
         }
@@ -729,5 +746,13 @@
     }
   </script>
 <script>navigator.serviceWorker.register('/sw.js').catch(function(e){console.error('SW registration failed:',e)});</script>
+
+  <script src="/js/scroll-3d-animations.js"></script>  <script src="/js/k-scroll.js" defer></script>
+
+  <div id="site-footer"></div>
+    <script src="/js/loading-screen.js"></script>
+<script src="/js/site.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
 </body>
 </html>

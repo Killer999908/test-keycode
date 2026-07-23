@@ -18,8 +18,10 @@ RUN addgroup -S appgroup && adduser -S appuser -G appgroup && \
     chown -R appuser:appgroup /app
 COPY --from=builder /app/server/node_modules ./server/node_modules
 COPY --from=frontend-builder /app/dist ./dist
+COPY --from=frontend-builder /app/public ./public
+COPY tools.html ./
 COPY server/ ./server/
-EXPOSE 5000
+EXPOSE 8080
 USER appuser
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 CMD node -e "fetch('http://localhost:5000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 CMD node -e "fetch('http://localhost:'+(process.env.PORT||8080)+'/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 CMD ["node", "server/server.js"]

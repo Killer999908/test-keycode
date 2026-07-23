@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <title>Support & Contact - KEYCODE Studio</title>
+  <meta name="description" content="KEYCODE Studio support center — submit a support ticket, browse FAQ, chat with our team, and find help for AI-powered website, CAD, PCB, and MCU generation.">
+  <meta name="keywords" content="KEYCODE support, help center, contact, FAQ, ticket submission, AI support, customer service">
+  <meta name="author" content="KEYCODE Studio">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://keycode-studio-production.up.railway.app/support.html">
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://keycode-studio-production.up.railway.app/support.html">
+  <meta property="og:title" content="Support & Contact - KEYCODE Studio">
+  <meta property="og:description" content="Get help with KEYCODE AI platform — FAQ, ticket submission, live chat, and email support.">
+  <meta property="og:image" content="/og-image.svg">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Support & Contact - KEYCODE Studio">
+  <meta name="twitter:description" content="Get help with KEYCODE AI platform — FAQ, ticket submission, live chat, and email support.">
+  <meta name="twitter:image" content="/og-image.svg">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ContactPage",
+    "name": "KEYCODE Studio Support",
+    "description": "Contact KEYCODE Studio support team",
+    "contactType": "customer support"
+  }
+  </script>
+
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#6366f1">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="KEYCODE Support">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" href="/favicon.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+<style>
+:root {
+  --bg: #0a0a1a;
+  --card: #12122a;
+  --primary: #6366f1;
+  --accent: #22d3ee;
+  --text: #e2e8f0;
+  --ash: #94a3b8;
+  --success: #10b981;
+  --border: rgba(255,255,255,0.06);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --header-h: 64px;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;font-size:16px}
+body{
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  line-height:1.6;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+::selection{background:var(--primary);color:#fff}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(99,102,241,0.3);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:rgba(99,102,241,0.5)}
+a{color:var(--primary);text-decoration:none;transition:color .2s}
+a:hover{color:var(--accent)}
+img{max-width:100%;height:auto;display:block}
+input,select,textarea,button{font-family:inherit;font-size:1rem}
+
+/* Header */
+.header{
+  position:fixed;top:0;left:0;right:0;z-index:1000;
+  height:var(--header-h);
+  background:rgba(10,10,26,.85);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;
+  padding:0 24px;
+}
+.header-logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.1rem;color:var(--text)}
+.header-logo img{height:30px;width:auto}
+.header-logo span{color:var(--primary)}
+.header-links{margin-left:auto;display:flex;gap:20px;align-items:center}
+.header-links a{font-size:.85rem;color:var(--ash);transition:color .2s;white-space:nowrap}
+.header-links a:hover,.header-links a.active{color:var(--text)}
+.header-links a.active{color:var(--primary)}
+.btn-login{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:8px 20px;border-radius:var(--radius-sm);
+  font-size:.85rem;font-weight:600;
+  background:var(--primary);color:#fff;
+  border:none;cursor:pointer;transition:all .2s;
+}
+.btn-login:hover{background:#5558e6;transform:translateY(-1px)}
+.hamburger{
+  display:none;background:none;border:none;color:var(--text);
+  font-size:1.3rem;cursor:pointer;padding:6px;margin-left:12px;
+}
+
+/* Hero */
+.hero{
+  padding:calc(var(--header-h) + 60px) 24px 60px;
+  text-align:center;
+  background:linear-gradient(180deg, rgba(99,102,241,.08) 0%, transparent 100%);
+  position:relative;
+}
+.hero h1{font-size:clamp(2rem,5vw,3.2rem);font-weight:800;margin-bottom:12px}
+.hero h1 span{background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero p{color:var(--ash);font-size:1.05rem;max-width:540px;margin:0 auto 32px}
+.search-box{
+  max-width:600px;margin:0 auto;position:relative;
+  display:flex;align-items:center;
+  background:var(--card);border:1px solid var(--border);
+  border-radius:50px;padding:4px 4px 4px 20px;
+  transition:border-color .3s,box-shadow .3s;
+}
+.search-box:focus-within{border-color:var(--primary);box-shadow:0 0 0 3px rgba(99,102,241,.15)}
+.search-box i{color:var(--ash);font-size:.95rem}
+.search-box input{
+  flex:1;background:none;border:none;outline:none;
+  padding:12px 12px;color:var(--text);font-size:.95rem;
+}
+.search-box input::placeholder{color:var(--ash)}
+.search-box button{
+  padding:10px 28px;border-radius:50px;
+  background:var(--primary);color:#fff;
+  border:none;font-weight:600;font-size:.875rem;
+  cursor:pointer;transition:all .2s;white-space:nowrap;
+}
+.search-box button:hover{background:#5558e6}
+
+/* Quick Help Cards */
+.quick-help{padding:60px 24px;max-width:1200px;margin:0 auto}
+.quick-help .section-label{
+  text-align:center;font-size:.8rem;text-transform:uppercase;letter-spacing:2px;
+  color:var(--primary);font-weight:600;margin-bottom:8px;
+}
+.quick-help h2{text-align:center;font-size:clamp(1.5rem,3vw,2rem);font-weight:700;margin-bottom:40px}
+.cards-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+.help-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);padding:28px 24px;
+  text-align:center;transition:all .3s;cursor:pointer;
+}
+.help-card:hover{border-color:var(--primary);transform:translateY(-4px);box-shadow:0 8px 30px rgba(99,102,241,.1)}
+.help-card .icon{font-size:2rem;margin-bottom:14px}
+.help-card h3{font-size:1.05rem;font-weight:600;margin-bottom:6px}
+.help-card p{font-size:.875rem;color:var(--ash);margin-bottom:0}
+
+/* Main layout */
+.main-layout{max-width:1200px;margin:0 auto;padding:0 24px 80px;display:grid;grid-template-columns:1fr 320px;gap:40px}
+
+/* FAQ */
+.faq-section h2{font-size:clamp(1.4rem,2.5vw,1.8rem);font-weight:700;margin-bottom:8px}
+.faq-section>.section-desc{color:var(--ash);font-size:.9rem;margin-bottom:28px}
+.accordion{display:flex;flex-direction:column;gap:8px}
+.accordion-item{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);overflow:hidden;
+  transition:border-color .3s;
+}
+.accordion-item.active{border-color:var(--primary)}
+.accordion-btn{
+  width:100%;display:flex;align-items:center;justify-content:space-between;
+  padding:18px 20px;background:none;border:none;
+  color:var(--text);font-size:.95rem;font-weight:500;
+  text-align:left;cursor:pointer;transition:color .2s;
+  gap:12px;
+}
+.accordion-btn:hover{color:var(--primary)}
+.accordion-btn i{color:var(--primary);font-size:.85rem;transition:transform .3s;flex-shrink:0}
+.accordion-item.active .accordion-btn i{transform:rotate(180deg)}
+.accordion-panel{
+  max-height:0;overflow:hidden;
+  transition:max-height .4s ease,padding .4s ease;
+}
+.accordion-item.active .accordion-panel{
+  max-height:400px;
+  padding:0 20px 18px;
+}
+.accordion-panel p{font-size:.875rem;color:var(--ash);line-height:1.7}
+.accordion-panel ul{list-style:none;padding:0;margin:8px 0 0}
+.accordion-panel ul li{font-size:.85rem;color:var(--ash);padding:4px 0;padding-left:18px;position:relative}
+.accordion-panel ul li::before{content:"\f105";font-family:"Font Awesome 6 Free";font-weight:900;position:absolute;left:0;color:var(--primary)}
+
+/* Contact Form */
+.contact-form-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:32px}
+.contact-form-wrap h2{font-size:clamp(1.3rem,2vw,1.6rem);font-weight:700;margin-bottom:6px}
+.contact-form-wrap>.section-desc{color:var(--ash);font-size:.9rem;margin-bottom:24px}
+.form-group{margin-bottom:18px}
+.form-group label{display:block;font-size:.85rem;font-weight:500;margin-bottom:6px;color:var(--text)}
+.form-group label .required{color:#ef4444;margin-left:2px}
+.form-group input,.form-group select,.form-group textarea{
+  width:100%;padding:12px 14px;
+  background:rgba(255,255,255,.04);border:1px solid var(--border);
+  border-radius:var(--radius-sm);color:var(--text);
+  transition:border-color .3s,box-shadow .3s;
+}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{
+  outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(99,102,241,.12);
+}
+.form-group input.error,.form-group select.error,.form-group textarea.error{border-color:#ef4444}
+.form-group .error-text{color:#ef4444;font-size:.78rem;margin-top:4px;display:none}
+.form-group textarea{resize:vertical;min-height:120px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.btn-submit{
+  width:100%;padding:14px;border-radius:var(--radius-sm);
+  background:var(--primary);color:#fff;
+  border:none;font-size:1rem;font-weight:600;
+  cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.btn-submit:hover{background:#5558e6}
+.btn-submit:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.btn-submit .spinner{display:none;width:18px;height:18px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
+.btn-submit.loading .spinner{display:inline-block}
+.btn-submit.loading .btn-text{opacity:.7}
+
+/* Sidebar */
+.sidebar{display:flex;flex-direction:column;gap:20px}
+.sidebar-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);padding:24px;
+}
+.sidebar-card h3{font-size:.95rem;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.sidebar-card h3 i{color:var(--primary);width:20px;text-align:center}
+.info-item{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px}
+.info-item:last-child{margin-bottom:0}
+.info-item .info-icon{color:var(--primary);width:20px;text-align:center;margin-top:2px;flex-shrink:0}
+.info-item .info-label{font-size:.8rem;color:var(--ash);margin-bottom:2px}
+.info-item .info-value{font-size:.875rem;color:var(--text)}
+.response-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(16,185,129,.12);color:var(--success);
+  padding:6px 14px;border-radius:50px;font-size:.8rem;font-weight:500;
+}
+.social-links-side{display:flex;gap:10px;flex-wrap:wrap}
+.social-link{
+  width:40px;height:40px;border-radius:50%;
+  background:rgba(255,255,255,.04);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--ash);font-size:1.1rem;transition:all .2s;
+}
+.social-link:hover{background:var(--primary);border-color:var(--primary);color:#fff}
+
+/* Toast */
+.toast-container{position:fixed;top:80px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:10px}
+.toast{
+  padding:14px 20px;border-radius:var(--radius-sm);
+  background:var(--card);border:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;
+  font-size:.875rem;font-weight:500;
+  box-shadow:0 8px 32px rgba(0,0,0,.4);
+  animation:slideIn .3s ease;
+  min-width:300px;max-width:420px;
+}
+.toast.success{border-color:var(--success)}
+.toast.success i{color:var(--success)}
+.toast.error{border-color:#ef4444}
+.toast.error i{color:#ef4444}
+.toast .toast-close{margin-left:auto;background:none;border:none;color:var(--ash);cursor:pointer;font-size:.85rem;padding:2px}
+
+/* Chat Widget */
+.chat-toggle{
+  position:fixed;bottom:24px;right:24px;z-index:999;
+  width:56px;height:56px;border-radius:50%;
+  background:var(--primary);color:#fff;border:none;
+  font-size:1.3rem;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 20px rgba(99,102,241,.35);
+  transition:all .3s;
+}
+.chat-toggle:hover{transform:scale(1.08);background:#5558e6}
+.chat-toggle .badge{
+  position:absolute;top:-4px;right:-4px;
+  width:20px;height:20px;border-radius:50%;
+  background:#ef4444;color:#fff;
+  font-size:.7rem;font-weight:700;
+  display:none;align-items:center;justify-content:center;
+}
+.chat-panel{
+  position:fixed;bottom:88px;right:24px;z-index:999;
+  width:360px;max-width:calc(100vw - 48px);
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);overflow:hidden;
+  box-shadow:0 12px 48px rgba(0,0,0,.5);
+  display:flex;flex-direction:column;
+  transform:translateY(20px);opacity:0;pointer-events:none;
+  transition:all .3s;
+}
+.chat-panel.open{transform:translateY(0);opacity:1;pointer-events:auto}
+.chat-header{
+  display:flex;align-items:center;gap:10px;
+  padding:16px 18px;
+  background:linear-gradient(135deg,var(--primary),#5558e6);
+  color:#fff;
+}
+.chat-header h4{font-size:.9rem;font-weight:600;flex:1}
+.chat-header button{background:none;border:none;color:rgba(255,255,255,.7);cursor:pointer;font-size:1rem;padding:2px;transition:color .2s}
+.chat-header button:hover{color:#fff}
+.chat-messages{flex:1;padding:16px;overflow-y:auto;max-height:320px;min-height:200px;display:flex;flex-direction:column;gap:8px}
+.chat-msg{max-width:85%;padding:10px 14px;border-radius:12px;font-size:.85rem;line-height:1.5;word-wrap:break-word}
+.chat-msg.bot{background:rgba(99,102,241,.12);color:var(--text);align-self:flex-start;border-bottom-left-radius:4px}
+.chat-msg.user{background:var(--primary);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.chat-msg .time{font-size:.7rem;opacity:.6;margin-top:4px;display:block}
+.chat-input-wrap{
+  display:flex;align-items:center;gap:8px;
+  padding:12px 14px;border-top:1px solid var(--border);
+}
+.chat-input-wrap input{
+  flex:1;padding:10px 14px;
+  background:rgba(255,255,255,.04);border:1px solid var(--border);
+  border-radius:50px;color:var(--text);font-size:.85rem;
+  transition:border-color .3s;
+}
+.chat-input-wrap input:focus{outline:none;border-color:var(--primary)}
+.chat-input-wrap button{
+  width:38px;height:38px;border-radius:50%;
+  background:var(--primary);color:#fff;border:none;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:all .2s;flex-shrink:0;
+}
+.chat-input-wrap button:hover{background:#5558e6}
+.chat-input-wrap button:disabled{opacity:.5;cursor:not-allowed}
+
+/* Footer */
+.site-footer{margin-top:0;border-top:1px solid var(--border);padding:48px 24px 24px}
+.footer-grid{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:32px;margin-bottom:32px}
+.footer-brand p{color:var(--ash);font-size:.85rem;margin:12px 0 16px;line-height:1.7}
+.social-links{display:flex;gap:10px}
+.social-links a{
+  width:36px;height:36px;border-radius:50%;
+  background:rgba(255,255,255,.04);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--ash);font-size:.95rem;transition:all .2s;
+}
+.social-links a:hover{background:var(--primary);border-color:var(--primary);color:#fff}
+.footer-col h4{font-size:.85rem;font-weight:600;margin-bottom:14px}
+.footer-col a{display:block;font-size:.8rem;color:var(--ash);padding:4px 0;transition:color .2s}
+.footer-col a:hover{color:var(--text)}
+.footer-bottom{max-width:1200px;margin:0 auto;padding-top:20px;border-top:1px solid var(--border);text-align:center;font-size:.8rem;color:var(--ash)}
+
+/* Animations */
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* Accordion empty state */
+.no-results{text-align:center;padding:40px 20px;color:var(--ash);font-size:.9rem;display:none}
+
+/* Responsive */
+@media(max-width:1024px){
+  .main-layout{grid-template-columns:1fr}
+  .cards-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:768px){
+  .header-links{gap:12px}
+  .header-links a{font-size:.8rem}
+  .header-links a.nav-hide{display:none}
+  .hamburger{display:block}
+  .cards-grid{grid-template-columns:1fr 1fr}
+  .form-row{grid-template-columns:1fr}
+  .chat-panel{width:calc(100vw - 32px);right:16px;bottom:80px}
+  .footer-grid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:480px){
+  .cards-grid{grid-template-columns:1fr}
+  .hero{padding-top:calc(var(--header-h) + 40px)}
+  .footer-grid{grid-template-columns:1fr}
+}
+</style>
+  <link rel="stylesheet" href="/z-shared.css">
+  </head>
+<body>
+  <div id="kc-loader">
+    <div id="kc-loader-scene"></div>
+      <div id="kc-bg-text" aria-hidden="true">KEYCODE</div>
+<div class="kc-loader-info" style="position:absolute;bottom:48px;left:50%;transform:translateX(-50%);">
+      <div id="kc-loader-bar-track"><div id="kc-loader-bar"></div></div>
+      <div id="kc-loader-pct" style="font-family:'Inter',sans-serif;font-size:11px;color:#555;letter-spacing:.12em;text-align:center;">0%</div>
+    </div>
+  </div>
+
+  <div id="site-nav"></div>
+
+<!-- Navigation -->
+<header class="header" id="header">
+  <a href="/" class="header-logo">
+    <img src="/logo-nav.png" alt="KEYCODE" width="100" height="30" loading="lazy">
+  </a>
+  <div class="header-links" id="navLinks">
+    <a href="ai-builder.html">AI Studio</a>
+    <a href="gallery.html">Gallery</a>
+    <a href="pricing.html">Pricing</a>
+    <a href="docs.html">Docs</a>
+    <a href="status.html">Status</a>
+    <a href="support.html" class="active">Support</a>
+    <a href="login.html" class="btn-login"><i class="fas fa-arrow-right-to-bracket"></i> Login</a>
+  </div>
+  <button type="button" class="hamburger" id="hamburger" aria-label="Menu"><i class="fas fa-bars"></i></button>
+</header>
+
+<!-- Hero -->
+<section class="hero">
+  <h1>How can we <span>help you?</span></h1>
+  <p>Search our knowledge base, browse FAQs, or get in touch with our support team.</p>
+  <div class="search-box" role="search">
+    <i class="fas fa-search"></i>
+    <input type="text" id="searchInput" placeholder="Search for answers..." aria-label="Search FAQ">
+    <button type="button" id="searchBtn"><i class="fas fa-arrow-right"></i></button>
+  </div>
+</section>
+
+<!-- Quick Help Cards -->
+<section class="quick-help">
+  <div class="section-label">Get Help Fast</div>
+  <h2>Choose how you'd like support</h2>
+  <div class="cards-grid">
+    <a href="docs.html" class="help-card">
+      <div class="icon">📖</div>
+      <h3>Documentation</h3>
+      <p>Browse our guides</p>
+    </a>
+    <div class="help-card" id="liveChatCard">
+      <div class="icon">💬</div>
+      <h3>Live Chat</h3>
+      <p>Chat with our team</p>
+    </div>
+    <a href="mailto:support@keycode.ai" class="help-card">
+      <div class="icon">📧</div>
+      <h3>Email Support</h3>
+      <p>support@keycode.ai</p>
+    </a>
+    <a href="docs.html#getting-started" class="help-card">
+      <div class="icon">🎥</div>
+      <h3>Video Tutorials</h3>
+      <p>Watch tutorials</p>
+    </a>
+  </div>
+</section>
+
+<!-- Main Layout: FAQ + Form + Sidebar -->
+<div class="main-layout">
+  <div>
+    <!-- FAQ -->
+    <section class="faq-section" id="faq">
+      <h2>Frequently Asked Questions</h2>
+      <p class="section-desc">Find quick answers to common questions. Can't find what you need? Use the contact form below.</p>
+      <div class="accordion" id="faqAccordion">
+        <div class="accordion-item">
+          <button class="accordion-btn" aria-expanded="false">
+            <span>How do I get started with KEYCODE?</span>
+            <i class="fas fa-chevron-down"></i>
+          </button>
+          <div class="accordion-panel">
+            <p>Getting started is easy! Head over to <a href="ai-builder.html">AI Studio</a>, describe your project in plain English (e.g., "a landing page for my coffee shop"), and our multi-agent AI system will generate a complete, production-ready output in seconds. No coding experience required.</p>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <button class="accordion-btn" aria-expanded="false">
+            <span>What payment methods do you accept?</span>
+            <i class="fas fa-chevron-down"></i>
+          </button>
+          <div class="accordion-panel">
+            <p>We accept a wide range of payment methods:</p>
+            <ul>
+              <li>Credit & Debit Cards (Visa, Mastercard, American Express)</li>
+              <li>PayPal</li>
+              <li>UPI (India)</li>
+              <li>Razorpay</li>
+            </ul>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <button class="accordion-btn" aria-expanded="false">
+            <span>How long does AI generation take?</span>
+            <i class="fas fa-chevron-down"></i>
+          </button>
+          <div class="accordion-panel">
+            <p>Generation times vary by project type:</p>
+            <ul>
+              <li><strong>Websites:</strong> Typically 30-60 seconds</li>
+              <li><strong>CAD Models:</strong> 1-5 minutes depending on complexity</li>
+              <li><strong>PCB Designs:</strong> 1-5 minutes including BOM and netlist</li>
+              <li><strong>MCU Firmware:</strong> 5-15 seconds</li>
+            </ul>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <button class="accordion-btn" aria-expanded="false">
+            <span>Can I use my own domain?</span>
+            <i class="fas fa-chevron-down"></i>
+          </button>
+          <div class="accordion-panel">
+            <p>Absolutely! Custom domains are fully supported. You can connect your own domain to projects generated with KEYCODE. Simply go to your project settings and follow the domain setup guide.</p>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <button class="accordion-btn" aria-expanded="false">
+            <span>How do I cancel my subscription?</span>
+            <i class="fas fa-chevron-down"></i>
+          </button>
+          <div class="accordion-panel">
+            <p>You can cancel anytime directly from your dashboard — no lock-in contracts. Go to <strong>Settings &rarr; Subscription</strong> and click Cancel. Your access continues until the end of the billing period.</p>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <button class="accordion-btn" aria-expanded="false">
+            <span>Is my data secure?</span>
+            <i class="fas fa-chevron-down"></i>
+          </button>
+          <div class="accordion-panel">
+            <p>Yes. We take data security seriously. All data is encrypted using AES-256 at rest and TLS 1.3 in transit. We are fully GDPR compliant. Your projects and personal information are never shared with third parties without your explicit consent.</p>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <button class="accordion-btn" aria-expanded="false">
+            <span>Do you offer refunds?</span>
+            <i class="fas fa-chevron-down"></i>
+          </button>
+          <div class="accordion-panel">
+            <p>Yes! We offer a <strong>14-day money-back guarantee</strong> on all paid plans. If you're not satisfied with KEYCODE, contact our support team within 14 days of purchase for a full refund, no questions asked.</p>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <button class="accordion-btn" aria-expanded="false">
+            <span>How do I contact support?</span>
+            <i class="fas fa-chevron-down"></i>
+          </button>
+          <div class="accordion-panel">
+            <p>You're in the right place! You can reach us through any of these channels:</p>
+            <ul>
+              <li>Submit a ticket using the form below</li>
+              <li>Email us at <a href="mailto:support@keycode.ai">support@keycode.ai</a></li>
+              <li>Use the live chat widget (bottom-right corner)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="no-results" id="noResults">No matching questions found. Try a different search term or <a href="#contact">contact us</a>.</div>
+    </section>
+
+    <!-- Contact Form -->
+    <section class="contact-form-wrap" id="contact" style="margin-top:40px">
+      <h2>Submit a Support Ticket</h2>
+      <p class="section-desc">Fill out the form below and our team will get back to you within 24 hours.</p>
+      <form id="supportForm" novalidate>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="name">Full Name <span class="required">*</span></label>
+            <input type="text" id="name" name="name" placeholder="John Doe" required autocomplete="name">
+            <div class="error-text" id="nameError">Please enter your name.</div>
+          </div>
+          <div class="form-group">
+            <label for="email">Email Address <span class="required">*</span></label>
+            <input type="email" id="email" name="email" placeholder="john@example.com" required autocomplete="email">
+            <div class="error-text" id="emailError">Please enter a valid email address.</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="category">Category <span class="required">*</span></label>
+          <select id="category" name="category" required>
+            <option value="">Select a category</option>
+            <option value="General">General</option>
+            <option value="Technical">Technical</option>
+            <option value="Billing">Billing</option>
+            <option value="Feature Request">Feature Request</option>
+            <option value="Bug Report">Bug Report</option>
+          </select>
+          <div class="error-text" id="categoryError">Please select a category.</div>
+        </div>
+        <div class="form-group">
+          <label for="subject">Subject <span class="required">*</span></label>
+          <input type="text" id="subject" name="subject" placeholder="Brief summary of your issue" required>
+          <div class="error-text" id="subjectError">Please enter a subject.</div>
+        </div>
+        <div class="form-group">
+          <label for="message">Message <span class="required">*</span></label>
+          <textarea id="message" name="message" placeholder="Describe your issue or question in detail..." required></textarea>
+          <div class="error-text" id="messageError">Please enter a message.</div>
+        </div>
+        <button type="submit" class="btn-submit" id="submitBtn">
+          <span class="spinner"></span>
+          <span class="btn-text"><i class="fas fa-paper-plane"></i> Submit Ticket</span>
+        </button>
+      </form>
+    </section>
+  </div>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-card">
+      <h3><i class="fas fa-envelope"></i> Email</h3>
+      <div class="info-item">
+        <div class="info-icon"><i class="fas fa-envelope"></i></div>
+        <div>
+          <div class="info-label">Support Email</div>
+          <div class="info-value"><a href="mailto:support@keycode.ai">support@keycode.ai</a></div>
+        </div>
+      </div>
+      <div class="info-item">
+        <div class="info-icon"><i class="fas fa-clock"></i></div>
+        <div>
+          <div class="info-label">Response Time</div>
+          <div class="info-value"><span class="response-badge"><i class="fas fa-bolt"></i> Average: &lt; 2 hours</span></div>
+        </div>
+      </div>
+      <div class="info-item">
+        <div class="info-icon"><i class="fas fa-building"></i></div>
+        <div>
+          <div class="info-label">Office</div>
+          <div class="info-value">KEYCODE Studio<br>San Francisco, CA 94105</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-card">
+      <h3><i class="fas fa-share-nodes"></i> Follow Us</h3>
+      <div class="social-links-side">
+        <a href="https://github.com/Killer999908" class="social-link" aria-label="GitHub"><i class="fab fa-github"></i></a>
+        <a href="https://twitter.com/keycode_studio" class="social-link" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+        <a href="https://discord.gg/keycode" class="social-link" aria-label="Discord"><i class="fab fa-discord"></i></a>
+        <a href="https://youtube.com/@keycodestudio" class="social-link" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+        <a href="#" class="social-link" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+      </div>
+    </div>
+
+    <div class="sidebar-card">
+      <h3><i class="fas fa-life-ring"></i> Quick Links</h3>
+      <div class="info-item">
+        <div class="info-icon"><i class="fas fa-book"></i></div>
+        <div><a href="docs.html">Documentation</a></div>
+      </div>
+      <div class="info-item">
+        <div class="info-icon"><i class="fas fa-circle-info"></i></div>
+        <div><a href="status.html">System Status</a></div>
+      </div>
+      <div class="info-item">
+        <div class="info-icon"><i class="fas fa-gavel"></i></div>
+        <div><a href="terms.html">Terms of Service</a></div>
+      </div>
+      <div class="info-item">
+        <div class="info-icon"><i class="fas fa-shield-halved"></i></div>
+        <div><a href="privacy.html">Privacy Policy</a></div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <img src="/logo-nav.png" alt="KEYCODE" height="28" loading="lazy">
+      <p>Build the future, one project at a time. KEYCODE is the world's most advanced AI-powered design platform.</p>
+      <div class="social-links">
+        <a href="https://github.com/Killer999908" aria-label="GitHub"><i class="fab fa-github"></i></a>
+        <a href="https://twitter.com/keycode_studio" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+        <a href="https://discord.gg/keycode" aria-label="Discord"><i class="fab fa-discord"></i></a>
+        <a href="https://youtube.com/@keycodestudio" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+      </div>
+    </div>
+    <div class="footer-col">
+      <h4>Product</h4>
+      <a href="ai-builder.html">AI Studio</a>
+      <a href="gallery.html">Gallery</a>
+      <a href="pricing.html">Pricing</a>
+      <a href="docs.html">Documentation</a>
+      <a href="status.html">Status</a>
+    </div>
+    <div class="footer-col">
+      <h4>Resources</h4>
+      <a href="docs.html">API Docs</a>
+      <a href="ai-health.html">AI Health</a>
+      <a href="shop.html">Shop</a>
+      <a href="support.html">Support</a>
+    </div>
+    <div class="footer-col">
+      <h4>Company</h4>
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="terms.html">Terms of Service</a>
+      <a href="cookies.html">Cookie Policy</a>
+      <a href="support.html">Contact Us</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>&copy; 2026 KEYCODE Studio. All rights reserved.</p>
+  </div>
+</footer>
+
+<!-- Chat Widget -->
+<button class="chat-toggle" id="chatToggle" aria-label="Open chat">
+  <i class="fas fa-comment-dots"></i>
+  <span class="badge" id="chatBadge">0</span>
+</button>
+
+<div class="chat-panel" id="chatPanel">
+  <div class="chat-header">
+    <i class="fas fa-comment-dots"></i>
+    <h4>KEYCODE Support</h4>
+    <button id="chatMinimize" aria-label="Minimize"><i class="fas fa-minus"></i></button>
+    <button id="chatClose" aria-label="Close"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="chat-messages" id="chatMessages">
+    <div class="chat-msg bot">Welcome to KEYCODE Support! How can we help you today?</div>
+  </div>
+  <div class="chat-input-wrap">
+    <input type="text" id="chatInput" placeholder="Type a message..." aria-label="Chat message">
+    <button id="chatSend" aria-label="Send message"><i class="fas fa-paper-plane"></i></button>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+(function(){
+  'use strict';
+
+  /* --- Hamburger Menu --- */
+  var hamburger = document.getElementById('hamburger');
+  var navLinks = document.getElementById('navLinks');
+  if (hamburger) {
+    hamburger.addEventListener('click', function() {
+      navLinks.classList.toggle('open');
+      var icon = hamburger.querySelector('i');
+      if (navLinks.classList.contains('open')) {
+        icon.className = 'fas fa-times';
+        navLinks.style.display = 'flex';
+        navLinks.style.flexDirection = 'column';
+        navLinks.style.position = 'absolute';
+        navLinks.style.top = '64px';
+        navLinks.style.left = '0';
+        navLinks.style.right = '0';
+        navLinks.style.background = 'rgba(10,10,26,.95)';
+        navLinks.style.backdropFilter = 'blur(16px)';
+        navLinks.style.padding = '20px 24px';
+        navLinks.style.borderBottom = '1px solid var(--border)';
+        navLinks.style.gap = '16px';
+      } else {
+        icon.className = 'fas fa-bars';
+        navLinks.style = '';
+      }
+    });
+  }
+
+  /* --- FAQ Accordion --- */
+  var accordionBtns = document.querySelectorAll('.accordion-btn');
+  accordionBtns.forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var item = btn.closest('.accordion-item');
+      var isActive = item.classList.contains('active');
+      item.classList.toggle('active');
+      btn.setAttribute('aria-expanded', !isActive);
+    });
+  });
+
+  /* --- Search / Filter FAQ --- */
+  var searchInput = document.getElementById('searchInput');
+  var searchBtn = document.getElementById('searchBtn');
+  var noResults = document.getElementById('noResults');
+  var faqItems = document.querySelectorAll('.accordion-item');
+
+  function filterFAQ() {
+    var query = searchInput.value.toLowerCase().trim();
+    var visible = 0;
+    faqItems.forEach(function(item) {
+      var text = item.textContent.toLowerCase();
+      var match = !query || text.indexOf(query) !== -1;
+      item.style.display = match ? '' : 'none';
+      if (match) visible++;
+    });
+    noResults.style.display = visible === 0 ? 'block' : 'none';
+  }
+
+  searchInput.addEventListener('input', filterFAQ);
+  if (searchBtn) searchBtn.addEventListener('click', filterFAQ);
+  searchInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); filterFAQ(); }
+  });
+
+  /* --- Form Validation & Submission --- */
+  var form = document.getElementById('supportForm');
+  var submitBtn = document.getElementById('submitBtn');
+  var nameInput = document.getElementById('name');
+  var emailInput = document.getElementById('email');
+  var categoryInput = document.getElementById('category');
+  var subjectInput = document.getElementById('subject');
+  var messageInput = document.getElementById('message');
+
+  var fields = [
+    { el: nameInput, err: 'nameError', test: function(v) { return v.trim().length > 0; } },
+    { el: emailInput, err: 'emailError', test: function(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()); } },
+    { el: categoryInput, err: 'categoryError', test: function(v) { return v !== ''; } },
+    { el: subjectInput, err: 'subjectError', test: function(v) { return v.trim().length > 0; } },
+    { el: messageInput, err: 'messageError', test: function(v) { return v.trim().length > 0; } }
+  ];
+
+  function validateField(field) {
+    var valid = field.test(field.el.value);
+    field.el.classList.toggle('error', !valid);
+    document.getElementById(field.err).style.display = valid ? 'none' : 'block';
+    return valid;
+  }
+
+  fields.forEach(function(f) {
+    f.el.addEventListener('blur', function() { validateField(f); });
+    f.el.addEventListener('input', function() {
+      if (f.el.classList.contains('error')) validateField(f);
+    });
+  });
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    var allValid = true;
+    fields.forEach(function(f) { if (!validateField(f)) allValid = false; });
+    if (!allValid) return;
+
+    submitBtn.disabled = true;
+    submitBtn.classList.add('loading');
+
+    var payload = {
+      name: nameInput.value.trim(),
+      email: emailInput.value.trim(),
+      category: categoryInput.value,
+      subject: subjectInput.value.trim(),
+      message: messageInput.value.trim()
+    };
+
+    fetch('/api/inquiries', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.success) {
+        showToast('Ticket submitted! We\'ll get back to you within 24 hours.', 'success');
+        form.reset();
+        fields.forEach(function(f) { f.el.classList.remove('error'); });
+      } else {
+        showToast(data.message || 'Something went wrong. Please try again.', 'error');
+      }
+    })
+    .catch(function() {
+      showToast('Network error. Please check your connection and try again.', 'error');
+    })
+    .finally(function() {
+      submitBtn.disabled = false;
+      submitBtn.classList.remove('loading');
+    });
+  });
+
+  /* --- Live Chat Widget --- */
+  var chatToggle = document.getElementById('chatToggle');
+  var chatPanel = document.getElementById('chatPanel');
+  var chatMessages = document.getElementById('chatMessages');
+  var chatInput = document.getElementById('chatInput');
+  var chatSend = document.getElementById('chatSend');
+  var chatMinimize = document.getElementById('chatMinimize');
+  var chatClose = document.getElementById('chatClose');
+  var chatBadge = document.getElementById('chatBadge');
+  var chatOpen = false;
+  var unreadChat = 0;
+
+  chatToggle.addEventListener('click', function() {
+    chatOpen = !chatOpen;
+    chatPanel.classList.toggle('open', chatOpen);
+    if (chatOpen) {
+      unreadChat = 0;
+      chatBadge.style.display = 'none';
+      chatInput.focus();
+      scrollChat();
+    }
+  });
+
+  chatClose.addEventListener('click', function() {
+    chatOpen = false;
+    chatPanel.classList.remove('open');
+  });
+
+  chatMinimize.addEventListener('click', function() {
+    chatOpen = false;
+    chatPanel.classList.remove('open');
+  });
+
+  function addChatMessage(text, type) {
+    var div = document.createElement('div');
+    div.className = 'chat-msg ' + type;
+    div.textContent = text;
+    var time = document.createElement('span');
+    time.className = 'time';
+    time.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    div.appendChild(time);
+    chatMessages.appendChild(div);
+    scrollChat();
+  }
+
+  function scrollChat() {
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  function sendChatMessage() {
+    var msg = chatInput.value.trim();
+    if (!msg) return;
+    addChatMessage(msg, 'user');
+    chatInput.value = '';
+    chatSend.disabled = true;
+
+    fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: msg })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function() {
+      addChatMessage('Thanks for your message! Our team typically responds within a few hours.', 'bot');
+    })
+    .catch(function() {
+      addChatMessage('Thanks for your message! Our team typically responds within a few hours.', 'bot');
+    })
+    .finally(function() {
+      chatSend.disabled = false;
+      chatInput.focus();
+    });
+  }
+
+  chatSend.addEventListener('click', sendChatMessage);
+  chatInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); sendChatMessage(); }
+  });
+
+  /* --- Live Chat Card opens chat --- */
+  var liveChatCard = document.getElementById('liveChatCard');
+  if (liveChatCard) {
+    liveChatCard.addEventListener('click', function() {
+      chatOpen = true;
+      chatPanel.classList.add('open');
+      unreadChat = 0;
+      chatBadge.style.display = 'none';
+      chatInput.focus();
+      scrollChat();
+    });
+  }
+
+  /* --- Toast System --- */
+  function showToast(message, type) {
+    var container = document.getElementById('toastContainer');
+    var toast = document.createElement('div');
+    toast.className = 'toast ' + type;
+    var icon = type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation';
+    toast.innerHTML = '<i class="fas ' + icon + '"></i> ' + message +
+      '<button class="toast-close" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>';
+    container.appendChild(toast);
+    setTimeout(function() { if (toast.parentElement) toast.remove(); }, 5000);
+  }
+
+  /* --- Service Worker Registration --- */
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(function() {});
+  }
+
+})();
+</script>
+
+  <script src="/js/scroll-3d-animations.js"></script>  <script src="/js/k-scroll.js" defer></script>
+
+  <div id="site-footer"></div>
+    <script src="/js/loading-screen.js"></script>
+<script src="/js/site.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+</body>
+</html>
