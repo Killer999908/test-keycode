@@ -56,46 +56,19 @@ export class UI {
       </nav>
 
        <div class="content">
-        <!-- HERO — LIVE AI FORGE (ONE & ONLY) -->
+        <!-- HERO — MINIMAL PRO (like Apple/Stripe) -->
         <section class="ovl ovl-hero" data-act="0">
-          <div class="forge-layout">
-            <div class="forge-left">
-              <p class="eyebrow"><span>${CONTENT.hero.eyebrow}</span> <span class="forge-badge">● LIVE FORGE</span></p>
-              <h1 class="h-display">${CONTENT.hero.title}</h1>
-              <p class="sub">${CONTENT.hero.sub}</p>
-              <div class="forge-prompt glass">
-                <div class="forge-prompt-head"><span>✦ AI FORGE — describe anything</span><span class="forge-live-dot"></span></div>
-                <textarea id="forge-input" placeholder="e.g. A Fortnite-style island with neon city, drift racing, power-ups — or a luxury e-commerce for watches"></textarea>
-                <div class="forge-prompt-actions">
-                  <button class="btn btn-primary magnetic" id="forge-build">Forge with 6 Agents →</button>
-                  <button class="btn btn-ghost" id="forge-random">Random prompt</button>
-                </div>
-                <div class="forge-agents" id="forge-agents">
-                  <span class="forge-agent active" data-agent="Core">Core</span>
-                  <span class="forge-agent" data-agent="Builder">Builder</span>
-                  <span class="forge-agent" data-agent="Designer">Designer</span>
-                  <span class="forge-agent" data-agent="QA">QA</span>
-                  <span class="forge-agent" data-agent="Scout">Scout</span>
-                  <span class="forge-agent" data-agent="Sweeper">Sweeper</span>
-                </div>
-                <div class="forge-code" id="forge-code"><span class="forge-code-hint">Agents idle — waiting for prompt…</span></div>
-              </div>
-              <div class="cta-row" style="margin-top:1.2rem">
-                <a class="btn btn-primary magnetic" href="${CONTENT.hero.primary.href}" data-auth="cta">${CONTENT.hero.primary.label} <span class="arrow">→</span></a>
-                <a class="btn btn-ghost magnetic" href="#" data-scroll="${CONTENT.hero.secondary.scroll}">${CONTENT.hero.secondary.label}</a>
-              </div>
-              <div class="live-ind"><span class="dot"></span><span class="live-text">${CONTENT.hero.live}</span></div>
+          <div class="inner">
+            <p class="eyebrow"><span>${CONTENT.hero.eyebrow}</span></p>
+            <h1 class="h-display">${CONTENT.hero.title}</h1>
+            <p class="sub">${CONTENT.hero.sub}</p>
+            <div class="cta-row">
+              <a class="btn btn-primary magnetic" href="/ai-builder.html">${CONTENT.hero.primary.label} <span class="arrow">→</span></a>
+              <a class="btn btn-ghost magnetic" href="/gallery.html">${CONTENT.hero.secondary.label}</a>
             </div>
-            <div class="forge-right glass-strong" id="forge-preview-wrap">
-              <div class="forge-preview-head">Live Preview <span id="forge-status">idle</span></div>
-              <iframe id="forge-preview" sandbox="allow-scripts allow-same-origin"></iframe>
-              <div class="forge-preview-actions">
-                <a class="btn btn-ghost" href="/ai-builder.html" target="_blank">Open full Forge</a>
-                <button class="btn btn-primary" id="forge-deploy">Deploy</button>
-              </div>
-            </div>
+            <div class="live-ind"><span class="dot"></span><span class="live-text">${CONTENT.hero.live}</span></div>
           </div>
-          <div class="scroll-hint"><span>Scroll to explore — drag 3D to orbit</span><div class="mouse"></div></div>
+          <div class="scroll-hint"><span>Scroll to explore</span><div class="mouse"></div></div>
         </section>
 
         ${CONTENT.acts.map((act, i) => {

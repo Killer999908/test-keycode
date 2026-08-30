@@ -18,9 +18,9 @@ export const CONTENT = {
       sub: 'AI · Game · 3D · Fab — each a complete system. Explore each on its dedicated page.',
       flagships: [
         { cat: 'AI', name: 'AI Full-Stack', tag: 'Code in real time', href: '/ai-builder.html' },
-        { cat: 'GAME', name: 'Game Engine', tag: 'Fortnite-grade worlds', href: '/game-builder.html' },
-        { cat: 'SCAN', name: '3D + CAD', tag: 'Scan → fab-ready', href: '/scan-3d.html' },
-        { cat: 'MAKE', name: 'PCB Fab', tag: 'HDI + Gerber', href: '/tools.html' }
+        { cat: 'GAME', name: 'Game Engine', tag: 'Fortnite-grade worlds', href: '/ai-builder.html?mode=game' },
+        { cat: 'SCAN', name: '3D + CAD', tag: 'Scan → fab-ready', href: '/ai-builder.html?mode=cad' },
+        { cat: 'MAKE', name: 'PCB Fab', tag: 'HDI + Gerber', href: '/ai-builder.html?mode=pcb' }
       ]
     },
     {
