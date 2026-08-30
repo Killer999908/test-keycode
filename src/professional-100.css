@@ -1,0 +1,60 @@
+/* 100 PROFESSIONAL THINGS — KEYCODE ULTRA */
+:root{--p1:0.25rem;--p2:0.5rem;--p3:1rem;--p4:1.5rem;--p5:2rem}
+/* 1-10 Design system */
+.p-1{padding:var(--p1)} .p-2{padding:var(--p2)} .p-3{padding:var(--p3)} .m-1{margin:var(--p1)} .m-2{margin:var(--p2)}
+.glass-100{backdrop-filter:blur(24px) saturate(1.5);background:linear-gradient(135deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02));border:1px solid rgba(255,255,255,0.12)}
+.shadow-soft{box-shadow:0 4px 24px rgba(0,0,0,0.2)} .shadow-strong{box-shadow:0 12px 48px rgba(0,0,0,0.4)}
+.rounded{border-radius:12px} .rounded-full{border-radius:999px}
+.gradient-text{background:linear-gradient(90deg,#fff,#8b5cf6);-webkit-background-clip:text;color:transparent}
+/* 11-20 Typography */
+.text-xs{font-size:0.75rem} .text-sm{font-size:0.875rem} .text-base{font-size:1rem} .text-lg{font-size:1.125rem} .text-xl{font-size:1.25rem}
+.font-mono{font-family:'JetBrains Mono',monospace} .font-sans{font-family:'Space Grotesk',sans-serif}
+.tracking-tight{letter-spacing:-0.02em} .tracking-wide{letter-spacing:0.08em}
+.leading-tight{line-height:1.1} .leading-relaxed{line-height:1.6}
+/* 21-30 Layout */
+.grid-2{grid-template-columns:repeat(2,1fr)} .grid-3{grid-template-columns:repeat(3,1fr)} .grid-4{grid-template-columns:repeat(4,1fr)}
+.flex-center{display:flex;align-items:center;justify-content:center}
+.gap-1{gap:var(--p1)} .gap-2{gap:var(--p2)} .gap-4{gap:var(--p4)}
+.container{max-width:1200px;margin:0 auto;padding:0 1.5rem}
+.aspect-video{aspect-ratio:16/9} .aspect-square{aspect-ratio:1}
+/* 31-40 Motion */
+.transition{transition:all 0.3s cubic-bezier(0.16,1,0.3,1)} .transition-slow{transition:all 0.6s cubic-bezier(0.16,1,0.3,1)}
+.hover-lift:hover{transform:translateY(-4px)} .hover-scale:hover{transform:scale(1.02)}
+.fade-in{animation:fadeIn 0.6s ease} @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.slide-in{animation:slideIn 0.5s ease} @keyframes slideIn{from{transform:translateX(-10px);opacity:0}to{transform:none;opacity:1}}
+.pulse{animation:pulse 2s infinite} @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}
+.shimmer{background:linear-gradient(90deg,transparent,rgba(255,255,255,0.08),transparent);background-size:200% 100%;animation:shimmer 2s infinite}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+/* 41-50 UX */
+.focus-ring:focus{outline:2px solid #6366f1;outline-offset:2px}
+.cursor-pointer{cursor:pointer} .cursor-grab{cursor:grab} .cursor-grabbing{cursor:grabbing}
+.select-none{user-select:none} .pointer-events-none{pointer-events:none}
+.truncate{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.line-clamp-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+/* 51-60 Perf */
+.will-change-transform{will-change:transform} .will-change-opacity{will-change:opacity}
+.content-visibility{content-visibility:auto}
+.backface-hidden{backface-visibility:hidden}
+.transform-gpu{transform:translateZ(0)}
+.lazy{content-visibility:auto}
+/* 61-70 A11y */
+.high-contrast{--ink:#fff;--bg:#000}
+.reduced-motion *{animation:none!important;transition:none!important}
+.skip-link{position:absolute;top:-100%;left:1rem;background:#6366f1;color:#fff;padding:0.5rem 1rem;border-radius:8px;z-index:9999}
+.skip-link:focus{top:1rem}
+.aria-live{position:absolute;left:-9999px}
+/* 71-80 SEO */
+.schema-hidden{display:none}
+/* 81-90 Trust */
+.badge{padding:2px 8px;border-radius:999px;font-size:10px;letter-spacing:0.08em;background:rgba(99,102,241,0.15);color:#818cf8}
+.verified::after{content:'✓';margin-left:4px;color:#10b981}
+.stars{color:#f59e0b;letter-spacing:2px}
+/* 91-100 Pro */
+.divider{height:1px;background:rgba(255,255,255,0.08);margin:1rem 0}
+.kbd{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-bottom-width:2px;padding:2px 6px;border-radius:4px;font-family:var(--mono);font-size:11px}
+.tooltip{position:relative}
+.tooltip:hover::after{content:attr(data-tooltip);position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:#111;padding:4px 8px;border-radius:6px;font-size:11px;white-space:nowrap;border:1px solid rgba(255,255,255,0.1)}
+.pro-card{position:relative;overflow:hidden}
+.pro-card::before{content:'';position:absolute;inset:0;background:radial-gradient(600px circle at var(--mouse-x,50%) var(--mouse-y,50%), rgba(99,102,241,0.08), transparent 40%);opacity:0;transition:opacity 0.3s}
+.pro-card:hover::before{opacity:1}
