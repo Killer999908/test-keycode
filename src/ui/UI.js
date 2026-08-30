@@ -38,7 +38,7 @@ export class UI {
         </a>
         <div class="nav-mid">
           <a href="/gallery.html">Works</a>
-          <a href="/tools.html">Services</a>
+          <a href="/ai-builder.html?mode=tools">Services</a>
           <a href="/pricing.html">Pricing</a>
           <a href="/ai-builder.html" style="color:var(--ink)">Forge</a>
         </div>
@@ -176,10 +176,10 @@ export class UI {
         <div class="menu-panel">
           <p class="menu-kicker">Navigate the studio</p>
           <a href="/ai-builder.html"><b>01</b> AI Builder</a>
-          <a href="/game-builder.html"><b>02</b> Game Builder</a>
+          <a href="/ai-builder.html?mode=game"><b>02</b> Game Builder</a>
           <a href="/realtime-builder"><b>03</b> Real-time Builder</a>
-          <a href="/scan-3d.html"><b>04</b> 3D Scan → CAD</a>
-          <a href="/tools.html"><b>05</b> 3D / PCB Studio</a>
+          <a href="/ai-builder.html?mode=cad"><b>04</b> 3D Scan → CAD</a>
+          <a href="/ai-builder.html?mode=tools"><b>05</b> 3D / PCB Studio</a>
           <a href="/pricing.html"><b>06</b> Pricing</a>
           <a href="/shop.html"><b>07</b> Shop</a>
           <a href="/docs.html"><b>08</b> Docs</a>
@@ -375,7 +375,7 @@ export class UI {
     this.worksGrid = grid;
     const data = items && items.length ? items : CONTENT.worksFallback;
     grid.innerHTML = data.map((w, i) => {
-      const href = w.href || (w.slug ? `/tools.html?service=${encodeURIComponent(w.slug)}` : '#');
+      const href = w.href || (w.slug ? `/ai-builder.html?mode=tools?service=${encodeURIComponent(w.slug)}` : '#');
       const img = w.image ? `<div class="wc-img" style="background-image:url('${w.image}')"></div>` : '';
       return `
       <a class="work-card panel3d has-img" href="${href}" style="--i:${i}">

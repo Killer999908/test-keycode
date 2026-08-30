@@ -36,7 +36,7 @@ export const CONTENT = {
       title: 'More inside.',
       sub: 'Services, agents, pricing, news — each on its own page, beautifully crafted.',
       ctaLinks: [
-        { label: 'Services', href: '/tools.html', desc: 'All 7 categories →' },
+        { label: 'Services', href: '/ai-builder.html?mode=tools', desc: 'All 7 categories →' },
         { label: 'Agents', href: '/docs.html', desc: '6 specialists →' },
         { label: 'Pricing', href: '/pricing.html', desc: 'Plans →' },
         { label: 'News', href: '/news.html', desc: 'Press →' }
@@ -45,9 +45,9 @@ export const CONTENT = {
   ],
   worksFallback: [
     { name: 'KizunaAI — Hello, Fortnite', cat: 'Fortnite · Metaverse', href: '/ai-builder.html', note: '2026.01', image: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=600&q=80', desc: 'In-Game Concert' },
-    { name: 'WEAR GO LAND — Fashion Metaverse', cat: 'Unreal · stellla', href: '/game-builder.html', note: '2025.05', image: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=600&q=80', desc: '15 brands · IS:SUE ambassador' },
-    { name: 'DISCOAT 2025SS — Virtual Exhibition', cat: 'Metaverse · Cloud', href: '/scan-3d.html', note: '2025.02', image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=600&q=80', desc: 'Virtual fashion show' },
-    { name: 'Matsuken Samba II — World Tour', cat: 'Fortnite · Concert', href: '/tools.html?service=pcb', note: '30M PV', image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600&q=80', desc: 'Rise Up the World' },
+    { name: 'WEAR GO LAND — Fashion Metaverse', cat: 'Unreal · stellla', href: '/ai-builder.html?mode=game', note: '2025.05', image: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=600&q=80', desc: '15 brands · IS:SUE ambassador' },
+    { name: 'DISCOAT 2025SS — Virtual Exhibition', cat: 'Metaverse · Cloud', href: '/ai-builder.html?mode=cad', note: '2025.02', image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=600&q=80', desc: 'Virtual fashion show' },
+    { name: 'Matsuken Samba II — World Tour', cat: 'Fortnite · Concert', href: '/ai-builder.html?mode=pcb', note: '30M PV', image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=600&q=80', desc: 'Rise Up the World' },
     { name: 'Real-time Trading Dashboard', cat: 'AI · Web App', href: '/realtime-builder', note: 'Live', image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&q=80', desc: 'Sub-second · 6 agents' },
     { name: 'PCB Fab — Drone Fleet', cat: 'Hardware · Fab', href: '/shop.html', note: 'Shipped', image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=600&q=80', desc: 'Fab-ready · DFM checked' }
   ],
@@ -74,9 +74,9 @@ export const CONTENT = {
         heading: 'Products',
         links: [
           { label: 'AI Builder', href: '/ai-builder.html' },
-          { label: 'Game Builder', href: '/game-builder.html' },
-          { label: '3D Scan → CAD', href: '/scan-3d.html' },
-          { label: 'PCB Studio', href: '/tools.html' },
+          { label: 'Game Builder', href: '/ai-builder.html?mode=game' },
+          { label: '3D Scan → CAD', href: '/ai-builder.html?mode=cad' },
+          { label: 'PCB Studio', href: '/ai-builder.html?mode=tools' },
           { label: 'Real-time Builder', href: '/realtime-builder' }
         ]
       },
