@@ -1,0 +1,62 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.super
+    image: keycode-super:latest
+    ports:
+      - "5000:5000"
+    env_file: ./server/.env
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - KICAD_CLI=/usr/bin/kicad-cli
+      - FREEROUTING_JAR=/opt/freerouting/freerouting.jar
+      - JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+      # AI LLM providers (set in server/.env, passed through)
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - CLOUDFLARE_ACCOUNT_ID=${CLOUDFLARE_ACCOUNT_ID}
+      - CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN}
+      - MISTRAL_API_KEY=${MISTRAL_API_KEY}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    volumes:
+      - ./exports:/app/exports
+      - ./generated:/app/generated
+      - ./preview:/app/preview
+      - ./uploads:/app/uploads
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:5000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  mongodb:
+    image: mongo:7
+    ports: ["27017:27017"]
+    volumes: [mongodb_data:/data/db]
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh --quiet
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  mongodb_data:

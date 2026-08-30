@@ -1,30 +1,49 @@
 import { defineConfig } from 'vite';
-import { resolve } from 'path';
-import fs from 'fs';
-
-// Auto-discover all HTML files for multi-page app mode
-const htmlFiles = fs.readdirSync(__dirname).filter(f => f.endsWith('.html'));
-const input = {};
-for (const f of htmlFiles) {
-  input[f.replace('.html', '')] = resolve(__dirname, f);
-}
+import glsl from 'vite-plugin-glsl';
+import compression from 'vite-plugin-compression';
 
 export default defineConfig({
-  root: __dirname,
+  root: '.',
+  publicDir: 'public',
   build: {
     outDir: 'dist',
-    emptyOutDir: true,
-    rollupOptions: {
-      input,
-    },
+    assetsDir: 'assets',
     minify: 'esbuild',
-    sourcemap: false,
+    cssCodeSplit: true,
+    cssMinify: true,
+    chunkSizeWarningLimit: 600,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'three': ['three'],
+          'cinematic': ['src/cinematic/index.js']
+        }
+      }
+    }
   },
+  plugins: [
+    glsl(),
+    compression({ algorithm: 'gzip', ext: '.gz' }),
+    compression({ algorithm: 'brotliCompress', ext: '.br' })
+  ],
   server: {
-    port: 3000,
+    port: 5173,
     proxy: {
-      '/api': 'http://localhost:5000',
-    },
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true
+      }
+    }
   },
-  publicDir: 'public',
+  resolve: {
+    alias: {
+      '@': '/src',
+      '@cinematic': '/src/cinematic',
+      '@acts': '/src/acts',
+      '@shaders': '/src/shaders',
+      '@ui': '/src/ui',
+      '@api': '/src/api',
+      '@utils': '/src/utils'
+    }
+  }
 });

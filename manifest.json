@@ -1,16 +1,12 @@
 {
-  "name": "KeyCode Studio — AI-Powered Digital Creation",
-  "short_name": "KeyCode",
-  "description": "Generate websites, 3D models, PCBs, and firmware with AI",
+  "name": "KEYCODE Studio",
+  "short_name": "KEYCODE",
+  "description": "AI engineering at the speed of thought.",
   "start_url": "/",
   "display": "standalone",
-  "display_override": ["window-controls-overlay", "standalone"],
-  "categories": ["productivity", "utilities"],
-  "scope": "/",
-  "background_color": "#000000",
-  "theme_color": "#000000",
+  "background_color": "#0a0a0b",
+  "theme_color": "#0a0a0b",
   "icons": [
-    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" },
     { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
     { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
   ]

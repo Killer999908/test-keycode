@@ -3,54 +3,74 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>KEYCODE</title>
+  <title>KEYCODE Studio — AI engineering at the speed of thought</title>
+  <meta name="description" content="KEYCODE Studio — world-class AI engineering at the speed of thought. Full-stack apps, 3D worlds, CAD & fab-ready PCBs by a pod of AI agents. Award-winning, premium, sub-second.">
+  <meta name="theme-color" content="#0a0a0b">
+  <meta name="author" content="KEYCODE Studio">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <meta name="keywords" content="AI studio, 3D game engine, full-stack, CAD, PCB, Three.js, WebGL, premium web development">
+  <link rel="canonical" href="https://keycode.studio/">
+  <meta name="color-scheme" content="dark">
+  <meta name="format-detection" content="telephone=no">
 
-  <!-- Google Fonts -->
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="KEYCODE Studio">
+  <meta property="og:title" content="KEYCODE Studio — World-Class AI Engineering">
+  <meta property="og:description" content="Award-winning studio. Full-stack apps, 3D worlds, CAD & PCBs — engineered end to end by AI agents. Premium, cinematic, sub-second.">
+  <meta property="og:url" content="https://keycode.studio/">
+  <meta property="og:image" content="/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:locale" content="en_US">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="KEYCODE Studio — World-Class AI Engineering">
+  <meta name="twitter:description" content="Premium cinematic WebGL studio. AI at the speed of thought.">
+  <meta name="twitter:image" content="/og-image.png">
+  <meta name="twitter:creator" content="@keycode_studio">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.json">
 
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ProfessionalService",
+    "name": "KEYCODE Studio",
+    "description": "World-class AI engineering studio — full-stack apps, 3D worlds, CAD & fab-ready PCBs. Premium, cinematic, award-winning.",
+    "url": "https://keycode.studio/",
+    "sameAs": ["https://github.com/keycode-studio", "https://x.com/keycode_studio"],
+    "award": "Best Website 2026 Nominee",
+    "makesOffer": [
+      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "AI Full-Stack Coding" } },
+      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "3D Game Engine" } },
+      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "3D Scan to CAD" } },
+      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "PCB Fabrication" } }
+    ]
+  }
+  </script>
+  <link rel="preload" as="image" href="/og-image.png" fetchpriority="high">
 
-  <!-- Three.js -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
-  <!-- GSAP + ScrollTrigger -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
-
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
-    body {
-      font-family: 'Inter', sans-serif;
-      background: #0a0a0a;
-      color: #fff;
-      overflow-x: hidden;
-    }
-  </style>
+  <noscript>
+    <style>.loader { display: none; } #ui { position: static; } .content { position: static; opacity: 1 !important; pointer-events: auto !important; }</style>
+  </noscript>
 </head>
 <body>
-
-  <!-- 3D Canvas Container -->
-  <div id="canvas-container"></div>
-
-  <!-- Content -->
-  <main id="main-content">
-    <section id="hero">
-      <h1>KEYCODE</h1>
-      <p>Digital Creation Studio</p>
-    </section>
-  </main>
-
-  <script>
-    gsap.registerPlugin(ScrollTrigger);
-    console.log('Tools loaded:', {
-      THREE: typeof THREE !== 'undefined',
-      gsap: typeof gsap !== 'undefined',
-      ScrollTrigger: typeof ScrollTrigger !== 'undefined'
-    });
-  </script>
+  <div id="app"></div>
+  <script type="module" src="/src/main.js"></script>
+  <noscript>
+    <div style="padding:3rem;font-family:sans-serif;color:#eee;background:#0a0a0b;min-height:100vh">
+      <h1>KEYCODE Studio</h1>
+      <p>AI engineering at the speed of thought. Enable JavaScript for the full cinematic experience.</p>
+      <p><a href="/signup.html">Start Building</a></p>
+    </div>
+  </noscript>
 </body>
 </html>

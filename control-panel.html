@@ -651,6 +651,24 @@
     const API_BASE = '/api';
     let currentUser = null;
 
+    (function handleOAuthToken(){
+      const p = new URLSearchParams(window.location.search);
+      const t = p.get('token');
+      if (t) {
+        localStorage.setItem('token', t);
+        fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + t } }).then(r=>r.json()).then(j=>{
+          const u = j.user || j;
+          if (u && (u.email || u._id)) localStorage.setItem('user', JSON.stringify(u));
+          history.replaceState({}, '', window.location.pathname);
+        }).catch(()=> history.replaceState({}, '', window.location.pathname));
+      }
+      const err = p.get('error');
+      if (err) {
+        setTimeout(()=> alert('OAuth: ' + err), 300);
+        history.replaceState({}, '', window.location.pathname);
+      }
+    })();
+
     function checkAuth() {
       const token = localStorage.getItem('token');
       const user = localStorage.getItem('user');

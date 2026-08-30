@@ -8,7 +8,7 @@ if (!fs.existsSync(exportsDir)) fs.mkdirSync(exportsDir, { recursive: true });
 
 function escStr(s) { return '"' + String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"'; }
 
-// Package → footprint mapping (KiCad 10 standard library)
+// Package → footprint mapping (KiCad 10 standard library) — now with smartphone HDI BGA
 const FOOTPRINT_MAP = {
   '0402':  'Resistor_SMD:R_0402_1005Metric',
   '0603':  'Resistor_SMD:R_0603_1608Metric',
@@ -37,6 +37,14 @@ const FOOTPRINT_MAP = {
   'TO92':    'Package_TO_THT:TO-92_Inline',
   'LED-0805': 'LED_SMD:LED_0805_2012Metric',
   'USB-C':   'Connector_USB:USB_C_Receptacle_HRO_TYPE-C-31-M-12',
+  'BGA-100': 'Package_BGA:BGA-100_10x10mm_Layout10x10_P0.8mm_Ball0.5mm',
+  'BGA100': 'Package_BGA:BGA-100_10x10mm_Layout10x10_P0.8mm_Ball0.5mm',
+  'BGA-256': 'Package_BGA:BGA-256_17x17mm_Layout16x16_P1.0mm_Ball0.6mm',
+  'BGA256': 'Package_BGA:BGA-256_17x17mm_Layout16x16_P1.0mm_Ball0.6mm',
+  'BGA-1000': 'Package_BGA:BGA-1000_14x14mm_Layout32x32_P0.35mm_Ball0.2mm',
+  'BGA1000': 'Package_BGA:BGA-1000_14x14mm_Layout32x32_P0.35mm_Ball0.2mm',
+  'WLCSP-36': 'Package_CSP:WLCSP-36_2.5x2.5mm_P0.4mm',
+  'WLCSP36': 'Package_CSP:WLCSP-36_2.5x2.5mm_P0.4mm',
 };
 
 function resolveFootprint(pkg) {
@@ -57,7 +65,7 @@ function resolveFootprint(pkg) {
   return 'Resistor_SMD:R_0805_2012Metric';
 }
 
-// Package physical dimensions (mm)
+// Package physical dimensions (mm) — with HDI BGA
 const PKG_SIZE = {
   'Resistor_SMD:R_0402_1005Metric': { w: 1.0, h: 0.5 },
   'Resistor_SMD:R_0603_1608Metric': { w: 1.6, h: 0.8 },
@@ -75,6 +83,10 @@ const PKG_SIZE = {
   'Package_TO_THT:TO-92_Inline': { w: 4.0, h: 3.0 },
   'LED_SMD:LED_0805_2012Metric': { w: 2.0, h: 1.2 },
   'Connector_USB:USB_C_Receptacle_HRO_TYPE-C-31-M-12': { w: 10.0, h: 5.0 },
+  'Package_BGA:BGA-100_10x10mm_Layout10x10_P0.8mm_Ball0.5mm': { w: 10.0, h: 10.0 },
+  'Package_BGA:BGA-256_17x17mm_Layout16x16_P1.0mm_Ball0.6mm': { w: 17.0, h: 17.0 },
+  'Package_BGA:BGA-1000_14x14mm_Layout32x32_P0.35mm_Ball0.2mm': { w: 14.0, h: 14.0 },
+  'Package_CSP:WLCSP-36_2.5x2.5mm_P0.4mm': { w: 2.5, h: 2.5 },
 };
 
 function footprintSize(footprint) {
@@ -168,7 +180,7 @@ function genKicadSch(components, netlist, name) {
 // Component placement (deterministic grid)
 // ──────────────────────────────────────────────
 
-function placeComponents(components, boardW, boardH) {
+export function placeComponents(components, boardW, boardH) {
   const margin = 5;
   const spacing = 12;
   const placed = [];
@@ -190,7 +202,7 @@ function placeComponents(components, boardW, boardH) {
 // Manhattan routing
 // ──────────────────────────────────────────────
 
-function routeNets(placed, netlist) {
+export function routeNets(placed, netlist) {
   const traceWidth = 0.3;
   const viaDiameter = 0.8;
   const viaDrill = 0.4;
@@ -665,7 +677,7 @@ export async function createManufacturingZip(name, components, netlist, boardW, 
   try { fs.rmSync(projectDir, { recursive: true, force: true }); } catch {}
 
   const zipBuf = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
-  return { zipBuffer: zipBuf, placed };
+  return { zipBuffer: zipBuf, placed, gerberFiles };
 }
 
 export function generatePcbSvg(components, netlist, dims, placed) {
@@ -744,4 +756,76 @@ export function generatePcbSvg(components, netlist, dims, placed) {
 
   svg += '</svg>';
   return svg;
+}
+
+// ──────────────────────────────────────────────
+// Fabrication Readiness Validator
+// ──────────────────────────────────────────────
+
+const FAB_RULES = {
+  minTraceWidth: 0.15,
+  minClearance: 0.2,
+  minViaSize: 0.6,
+  minViaDrill: 0.3,
+  minAnnularRing: 0.1,
+  minBoardWidth: 10,
+  maxBoardWidth: 400,
+  minBoardHeight: 10,
+  maxBoardHeight: 400,
+  requiredGerberLayers: ['F.Cu', 'B.Cu', 'F.Mask', 'B.Mask', 'F.Silkscreen', 'Edge.Cuts'],
+  requiredBomFields: ['reference', 'value', 'package', 'description'],
+};
+
+export function validatePcbForFabrication({ components, netlist, boardW, boardH, gerberFiles, placed }) {
+  const errors = [];
+  const warnings = [];
+
+  if (!components || !components.length) errors.push('BOM is empty — no components to fabricate');
+  if (!netlist || !netlist.length) errors.push('Netlist is empty — no connectivity defined');
+
+  if (boardW < FAB_RULES.minBoardWidth || boardW > FAB_RULES.maxBoardWidth) errors.push(`Board width ${boardW}mm is outside fab range (${FAB_RULES.minBoardWidth}-${FAB_RULES.maxBoardWidth}mm)`);
+  if (boardH < FAB_RULES.minBoardHeight || boardH > FAB_RULES.maxBoardHeight) errors.push(`Board height ${boardH}mm is outside fab range (${FAB_RULES.minBoardHeight}-${FAB_RULES.maxBoardHeight}mm)`);
+
+  const hasVCC = netlist.some(n => /^VCC|VDD|3V3|5V/i.test(n.net));
+  const hasGND = netlist.some(n => /^GND|VSS|0V/i.test(n.net));
+  if (!hasVCC) warnings.push('No VCC/VDD rail found in netlist');
+  if (!hasGND) warnings.push('No GND/VSS rail found in netlist');
+
+  for (const comp of components || []) {
+    for (const field of FAB_RULES.requiredBomFields) {
+      if (!comp[field] || String(comp[field]).trim() === '') warnings.push(`BOM field "${field}" missing for ${comp.reference || 'unknown ref'}`);
+    }
+    if (comp.package && !/^(0402|0603|0805|1206|1210|SOT-23|SOT23|SOT-223|SOT223|DIP-8|DIP8|TQFP-32|TQFP32|QFN-32|SOIC-8|SOP-8|TO-92|LED-0805|USB-C)$/i.test(comp.package)) {
+      warnings.push(`Package "${comp.package}" for ${comp.reference || 'comp'} may not be in standard KiCad library — verify footprint`);
+    }
+  }
+
+  const missingNets = [];
+  for (const comp of components || []) {
+    const ref = comp.reference || '';
+    const pins = (netlist || []).flatMap(n => n.nodes || []);
+    const connectedPins = pins.filter(n => n.startsWith(ref + ':')).length;
+    const expectedPins = comp.package?.includes('TQFP') ? 32 : comp.package?.includes('SOIC') || comp.package?.includes('SOP') ? 8 : comp.package?.includes('DIP') ? 8 : comp.type === 'IC' ? 8 : 2;
+    if (expectedPins > 2 && connectedPins < 2) missingNets.push(`${ref}: only ${connectedPins} pins connected (expected ~${expectedPins})`);
+  }
+  if (missingNets.length) warnings.push('Possible unterminated pins: ' + missingNets.slice(0, 5).join(', '));
+
+  if (gerberFiles) {
+    const gerberKeys = Object.keys(gerberFiles);
+    const missingLayers = FAB_RULES.requiredGerberLayers.filter(l => !gerberKeys.some(k => k.includes(l)));
+    if (missingLayers.length) errors.push(`Missing Gerber layers: ${missingLayers.join(', ')}`);
+  }
+
+  if (!placed || !placed.length) errors.push('Component placement is empty — board has no parts');
+
+  const isReady = errors.length === 0;
+  return {
+    isReady,
+    errors,
+    warnings,
+    score: Math.max(0, 100 - errors.length * 25 - warnings.length * 5),
+    summary: isReady
+      ? `✅ PCB is fabrication-ready (${(placed || []).length} components, ${(netlist || []).length} nets)`
+      : `❌ PCB has ${errors.length} fabrication-blocking issue(s) and ${warnings.length} warning(s)`,
+  };
 }
