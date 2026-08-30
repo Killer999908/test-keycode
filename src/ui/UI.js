@@ -133,6 +133,12 @@ export class UI {
               ${act.ctaLinks.map(l=>`<a class="glass" href="${l.href}" style="padding:16px;border-radius:12px;text-decoration:none;display:flex;flex-direction:column;gap:4px"><span style="font-weight:600;color:var(--ink)">${l.label}</span><small style="color:var(--ink-dim);font-size:12px">${l.desc}</small></a>`).join('')}
             </div>` : '';
           const worksLink = act.worksLink ? `<div style="margin-top:1.2rem"><a class="btn btn-ghost" href="${act.worksLink}">View all works →</a></div>` : '';
+          const trustBar = (act.id==='cta' && CONTENT.trust) ? `
+            <div style="margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-family:var(--mono);font-size:10px;letter-spacing:0.14em;color:var(--faint)">${CONTENT.trust.logos.map(l=>`<span style="padding:4px 8px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:999px">${l}</span>`).join('')}</div>
+              <div style="display:flex;gap:12px;font-family:var(--mono);font-size:11px">${CONTENT.trust.metrics.map(m=>`<span><b style="color:var(--ink)">${m.value}</b> <span style="color:var(--faint)">${m.label}</span></span>`).join(' • ')}</div>
+              <div style="font-size:13px;color:var(--ink-dim);font-style:italic">“${CONTENT.trust.testimonial.quote}” — <b style="color:var(--ink)">${CONTENT.trust.testimonial.author}</b> ★★★★★</div>
+            </div>` : '';
           return `
           <section class="ovl act-header${side}" data-act="${i + 1}">
             <div class="inner">
@@ -142,6 +148,7 @@ export class UI {
               ${list}
               ${ctaLinks}
               ${worksLink}
+              ${trustBar}
             </div>
             ${flagships}
             ${pricing}

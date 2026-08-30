@@ -56,6 +56,16 @@ export const CONTENT = {
     { date: '2025.05', title: 'TechCrunch: KEYCODE raises to architect worlds that move hearts', href: '/news' },
     { date: '2024.10', title: 'Hakuhodo ReIMAGINE — creative team formed', href: '/news' }
   ],
+  trust: {
+    logos: ['TechStart', 'GreenLeaf', 'FutureTech', 'Hakuhodo'],
+    testimonial: { quote: 'KEYCODE transformed our online presence — AI approach exceeded expectations.', author: 'Sarah Johnson, TechStart Inc.', rating: 5 },
+    metrics: [
+      { value: '99.99%', label: 'Uptime' },
+      { value: '<1s', label: 'LCP' },
+      { value: '6', label: 'Agents' },
+      { value: '500+', label: 'Ships' }
+    ]
+  },
   footer: {
     tagline: 'A studio of AI engineers building across every medium — one pod, every discipline.',
     newsletter: 'One build, every month. Straight to your inbox.',
