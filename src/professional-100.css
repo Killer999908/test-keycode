@@ -32,8 +32,9 @@
 .truncate{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .line-clamp-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
-/* 51-60 Perf */
-.will-change-transform{will-change:transform} .will-change-opacity{will-change:opacity}
+/* 51-60 Perf — will-change only on hover to avoid budget */
+.will-change-transform{transform:translateZ(0)} .will-change-opacity{opacity:1}
+.will-change-transform:hover{will-change:transform} .will-change-opacity:hover{will-change:opacity}
 .content-visibility{content-visibility:auto}
 .backface-hidden{backface-visibility:hidden}
 .transform-gpu{transform:translateZ(0)}

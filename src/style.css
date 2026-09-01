@@ -4,33 +4,33 @@
    ============================================================ */
 
 :root {
-  --bg: #0a0a0b;
+  --bg: #08080a;
   --bg-elev: #121214;
-  --panel: rgba(255, 255, 255, 0.045);
-  --panel-hi: rgba(255, 255, 255, 0.09);
-  --border: rgba(255, 255, 255, 0.09);
-  --border-hi: rgba(255, 255, 255, 0.22);
-  --ink: #f5f5f4;
-  --ink-dim: #a3a3a3;
-  --ink-faint: #6e6e73;
+  --panel: rgba(255, 255, 255, 0.04);
+  --panel-hi: rgba(255, 255, 255, 0.08);
+  --border: rgba(255, 255, 255, 0.07);
+  --border-hi: rgba(255, 255, 255, 0.18);
+  --ink: #fafafa;
+  --ink-dim: #a1a1aa;
+  --ink-faint: #71717a;
   --white: #ffffff;
   --font: 'Space Grotesk', system-ui, sans-serif;
   --mono: 'JetBrains Mono', monospace;
-  --t-display: clamp(3rem, 8vw, 7.2rem);
-  --t-h2: clamp(1.9rem, 4.2vw, 3.4rem);
-  --t-h3: clamp(1.2rem, 2.5vw, 1.7rem);
-  --t-body: 1.05rem;
+  --t-display: clamp(3.2rem, 8.5vw, 7.6rem);
+  --t-h2: clamp(2rem, 4.5vw, 3.6rem);
+  --t-h3: clamp(1.25rem, 2.6vw, 1.8rem);
+  --t-body: 1.08rem;
   --t-sm: 0.875rem;
-  --t-caption: 0.68rem;
+  --t-caption: 0.66rem;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-expo: cubic-bezier(0.19, 1, 0.22, 1);
-  --nav-h: 76px;
-  --pad-x: clamp(1.25rem, 5vw, 5.5rem);
-  --radius: 20px;
-  --glass: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
-  --glass-border: rgba(255,255,255,0.13);
-  --glass-blur: blur(22px) saturate(1.45);
+  --nav-h: 72px;
+  --pad-x: clamp(1.5rem, 6vw, 6rem);
+  --radius: 22px;
+  --glass: linear-gradient(135deg, rgba(255,255,255,0.07), rgba(255,255,255,0.015));
+  --glass-border: rgba(255,255,255,0.10);
+  --glass-blur: blur(24px) saturate(1.5);
 }
 html.lenis { height: auto; }
 .lenis.lenis-smooth { scroll-behavior: auto !important; }

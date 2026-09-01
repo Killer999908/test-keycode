@@ -385,7 +385,14 @@ async function forge(prompt, isRefine=false, forceAct=false){
     statusEl.textContent='CAD forging…'; meta.textContent='Generating STL + KiCad + FreeCAD…';
     addMsg('🧊 <b>CAD Forge</b> — OpenSCAD + STL + 3D preview — AI auto-downloads tools', 'bot');
   }
-  statusEl.textContent='coding live…'; meta.textContent='Streaming code + preview…';
+  statusEl.textContent='coding live…'; meta.textContent='Streaming code + preview — watch right →';
+  // Ensure preview visible live (split view)
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelector('[data-pane="preview"]').classList.add('active');
+  document.querySelectorAll('.pane').forEach(p=>{p.classList.remove('active'); p.style.display='none'});
+  preview.classList.add('active'); preview.style.display='block'; codeWrap.style.display='none';
+  // Also show code live in split if user wants — auto split during streaming
+  let autoSplit = true;
   try{
     const fullPrompt = prompt + (uploadedImage ? ' [image attached]' : '') + (planData ? ` | PLAN: ${JSON.stringify(planData).slice(0,800)}` : '') + (chatHistory.length ? ` | HISTORY: ${JSON.stringify(chatHistory).slice(0,1000)}` : '');
     const body = { description: fullPrompt };
@@ -399,16 +406,50 @@ async function forge(prompt, isRefine=false, forceAct=false){
         if(!part.startsWith('data:')) continue;
         try{
           const data=JSON.parse(part.slice(5));
-          if(data.type==='token'){ fullCode+=data.token; codeEl.textContent=fullCode.slice(0,15000); if(!htmlSet && fullCode.includes('<html')){ const m=fullCode.match(/<!DOCTYPE[\s\S]*?<\/html>/i); if(m && m[0].length>500){ preview.srcdoc=m[0]; htmlSet=true; } } }
+          if(data.type==='token'){
+            fullCode+=data.token;
+            codeEl.textContent=fullCode.slice(0,18000);
+            document.getElementById('code-lines').textContent = fullCode.split('\n').length + ' lines';
+            // Live preview update: try to render partial HTML incrementally
+            if(fullCode.includes('<html')){
+              const m=fullCode.match(/<!DOCTYPE[\s\S]*?<\/html>/i) || fullCode.match(/<html[\s\S]*?<\/html>/i);
+              if(m && m[0].length>800){
+                try{ preview.srcdoc=m[0]; htmlSet=true; }catch(e){}
+              } else if(fullCode.length>1000 && !htmlSet){
+                // Show live code preview as text until valid HTML
+                preview.srcdoc = `<html><body style="margin:0;padding:20px;background:#0a0a0f;color:#a5b4fc;font-family:monospace;white-space:pre-wrap">${fullCode.slice(0,3000).replace(/</g,'&lt;')}</body></html>`;
+              }
+            }
+          }
           else if(data.type==='html'){ preview.srcdoc=data.html; htmlSet=true; }
-          else if(data.type==='status'){ meta.textContent=data.message; }
-          else if(data.type==='done' && data.files){ if(data.files['index.html']) preview.srcdoc=data.files['index.html']; if(data.files['server.js']) $('#backendpane').textContent=data.files['server.js'].slice(0,4000); }
+          else if(data.type==='status'){ meta.textContent=data.message; addMsg(data.message,'sys'); }
+          else if(data.type==='done' && data.files){ if(data.files['index.html']) preview.srcdoc=data.files['index.html']; if(data.files['server.js']) $('#backendpane').textContent=data.files['server.js'].slice(0,4000); htmlSet=true; }
         }catch(e){}
       }
     }
-    if(!htmlSet && fullCode){ const m=fullCode.match(/<!DOCTYPE[\s\S]*?<\/html>/i); if(m) preview.srcdoc=m[0]; }
-    statusEl.textContent='live ✓'; meta.textContent='Live — chat to refine';
-    addMsg('✅ Forge complete — preview live. Refine via chat.', 'bot');
+    if(!htmlSet && fullCode){ const m=fullCode.match(/<!DOCTYPE[\s\S]*?<\/html>/i); if(m) preview.srcdoc=m[0]; else if(fullCode.length>500) preview.srcdoc=`<html><body style="margin:0;padding:16px;background:#fff;font-family:sans-serif"><pre style="white-space:pre-wrap">${fullCode.slice(0,5000).replace(/</g,'&lt;')}</pre></body></html>`; }
+    statusEl.textContent='live ✓'; meta.textContent='Live — preview built in real-time as you watched';
+    addMsg('✅ <b>Forge live complete!</b> Preview built in real-time. <button class="btn primary" id="completeDash" style="margin-top:8px">Complete → Send to Dashboard (Pay to Use)</button>', 'bot');
+    setTimeout(()=>{
+      const btn=document.getElementById('completeDash');
+      if(btn) btn.addEventListener('click', async()=>{
+        btn.textContent='Sending…'; btn.disabled=true;
+        try{
+          const html = preview.srcdoc || fullCode;
+          const r = await fetch('/api/ai/generate-and-order',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('token')||'')},body:JSON.stringify({description: prompt, files:{'index.html': html}})});
+          const j = await r.json();
+          if(j.success || j.fileId || j.previewUrl){
+            addMsg(`📦 Sent to Dashboard! <a href="/control-panel.html" target="_blank" style="color:#10b981">Open Dashboard → Pay to unlock & use</a>`, 'bot');
+            meta.textContent='Sent to dashboard — pay to use';
+            setTimeout(()=> window.open('/control-panel.html','_blank'), 800);
+          } else {
+            addMsg('Sent to dashboard — <a href="/control-panel.html" target="_blank">Open Dashboard</a> (pay to use)', 'bot');
+            window.open('/control-panel.html','_blank');
+          }
+        }catch(e){ addMsg('Dashboard error: '+e.message+' — <a href="/control-panel.html" target="_blank">Open Dashboard manually</a>','bot'); }
+        btn.textContent='Sent ✓';
+      });
+    }, 300);
   }catch(e){ addMsg('❌ '+e.message,'bot'); statusEl.textContent='error'; }
   streaming=false; forgeBtn.disabled=false; forgeBtn.textContent='Forge ▶';
 }

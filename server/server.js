@@ -912,7 +912,7 @@ app.use(helmet.contentSecurityPolicy({
       "https://modelviewer.dev",
       "blob:"
     ],
-    imgSrc: ["'self'", "data:", "blob:", "https://*.stripe.com", "https://api.qrserver.com"],
+    imgSrc: ["'self'", "data:", "blob:", "https://*.stripe.com", "https://api.qrserver.com", "https://images.unsplash.com", "https://*.unsplash.com"],
     frameSrc: [
       "'self'",
       "blob:",

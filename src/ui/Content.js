@@ -103,15 +103,15 @@ export const CONTENT = {
   }
 };
 
-/* Section visibility windows — minimal 3 acts + hero */
+/* Section visibility — smooth, overlapping, no snap (world-class) */
 export const SECTION_WINDOWS = {
-  hero: { in: -0.05, out: 0.18 },
-  flagships: { in: 0.18, out: 0.42 },
-  works: { in: 0.43, out: 0.68 },
-  cta: { in: 0.69, out: 0.92 },
-  footer: { in: 0.93 }
+  hero: { in: -0.05, out: 0.28 },
+  flagships: { in: 0.18, out: 0.52 },
+  works: { in: 0.42, out: 0.78 },
+  cta: { in: 0.68, out: 0.98 },
+  footer: { in: 0.92 }
 };
-export const ACT_STARTS = [0, 0.18, 0.43, 0.69];
+export const ACT_STARTS = [0, 0.18, 0.43, 0.68];
 
 export function clamp01(v) {
   return Math.max(0, Math.min(1, v));
@@ -122,9 +122,9 @@ export function smoothstep(edge0, edge1, x) {
   return t * t * (3 - 2 * t);
 }
 
-/* Opacity of a section at scroll progress p. */
+/* Opacity — ultra smooth, no snap */
 export function sectionOpacity(p, win) {
-  const fadeIn = smoothstep(win.in, win.in + 0.045, p);
-  const fadeOut = win.out == null ? 1 : 1 - smoothstep(win.out, win.out + 0.045, p);
+  const fadeIn = smoothstep(win.in, win.in + 0.09, p);
+  const fadeOut = win.out == null ? 1 : 1 - smoothstep(win.out - 0.09, win.out, p);
   return clamp01(Math.min(fadeIn, fadeOut));
 }
