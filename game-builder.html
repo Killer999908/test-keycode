@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root{--void:#030305;--obsidian:#0a0a0f;--graphite:#12121a;--slate:#1a1a24;--surface:#181825;--primary:#6366f1;--primary-glow:#818cf8;--secondary:#ec4899;--accent:#22d3ee;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--white:#fff;--ash:#94a3b8;--glass-border:rgba(255,255,255,0.06)}
+:root{--void:#030305;--obsidian:#0a0a0f;--graphite:#12121a;--slate:#1a1a24;--surface:#181825;--primary:#ffffff;--primary-glow:#818cf8;--secondary:#ec4899;--accent:#22d3ee;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--white:#fff;--ash:#94a3b8;--glass-border:rgba(255,255,255,0.06)}
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Inter',sans-serif;background:var(--void);color:var(--white);overflow-x:hidden;-webkit-font-smoothing:antialiased;min-height:100vh}
 body::-webkit-scrollbar{width:4px}body::-webkit-scrollbar-track{background:var(--void)}body::-webkit-scrollbar-thumb{background:var(--slate);border-radius:4px}
@@ -111,7 +111,7 @@ body::-webkit-scrollbar{width:4px}body::-webkit-scrollbar-track{background:var(-
   <div class="nav-links">
     <a href="/"><i class="fas fa-home"></i> Home</a>
     <a href="/ai-builder.html"><i class="fas fa-robot"></i> AI Builder</a>
-    <a href="/scan-3d.html"><i class="fas fa-camera"></i> 3D Scan</a>
+    <a href="/ai-builder.html?mode=cad"><i class="fas fa-camera"></i> 3D Scan</a>
     <a href="/realtime-builder"><i class="fas fa-bolt"></i> Real-time Builder</a>
     <a href="/dashboard.html" class="dashboard-link"><i class="fas fa-th-large"></i> Dashboard</a>
   </div>
@@ -140,7 +140,7 @@ body::-webkit-scrollbar{width:4px}body::-webkit-scrollbar-track{background:var(-
             </div>
             <div class="form-group">
               <label>Primary</label>
-              <input type="color" id="primaryColor" value="#6366f1" onchange="updatePreview()">
+              <input type="color" id="primaryColor" value="#ffffff" onchange="updatePreview()">
             </div>
           </div>
           <div class="form-group">
@@ -206,13 +206,13 @@ body::-webkit-scrollbar{width:4px}body::-webkit-scrollbar-track{background:var(-
 
 <script>
 var templates = [
-  { id: 'platformer', name: 'Platformer', icon: '🎮', desc: 'Jump & collect', color: '#6366f1' },
+  { id: 'platformer', name: 'Platformer', icon: '🎮', desc: 'Jump & collect', color: '#ffffff' },
   { id: 'shooter', name: 'Shooter', icon: '🎯', desc: 'Aim & destroy', color: '#ef4444' },
   { id: 'runner', name: 'Runner', icon: '🏃', desc: 'Endless run', color: '#10b981' },
   { id: 'puzzle', name: 'Puzzle', icon: '🧩', desc: 'Slide & solve', color: '#f59e0b' },
   { id: 'clicker', name: 'Clicker', icon: '🖱️', desc: 'Tap & earn', color: '#ec4899' },
   { id: 'snake', name: 'Snake', icon: '🐍', desc: 'Classic snake', color: '#22d3ee' },
-  { id: 'breakout', name: 'Breakout', icon: '🧱', desc: 'Brick breaker', color: '#8b5cf6' },
+  { id: 'breakout', name: 'Breakout', icon: '🧱', desc: 'Brick breaker', color: '#a3a3a3' },
   { id: 'space', name: 'Space', icon: '🚀', desc: 'Space shooter', color: '#06b6d4' }
 ];
 
@@ -249,7 +249,7 @@ function generateGameCode(templateId, title, bg, primary, difficulty, player) {
   var diffs = { easy: { speed: 150, spawnRate: 3000, enemies: 2 }, normal: { speed: 250, spawnRate: 2000, enemies: 4 }, hard: { speed: 400, spawnRate: 1000, enemies: 6 } };
   var d = diffs[difficulty] || diffs.normal;
 
-  var config = { title: title || 'My Game', bg: bg || '#0a0a1a', primary: primary || '#6366f1', player: player || 'Player', speed: d.speed, spawnRate: d.spawnRate, enemies: d.enemies };
+  var config = { title: title || 'My Game', bg: bg || '#0a0a1a', primary: primary || '#ffffff', player: player || 'Player', speed: d.speed, spawnRate: d.spawnRate, enemies: d.enemies };
 
   var games = {
     platformer: function(c) { return '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>' + c.title + '</title><script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"><\/script><style>body{margin:0;background:' + c.bg + ';display:flex;justify-content:center;align-items:center;min-height:100vh}canvas{display:block}</style></head><body><div style="position:fixed;top:0;left:0;right:0;z-index:9999;background:#0a0a0a;border-bottom:1px solid rgba(255,255,255,0.08);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;font-family:monospace;font-size:12px;color:#a3a3a3"><span>⚡ SINGLE BUILDER — This page merged into <b style="color:#fff">One AI Builder</b> (does all)</span><a href="/ai-builder.html" style="padding:6px 12px;background:#fff;color:#000;border-radius:8px;text-decoration:none;font-weight:600">Open Single Builder →</a></div><script>setTimeout(()=>location.href="/ai-builder.html",3000);</script><script>var config={type:Phaser.AUTO,width:800,height:500,backgroundColor:"' + c.bg + '",physics:{default:"arcade",arcade:{gravity:{y:300},debug:false}},scene:{preload:function(){this.load.image("star","data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'32\' height=\'32\'><polygon points=\'16,2 20,12 32,12 22,19 26,30 16,24 6,30 10,19 0,12 12,12\' fill=\'%23' + c.primary.slice(1) + '\'/></svg>");this.load.image("player","data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'32\' height=\'32\'><rect width=\'32\' height=\'32\' rx=\'6\' fill=\'%23' + c.primary.slice(1) + '\'/></svg>")},create:function(){var stars=this.physics.add.group();for(var i=0;i<12;i++){var s=stars.create(Phaser.Math.Between(50,750),Phaser.Math.Between(50,400),"star");s.setBounceY(Phaser.Math.FloatBetween(0.4,0.8))}this.player=this.physics.add.sprite(400,400,"player");this.player.setCollideWorldBounds(true);this.cursors=this.input.keyboard.createCursorKeys();this.score=0;this.scoreText=this.add.text(16,16,"Score: 0",{fontSize:"20px",fill:"' + c.primary + '"});this.physics.add.overlap(this.player,stars,function(p,s){s.destroy();this.score+=10;this.scoreText.setText("Score: "+this.score)},null,this)},update:function(){if(this.cursors.left.isDown)this.player.setVelocityX(-' + c.speed + ');else if(this.cursors.right.isDown)this.player.setVelocityX(' + c.speed + ');else this.player.setVelocityX(0);if(this.cursors.up.isDown&&this.player.body.touching.down)this.player.setVelocityY(-350)}}};var game=new Phaser.Game(config);<\/script></body></html>'; },
@@ -351,7 +351,7 @@ function exportGame() {
 
 async function saveGame() {
   var token = localStorage.getItem('keycode_token') || localStorage.getItem('token');
-  if (!token) { window.location.href = 'login.html?redirect=/game-builder.html'; return; }
+  if (!token) { window.location.href = 'login.html?redirect=/ai-builder.html?mode=game'; return; }
   if (!currentGameCode) { showToast('Create a game first!', 'error'); return; }
 
   var title = document.getElementById('gameTitle').value || 'My Game';

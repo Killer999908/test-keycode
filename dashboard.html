@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha384-/o6I2CkkWC//PSjvWC/eYN7l3xM3tJm8ZzVkCOfp//W05QcE3mlGskpoHB6XqI+B" crossorigin="anonymous">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--void:#030305;--obsidian:#0a0a0f;--graphite:#12121a;--slate:#1a1a24;--surface:#181825;--primary:#6366f1;--primary-glow:#818cf8;--secondary:#ec4899;--accent:#22d3ee;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--white:#fff;--pearl:#e2e8f0;--ash:#94a3b8;--silver:#cbd5e1;--glass-border:rgba(255,255,255,0.06);--sidebar-w:260px;--header-h:64px}
+:root{--void:#030305;--obsidian:#0a0a0f;--graphite:#12121a;--slate:#1a1a24;--surface:#181825;--primary:#ffffff;--primary-glow:#818cf8;--secondary:#ec4899;--accent:#22d3ee;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--white:#fff;--pearl:#e2e8f0;--ash:#94a3b8;--silver:#cbd5e1;--glass-border:rgba(255,255,255,0.06);--sidebar-w:260px;--header-h:64px}
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Inter',sans-serif;background:var(--void);color:var(--pearl);overflow-x:hidden}
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--void)}::-webkit-scrollbar-thumb{background:var(--slate);border-radius:4px}::-webkit-scrollbar-thumb:hover{background:var(--ash)}
@@ -238,8 +238,7 @@ tr:hover td{background:rgba(255,255,255,0.015)}
   .bot-panel{width:calc(100vw - 32px);right:16px;bottom:80px;height:50vh}
 }
 </style>
-  <link rel="stylesheet" href="/z-shared.css">
-  </head>
+    </head>
 <body>
   <div id="kc-loader">
     <div id="kc-loader-scene"></div>
@@ -270,8 +269,8 @@ tr:hover td{background:rgba(255,255,255,0.015)}
     <div class="sidebar-label" id="adminLabel" style="display:none">Admin</div>
     <a class="nav-item" id="adminSvcOrders" data-page="service-orders" href="#" style="display:none"><i class="fas fa-clipboard-list"></i><span>Service Orders</span></a>
     <a class="nav-item" href="/ai-builder.html"><i class="fas fa-wand-magic-sparkles"></i><span>AI Builder</span></a>
-    <a class="nav-item" href="/game-builder.html"><i class="fas fa-gamepad"></i><span>Game Builder</span></a>
-    <a class="nav-item" href="/scan-3d.html"><i class="fas fa-camera"></i><span>3D Scanner</span></a>
+    <a class="nav-item" href="/ai-builder.html?mode=game"><i class="fas fa-gamepad"></i><span>Game Builder</span></a>
+    <a class="nav-item" href="/ai-builder.html?mode=cad"><i class="fas fa-camera"></i><span>3D Scanner</span></a>
     <a class="nav-item" href="/shop"><i class="fas fa-store"></i><span>Marketplace</span></a>
     <a class="nav-item" href="#" onclick="logout()"><i class="fas fa-right-from-bracket"></i><span>Logout</span></a>
   </nav>
@@ -299,8 +298,8 @@ tr:hover td{background:rgba(255,255,255,0.015)}
 <div class="page active" id="page-overview">
   <div class="quick-actions">
     <a class="qa-card" href="/ai-builder.html"><div class="qa-icon" style="background:rgba(99,102,241,0.12);color:var(--primary)"><i class="fas fa-wand-magic-sparkles"></i></div><div class="qa-title">AI Builder</div><div class="qa-desc">Generate with AI</div></a>
-    <a class="qa-card" href="/game-builder.html"><div class="qa-icon" style="background:rgba(236,72,153,0.12);color:var(--secondary)"><i class="fas fa-gamepad"></i></div><div class="qa-title">Game Builder</div><div class="qa-desc">Create HTML5 games</div></a>
-    <a class="qa-card" href="/scan-3d.html"><div class="qa-icon" style="background:rgba(6,182,212,0.12);color:#06b6d4"><i class="fas fa-camera"></i></div><div class="qa-title">3D Scanner</div><div class="qa-desc">Scan objects to 3D</div></a>
+    <a class="qa-card" href="/ai-builder.html?mode=game"><div class="qa-icon" style="background:rgba(236,72,153,0.12);color:var(--secondary)"><i class="fas fa-gamepad"></i></div><div class="qa-title">Game Builder</div><div class="qa-desc">Create HTML5 games</div></a>
+    <a class="qa-card" href="/ai-builder.html?mode=cad"><div class="qa-icon" style="background:rgba(6,182,212,0.12);color:#06b6d4"><i class="fas fa-camera"></i></div><div class="qa-title">3D Scanner</div><div class="qa-desc">Scan objects to 3D</div></a>
     <div class="qa-card" onclick="navigate('manufacturing')"><div class="qa-icon" style="background:rgba(245,158,11,0.12);color:var(--warning)"><i class="fas fa-microchip"></i></div><div class="qa-title">Order PCB</div><div class="qa-desc">From your design</div></div>
     <div class="qa-card" onclick="navigate('manufacturing')"><div class="qa-icon" style="background:rgba(16,185,129,0.12);color:var(--success)"><i class="fas fa-cube"></i></div><div class="qa-title">3D Print</div><div class="qa-desc">Order a print</div></div>
     <div class="qa-card" onclick="navigate('products')"><div class="qa-icon" style="background:rgba(236,72,153,0.12);color:var(--secondary)"><i class="fas fa-store"></i></div><div class="qa-title">Products</div><div class="qa-desc">Manage shop</div></div>
@@ -595,7 +594,7 @@ async function loadOverview(){
     var d=await r.json();
     var s=d.stats||{};
     document.getElementById('statsGrid').innerHTML=[
-      {icon:'fas fa-folder',val:s.totalAiProjects||0,label:'AI Projects',color:'#6366f1',trend:'+'+((s.totalAiProjects||0)>0?'1 this week':'0 this week')},
+      {icon:'fas fa-folder',val:s.totalAiProjects||0,label:'AI Projects',color:'#ffffff',trend:'+'+((s.totalAiProjects||0)>0?'1 this week':'0 this week')},
       {icon:'fas fa-box',val:s.totalOrders||0,label:'Orders',color:'#22d3ee',trend:s.totalOrders>0?'Last 30 days':'No orders yet'},
       {icon:'fas fa-industry',val:0,label:'Manufactured',color:'#f59e0b',trend:'Order PCBs & 3D prints'},
       {icon:'fas fa-dollar-sign',val:'$'+(s.totalRevenue||0).toFixed(2),label:'Revenue',color:'#10b981',trend:'From orders & hosting'},
@@ -605,7 +604,7 @@ async function loadOverview(){
     var recentEl=document.getElementById('recentProjects');
     if(projects.length){
       recentEl.innerHTML='<div class="table-wrap"><table><tr><th>Project</th><th>Type</th><th>Actions</th></tr>'+projects.slice(0,5).map(function(p){
-        var t=p.projectType||'website';var tc=t==='pcb'?'#f59e0b':t==='cad'?'#22d3ee':t==='mcu'?'#10b981':'#6366f1';
+        var t=p.projectType||'website';var tc=t==='pcb'?'#f59e0b':t==='cad'?'#22d3ee':t==='mcu'?'#10b981':'#ffffff';
         return '<tr><td style="font-weight:600;color:var(--white)">'+(p.title||'Project')+'</td><td><span class="badge badge-info">'+t+'</span></td><td><div style="display:flex;gap:4px"><a href="/preview/'+(p.fileId||'')+'/" class="badge badge-secondary" style="cursor:pointer;text-decoration:none" target="_blank"><i class="fas fa-eye"></i> View</a>'+(t==='pcb'||t==='circuit'?' <span class="badge badge-warning" style="cursor:pointer" onclick="showMfgOrder(\'pcb\')"><i class="fas fa-microchip"></i> PCB</span>':'')+(t==='cad'?' <span class="badge badge-success" style="cursor:pointer" onclick="showMfgOrder(\'3d\')"><i class="fas fa-cube"></i> 3D</span>':'')+'</div></td></tr>';
       }).join('')+'</table></div>';
     } else {
@@ -616,7 +615,7 @@ async function loadOverview(){
     var feed=document.getElementById('activityFeed').querySelector('.activity-feed');
     if(feed){
       var items=[];
-      if(projects.length)items.push({text:'Generated "'+(projects[0].title||'a project')+'"',time:'Recently',color:'#6366f1'});
+      if(projects.length)items.push({text:'Generated "'+(projects[0].title||'a project')+'"',time:'Recently',color:'#ffffff'});
       items.push({text:'Welcome to KEYCODE Dashboard',time:'Now',color:'#10b981'});
       feed.innerHTML=items.map(function(a){return'<div class="activity-item"><div class="activity-dot" style="background:'+a.color+'"></div><div class="activity-content"><div class="activity-text">'+a.text+'</div><div class="activity-time">'+a.time+'</div></div></div>'}).join('');
     }
@@ -637,7 +636,7 @@ async function loadProjects(){
       return;
     }
     allProjects=data.projects;
-    var colors={website:'#6366f1',cad:'#22d3ee',pcb:'#f59e0b',mcu:'#10b981',other:'#94a3b8'};
+    var colors={website:'#ffffff',cad:'#22d3ee',pcb:'#f59e0b',mcu:'#10b981',other:'#94a3b8'};
     var icons={website:'fas fa-globe',cad:'fas fa-cube',pcb:'fas fa-microchip',mcu:'fas fa-chip',other:'fas fa-file'};
     el.innerHTML='<div class="project-grid">'+data.projects.map(function(p){
       var c=colors[p.type]||'#94a3b8',ic=icons[p.type]||'fas fa-file';

@@ -83,8 +83,7 @@
   }
 }
 </script>
-  <link rel="stylesheet" href="/z-shared.css">
-  </head>
+    </head>
 <body>
   <div id="kc-loader">
     <div id="kc-loader-scene"></div>
@@ -254,10 +253,10 @@
     document.head.appendChild(style);
     window.showToast = function(m, type) {
       type = type || 'info';
-      var colors = {info:'#6366f1',success:'#10b981',error:'#ef4444',warning:'#f59e0b'};
+      var colors = {info:'#ffffff',success:'#10b981',error:'#ef4444',warning:'#f59e0b'};
       var icons = {info:'fa-info-circle',success:'fa-check-circle',error:'fa-exclamation-circle',warning:'fa-exclamation-triangle'};
       var t = document.createElement('div');
-      t.style.cssText = 'padding:12px 16px;border-radius:10px;background:'+(colors[type]||'#6366f1')+';color:#fff;font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px;box-shadow:0 8px 32px rgba(0,0,0,0.4);animation:kcToastIn .3s ease;cursor:pointer';
+      t.style.cssText = 'padding:12px 16px;border-radius:10px;background:'+(colors[type]||'#ffffff')+';color:#fff;font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px;box-shadow:0 8px 32px rgba(0,0,0,0.4);animation:kcToastIn .3s ease;cursor:pointer';
       t.innerHTML = '<i class="fas '+(icons[type]||'fa-info-circle')+'"></i> '+m;
       t.onclick = function(){ t.style.animation='kcToastOut .2s ease';setTimeout(function(){t.remove()},200); };
       c.appendChild(t);

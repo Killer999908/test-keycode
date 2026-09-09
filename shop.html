@@ -16,7 +16,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://js.stripe.com/v3/"></script>
 <style>
-:root { --void:#030305;--obsidian:#0a0a0f;--graphite:#12121a;--slate:#1a1a24;--surface:#181825;--primary:#6366f1;--primary-glow:#818cf8;--secondary:#ec4899;--accent:#22d3ee;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--white:#fff;--pearl:#e2e8f0;--ash:#94a3b8;--glass-border:rgba(255,255,255,0.06); }
+:root { --void:#030305;--obsidian:#0a0a0f;--graphite:#12121a;--slate:#1a1a24;--surface:#181825;--primary:#ffffff;--primary-glow:#818cf8;--secondary:#ec4899;--accent:#22d3ee;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--white:#fff;--pearl:#e2e8f0;--ash:#94a3b8;--glass-border:rgba(255,255,255,0.06); }
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Inter',sans-serif;background:var(--void);color:var(--pearl);min-height:100vh}
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--void)}::-webkit-scrollbar-thumb{background:var(--slate);border-radius:4px}
@@ -121,8 +121,7 @@ header{padding:16px 24px;background:rgba(10,10,15,0.9);backdrop-filter:blur(12px
 .toast.error{border-color:var(--danger);color:var(--danger)}
 @keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
 </style>
-  <link rel="stylesheet" href="/z-shared.css">
-  </head>
+    </head>
 <body>
   <div id="kc-loader">
     <div id="kc-loader-scene"></div>
@@ -340,7 +339,7 @@ function openCheckout(){
   el.innerHTML = '';
   if(stripe){
     try {
-      stripeElements = stripe.elements({ appearance: { theme: 'night', labels: 'floating', variables: { colorPrimary: '#6366f1', colorBackground: '#12121a', colorText: '#e2e8f0', fontFamily: 'Inter, sans-serif', borderRadius: '8px' } } });
+      stripeElements = stripe.elements({ appearance: { theme: 'night', labels: 'floating', variables: { colorPrimary: '#ffffff', colorBackground: '#12121a', colorText: '#e2e8f0', fontFamily: 'Inter, sans-serif', borderRadius: '8px' } } });
       stripePayment = stripeElements.create('payment', { layout: 'tabs' });
       stripePayment.mount('#stripeElement');
     } catch(e){ el.innerHTML = '<p style="color:var(--ash);font-size:12px">Stripe unavailable. Payment will be recorded without processing.</p>'; }

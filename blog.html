@@ -30,7 +30,7 @@
   </script>
 
   <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#6366f1">
+  <meta name="theme-color" content="#ffffff">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="KEYCODE Blog">
@@ -51,7 +51,7 @@
   --bg: #0a0a1a;
   --card: #12122a;
   --card-hover: #181840;
-  --primary: #6366f1;
+  --primary: #ffffff;
   --primary-glow: rgba(99,102,241,0.25);
   --accent: #22d3ee;
   --text: #e2e8f0;
@@ -430,8 +430,7 @@ input{font-family:var(--font)}
   .reader-content{margin:40px auto;padding:0 16px 60px}
 }
 </style>
-  <link rel="stylesheet" href="/z-shared.css">
-  </head>
+    </head>
 <body>
   <div id="kc-loader">
     <div id="kc-loader-scene"></div>
@@ -655,11 +654,11 @@ function formatDate(dateStr) {
 
 function getCategoryColor(cat) {
   var c = (cat || '').toLowerCase();
-  if (c === 'tutorial') return '#6366f1';
+  if (c === 'tutorial') return '#ffffff';
   if (c === 'news') return '#22d3ee';
   if (c === 'guide') return '#10b981';
   if (c === 'release') return '#f59e0b';
-  return '#6366f1';
+  return '#ffffff';
 }
 
 function getInitial(name) {

@@ -17,7 +17,7 @@
       --obsidian: #0a0a0f;
       --graphite: #12121a;
       --slate: #1a1a24;
-      --primary: #6366f1;
+      --primary: #ffffff;
       --primary-glow: #818cf8;
       --secondary: #ec4899;
       --accent: #22d3ee;
@@ -27,7 +27,7 @@
       --white: #ffffff;
       --pearl: #e2e8f0;
       --ash: #d1d5db;
-      --gradient-1: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+      --gradient-1: linear-gradient(135deg, #ffffff 0%, #a3a3a3 50%, #ec4899 100%);
       --font-display: 'Syne', sans-serif;
       --font-body: 'Inter', sans-serif;
     }
@@ -302,8 +302,7 @@
     .skeleton-load { background:linear-gradient(90deg,var(--slate) 25%,var(--graphite) 50%,var(--slate) 75%);background-size:200% 100%;animation:skeleton 1.5s ease-in-out infinite;border-radius:8px;color:transparent!important;user-select:none;pointer-events:none;min-height:20px }
     @keyframes skeleton { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
   </style>
-  <link rel="stylesheet" href="/z-shared.css">
-  </head>
+    </head>
 <body>
   <div id="kc-loader">
     <div id="kc-loader-scene"></div>
@@ -1052,10 +1051,10 @@
     document.head.appendChild(style);
     window.showToast = function(m, type) {
       type = type || 'info';
-      var colors = {info:'#6366f1',success:'#10b981',error:'#ef4444',warning:'#f59e0b'};
+      var colors = {info:'#ffffff',success:'#10b981',error:'#ef4444',warning:'#f59e0b'};
       var icons = {info:'fa-info-circle',success:'fa-check-circle',error:'fa-exclamation-circle',warning:'fa-exclamation-triangle'};
       var t = document.createElement('div');
-      t.style.cssText = 'padding:12px 16px;border-radius:10px;background:'+(colors[type]||'#6366f1')+';color:#fff;font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px;box-shadow:0 8px 32px rgba(0,0,0,0.4);animation:kcToastIn .3s ease;cursor:pointer';
+      t.style.cssText = 'padding:12px 16px;border-radius:10px;background:'+(colors[type]||'#ffffff')+';color:#fff;font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px;box-shadow:0 8px 32px rgba(0,0,0,0.4);animation:kcToastIn .3s ease;cursor:pointer';
       t.innerHTML = '<i class="fas '+(icons[type]||'fa-info-circle')+'"></i> '+m;
       t.onclick = function(){ t.style.animation='kcToastOut .2s ease';setTimeout(function(){t.remove()},200); };
       c.appendChild(t);

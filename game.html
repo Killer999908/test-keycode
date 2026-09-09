@@ -18,7 +18,7 @@
 :root {
   --bg: #0a0a12;
   --surface: rgba(26,26,46,0.9);
-  --primary: #6366f1; --secondary: #22d3ee; --accent: #f59e0b;
+  --primary: #ffffff; --secondary: #22d3ee; --accent: #f59e0b;
   --text: #e2e8f0; --ash: #94a3b8;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -40,7 +40,7 @@ nav {
   gap: 16px;
   z-index: 100;
 }
-nav .logo { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; background: linear-gradient(135deg,#6366f1,#22d3ee); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+nav .logo { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; background: linear-gradient(135deg,#ffffff,#22d3ee); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 nav h1 { font-size: 16px; font-weight: 600; flex: 1; }
 nav a {
   color: var(--ash);
@@ -224,8 +224,7 @@ nav a:hover { background: rgba(99,102,241,0.2); color: white; }
   .game-info { padding: 16px; }
 }
 </style>
-    <link rel="stylesheet" href="/z-shared.css">
-</head>
+    </head>
 <body>
   <div id="kc-loader">
     <div id="kc-loader-scene"></div>
@@ -246,7 +245,7 @@ nav a:hover { background: rgba(99,102,241,0.2); color: white; }
   <span class="logo">KEYCODE</span>
   <h1><i class="fas fa-gamepad" style="color:var(--primary);margin-right:8px;"></i>Game Engine</h1>
   <a href="ai-builder.html"><i class="fas fa-magic"></i> AI Builder</a>
-  <a href="playground.html"><i class="fas fa-terminal"></i> Playground</a>
+  <a href="ai-builder.html?mode=playground"><i class="fas fa-terminal"></i> Playground</a>
   <a href="/"><i class="fas fa-home"></i></a>
 </nav>
 
@@ -256,7 +255,7 @@ nav a:hover { background: rgba(99,102,241,0.2); color: white; }
     <h2>No Game Loaded</h2>
     <p>Generate a game using the AI Builder or load an existing game project. The built-in <strong>Phaser.js</strong> engine is ready — just describe what kind of game you want to build.</p>
     <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
-      <a href="game-builder.html" class="toolbar"><button class="primary"><i class="fas fa-palette"></i> Game Builder</button></a>
+      <a href="ai-builder.html?mode=game" class="toolbar"><button class="primary"><i class="fas fa-palette"></i> Game Builder</button></a>
       <a href="ai-builder.html" class="toolbar"><button class="primary"><i class="fas fa-magic"></i> Create with AI</button></a>
       <button onclick="document.getElementById('gameFileInput').click()" style="padding:10px 22px;background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.2);border-radius:10px;color:var(--text);font-family:'Inter',sans-serif;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:8px"><i class="fas fa-folder-open"></i> Load HTML Game</button>
     </div>

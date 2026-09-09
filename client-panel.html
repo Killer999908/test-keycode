@@ -13,10 +13,10 @@
   <style>
     :root {
       --void: #030305; --obsidian: #0a0a0f; --graphite: #12121a; --slate: #1a1a24;
-      --primary: #6366f1; --primary-glow: #818cf8; --secondary: #ec4899;
+      --primary: #ffffff; --primary-glow: #818cf8; --secondary: #ec4899;
       --accent: #22d3ee; --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
       --white: #ffffff; --ash: #d1d5db;
-      --gradient-1: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+      --gradient-1: linear-gradient(135deg, #ffffff 0%, #a3a3a3 50%, #ec4899 100%);
       --font-display: 'Syne', sans-serif; --font-body: 'Inter', sans-serif;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -108,8 +108,7 @@
     @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     .empty-state { text-align: center; padding: 40px; color: var(--ash); }
   </style>
-  <link rel="stylesheet" href="/z-shared.css">
-  </head>
+    </head>
 <body>
   <div id="kc-loader">
     <div id="kc-loader-scene"></div>
@@ -201,14 +200,14 @@
             <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:var(--ash);font-size:13px">Order ID</span><span id="payOrderId" style="font-size:13px;font-weight:600">-</span></div>
             <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:var(--ash);font-size:13px">Project Type</span><span id="payProjectType" style="font-size:13px">-</span></div>
             <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:var(--ash);font-size:13px">Pricing Tier</span><span id="payTier" style="font-size:13px">-</span></div>
-            <div style="display:flex;justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06)"><span style="font-size:15px;font-weight:600">Total</span><span id="payAmount" style="font-size:18px;font-weight:800;color:#6366f1">₹0</span></div>
+            <div style="display:flex;justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06)"><span style="font-size:15px;font-weight:600">Total</span><span id="payAmount" style="font-size:18px;font-weight:800;color:#ffffff">₹0</span></div>
           </div>
           <div id="paymentActions" style="display:flex;flex-direction:column;gap:8px">
-            <button id="payNowBtn" onclick="processPayment()" class="glow-border-three-d" style="width:100%;padding:14px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;transition:.3s"><i class="fas fa-credit-card"></i> Pay with Razorpay</button>
+            <button id="payNowBtn" onclick="processPayment()" class="glow-border-three-d" style="width:100%;padding:14px;background:linear-gradient(135deg,#ffffff,#a3a3a3);color:white;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;transition:.3s"><i class="fas fa-credit-card"></i> Pay with Razorpay</button>
             <button id="payUpiBtn" onclick="payWithUPI()" style="width:100%;padding:12px;background:rgba(255,255,255,0.05);color:var(--ash);border:1px solid var(--glass-border);border-radius:12px;font-size:13px;cursor:pointer"><i class="fas fa-qrcode"></i> Pay with UPI</button>
           </div>
           <div id="paymentStatus" style="display:none;text-align:center;padding:20px">
-            <div class="spinner" style="width:32px;height:32px;border:3px solid rgba(99,102,241,0.2);border-top-color:#6366f1;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px"></div>
+            <div class="spinner" style="width:32px;height:32px;border:3px solid rgba(99,102,241,0.2);border-top-color:#ffffff;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px"></div>
             <p style="color:var(--ash);font-size:13px">Processing payment...</p>
           </div>
         </div>
@@ -382,7 +381,7 @@
           });
           rzp.open();
         } else if (initRes.gateway === 'upi_qr') {
-          document.getElementById('paymentStatus').innerHTML = '<p style="color:var(--ash);font-size:14px">📱 Pay to UPI ID: <strong>' + initRes.upiId + '</strong></p><p style="color:var(--ash);font-size:12px;margin-top:8px">Amount: ₹' + (initRes.amount / 100).toFixed(2) + '</p><button onclick="confirmPayment(\'' + _payingOrderId + '\',null,null,null,\'upi\')" style="margin-top:12px;padding:10px 24px;background:#6366f1;color:white;border:none;border-radius:8px;cursor:pointer">I\'ve Paid</button>';
+          document.getElementById('paymentStatus').innerHTML = '<p style="color:var(--ash);font-size:14px">📱 Pay to UPI ID: <strong>' + initRes.upiId + '</strong></p><p style="color:var(--ash);font-size:12px;margin-top:8px">Amount: ₹' + (initRes.amount / 100).toFixed(2) + '</p><button onclick="confirmPayment(\'' + _payingOrderId + '\',null,null,null,\'upi\')" style="margin-top:12px;padding:10px 24px;background:#ffffff;color:white;border:none;border-radius:8px;cursor:pointer">I\'ve Paid</button>';
         }
       } catch (err) {
         document.getElementById('paymentActions').style.display = 'flex';
@@ -392,7 +391,7 @@
     }
 
     async function confirmPayment(orderId, paymentId, razorpayOrderId, signature, method) {
-      document.getElementById('paymentStatus').innerHTML = '<div class="spinner" style="width:32px;height:32px;border:3px solid rgba(99,102,241,0.2);border-top-color:#6366f1;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px"></div><p style="color:var(--ash);font-size:13px">Verifying payment...</p>';
+      document.getElementById('paymentStatus').innerHTML = '<div class="spinner" style="width:32px;height:32px;border:3px solid rgba(99,102,241,0.2);border-top-color:#ffffff;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px"></div><p style="color:var(--ash);font-size:13px">Verifying payment...</p>';
 
       try {
         var confirmRes = await api('/orders/' + orderId + '/confirm-payment', {
