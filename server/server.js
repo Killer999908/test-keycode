@@ -2661,6 +2661,42 @@ async function streamFromProviders(prompt, maxTokens, onToken, onProvider) {
         temperature: 0.4, max_tokens: maxTokens, stream: true,
       })
     },
+    { name: 'Mistral', client: mistral, alive: mistral && isProviderAlive('Mistral'),
+      create: () => mistral.chat.completions.create({
+        model: 'codestral-latest',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.4, max_tokens: maxTokens, stream: true,
+      })
+    },
+    { name: 'Ollama', client: true, alive: isProviderAlive('Ollama'),
+      create: async () => {
+        const r = await fetch(OLLAMA_HOST + '/api/chat', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model: OLLAMA_MODEL, messages: [{ role: 'user', content: prompt }], stream: true, options: { num_predict: maxTokens } })
+        });
+        if (!r.ok || !r.body) throw new Error('ollama stream down');
+        const reader = r.body.getReader();
+        const dec = new TextDecoder();
+        let buf = '';
+        async function* gen() {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buf += dec.decode(value, { stream: true });
+            const lines = buf.split('\n');
+            buf = lines.pop();
+            for (const line of lines) {
+              if (!line.trim()) continue;
+              try {
+                const j = JSON.parse(line);
+                if (j.message?.content) yield { choices: [{ delta: { content: j.message.content } }] };
+              } catch {}
+            }
+          }
+        }
+        return gen();
+      }
+    },
   ];
 
   for (const p of providers) {
@@ -2693,6 +2729,19 @@ async function streamFromProviders(prompt, maxTokens, onToken, onProvider) {
       markProviderDead(p.name);
     }
   }
+  // Fallback: non-streaming providers (Cloudflare/Pollinations/etc) via callAI, emitted as live chunks
+  try {
+    onProvider && onProvider('KEYCODE-Swarm');
+    const fb = await callAI(prompt, maxTokens);
+    if (fb && fb.trim().length > 50) {
+      for (let i = 0; i < fb.length; i += 120) {
+        const cont = onToken(fb.slice(i, i + 120), 'KEYCODE-Swarm');
+        if (cont === false) return false;
+        await new Promise(r => setTimeout(r, 15));
+      }
+      return true;
+    }
+  } catch (e) { console.warn('[KEYCODE-Swarm] fallback failed:', e.message); }
   return false;
 }
 
