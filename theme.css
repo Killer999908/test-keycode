@@ -1450,6 +1450,20 @@ th[aria-sort="desc"]::after { content: ' ↓'; opacity: 1; color: var(--kc-accen
   .kc-nav-extra .kc-nav-clock { display: none; }
 }
 
+/* ===== MAX ANIMATION + 3D EVERYWHERE ===== */
+@keyframes kc-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes kc-spin-slow { to { transform: rotate(360deg); } }
+@keyframes kc-pop { from { opacity: 0; transform: scale(0.96) translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes kc-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes kc-border-glow { 0%,100% { box-shadow: 0 0 0 rgba(255,255,255,0); } 50% { box-shadow: 0 0 24px rgba(255,255,255,0.12); } }
+.kc-anim { opacity: 0; }
+.kc-anim.kc-revealed, .kc-anim.kc-float-in { opacity: 1; animation: kc-pop 0.6s cubic-bezier(0.16,1,0.3,1) both; }
+.kc-card, .card, .glass { animation: kc-border-glow 4s ease-in-out infinite; }
+section { perspective: 1200px; }
+h1, h2, h3 { transform-style: preserve-3d; }
+img { transition: transform 0.4s ease, filter 0.4s ease; }
+img:hover { transform: scale(1.03) rotate(0.3deg); }
+
 /* ===== GLOBAL TEXT + FONT ANIMATION (everywhere) ===== */
 @keyframes kc-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 @keyframes kc-gradient { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }

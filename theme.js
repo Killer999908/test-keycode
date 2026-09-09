@@ -1571,6 +1571,39 @@
   }
 
   // ========================================================================
+  // MAX MOTION — 3D tilt + reveal + counters + magnetic
+  // ========================================================================
+  function initMaxMotion() {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var io = new IntersectionObserver(function(es) {
+      es.forEach(function(e) { if (e.isIntersecting) { e.target.classList.add('kc-revealed', 'kc-float-in'); io.unobserve(e.target); } });
+    }, { threshold: 0.12 });
+    document.querySelectorAll('.kc-card, .card, .glass, section > div, article, .product-card, .work-card').forEach(function(el) {
+      el.classList.add('kc-anim');
+      io.observe(el);
+    });
+    document.querySelectorAll('.kc-card, .card, .glass, .product-card').forEach(function(card) {
+      card.style.transformStyle = 'preserve-3d';
+      card.addEventListener('mousemove', function(e) {
+        var r = card.getBoundingClientRect();
+        var x = ((e.clientX - r.left) / r.width - 0.5) * 10;
+        var y = ((e.clientY - r.top) / r.height - 0.5) * -10;
+        card.style.transform = 'perspective(900px) rotateX(' + y.toFixed(2) + 'deg) rotateY(' + x.toFixed(2) + 'deg) translateY(-3px)';
+      });
+      card.addEventListener('mouseleave', function() { card.style.transform = ''; });
+    });
+    document.querySelectorAll('.btn, .kc-btn, button').forEach(function(b) {
+      b.addEventListener('mousemove', function(e) {
+        var r = b.getBoundingClientRect();
+        var x = (e.clientX - r.left - r.width / 2) * 0.12;
+        var y = (e.clientY - r.top - r.height / 2) * 0.18;
+        b.style.transform = 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px)';
+      });
+      b.addEventListener('mouseleave', function() { b.style.transform = ''; });
+    });
+  }
+
+  // ========================================================================
   // DOWNLOAD TRACKER
   // ========================================================================
   function initDownloadTracking() {
@@ -1717,6 +1750,7 @@
     // non-auth features
     initParticles();
     initParallax();
+    initMaxMotion();
 
     applyThemeOverrides();
 
