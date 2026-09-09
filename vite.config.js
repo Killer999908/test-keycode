@@ -9,9 +9,11 @@ export default defineConfig({
     outDir: 'dist',
     assetsDir: 'assets',
     minify: 'esbuild',
+    sourcemap: false,
     cssCodeSplit: true,
     cssMinify: true,
     chunkSizeWarningLimit: 600,
+    esbuild: { drop: ['console', 'debugger'] },
     rollupOptions: {
       output: {
         manualChunks: {
