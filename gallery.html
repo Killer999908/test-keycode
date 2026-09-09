@@ -526,7 +526,8 @@
 
       function showError(msg) {
         stateContainer.style.display = 'flex';
-        stateContainer.innerHTML = '<i class="fas fa-exclamation-triangle"></i><h3>Failed to load projects</h3><p>' + (msg || 'An unexpected error occurred. Please try again.') + '</p><button class="retry-btn" onclick="window.__galleryFetch()"><i class="fas fa-sync-alt"></i> Retry</button>';
+        stateContainer.innerHTML = '<i class="fas fa-exclamation-triangle"></i><h3>Failed to load projects</h3><p></p><button class="retry-btn" onclick="window.__galleryFetch()"><i class="fas fa-sync-alt"></i> Retry</button>';
+        stateContainer.querySelector('p').textContent = (msg || 'An unexpected error occurred. Please try again.');
         projectGrid.innerHTML = '';
         resultCount.textContent = '';
       }

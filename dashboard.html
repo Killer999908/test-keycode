@@ -985,13 +985,13 @@ function toggleBot(){document.getElementById('botPanel').classList.toggle('open'
 async function sendBot(){
   var inp=document.getElementById('botInput');var msg=inp.value.trim();if(!msg)return;inp.value='';
   var msgs=document.getElementById('botMsgs');
-  msgs.innerHTML+='<div class="bot-msg outgoing">'+msg+'</div>';
-  msgs.innerHTML+='<div class="bot-msg incoming" id="botThink"><i class="fas fa-spinner fa-spin"></i> Thinking...</div>';
+  var out=document.createElement('div'); out.className='bot-msg outgoing'; out.textContent=msg; msgs.appendChild(out);
+  msgs.insertAdjacentHTML('beforeend','<div class="bot-msg incoming" id="botThink"><i class="fas fa-spinner fa-spin"></i> Thinking...</div>');
   msgs.scrollTop=msgs.scrollHeight;
   try{
     var r=await fetch('/api/ai/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:[{role:'user',content:msg}]})});
     var data=await r.json();var think=document.getElementById('botThink');
-    if(think)think.outerHTML='<div class="bot-msg incoming">'+(data.response||data.reply||data.message||'I can help with your projects and orders!')+'</div>';
+    if(think){ var rep=document.createElement('div'); rep.className='bot-msg incoming'; rep.textContent=(data.response||data.reply||data.message||'I can help with your projects and orders!'); think.replaceWith(rep); }
   }catch(e){var el=document.getElementById('botThink');if(el)el.outerHTML='<div class="bot-msg incoming">Sorry, connection issue. Try again!</div>'}
   msgs.scrollTop=msgs.scrollHeight;
 }

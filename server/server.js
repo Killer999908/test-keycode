@@ -6796,7 +6796,7 @@ function generateFallbackCode(projectType, features, pages, designLevel) {
   ${features.includes('chat') ? `
   <script>
     function toggleChat() { document.getElementById('chatWindow').classList.toggle('show'); }
-    function sendChat() { const input = document.getElementById('chatInput'); const msg = input.value.trim(); if (msg) { document.getElementById('chatMessages').innerHTML += '<div style="padding:8px 12px;background:#6366f1;border-radius:8px;margin:5px 0;color:#fff;">' + msg + '</div>'; input.value = ''; } }
+    function sendChat() { const input = document.getElementById('chatInput'); const msg = input.value.trim(); if (msg) { var d = document.createElement('div'); d.setAttribute('style','padding:8px 12px;background:#6366f1;border-radius:8px;margin:5px 0;color:#fff;'); d.textContent = msg; document.getElementById('chatMessages').appendChild(d); input.value = ''; } }
   </script>` : ''}
 </body>
 </html>`;

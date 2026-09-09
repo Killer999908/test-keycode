@@ -1,4 +1,4 @@
-const CACHE = 'keycode-v8';
+const CACHE = 'keycode-v9';
 const PRECACHE = [
   '/',
   '/offline.html',
@@ -6,15 +6,8 @@ const PRECACHE = [
   '/favicon.png',
   '/icon-192.png',
   '/icon-512.png',
-  '/z-alche.css',
-  '/z-shared.css',
-  '/index.css',
-  '/fontawesome.min.css',
-  '/three.min.js',
-  '/3d-scroll.js',
-  '/js/site.js',
-  '/js/effects.js',
-  '/js/scroll-3d-animations.js',
+  '/theme.css',
+  '/theme.js',
   '/gallery.html',
   '/pricing.html',
   '/blog.html',
@@ -23,8 +16,9 @@ const PRECACHE = [
   '/status.html',
   '/support.html',
   '/rss.xml',
-  '/og-image.png',
-  '/sitemap.xml'
+  '/og-image.svg',
+  '/sitemap.xml',
+  '/manifest.json'
 ];
 
 const OFFLINE_RESPONSE = new Response(

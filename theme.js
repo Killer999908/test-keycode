@@ -404,7 +404,8 @@
     var icons = { info: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>', success: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>', warning: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>', danger: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>' };
     var toast = document.createElement('div');
     toast.className = 'kc-toast kc-toast-' + type;
-    toast.innerHTML = '<span class="kc-toast-icon">' + (icons[type] || icons.info) + '</span><span class="kc-toast-msg">' + message + '</span><button class="kc-toast-close" aria-label="Dismiss">&times;</button>';
+    toast.innerHTML = '<span class="kc-toast-icon">' + (icons[type] || icons.info) + '</span><span class="kc-toast-msg"></span><button class="kc-toast-close" aria-label="Dismiss">&times;</button>';
+    toast.querySelector('.kc-toast-msg').textContent = message;
     container.appendChild(toast);
     requestAnimationFrame(function() { toast.classList.add('kc-toast-show'); });
     var timer = setTimeout(function() { dismiss(toast); }, 5000);
@@ -1374,7 +1375,10 @@
     ];
     var related = pages.filter(function(p) { return topics.some(function(t) { return p.tags.indexOf(t) !== -1; }); }).slice(0, 3);
     if (related.length === 0) { container.style.display = 'none'; return; }
-    container.innerHTML = '<h3 class="kc-related-title">Related Content</h3><div class="kc-related-grid">' + related.map(function(p) { return '<a href="' + p.url + '" class="kc-related-card"><span class="kc-related-name">' + p.name + '</span></a>'; }).join('') + '</div>';
+    container.textContent = '';
+    var rh = document.createElement('h3'); rh.className = 'kc-related-title'; rh.textContent = 'Related Content'; container.appendChild(rh);
+    var grid = document.createElement('div'); grid.className = 'kc-related-grid'; container.appendChild(grid);
+    related.forEach(function(p) { var a = document.createElement('a'); a.href = p.url; a.className = 'kc-related-card'; var s = document.createElement('span'); s.className = 'kc-related-name'; s.textContent = p.name; a.appendChild(s); grid.appendChild(a); });
   }
 
   // ========================================================================

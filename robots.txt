@@ -1,3 +1,8 @@
 User-agent: *
 Allow: /
-Sitemap: https://keycode-studio-production.up.railway.app/sitemap.xml
+Disallow: /admin-*.html
+Disallow: /control-panel.html
+Disallow: /dashboard.html
+Disallow: /api-keys.html
+Disallow: /api/
+Sitemap: https://keycode.studio/sitemap.xml

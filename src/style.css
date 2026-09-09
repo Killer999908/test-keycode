@@ -52,8 +52,7 @@ body {
   color: var(--ink);
   background: var(--bg);
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  min-height: 500vh;
+  min-height: 400vh;
   font-size: 16px;
   line-height: 1.6;
   text-rendering: optimizeLegibility;

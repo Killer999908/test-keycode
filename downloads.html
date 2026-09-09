@@ -925,7 +925,10 @@
       var el = document.createElement('div');
       el.className = 'toast ' + (type || 'info');
       var iconMap = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle' };
-      el.innerHTML = '<i class="fas ' + (iconMap[type] || iconMap.info) + '"></i> ' + msg;
+      var ic = document.createElement('i');
+      ic.className = 'fas ' + (iconMap[type] || iconMap.info);
+      el.appendChild(ic);
+      el.appendChild(document.createTextNode(' ' + String(msg || '')));
       toastContainer.appendChild(el);
       setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 3000);
     }
