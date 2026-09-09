@@ -95,6 +95,8 @@ console.log('  Gemini:', (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_K
   console.log('  Nebius:', process.env.NEBIUS_API_KEY ? 'key set' : '❌ missing');
   console.log('  Cohere:', process.env.COHERE_API_KEY ? 'key set' : '❌ missing');
   console.log('  Pollinations: ✅ always-on (no key)');
+  console.log('  Ollama:', (process.env.OLLAMA_MODEL || 'llama3.2:1b') + ' @ ' + (process.env.OLLAMA_HOST || 'http://localhost:11434'));
+  console.log('  GitHubModels:', process.env.GITHUB_TOKEN ? 'key set' : '❌ missing (free: github.com/settings/tokens)');
 console.log('--------------------------');
 
 // ===== SECURITY STARTUP VALIDATION =====
@@ -918,6 +920,7 @@ app.use(helmet.contentSecurityPolicy({
       "https://api.studio.nebius.com",
       "https://api.cohere.com",
       "https://text.pollinations.ai",
+      "https://duckduckgo.com",
       "https://js.stripe.com",
       "https://api.stripe.com",
       "https://api.razorpay.com",
@@ -2453,6 +2456,14 @@ const nebius = process.env.NEBIUS_API_KEY ? new OpenAI({
 // Cohere (FREE trial key, native API via fetch)
 const cohereKey = process.env.COHERE_API_KEY || "";
 // Pollinations.ai (100% FREE, no key, OpenAI-compatible) — always on
+// GitHub Models (FREE for all GitHub users with PAT, generous limits)
+const githubModels = process.env.GITHUB_TOKEN ? new OpenAI({
+  apiKey: process.env.GITHUB_TOKEN,
+  baseURL: "https://models.github.ai/inference"
+}) : null;
+// Ollama local (100% FREE, private, no key — auto-detects localhost:11434)
+const OLLAMA_HOST = process.env.OLLAMA_HOST || "http://localhost:11434";
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "llama3.2:1b";
 
 // Background provider health check — marks dead providers so callAI skips them
 (async function warmProviderHealth() {
@@ -2475,6 +2486,8 @@ const cohereKey = process.env.COHERE_API_KEY || "";
   if (nebius) checks.push(checkAndMark('Nebius', () => nebius.chat.completions.create({ model: 'meta-llama/Meta-Llama-3.1-8B-Instruct', messages: [{ role: 'user', content: testPrompt }], max_tokens: 5 })));
   if (cohereKey) checks.push(checkAndMark('Cohere', () => fetch('https://api.cohere.com/v2/chat', { method: 'POST', headers: { 'Authorization': 'Bearer ' + cohereKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'command-r7b-12-2024', messages: [{ role: 'user', content: testPrompt }], max_tokens: 5 }) }).then(r => { if (!r.ok) throw new Error(); return r.json(); }).then(d => { if (!d?.message?.content?.[0]?.text) throw new Error(); return d.message.content[0].text; })));
   checks.push(checkAndMark('Pollinations', () => { const k = process.env.POLLINATIONS_API_KEY || ""; const h = { 'Content-Type': 'application/json' }; if (k) h['Authorization'] = 'Bearer ' + k; return fetch('https://text.pollinations.ai/openai', { method: 'POST', headers: h, body: JSON.stringify({ model: 'openai', messages: [{ role: 'user', content: 'hi' }], max_tokens: 5 }) }).then(r => { if (!r.ok) throw new Error(); return r.json(); }).then(d => { if (!d?.choices?.[0]?.message?.content) throw new Error(); return d.choices[0].message.content; }); }));
+  if (githubModels) checks.push(checkAndMark('GitHubModels', () => githubModels.chat.completions.create({ model: 'openai/gpt-4o-mini', messages: [{ role: 'user', content: testPrompt }], max_tokens: 5 })));
+  checks.push(checkAndMark('Ollama', () => fetch(OLLAMA_HOST + '/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: OLLAMA_MODEL, messages: [{ role: 'user', content: testPrompt }], stream: false }) }).then(r => { if (!r.ok) throw new Error(); return r.json(); }).then(d => { if (!d?.message?.content) throw new Error(); return d.message.content; })));
   await Promise.allSettled(checks);
   const alive = Object.entries(providerHealth).filter(([_, h]) => h.alive).map(([n]) => n);
   if (alive.length) console.log('✅ Warm providers:', alive.join(', '));
@@ -2540,6 +2553,8 @@ async function callAI(prompt, maxTokens) {
   if (nebius && isProviderAlive('Nebius')) candidates.push(tryModel({ client: nebius, name: 'Nebius', model: 'meta-llama/Meta-Llama-3.1-8B-Instruct', base: 'https://api.studio.nebius.com/v1' }, prompt, maxTokens));
   if (cohereKey && isProviderAlive('Cohere')) candidates.push(tryCohere(prompt, cohereKey, maxTokens));
   if (isProviderAlive('Pollinations')) candidates.push(tryPollinations(prompt, maxTokens));
+  if (githubModels && isProviderAlive('GitHubModels')) candidates.push(tryModel({ client: githubModels, name: 'GitHubModels', model: 'openai/gpt-4o-mini', base: 'https://models.github.ai/inference' }, prompt, maxTokens));
+  if (isProviderAlive('Ollama')) candidates.push(tryOllama(prompt, maxTokens));
 
   // Race — first success wins
   while (candidates.length > 0) {
@@ -2791,6 +2806,20 @@ async function tryPollinations(prompt, maxTokens) {
     ]);
     if (r.ok) { const d = await r.json(); const c = d?.choices?.[0]?.message?.content; if (c && c.trim().length > 5) { markProviderAlive('Pollinations'); return c.slice(0, maxTokens ? maxTokens * 4 : 8000); } }
   } catch(e) { markProviderDead('Pollinations'); }
+  return null;
+}
+
+async function tryOllama(prompt, maxTokens) {
+  try {
+    const r = await Promise.race([
+      fetch(OLLAMA_HOST + '/api/chat', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: OLLAMA_MODEL, messages: [{ role: 'user', content: prompt.slice(0, 4000) }], stream: false, options: { num_predict: maxTokens || 2048 } })
+      }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), AI_TIMEOUT))
+    ]);
+    if (r.ok) { const d = await r.json(); const c = d?.message?.content; if (c && c.trim().length > 5) { markProviderAlive('Ollama'); return c; } }
+  } catch(e) { markProviderDead('Ollama'); }
   return null;
 }
 
@@ -4217,6 +4246,8 @@ app.get("/api/services/providers", (req, res) => {
     { id: 'fireworks', name: 'Fireworks AI', category: 'ai', icon: 'fa-fire', status: aiStatus(process.env.FIREWORKS_API_KEY), desc: 'Fast serverless inference', limit: 'Free trial', env: ['FIREWORKS_API_KEY'] },
     { id: 'nebius', name: 'Nebius Studio', category: 'ai', icon: 'fa-star', status: aiStatus(process.env.NEBIUS_API_KEY), desc: 'Full-stack AI cloud', limit: 'Free trial', env: ['NEBIUS_API_KEY'] },
     { id: 'cohere', name: 'Cohere', category: 'ai', icon: 'fa-message', status: aiStatus(process.env.COHERE_API_KEY), desc: 'Command R chat models', limit: 'Free trial', env: ['COHERE_API_KEY'] },
+    { id: 'ollama', name: 'Ollama Local', category: 'ai', icon: 'fa-server', status: 'online', desc: 'Private local LLM, unlimited', limit: 'Free unlimited', env: ['OLLAMA_HOST', 'OLLAMA_MODEL'] },
+    { id: 'github-models', name: 'GitHub Models', category: 'ai', icon: 'fa-github', status: aiStatus(process.env.GITHUB_TOKEN), desc: 'Free GPT-4o-mini for GitHub users', limit: 'Free generous', env: ['GITHUB_TOKEN'] },
     { id: 'vercel', name: 'Vercel', category: 'hosting', icon: 'fa-bolt', status: process.env.VERCEL_TOKEN && !process.env.VERCEL_TOKEN.includes('your_') ? 'online' : 'not_configured', desc: 'Deploy websites to vercel.app', limit: '100K visits/mo (free)', env: ['VERCEL_TOKEN'] },
     { id: 'cloudflare-pages', name: 'Cloudflare Pages', category: 'hosting', icon: 'fa-cloud', status: process.env.CLOUDFLARE_API_TOKEN && process.env.CLOUDFLARE_ACCOUNT_ID ? 'online' : 'not_configured', desc: 'Deploy websites to pages.dev', limit: 'Unlimited bandwidth (free)', env: ['CLOUDFLARE_API_TOKEN', 'CLOUDFLARE_ACCOUNT_ID'] },
     { id: 'digitalocean', name: 'DigitalOcean', category: 'hosting', icon: 'fa-droplet', status: process.env.DO_API_TOKEN && !process.env.DO_API_TOKEN.includes('your_') ? 'configured' : 'not_configured', desc: 'Provision cloud droplets', limit: 'Free credit with referral', env: ['DO_API_TOKEN'] },
@@ -10733,6 +10764,8 @@ app.get("/api/ai/providers", async (req, res) => {
     checkProvider("Nebius", async () => nebius ? (await nebius.chat.completions.create({ model: "meta-llama/Meta-Llama-3.1-8B-Instruct", messages: [{ role: "user", content: testPrompt }], max_tokens: 10 }))?.choices?.[0]?.message?.content : null),
     checkProvider("Cohere", async () => { if (!cohereKey) return null; const r = await fetch('https://api.cohere.com/v2/chat', { method: 'POST', headers: { 'Authorization': 'Bearer ' + cohereKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'command-r7b-12-2024', messages: [{ role: 'user', content: testPrompt }], max_tokens: 10 }) }); if (!r.ok) throw new Error(await r.text()); const d = await r.json(); return d?.message?.content?.[0]?.text; }),
     checkProvider("Pollinations", async () => { const k = process.env.POLLINATIONS_API_KEY || ""; const h = { 'Content-Type': 'application/json' }; if (k) h['Authorization'] = 'Bearer ' + k; const r = await fetch('https://text.pollinations.ai/openai', { method: 'POST', headers: h, body: JSON.stringify({ model: 'openai', messages: [{ role: 'user', content: 'hi' }], max_tokens: 10 }) }); if (!r.ok) throw new Error(await r.text()); const d = await r.json(); return d?.choices?.[0]?.message?.content; }),
+    checkProvider("GitHubModels", async () => githubModels ? (await githubModels.chat.completions.create({ model: "openai/gpt-4o-mini", messages: [{ role: "user", content: testPrompt }], max_tokens: 10 }))?.choices?.[0]?.message?.content : null),
+    checkProvider("Ollama", async () => { const r = await fetch(OLLAMA_HOST + '/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: OLLAMA_MODEL, messages: [{ role: 'user', content: 'hi' }], stream: false }) }); if (!r.ok) throw new Error('ollama down'); const d = await r.json(); return d?.message?.content; }),
   ]);
 
   res.json({ success: true, providers, total: providers.length, online: providers.filter(p => p.status === "online").length, timestamp: new Date().toISOString() });
