@@ -1449,3 +1449,17 @@ th[aria-sort="desc"]::after { content: ' ↓'; opacity: 1; color: var(--kc-accen
   .kc-toc { display: none; }
   .kc-nav-extra .kc-nav-clock { display: none; }
 }
+
+/* ===== GLOBAL TEXT + FONT ANIMATION (everywhere) ===== */
+@keyframes kc-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes kc-gradient { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+@keyframes kc-glow { 0%,100% { text-shadow: 0 0 0 rgba(255,255,255,0); } 50% { text-shadow: 0 0 18px rgba(255,255,255,0.25); } }
+h1, h2 { animation: kc-rise 0.7s cubic-bezier(0.16,1,0.3,1) both; letter-spacing: -0.02em; text-wrap: balance; }
+h3, h4 { animation: kc-rise 0.6s cubic-bezier(0.16,1,0.3,1) both; }
+p, li { animation: kc-rise 0.5s ease both; }
+a { transition: color 0.2s, opacity 0.2s, transform 0.2s; }
+a:hover { animation: kc-glow 1.2s ease infinite; }
+button, .btn, .kc-btn { transition: transform 0.2s, box-shadow 0.2s, background 0.2s; }
+button:hover, .btn:hover, .kc-btn:hover { transform: translateY(-1px); }
+.kc-section-title, .kc-page h1:first-child { background: linear-gradient(90deg,#fff,#a3a3a3,#fff); background-size: 200% auto; -webkit-background-clip: text; background-clip: text; color: transparent; animation: kc-gradient 6s linear infinite, kc-rise 0.7s ease both; }
+@media (prefers-reduced-motion: reduce) { h1,h2,h3,h4,p,li,a { animation: none !important; } }
