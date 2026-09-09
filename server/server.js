@@ -88,6 +88,13 @@ console.log('  HuggingFace:', (process.env.HUGGINGFACE_TOKEN || process.env.HF_T
 console.log('  Gemini:', (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY) ? 'key set' : '❌ missing');
   console.log('  Cloudflare:', (process.env.CLOUDFLARE_ACCOUNT_ID && process.env.CLOUDFLARE_API_TOKEN) ? 'configured' : '❌ missing');
   console.log('  DeepInfra:', process.env.DEEPINFRA_API_KEY ? 'key set' : '❌ missing');
+  console.log('  Cerebras:', process.env.CEREBRAS_API_KEY ? 'key set' : '❌ missing');
+  console.log('  SambaNova:', process.env.SAMBANOVA_API_KEY ? 'key set' : '❌ missing');
+  console.log('  Together:', process.env.TOGETHER_API_KEY ? 'key set' : '❌ missing');
+  console.log('  Fireworks:', process.env.FIREWORKS_API_KEY ? 'key set' : '❌ missing');
+  console.log('  Nebius:', process.env.NEBIUS_API_KEY ? 'key set' : '❌ missing');
+  console.log('  Cohere:', process.env.COHERE_API_KEY ? 'key set' : '❌ missing');
+  console.log('  Pollinations: ✅ always-on (no key)');
 console.log('--------------------------');
 
 // ===== SECURITY STARTUP VALIDATION =====
@@ -904,6 +911,13 @@ app.use(helmet.contentSecurityPolicy({
       "https://api.cloudflare.com",
       "https://challenges.cloudflare.com",
       "https://api.deepinfra.com",
+      "https://api.cerebras.ai",
+      "https://api.sambanova.ai",
+      "https://api.together.xyz",
+      "https://api.fireworks.ai",
+      "https://api.studio.nebius.com",
+      "https://api.cohere.com",
+      "https://text.pollinations.ai",
       "https://js.stripe.com",
       "https://api.stripe.com",
       "https://api.razorpay.com",
@@ -2406,6 +2420,40 @@ const deepinfra = process.env.DEEPINFRA_API_KEY ? new OpenAI({
   baseURL: "https://api.deepinfra.com/v1/openai"
 }) : null;
 
+// Cerebras (FREE tier, OpenAI-compatible, ultra-fast)
+const cerebras = process.env.CEREBRAS_API_KEY ? new OpenAI({
+  apiKey: process.env.CEREBRAS_API_KEY,
+  baseURL: "https://api.cerebras.ai/v1"
+}) : null;
+
+// SambaNova Cloud (FREE tier, OpenAI-compatible)
+const sambanova = process.env.SAMBANOVA_API_KEY ? new OpenAI({
+  apiKey: process.env.SAMBANOVA_API_KEY,
+  baseURL: "https://api.sambanova.ai/v1"
+}) : null;
+
+// Together AI (FREE $1 credit, OpenAI-compatible)
+const together = process.env.TOGETHER_API_KEY ? new OpenAI({
+  apiKey: process.env.TOGETHER_API_KEY,
+  baseURL: "https://api.together.xyz/v1"
+}) : null;
+
+// Fireworks AI (FREE trial, OpenAI-compatible)
+const fireworks = process.env.FIREWORKS_API_KEY ? new OpenAI({
+  apiKey: process.env.FIREWORKS_API_KEY,
+  baseURL: "https://api.fireworks.ai/inference/v1"
+}) : null;
+
+// Nebius AI Studio (FREE trial, OpenAI-compatible)
+const nebius = process.env.NEBIUS_API_KEY ? new OpenAI({
+  apiKey: process.env.NEBIUS_API_KEY,
+  baseURL: "https://api.studio.nebius.com/v1"
+}) : null;
+
+// Cohere (FREE trial key, native API via fetch)
+const cohereKey = process.env.COHERE_API_KEY || "";
+// Pollinations.ai (100% FREE, no key, OpenAI-compatible) — always on
+
 // Background provider health check — marks dead providers so callAI skips them
 (async function warmProviderHealth() {
   const testPrompt = "Say 'ok'";
@@ -2420,6 +2468,13 @@ const deepinfra = process.env.DEEPINFRA_API_KEY ? new OpenAI({
   if (process.env.HUGGINGFACE_TOKEN || process.env.HF_TOKEN) checks.push(checkAndMark('HuggingFace', () => fetch('https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.3/v1/chat/completions', { method: 'POST', headers: { 'Authorization': 'Bearer ' + (process.env.HUGGINGFACE_TOKEN || process.env.HF_TOKEN), 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'mistralai/Mistral-7B-Instruct-v0.3', messages: [{ role: 'user', content: testPrompt }], max_tokens: 5 }) }).then(r => { if (!r.ok) throw new Error(); return r.json(); }).then(d => { if (!d?.choices?.[0]?.message?.content) throw new Error(); return d.choices[0].message.content; })));
   if (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY) checks.push(checkAndMark('Gemini', () => fetch('https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=' + (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: testPrompt }] }], generationConfig: { maxOutputTokens: 5 } }) }).then(r => { if (!r.ok) throw new Error(); return r.json(); }).then(d => { if (!d?.candidates?.[0]?.content?.parts?.[0]?.text) throw new Error(); return d.candidates[0].content.parts[0].text; })));
   if (deepinfra) checks.push(checkAndMark('DeepInfra', () => deepinfra.chat.completions.create({ model: 'meta-llama/Llama-3.3-70B-Instruct-Turbo', messages: [{ role: 'user', content: testPrompt }], max_tokens: 5 })));
+  if (cerebras) checks.push(checkAndMark('Cerebras', () => cerebras.chat.completions.create({ model: 'llama3.1-8b', messages: [{ role: 'user', content: testPrompt }], max_tokens: 5 })));
+  if (sambanova) checks.push(checkAndMark('SambaNova', () => sambanova.chat.completions.create({ model: 'Meta-Llama-3.1-8B-Instruct', messages: [{ role: 'user', content: testPrompt }], max_tokens: 5 })));
+  if (together) checks.push(checkAndMark('Together', () => together.chat.completions.create({ model: 'meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo', messages: [{ role: 'user', content: testPrompt }], max_tokens: 5 })));
+  if (fireworks) checks.push(checkAndMark('Fireworks', () => fireworks.chat.completions.create({ model: 'accounts/fireworks/models/llama-v3p1-8b-instruct', messages: [{ role: 'user', content: testPrompt }], max_tokens: 5 })));
+  if (nebius) checks.push(checkAndMark('Nebius', () => nebius.chat.completions.create({ model: 'meta-llama/Meta-Llama-3.1-8B-Instruct', messages: [{ role: 'user', content: testPrompt }], max_tokens: 5 })));
+  if (cohereKey) checks.push(checkAndMark('Cohere', () => fetch('https://api.cohere.com/v2/chat', { method: 'POST', headers: { 'Authorization': 'Bearer ' + cohereKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'command-r7b-12-2024', messages: [{ role: 'user', content: testPrompt }], max_tokens: 5 }) }).then(r => { if (!r.ok) throw new Error(); return r.json(); }).then(d => { if (!d?.message?.content?.[0]?.text) throw new Error(); return d.message.content[0].text; })));
+  checks.push(checkAndMark('Pollinations', () => fetch('https://text.pollinations.ai/' + encodeURIComponent(testPrompt), { signal: AbortSignal.timeout(15000) }).then(r => { if (!r.ok) throw new Error(); return r.text(); }).then(t => { if (!t || !t.trim()) throw new Error(); return t.slice(0, 200); })));
   await Promise.allSettled(checks);
   const alive = Object.entries(providerHealth).filter(([_, h]) => h.alive).map(([n]) => n);
   if (alive.length) console.log('✅ Warm providers:', alive.join(', '));
@@ -2478,6 +2533,13 @@ async function callAI(prompt, maxTokens) {
   if (cfAcc && cfTok && isProviderAlive('CloudflareDeepSeek')) candidates.push(tryCloudflareModel(cfAcc, cfTok, '@cf/deepseek-ai/deepseek-r1-distill-qwen-32b', prompt, maxTokens));
   if (hfToken && isProviderAlive('HuggingFace')) candidates.push(tryHuggingFace(hfToken, prompt, maxTokens));
   if (deepinfra && isProviderAlive('DeepInfra')) candidates.push(tryModel({ client: deepinfra, name: 'DeepInfra', model: 'meta-llama/Llama-3.3-70B-Instruct-Turbo', base: 'https://api.deepinfra.com/v1/openai' }, prompt, maxTokens));
+  if (cerebras && isProviderAlive('Cerebras')) candidates.push(tryModel({ client: cerebras, name: 'Cerebras', model: 'llama3.1-8b', base: 'https://api.cerebras.ai/v1' }, prompt, maxTokens));
+  if (sambanova && isProviderAlive('SambaNova')) candidates.push(tryModel({ client: sambanova, name: 'SambaNova', model: 'Meta-Llama-3.1-8B-Instruct', base: 'https://api.sambanova.ai/v1' }, prompt, maxTokens));
+  if (together && isProviderAlive('Together')) candidates.push(tryModel({ client: together, name: 'Together', model: 'meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo', base: 'https://api.together.xyz/v1' }, prompt, maxTokens));
+  if (fireworks && isProviderAlive('Fireworks')) candidates.push(tryModel({ client: fireworks, name: 'Fireworks', model: 'accounts/fireworks/models/llama-v3p1-8b-instruct', base: 'https://api.fireworks.ai/inference/v1' }, prompt, maxTokens));
+  if (nebius && isProviderAlive('Nebius')) candidates.push(tryModel({ client: nebius, name: 'Nebius', model: 'meta-llama/Meta-Llama-3.1-8B-Instruct', base: 'https://api.studio.nebius.com/v1' }, prompt, maxTokens));
+  if (cohereKey && isProviderAlive('Cohere')) candidates.push(tryCohere(prompt, cohereKey, maxTokens));
+  if (isProviderAlive('Pollinations')) candidates.push(tryPollinations(prompt, maxTokens));
 
   // Race — first success wins
   while (candidates.length > 0) {
@@ -2698,6 +2760,31 @@ async function tryHuggingFace(token, prompt, maxTokens) {
     ]);
     if (r.ok) { const d = await r.json(); const c = d?.choices?.[0]?.message?.content; if (c) return c; }
   } catch(e) { console.warn('[HuggingFace] API call failed:', e.message); }
+  return null;
+}
+
+async function tryCohere(prompt, key, maxTokens) {
+  try {
+    const r = await Promise.race([
+      fetch('https://api.cohere.com/v2/chat', {
+        method: 'POST', headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: 'command-r7b-12-2024', messages: [{ role: 'user', content: prompt }], max_tokens: maxTokens || 2048, temperature: 0.4 })
+      }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), AI_TIMEOUT))
+    ]);
+    if (r.ok) { const d = await r.json(); const c = d?.message?.content?.[0]?.text; if (c) { markProviderAlive('Cohere'); return c; } }
+  } catch(e) { markProviderDead('Cohere'); }
+  return null;
+}
+
+async function tryPollinations(prompt, maxTokens) {
+  try {
+    const r = await Promise.race([
+      fetch('https://text.pollinations.ai/' + encodeURIComponent(prompt.slice(0, 1500)), { signal: AbortSignal.timeout(AI_TIMEOUT) }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), AI_TIMEOUT))
+    ]);
+    if (r.ok) { const t = await r.text(); if (t && t.trim().length > 10) { markProviderAlive('Pollinations'); return t.slice(0, maxTokens ? maxTokens * 4 : 8000); } }
+  } catch(e) { markProviderDead('Pollinations'); }
   return null;
 }
 
@@ -4117,6 +4204,13 @@ app.get("/api/services/providers", (req, res) => {
     { id: 'openrouter', name: 'OpenRouter', category: 'ai', icon: 'fa-route', status: aiStatus(process.env.OPENROUTER_API_KEY), desc: 'AI code generation fallback', limit: 'Needs $1+ balance', env: ['OPENROUTER_API_KEY'] },
     { id: 'huggingface', name: 'HuggingFace', category: 'ai', icon: 'fa-face-smile', status: (process.env.HUGGINGFACE_TOKEN || process.env.HF_TOKEN) ? 'error' : 'not_configured', desc: 'AI code generation inference', limit: 'Free tier', env: ['HUGGINGFACE_TOKEN', 'HF_TOKEN'] },
     { id: 'gemini', name: 'Google Gemini', category: 'ai', icon: 'fa-gem', status: (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY) ? 'configured' : 'not_configured', desc: 'AI code generation via Gemini', limit: 'Free tier', env: ['GEMINI_API_KEY', 'GOOGLE_API_KEY'] },
+    { id: 'pollinations', name: 'Pollinations', category: 'ai', icon: 'fa-leaf', status: 'online', desc: 'Free unlimited text AI, no key', limit: 'Free unlimited', env: [] },
+    { id: 'cerebras', name: 'Cerebras', category: 'ai', icon: 'fa-bolt', status: aiStatus(process.env.CEREBRAS_API_KEY), desc: 'Ultra-fast Llama inference', limit: 'Free tier', env: ['CEREBRAS_API_KEY'] },
+    { id: 'sambanova', name: 'SambaNova', category: 'ai', icon: 'fa-cloud', status: aiStatus(process.env.SAMBANOVA_API_KEY), desc: 'Free Llama cloud chips', limit: 'Free tier', env: ['SAMBANOVA_API_KEY'] },
+    { id: 'together', name: 'Together AI', category: 'ai', icon: 'fa-users', status: aiStatus(process.env.TOGETHER_API_KEY), desc: 'Open models cloud', limit: 'Free $1 credit', env: ['TOGETHER_API_KEY'] },
+    { id: 'fireworks', name: 'Fireworks AI', category: 'ai', icon: 'fa-fire', status: aiStatus(process.env.FIREWORKS_API_KEY), desc: 'Fast serverless inference', limit: 'Free trial', env: ['FIREWORKS_API_KEY'] },
+    { id: 'nebius', name: 'Nebius Studio', category: 'ai', icon: 'fa-star', status: aiStatus(process.env.NEBIUS_API_KEY), desc: 'Full-stack AI cloud', limit: 'Free trial', env: ['NEBIUS_API_KEY'] },
+    { id: 'cohere', name: 'Cohere', category: 'ai', icon: 'fa-message', status: aiStatus(process.env.COHERE_API_KEY), desc: 'Command R chat models', limit: 'Free trial', env: ['COHERE_API_KEY'] },
     { id: 'vercel', name: 'Vercel', category: 'hosting', icon: 'fa-bolt', status: process.env.VERCEL_TOKEN && !process.env.VERCEL_TOKEN.includes('your_') ? 'online' : 'not_configured', desc: 'Deploy websites to vercel.app', limit: '100K visits/mo (free)', env: ['VERCEL_TOKEN'] },
     { id: 'cloudflare-pages', name: 'Cloudflare Pages', category: 'hosting', icon: 'fa-cloud', status: process.env.CLOUDFLARE_API_TOKEN && process.env.CLOUDFLARE_ACCOUNT_ID ? 'online' : 'not_configured', desc: 'Deploy websites to pages.dev', limit: 'Unlimited bandwidth (free)', env: ['CLOUDFLARE_API_TOKEN', 'CLOUDFLARE_ACCOUNT_ID'] },
     { id: 'digitalocean', name: 'DigitalOcean', category: 'hosting', icon: 'fa-droplet', status: process.env.DO_API_TOKEN && !process.env.DO_API_TOKEN.includes('your_') ? 'configured' : 'not_configured', desc: 'Provision cloud droplets', limit: 'Free credit with referral', env: ['DO_API_TOKEN'] },
@@ -10626,6 +10720,13 @@ app.get("/api/ai/providers", async (req, res) => {
     checkProvider("DeepSeek", async () => deepseek ? (await deepseek.chat.completions.create({ model: "deepseek-chat", messages: [{ role: "user", content: testPrompt }], max_tokens: 10 }))?.choices?.[0]?.message?.content : null),
     checkProvider("Mistral", async () => mistral ? (await mistral.chat.completions.create({ model: "codestral-latest", messages: [{ role: "user", content: testPrompt }], max_tokens: 10 }))?.choices?.[0]?.message?.content : null),
     checkProvider("DeepInfra", async () => deepinfra ? (await deepinfra.chat.completions.create({ model: "meta-llama/Llama-3.3-70B-Instruct-Turbo", messages: [{ role: "user", content: testPrompt }], max_tokens: 10 }))?.choices?.[0]?.message?.content : null),
+    checkProvider("Cerebras", async () => cerebras ? (await cerebras.chat.completions.create({ model: "llama3.1-8b", messages: [{ role: "user", content: testPrompt }], max_tokens: 10 }))?.choices?.[0]?.message?.content : null),
+    checkProvider("SambaNova", async () => sambanova ? (await sambanova.chat.completions.create({ model: "Meta-Llama-3.1-8B-Instruct", messages: [{ role: "user", content: testPrompt }], max_tokens: 10 }))?.choices?.[0]?.message?.content : null),
+    checkProvider("Together", async () => together ? (await together.chat.completions.create({ model: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo", messages: [{ role: "user", content: testPrompt }], max_tokens: 10 }))?.choices?.[0]?.message?.content : null),
+    checkProvider("Fireworks", async () => fireworks ? (await fireworks.chat.completions.create({ model: "accounts/fireworks/models/llama-v3p1-8b-instruct", messages: [{ role: "user", content: testPrompt }], max_tokens: 10 }))?.choices?.[0]?.message?.content : null),
+    checkProvider("Nebius", async () => nebius ? (await nebius.chat.completions.create({ model: "meta-llama/Meta-Llama-3.1-8B-Instruct", messages: [{ role: "user", content: testPrompt }], max_tokens: 10 }))?.choices?.[0]?.message?.content : null),
+    checkProvider("Cohere", async () => { if (!cohereKey) return null; const r = await fetch('https://api.cohere.com/v2/chat', { method: 'POST', headers: { 'Authorization': 'Bearer ' + cohereKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'command-r7b-12-2024', messages: [{ role: 'user', content: testPrompt }], max_tokens: 10 }) }); if (!r.ok) throw new Error(await r.text()); const d = await r.json(); return d?.message?.content?.[0]?.text; }),
+    checkProvider("Pollinations", async () => { const r = await fetch('https://text.pollinations.ai/' + encodeURIComponent(testPrompt)); if (!r.ok) throw new Error('pollinations down'); const t = await r.text(); if (!t.trim()) throw new Error('empty'); return t.slice(0, 100); }),
   ]);
 
   res.json({ success: true, providers, total: providers.length, online: providers.filter(p => p.status === "online").length, timestamp: new Date().toISOString() });
