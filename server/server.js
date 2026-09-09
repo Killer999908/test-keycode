@@ -2474,7 +2474,7 @@ const cohereKey = process.env.COHERE_API_KEY || "";
   if (fireworks) checks.push(checkAndMark('Fireworks', () => fireworks.chat.completions.create({ model: 'accounts/fireworks/models/llama-v3p1-8b-instruct', messages: [{ role: 'user', content: testPrompt }], max_tokens: 5 })));
   if (nebius) checks.push(checkAndMark('Nebius', () => nebius.chat.completions.create({ model: 'meta-llama/Meta-Llama-3.1-8B-Instruct', messages: [{ role: 'user', content: testPrompt }], max_tokens: 5 })));
   if (cohereKey) checks.push(checkAndMark('Cohere', () => fetch('https://api.cohere.com/v2/chat', { method: 'POST', headers: { 'Authorization': 'Bearer ' + cohereKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'command-r7b-12-2024', messages: [{ role: 'user', content: testPrompt }], max_tokens: 5 }) }).then(r => { if (!r.ok) throw new Error(); return r.json(); }).then(d => { if (!d?.message?.content?.[0]?.text) throw new Error(); return d.message.content[0].text; })));
-  checks.push(checkAndMark('Pollinations', () => fetch('https://text.pollinations.ai/' + encodeURIComponent(testPrompt), { signal: AbortSignal.timeout(15000) }).then(r => { if (!r.ok) throw new Error(); return r.text(); }).then(t => { if (!t || !t.trim()) throw new Error(); return t.slice(0, 200); })));
+  checks.push(checkAndMark('Pollinations', () => { const k = process.env.POLLINATIONS_API_KEY || ""; const h = { 'Content-Type': 'application/json' }; if (k) h['Authorization'] = 'Bearer ' + k; return fetch('https://text.pollinations.ai/openai', { method: 'POST', headers: h, body: JSON.stringify({ model: 'openai', messages: [{ role: 'user', content: testPrompt }], max_tokens: 5 }) }).then(r => { if (!r.ok) throw new Error(); return r.json(); }).then(d => { if (!d?.choices?.[0]?.message?.content) throw new Error(); return d.choices[0].message.content; }); }));
   await Promise.allSettled(checks);
   const alive = Object.entries(providerHealth).filter(([_, h]) => h.alive).map(([n]) => n);
   if (alive.length) console.log('✅ Warm providers:', alive.join(', '));
@@ -2779,11 +2779,17 @@ async function tryCohere(prompt, key, maxTokens) {
 
 async function tryPollinations(prompt, maxTokens) {
   try {
+    const key = process.env.POLLINATIONS_API_KEY || "";
+    const headers = { 'Content-Type': 'application/json' };
+    if (key) headers['Authorization'] = 'Bearer ' + key;
     const r = await Promise.race([
-      fetch('https://text.pollinations.ai/' + encodeURIComponent(prompt.slice(0, 1500)), { signal: AbortSignal.timeout(AI_TIMEOUT) }),
+      fetch('https://text.pollinations.ai/openai', {
+        method: 'POST', headers,
+        body: JSON.stringify({ model: 'openai', messages: [{ role: 'user', content: prompt.slice(0, 4000) }], max_tokens: maxTokens || 2048, temperature: 0.4 })
+      }),
       new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), AI_TIMEOUT))
     ]);
-    if (r.ok) { const t = await r.text(); if (t && t.trim().length > 10) { markProviderAlive('Pollinations'); return t.slice(0, maxTokens ? maxTokens * 4 : 8000); } }
+    if (r.ok) { const d = await r.json(); const c = d?.choices?.[0]?.message?.content; if (c && c.trim().length > 5) { markProviderAlive('Pollinations'); return c.slice(0, maxTokens ? maxTokens * 4 : 8000); } }
   } catch(e) { markProviderDead('Pollinations'); }
   return null;
 }
@@ -10726,7 +10732,7 @@ app.get("/api/ai/providers", async (req, res) => {
     checkProvider("Fireworks", async () => fireworks ? (await fireworks.chat.completions.create({ model: "accounts/fireworks/models/llama-v3p1-8b-instruct", messages: [{ role: "user", content: testPrompt }], max_tokens: 10 }))?.choices?.[0]?.message?.content : null),
     checkProvider("Nebius", async () => nebius ? (await nebius.chat.completions.create({ model: "meta-llama/Meta-Llama-3.1-8B-Instruct", messages: [{ role: "user", content: testPrompt }], max_tokens: 10 }))?.choices?.[0]?.message?.content : null),
     checkProvider("Cohere", async () => { if (!cohereKey) return null; const r = await fetch('https://api.cohere.com/v2/chat', { method: 'POST', headers: { 'Authorization': 'Bearer ' + cohereKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'command-r7b-12-2024', messages: [{ role: 'user', content: testPrompt }], max_tokens: 10 }) }); if (!r.ok) throw new Error(await r.text()); const d = await r.json(); return d?.message?.content?.[0]?.text; }),
-    checkProvider("Pollinations", async () => { const r = await fetch('https://text.pollinations.ai/' + encodeURIComponent(testPrompt)); if (!r.ok) throw new Error('pollinations down'); const t = await r.text(); if (!t.trim()) throw new Error('empty'); return t.slice(0, 100); }),
+    checkProvider("Pollinations", async () => { const k = process.env.POLLINATIONS_API_KEY || ""; const h = { 'Content-Type': 'application/json' }; if (k) h['Authorization'] = 'Bearer ' + k; const r = await fetch('https://text.pollinations.ai/openai', { method: 'POST', headers: h, body: JSON.stringify({ model: 'openai', messages: [{ role: 'user', content: testPrompt }], max_tokens: 10 }) }); if (!r.ok) throw new Error(await r.text()); const d = await r.json(); return d?.choices?.[0]?.message?.content; }),
   ]);
 
   res.json({ success: true, providers, total: providers.length, online: providers.filter(p => p.status === "online").length, timestamp: new Date().toISOString() });
