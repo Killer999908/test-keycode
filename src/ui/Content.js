@@ -122,9 +122,9 @@ export function smoothstep(edge0, edge1, x) {
   return t * t * (3 - 2 * t);
 }
 
-/* Opacity — ultra smooth, no snap */
+/* Opacity — pro glide, long crossfade */
 export function sectionOpacity(p, win) {
-  const fadeIn = smoothstep(win.in, win.in + 0.09, p);
-  const fadeOut = win.out == null ? 1 : 1 - smoothstep(win.out - 0.09, win.out, p);
+  const fadeIn = smoothstep(win.in, win.in + 0.14, p);
+  const fadeOut = win.out == null ? 1 : 1 - smoothstep(win.out - 0.14, win.out, p);
   return clamp01(Math.min(fadeIn, fadeOut));
 }

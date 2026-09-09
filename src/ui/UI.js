@@ -344,9 +344,9 @@ export class UI {
       const win = SECTION_WINDOWS[key];
       if (!win) return;
       const o = sectionOpacity(scrollProgress, win);
-      const dy = (1 - o) * 26 + (scrollVelocity / 5000) * 8;
+      const dy = (1 - o) * 8 + (scrollVelocity / 12000) * 2;
       el.style.opacity = o.toFixed(3);
-      el.style.transform = `translate3d(0, ${dy.toFixed(2)}px, 0)`;
+      el.style.transform = `translate3d(0, ${dy.toFixed(2)}px, 0) scale(${(0.98 + o * 0.02).toFixed(4)})`;
       el.querySelectorAll('.inner, .scroll-hint, .flagship-grid, .pricing-grid').forEach(child => {
         child.style.pointerEvents = o > 0.05 ? 'auto' : 'none';
       });

@@ -9,10 +9,10 @@ import { CinematicExperience } from './cinematic/index.js';
 gsap.registerPlugin(ScrollTrigger);
 
 const lenis = new Lenis({
-  duration: 1.2,
-  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  duration: 1.6,
+  easing: (t) => 1 - Math.pow(1 - t, 4),
   smoothWheel: true,
-  touchMultiplier: 1.8,
+  touchMultiplier: 1.4,
 });
 
 lenis.on('scroll', ScrollTrigger.update);
