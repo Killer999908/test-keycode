@@ -331,13 +331,34 @@ async function forge(prompt, isRefine=false, forceAct=false){
       const escS = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
       if(ws.length) addMsg('🌐 <b>Websurf</b> — found '+ws.length+' sources:<br>' + ws.map(w=>`• <a href="${escS(w.url)}" target="_blank" rel="noopener" style="color:#818cf8">${escS(w.title)}</a> — ${escS((w.snippet||'').slice(0,90))}`).join('<br>'), 'sys');
       if(!planData){ addMsg('⚠️ Plan engine busy — switching to <b>Act mode</b> automatically.', 'sys'); currentMode='act'; streaming=false; forgeBtn.disabled=false; return forge(prompt, isRefine, true); }
-      addMsg(`📋 <b>Plan</b> — Type: ${planData.type||'website'}<br>Insights: ${(planData.insights||[]).join(' • ')}<br>Stack: ${(planData.stack||[]).join(', ')}`, 'bot');
+      addMsgSafe(j.message || `Got it — ${planData.type || 'website'} it is. I'll use ${(planData.stack||[]).slice(0,2).join(' + ') || 'the best stack'}.`, 'bot');
       if(planData.questions && planData.questions.length){
-        addMsg('❓ <b>Questions before act:</b><br>' + planData.questions.map((q,i)=>`${i+1}. ${q}`).join('<br>') + '<br><br>Reply in chat, then hit <b>Act → Forge</b> or press ⚡', 'bot');
-        document.getElementById('actNow').style.display='grid';
+        const qw = document.createElement('div');
+        qw.className = 'msg bot';
+        qw.appendChild(document.createTextNode('Quick answers (tap one or just reply):'));
+        const box = document.createElement('div');
+        box.className = 'hints'; box.style.padding = '8px 0 0';
+        planData.questions.forEach(q => {
+          const s = document.createElement('span');
+          s.className = 'hint'; s.textContent = String(q).slice(0, 80);
+          s.addEventListener('click', () => { forge(q); });
+          box.appendChild(s);
+        });
+        const go = document.createElement('div');
+        go.style.marginTop = '8px';
+        const act = document.createElement('button');
+        act.className = 'btn primary'; act.textContent = 'Looks good — forge it →';
+        act.addEventListener('click', () => { currentMode = 'act'; forge(prompt, false, true); });
+        go.appendChild(act);
+        qw.appendChild(box); qw.appendChild(go);
+        chat.appendChild(qw); chat.scrollTop = chat.scrollHeight;
+      } else {
+        currentMode = 'act';
+        forge(prompt, false, true);
+        return;
       }
       chatHistory.push({role:'assistant', content: JSON.stringify(planData)});
-      statusEl.textContent='plan ready'; meta.textContent='Plan ready — refine in chat, then Act';
+      statusEl.textContent='plan ready'; meta.textContent='Reply or tap — then I forge';
     }catch(e){ addMsg('❌ Plan error: '+e.message,'bot'); }
     streaming=false; forgeBtn.disabled=false; forgeBtn.textContent='↑'; return;
   }
