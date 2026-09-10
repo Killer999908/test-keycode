@@ -5,7 +5,7 @@ export const CONTENT = {
   hero: {
     eyebrow: 'KEYCODE STUDIO',
     title: 'We architect<br><em>worlds.</em>',
-    sub: 'AI-native studio — apps, 3D, CAD, PCBs. Minimal, professional, interactive.',
+    sub: 'AI-native studio — apps, 3D, CAD, PCBs. Free preview first — pay only when you love it.',
     primary: { label: 'Start Building', href: '/register.html' },
     secondary: { label: 'Explore', scroll: 1 },
     live: 'Drag 3D · Scroll'
