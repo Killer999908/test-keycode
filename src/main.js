@@ -1,6 +1,8 @@
 import './style.css';
 import './professional-100.css';
 import './professional-100.js';
+import './pro-1000.css';
+import './pro-1000.js';
 import Lenis from 'lenis';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
