@@ -58,6 +58,7 @@ export class UI {
        <div class="content">
         <!-- HERO — BEYOND IMAGINATION -->
         <section class="ovl ovl-hero" data-act="0">
+          <div class="hero-orbs"><div class="hero-orb o1"></div><div class="hero-orb o2"></div><div class="hero-orb o3"></div></div>
           <div class="inner">
             <p class="eyebrow"><span>${CONTENT.hero.eyebrow}</span> <span class="forge-badge">● LIVE</span></p>
             <h1 class="h-display">${CONTENT.hero.title}</h1>
@@ -72,6 +73,7 @@ export class UI {
               <a class="btn btn-ghost magnetic" href="/gallery.html">${CONTENT.hero.secondary.label}</a>
             </div>
             <div class="live-ind"><span class="dot"></span><span class="live-text">${CONTENT.hero.live}</span></div>
+            <div class="ai-dots" id="ai-dots"><span>AI:</span></div>
           </div>
           <div class="scroll-hint"><span>Scroll to explore</span><div class="mouse"></div></div>
         </section>
@@ -269,8 +271,28 @@ export class UI {
           fetch('/api/ai/providers').then(r => r.json()).catch(() => null)
         ]);
         if (this.liveText && (h || p)) this.liveText.textContent = `${p?.online || '?'}/${p?.total || '?'} AI live · ${h?.db === 'connected' ? 'DB live' : 'Cloud live'} · Drag 3D`;
+        const dots = this.element.querySelector('#ai-dots');
+        const names = ['GROQ', 'Mistral', 'Cloudflare', 'Pollinations', 'Ollama'];
+        const live = new Set((p?.providers || []).filter(x => x.status === 'online').map(x => x.name));
+        if (dots) names.forEach(n => {
+          const s = document.createElement('span');
+          s.className = 'ai-dot' + (live.has(n) ? ' on' : '');
+          s.innerHTML = '<i></i>';
+          s.appendChild(document.createTextNode(n));
+          dots.appendChild(s);
+        });
       } catch {}
     })();
+    const hero = this.element.querySelector('.ovl-hero');
+    const orbs = this.element.querySelectorAll('.hero-orb');
+    if (hero && orbs.length && !this.experience.reducedMotion) {
+      hero.addEventListener('mousemove', (e) => {
+        const r = hero.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width - 0.5;
+        const y = (e.clientY - r.top) / r.height - 0.5;
+        orbs.forEach((o, i) => { o.style.translate = `${(x * (18 + i * 10)).toFixed(1)}px ${(y * (14 + i * 8)).toFixed(1)}px`; });
+      });
+    }
   }
 
   bindForge() {

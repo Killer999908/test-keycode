@@ -1077,6 +1077,16 @@ canvas {
   border-color: rgba(255,255,255,0.20) !important;
   box-shadow: 0 12px 40px rgba(0,0,0,0.4), 0 0 30px rgba(139,92,246,0.12) !important;
 }
+.hero-orbs { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.hero-orb { position: absolute; border-radius: 50%; background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.22), rgba(255,255,255,0.03) 60%, transparent 70%); border: 1px solid rgba(255,255,255,0.14); backdrop-filter: blur(6px); box-shadow: inset -8px -12px 30px rgba(0,0,0,0.35), 0 12px 40px rgba(0,0,0,0.35); animation: orbFloat 9s ease-in-out infinite; transform-style: preserve-3d; }
+.hero-orb.o1 { width: 180px; height: 180px; right: 6%; top: 12%; }
+.hero-orb.o2 { width: 110px; height: 110px; right: 22%; bottom: 14%; animation-delay: -3s; }
+.hero-orb.o3 { width: 70px; height: 70px; right: 12%; top: 55%; animation-delay: -6s; }
+@keyframes orbFloat { 0%,100% { transform: translateY(0) translateZ(0) rotate(0deg); } 50% { transform: translateY(-22px) translateZ(40px) rotate(8deg); } }
+.ai-dots { display: flex; gap: 8px; align-items: center; margin-top: 0.8rem; font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; color: var(--ink-faint); }
+.ai-dot { display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px; border-radius: 999px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); }
+.ai-dot i { width: 6px; height: 6px; border-radius: 50%; background: #52525b; display: inline-block; }
+.ai-dot.on i { background: #10b981; box-shadow: 0 0 8px #10b981; }
 .alche-kv { position: fixed; inset: 0; pointer-events: none; z-index: 1; overflow: hidden; }
 .alche-grain { position: fixed; inset: 0; pointer-events: none; z-index: 5; opacity: 0.035; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E"); }
 .alche-vignette { position: fixed; inset: 0; pointer-events: none; z-index: 2; background: radial-gradient(120% 120% at 50% 50%, transparent 45%, rgba(0,0,0,0.55) 100%); }
