@@ -6735,9 +6735,25 @@ app.post("/api/ai/plan", aiRateLimit, async (req,res)=>{
   const prior = [...history].reverse().find(h => h && h.role === 'user' && h.content);
   const topic = (prior && String(prompt).trim().length < 80) ? `${String(prior.content).slice(0,200)} → refinement: ${prompt}` : prompt;
   const planPrompt = `You are KEYCODE Ultra Architect. User wants: "${topic}".\n\nWeb research (deep surf):\n${webContext || 'No web results, use knowledge cutoff 2026.'}\n\nChat history: ${JSON.stringify(history).slice(0,2000)}\n\nTask: Create a concise build plan with: 1) Detected type (website/game/PCB/CAD), 2) 3 competitor insights from web, 3) Recommended stack/features, 4) AT MOST 2 short clarifying questions. Return JSON: {"type":"", "insights":[], "stack":[], "questions":[], "readyToAct": false}`;
-  const raw = await callAI(planPrompt, 900);
+  const [archSettled, criticSettled] = await Promise.allSettled([
+    callAI(planPrompt, 900),
+    callAI(`You are KEYCODE Critic, a ruthless reviewer. User wants: "${topic}". Rules a good plan MUST pass: 1) type is exactly one of website/game/pcb/cad/firmware, 2) insights name REAL tech/competitors/standards — NEVER quote user words as a category, 3) stack items are real tools, 4) max 2 short questions. Reply ONLY JSON: {"verdict":"pass|fail","notes":"one line why"}.`, 200)
+  ]);
+  const raw = archSettled.status === 'fulfilled' ? archSettled.value : '';
+  let criticNotes = '';
+  try{
+    const c = criticSettled.status === 'fulfilled' && criticSettled.value ? JSON.parse(criticSettled.value.replace(/```json|```/g,'').trim()) : null;
+    if(c && c.verdict) criticNotes = `Critic verdict: ${c.verdict} — ${c.notes || ''}`;
+  }catch(e){}
   let plan = null;
-  try{ plan = JSON.parse(raw.replace(/```json|```/g,'').trim()); }catch(e){ plan = null; }
+  try{ plan = JSON.parse((raw || '').replace(/```json|```/g,'').trim()); }catch(e){ plan = null; }
+  if(plan && criticNotes && /fail/i.test(criticNotes)){
+    try{
+      const rawR = await callAI(`${planPrompt}\n\nCRITIC FEEDBACK (fix this): ${criticNotes}`, 900);
+      const pR = JSON.parse((rawR || '').replace(/```json|```/g,'').trim());
+      if(pR && pR.type) plan = pR;
+    }catch(e){}
+  }
   const echoBad = (p) => {
     if(!p || !p.type || !Array.isArray(p.insights)) return true;
     const words = String(prompt).toLowerCase().split(/\s+/).filter(w => w.replace(/[^a-z0-9]/g,'').length >= 4);
@@ -6764,7 +6780,7 @@ app.post("/api/ai/plan", aiRateLimit, async (req,res)=>{
     const say = await callAI(`You are KEYCODE Forge, a friendly expert talking to a customer in chat. Project: "${topic}". Facts: type=${plan.type}; stack=${(plan.stack||[]).join(', ')}; insights=${(plan.insights||[]).join(' | ')}. Write a NATURAL chat reply: 2 short sentences showing you understood, mention ONE concrete fact from the facts above. RULES: never invent details the user didn't give (no React, Vercel, GPT-4, or tech names unless in facts). If facts are thin, ask ONE short question instead of asserting. No bullet lists, no numbered lists, no headers, max 1 emoji, no button instructions. Plain conversational text only.`, 300);
     if(say) message = say.trim();
   }catch(e){}
-  res.json({ success: true, plan, websurf: allResults.slice(0,4), mode: 'plan', message });
+  res.json({ success: true, plan, websurf: allResults.slice(0,4), mode: 'plan', message, orchestra: ['Architect', 'Critic'], critic: criticNotes || undefined });
 });
 
 app.post("/api/ai/act", aiRateLimit, async (req,res)=>{
