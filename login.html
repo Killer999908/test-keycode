@@ -409,6 +409,7 @@
         var email = params.get('email') || '';
         var avatar = params.get('avatar') || '';
         localStorage.setItem('token', token);
+        try { localStorage.setItem('token_at', String(Date.now())); } catch (e) {}
         localStorage.setItem('keycode_token', token);
         localStorage.setItem('user', JSON.stringify({ name: decodeURIComponent(name), email: decodeURIComponent(email), avatar: decodeURIComponent(avatar) }));
         localStorage.setItem('keycode_user', JSON.stringify({ name: decodeURIComponent(name), email: decodeURIComponent(email), avatar: decodeURIComponent(avatar) }));
@@ -428,6 +429,7 @@
             var d = await r.json();
             if (d.token) {
               localStorage.setItem('token', d.token);
+              try { localStorage.setItem('token_at', String(Date.now())); } catch (e) {}
               localStorage.setItem('keycode_token', d.token);
               if (d.accessToken) localStorage.setItem('accessToken', d.accessToken);
               if (d.refreshToken) localStorage.setItem('refreshToken', d.refreshToken);
@@ -478,6 +480,7 @@
         }
         if (data.success || data.token) {
           localStorage.setItem('token', data.token);
+          try { localStorage.setItem('token_at', String(Date.now())); } catch (e) {}
           localStorage.setItem('keycode_token', data.token);
           if (data.accessToken) localStorage.setItem('accessToken', data.accessToken);
           if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken);
@@ -536,6 +539,7 @@
         var data = await res.json();
         if (data.success) {
           localStorage.setItem('token', data.token);
+          try { localStorage.setItem('token_at', String(Date.now())); } catch (e) {}
           localStorage.setItem('keycode_token', data.token);
           localStorage.setItem('user', JSON.stringify(data.user));
           localStorage.setItem('keycode_user', JSON.stringify(data.user));
@@ -615,6 +619,7 @@
         var data = await res.json();
         if (data.success && data.token) {
           localStorage.setItem('token', data.token);
+          try { localStorage.setItem('token_at', String(Date.now())); } catch (e) {}
           localStorage.setItem('keycode_token', data.token);
           localStorage.setItem('user', JSON.stringify(data.user));
           localStorage.setItem('keycode_user', JSON.stringify(data.user));
@@ -689,6 +694,7 @@
         var data = await completeRes.json();
         if (data.token) {
           localStorage.setItem('token', data.token);
+          try { localStorage.setItem('token_at', String(Date.now())); } catch (e) {}
           localStorage.setItem('keycode_token', data.token);
           localStorage.setItem('user', JSON.stringify(data.user));
           localStorage.setItem('keycode_user', JSON.stringify(data.user));
@@ -730,6 +736,7 @@
         var data = await completeRes.json();
         if (data.token) {
           localStorage.setItem('token', data.token);
+          try { localStorage.setItem('token_at', String(Date.now())); } catch (e) {}
           localStorage.setItem('keycode_token', data.token);
           localStorage.setItem('user', JSON.stringify(data.user));
           localStorage.setItem('keycode_user', JSON.stringify(data.user));

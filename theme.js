@@ -552,6 +552,57 @@
   // ========================================================================
   // CONNECTION STATUS
   // ========================================================================
+  // ========================================================================
+  // SESSION KEEPER — silent refresh keeps users signed in 2+ days
+  // ========================================================================
+  var __refreshing = false;
+  function initSessionKeeper() {
+    async function silentRefresh() {
+      if (__refreshing) return false;
+      var rt = null;
+      try { rt = localStorage.getItem('refreshToken'); } catch (e) { return false; }
+      if (!rt) return false;
+      __refreshing = true;
+      try {
+        var r = await fetch('/api/auth/refresh', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ refreshToken: rt }) });
+        var j = await r.json().catch(function() { return null; });
+        if (j && (j.accessToken || j.token)) {
+          try {
+            localStorage.setItem('token', j.accessToken || j.token);
+            if (j.refreshToken) localStorage.setItem('refreshToken', j.refreshToken);
+            localStorage.setItem('token_at', String(Date.now()));
+          } catch (e) {}
+          __refreshing = false;
+          return true;
+        }
+      } catch (e) {}
+      __refreshing = false;
+      return false;
+    }
+    window.KCRefresh = silentRefresh;
+    var origFetch = window.fetch.bind(window);
+    window.fetch = function(url, opts) {
+      return origFetch(url, opts).then(function(res) {
+        if (res.status === 401 && typeof url === 'string' && url.indexOf('/api/') !== -1 && url.indexOf('/api/auth/') === -1) {
+          return silentRefresh().then(function(ok) {
+            if (!ok) return res;
+            try {
+              opts = opts || {};
+              opts.headers = Object.assign({}, opts.headers, { 'Authorization': 'Bearer ' + localStorage.getItem('token') });
+            } catch (e) {}
+            return origFetch(url, opts);
+          });
+        }
+        return res;
+      });
+    };
+    try {
+      var at = parseInt(localStorage.getItem('token_at') || '0', 10);
+      if (localStorage.getItem('token') && (!at || Date.now() - at > 10 * 60 * 1000)) silentRefresh();
+      setInterval(silentRefresh, 10 * 60 * 1000);
+    } catch (e) {}
+  }
+
   function injectConnectionStatus() {
     var badge = document.createElement('div');
     badge.id = 'kc-connection-badge';
@@ -1692,6 +1743,7 @@
     genBreadcrumbs();
     initAnnouncementBar();
     trackPageView();
+    initSessionKeeper();
 
     if (!isAuthPage && !isErrorPage && !isAppPage) {
       injectNav();

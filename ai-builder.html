@@ -169,6 +169,30 @@ fetch('/api/reviews').then(r=>r.json()).then(list => {
 }).catch(()=>{});
 let forgeSession = localStorage.getItem('forgeSession') || null;
 let lastCode = '';
+function saveForgeState() {
+  try {
+    const msgs = [...chat.querySelectorAll('.msg')].slice(-30).map(m => ({ c: m.className, h: m.innerHTML.slice(0, 4000) }));
+    localStorage.setItem('forgeState', JSON.stringify({ msgs, code: (fullCode || '').slice(0, 300000), preview: (preview.srcdoc || '').slice(0, 400000), session: forgeSession, at: Date.now() }));
+  } catch {}
+}
+function restoreForgeState() {
+  try {
+    const raw = localStorage.getItem('forgeState');
+    if (!raw) return false;
+    const s = JSON.parse(raw);
+    if (!s || !s.msgs || !s.msgs.length) return false;
+    const w = document.getElementById('welcome'); if (w) w.classList.add('done');
+    s.msgs.forEach(m => { const d = document.createElement('div'); d.className = m.c; d.innerHTML = m.h; chat.appendChild(d); });
+    if (s.code) { fullCode = s.code; lastCode = s.code; codeEl.textContent = s.code.slice(0, 18000); }
+    if (s.preview) preview.srcdoc = s.preview;
+    if (s.session) { forgeSession = s.session; localStorage.setItem('forgeSession', s.session); }
+    chat.scrollTop = chat.scrollHeight;
+    addMsg('👋 Welcome back — your last forge was restored. Keep refining or start fresh below.', 'bot');
+    return true;
+  } catch { return false; }
+}
+restoreForgeState();
+window.addEventListener('beforeunload', saveForgeState);
 
 // Health
 fetch('/api/ai/providers').then(r=>r.json()).then(j=>{ statusEl.textContent = (j.online||0)+'/'+(j.total||0)+' AI online'; }).catch(()=>{});
