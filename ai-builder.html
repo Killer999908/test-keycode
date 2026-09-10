@@ -132,6 +132,8 @@ body{height:100vh;background:var(--bg);color:var(--ink);font-family:var(--sans);
 <script>
 const $=s=>document.querySelector(s), chat=$('#chat'), promptEl=$('#prompt'), forgeBtn=$('#forge'), codeEl=$('#code'), preview=$('#preview'), statusEl=$('#status'), meta=$('#meta');
 let fullCode='', streaming=false, uploadedImage='';
+let forgeSession = localStorage.getItem('forgeSession') || null;
+let lastCode = '';
 
 // Health
 fetch('/api/ai/providers').then(r=>r.json()).then(j=>{ statusEl.textContent = (j.online||0)+'/'+(j.total||0)+' AI online'; }).catch(()=>{});
@@ -396,8 +398,8 @@ async function forge(prompt, isRefine=false, forceAct=false){
   // Also show code live in split if user wants — auto split during streaming
   let autoSplit = true;
   try{
-    const fullPrompt = prompt + (uploadedImage ? ' [image attached]' : '') + (planData ? ` | PLAN: ${JSON.stringify(planData).slice(0,800)}` : '') + (chatHistory.length ? ` | HISTORY: ${JSON.stringify(chatHistory).slice(0,1000)}` : '');
-    const body = { description: fullPrompt };
+    const fullPrompt = prompt + (uploadedImage ? ' [image attached]' : '') + (planData ? ` | PLAN: ${JSON.stringify(planData).slice(0,800)}` : '');
+    const body = { description: fullPrompt, sessionId: forgeSession, history: chatHistory.slice(-10), previousCode: lastCode.slice(0, 6000) };
     const res = await fetch('/api/ai/stream-website',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const reader=res.body.getReader(); const dec=new TextDecoder(); let buf='', htmlSet=false;
     while(true){
@@ -426,10 +428,12 @@ async function forge(prompt, isRefine=false, forceAct=false){
           else if(data.type==='html'){ preview.srcdoc=data.html; htmlSet=true; }
           else if(data.type==='status'){ meta.textContent=data.message; addMsg(data.message,'sys'); }
           else if(data.type==='done' && data.files){ if(data.files['index.html']) preview.srcdoc=data.files['index.html']; if(data.files['server.js']) $('#backendpane').textContent=data.files['server.js'].slice(0,4000); htmlSet=true; }
+          else if(data.type==='complete' && data.data){ if(data.data.sessionId){ forgeSession=data.data.sessionId; localStorage.setItem('forgeSession', forgeSession); } if(data.data.html) { preview.srcdoc=data.data.html; htmlSet=true; } }
         }catch(e){}
       }
     }
     if(!htmlSet && fullCode){ const m=fullCode.match(/<!DOCTYPE[\s\S]*?<\/html>/i); if(m) preview.srcdoc=m[0]; else if(fullCode.length>500) preview.srcdoc=`<html><body style="margin:0;padding:16px;background:#fff;font-family:sans-serif"><pre style="white-space:pre-wrap">${fullCode.slice(0,5000).replace(/</g,'&lt;')}</pre></body></html>`; }
+    if(fullCode){ lastCode=fullCode; chatHistory.push({role:'user', content: promptEl.value.trim()}); chatHistory.push({role:'assistant', content: 'Forged ' + fullCode.length + ' chars'}); }
     statusEl.textContent='live ✓'; meta.textContent='Live — preview built in real-time as you watched';
     addMsg('✅ <b>Forge live complete!</b> Preview built in real-time. <button class="btn primary" id="completeDash" style="margin-top:8px">Complete → Send to Dashboard (Pay to Use)</button>', 'bot');
     setTimeout(()=>{
