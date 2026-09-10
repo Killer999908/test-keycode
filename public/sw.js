@@ -1,4 +1,4 @@
-const CACHE = 'keycode-v9';
+const CACHE = 'keycode-v10';
 const PRECACHE = [
   '/',
   '/offline.html',
@@ -52,7 +52,7 @@ self.addEventListener('fetch', e => {
     );
   }
 
-  if (url.pathname === '/' || url.pathname === '/index.html') {
+  if (url.pathname === '/' || url.pathname === '/index.html' || url.pathname.endsWith('.html')) {
     return e.respondWith(
       fetch(e.request).then(response => {
         const clone = response.clone();
