@@ -9,6 +9,8 @@
   const authPages = ['/login.html', '/register.html', '/otp-login.html', '/reset-password.html', '/verify-email.html', '/admin-login.html', '/admin-access.html'];
   const isAuthPage = authPages.includes(path);
   const isErrorPage = document.documentElement.hasAttribute('data-kc-error');
+  const appPages = ['/ai-builder.html'];
+  const isAppPage = appPages.includes(path) || !!document.getElementById('orbCanvas');
   const SERVER = window.location.origin;
 
 
@@ -1691,7 +1693,7 @@
     initAnnouncementBar();
     trackPageView();
 
-    if (!isAuthPage && !isErrorPage) {
+    if (!isAuthPage && !isErrorPage && !isAppPage) {
       injectNav();
       injectFooter();
       injectBackToTop();

@@ -1092,7 +1092,7 @@ app.use(async (req, res, next) => {
 
 // Theme injection middleware — applies dark theme to all HTML pages
 app.use((req, res, next) => {
-  if (req.path.startsWith('/api/') || req.path.startsWith('/uploads/') || req.path.startsWith('/dist/') || req.path.startsWith('/_next/') || req.path.startsWith('/theme.') || req.path.startsWith('/favicon') || req.path.startsWith('/manifest')) return next();
+  if (req.path.startsWith('/api/') || req.path.startsWith('/uploads/') || req.path.startsWith('/dist/') || req.path.startsWith('/_next/') || req.path.startsWith('/theme.') || req.path.startsWith('/favicon') || req.path.startsWith('/manifest') || req.path === '/ai-builder.html') return next();
 
   const isHtml = req.path.endsWith('.html') || req.path === '/';
   if (!isHtml) return next();
