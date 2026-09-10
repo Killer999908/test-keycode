@@ -6687,6 +6687,18 @@ app.post("/api/ai/act", aiRateLimit, async (req,res)=>{
   res.end();
 });
 
+app.get("/api/quote", aiRateLimit, async (req, res) => {
+  try {
+    const description = String(req.query.description || req.query.prompt || '').slice(0, 2000);
+    if (!description) return res.status(400).json({ error: "description query required" });
+    const d = description.toLowerCase();
+    const taskType = /pcb|circuit|schematic|gerber/.test(d) ? 'pcb' : /cad|stl|3d|enclosure/.test(d) ? 'cad' : /game|fortnite|racing/.test(d) ? 'game' : /firmware|arduino|esp32/.test(d) ? 'mcu' : 'website';
+    const { price, tier, complexity } = estimatePricing(description, [], taskType);
+    const inr = Math.round(price * 83);
+    res.json({ success: true, taskType, tier, complexity, usd: price, inr, checkoutUrl: `/checkout.html?plan=custom&price=${price}`, message: `Estimated $${price} (₹${inr.toLocaleString('en-IN')}) — ${tier} tier` });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // ==================== CODE GENERATION ====================
 
 app.post("/api/generate-code", async (req, res) => {

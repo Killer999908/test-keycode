@@ -436,6 +436,16 @@ async function forge(prompt, isRefine=false, forceAct=false){
     if(fullCode){ lastCode=fullCode; chatHistory.push({role:'user', content: promptEl.value.trim()}); chatHistory.push({role:'assistant', content: 'Forged ' + fullCode.length + ' chars'}); }
     statusEl.textContent='live ✓'; meta.textContent='Live — preview built in real-time as you watched';
     addMsg('✅ <b>Forge live complete!</b> Preview built in real-time. <button class="btn primary" id="completeDash" style="margin-top:8px">Complete → Send to Dashboard (Pay to Use)</button>', 'bot');
+    try{
+      const q = await fetch('/api/quote?description=' + encodeURIComponent(promptEl.value.trim().slice(0,300))).then(r=>r.json()).catch(()=>null);
+      if(q && q.success) addMsg(`💰 <b>Your price: $${q.usd} (₹${q.inr.toLocaleString('en-IN')})</b> — ${q.tier} tier — <a href="/checkout.html?plan=custom&price=${q.usd}" target="_blank" style="color:#10b981">Checkout now →</a>`, 'bot');
+      const tok = localStorage.getItem('token');
+      if(tok){
+        const ref = await fetch('/api/referral/my', { headers: { 'Authorization': 'Bearer ' + tok } }).then(r=>r.json()).catch(()=>null);
+        const code = ref && (ref.referral?.code || ref.code);
+        if(code) addMsg(`🎁 <b>Earn while you build:</b> share your code <b>${code}</b> — 500 pts per friend who joins. <a href="/pricing.html" target="_blank">See plans</a>`, 'sys');
+      }
+    }catch(e){}
     setTimeout(()=>{
       const btn=document.getElementById('completeDash');
       if(btn) btn.addEventListener('click', async()=>{
