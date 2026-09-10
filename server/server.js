@@ -4007,6 +4007,8 @@ app.post("/api/subscribe", async (req, res) => {
   try {
     const { email, name, preferences } = req.body;
     if (!email) return res.status(400).json({ error: "Email is required" });
+    if (typeof email !== 'string' || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return res.status(400).json({ error: "Valid email is required" });
+    if (name && (typeof name !== 'string' || name.length > 100)) return res.status(400).json({ error: "Name is too long (max 100 characters)" });
 
     const existing = await Subscription.findOne({ email });
     if (existing) {
@@ -7020,8 +7022,10 @@ app.post("/api/inquiries", async (req, res) => {
     if (!name || !email || !message) {
       return res.status(400).json({ error: "Name, email, and message are required" });
     }
-    
-    const inquiry = await Inquiry.create({ name, email, phone, projectType, message });
+    if (typeof email !== 'string' || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return res.status(400).json({ error: "Valid email is required" });
+    if (String(name).length > 100 || String(message).length > 5000 || (phone && String(phone).length > 30) || (projectType && String(projectType).length > 100)) return res.status(400).json({ error: "Input too long" });
+
+    const inquiry = await Inquiry.create({ name: String(name).slice(0,100), email: email.trim().slice(0,254), phone: phone ? String(phone).slice(0,30) : phone, projectType: projectType ? String(projectType).slice(0,100) : projectType, message: String(message).slice(0,5000) });
     
     // Send admin notification email (non-blocking)
     const adminEmail = process.env.ADMIN_EMAIL || "admin@keycode.studio";
