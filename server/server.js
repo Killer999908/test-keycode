@@ -12500,8 +12500,10 @@ app.get("/news", (req, res) => {
 
 // ==================== STREAMING WEBSITE GENERATION (real-time preview) ====================
 app.post("/api/ai/stream-website", async (req, res) => {
-  const { description } = req.body;
+  const { description, sessionId, history = [], previousCode = "" } = req.body;
   if (!description) return res.status(400).json({ error: "Description required" });
+  const forgeSession = sessionId || ('forge_' + Date.now());
+  const memContext = (history.length ? `\nCONVERSATION MEMORY:\n${JSON.stringify(history).slice(0, 3000)}\n` : '') + (previousCode ? `\nPREVIOUS CODE (refine, don't restart):\n${String(previousCode).slice(0, 6000)}\n` : '');
 
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
@@ -12532,16 +12534,8 @@ app.post("/api/ai/stream-website", async (req, res) => {
     let hasBackend = false;
     let htmlExtracted = false;
 
-    // Try streaming from GROQ first (confirmed working)
-    if (groq) {
-      sendEvent('status', { message: '🧠 GROQ generating code...' });
-      try {
-        const stream = await groq.chat.completions.create({
-          model: 'groq/compound',
-          messages: [{
-            role: 'user',
-            content: `Build a complete, production-ready website for: "${description}".
-
+    // KEYCODE agent: stream via ALL providers (GROQ→Mistral→Ollama→Swarm), with memory
+    const streamPrompt = `Build a complete, production-ready website for: "${description}".${memContext}
 Return a VALID JSON object (no markdown, no backticks) with this structure:
 {
   "title": "Project name",
@@ -12559,64 +12553,32 @@ Guidelines:
 - index.html MUST be complete, beautiful, responsive
 - Use modern design: gradients, animations, glassmorphism
 - Include Font Awesome CDN and Google Fonts
-- All files must be valid and complete`
-          }],
-          temperature: 0.4,
-          max_tokens: 6144,
-          stream: true,
-        });
-
-        let buffer = '';
-        for await (const chunk of stream) {
-          const token = chunk.choices?.[0]?.delta?.content || '';
-          if (token) {
-            buffer += token;
-            fullResponse += token;
-            sendEvent('token', { token });
-
-            // Try to extract HTML from accumulating buffer
-            if (!htmlExtracted && buffer.includes('"index.html"')) {
-              const htmlMatch = buffer.match(/"index.html":\s*"([^"]+)"/);
-              if (htmlMatch) {
-                const partialHtml = htmlMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"');
-                if (partialHtml.length > 100) {
-                  htmlExtracted = true;
-                  sendEvent('html', { html: partialHtml });
-                  // Write initial preview
-                  fs.writeFileSync(path.join(previewDir, 'index.html'), partialHtml, 'utf8');
-                }
-              }
-            }
-
-            // Try to parse complete JSON
-            const cleaned = fullResponse.replace(/```(?:json)?\s*|```\s*/g, '').trim();
-            try {
-              const parsed = JSON.parse(cleaned);
-              if (parsed && parsed.files) {
-                projectFiles = parsed.files;
-                hasBackend = !!parsed.hasBackend;
-              }
-            } catch (e) { /* JSON not complete yet */ }
+- All files must be valid and complete. Write REAL code from scratch — never placeholders.`;
+    let buffer = '';
+    let curProvider = '';
+    await streamFromProviders(streamPrompt, 8192, (token, provider) => {
+      if (provider !== curProvider) { curProvider = provider; sendEvent('status', { message: `🧠 ${provider} forging code...`, provider }); }
+      buffer += token;
+      fullResponse += token;
+      sendEvent('token', { token, provider: curProvider });
+      if (!htmlExtracted && buffer.includes('"index.html"')) {
+        const htmlMatch = buffer.match(/"index.html":\s*"([^"]+)"/);
+        if (htmlMatch) {
+          const partialHtml = htmlMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"');
+          if (partialHtml.length > 100) {
+            htmlExtracted = true;
+            sendEvent('html', { html: partialHtml });
+            fs.writeFileSync(path.join(previewDir, 'index.html'), partialHtml, 'utf8');
           }
         }
-      } catch (e) {
-        sendEvent('status', { message: '⚠️ GROQ failed, trying alternatives...' });
-        console.warn('[Stream] GROQ error:', e.message);
       }
-    }
-
-    // Fallback to non-streaming callAI if GROQ failed
-    if (Object.keys(projectFiles).length === 0) {
-      sendEvent('status', { message: '🔄 Generating with fallback AI...' });
-      const aiProject = await callAI(`Build a complete website for: "${description}". Return JSON with "files" object containing index.html, style.css, app.js.`, 6144);
-      if (aiProject) {
-        const cleaned = aiProject.replace(/```(?:json)?\s*|```\s*/g, '').trim();
-        try {
-          const parsed = JSON.parse(cleaned);
-          if (parsed?.files) projectFiles = parsed.files;
-        } catch (e) { /* parse failed */ }
-      }
-    }
+      const cleaned = fullResponse.replace(/```(?:json)?\s*|```\s*/g, '').trim();
+      try {
+        const parsed = JSON.parse(cleaned);
+        if (parsed && parsed.files) { projectFiles = parsed.files; hasBackend = !!parsed.hasBackend; }
+      } catch (e) { /* JSON not complete yet */ }
+      return true;
+    }, (name) => sendEvent('status', { message: `🧠 ${name} forging code...`, provider: name }));
 
     // Write files to preview directory
     const fileList = [];
@@ -12631,13 +12593,12 @@ Guidelines:
       }
     }
 
-    // Fallback page if nothing generated
+    // Scratch-only: never serve templates — fail honestly so the agent retries
     if (fileList.length === 0) {
-      const title = description.slice(0, 60);
-      const fallbackHtml = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>${title}</title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet"><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#0f0f1a,#1a1a2e);color:#e2e8f0;min-height:100vh;display:flex;align-items:center;justify-content:center}.container{text-align:center;padding:40px;max-width:600px}.logo{font-size:48px;margin-bottom:20px;background:linear-gradient(135deg,#6366f1,#22d3ee);-webkit-background-clip:text;-webkit-text-fill-color:transparent}h1{font-size:36px;font-weight:800;margin-bottom:16px;background:linear-gradient(135deg,#6366f1,#22d3ee);-webkit-background-clip:text;-webkit-text-fill-color:transparent}p{font-size:16px;color:#94a3b8;line-height:1.6;margin-bottom:24px}.btn{display:inline-block;padding:12px 32px;background:linear-gradient(135deg,#6366f1,#22d3ee);color:white;border-radius:8px;text-decoration:none;font-weight:600;transition:.3s}.btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(99,102,241,0.3)}.features{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px;margin-top:32px}.feature{padding:20px;background:rgba(255,255,255,0.05);border-radius:12px;border:1px solid rgba(255,255,255,0.08)}.feature i{font-size:24px;color:#6366f1;margin-bottom:8px}.feature h3{font-size:14px;margin-bottom:4px}.feature p{font-size:11px;color:#94a3b8}</style></head><body><div class="container"><div class="logo"><i class="fas fa-bolt"></i></div><h1>${title}</h1><p>Your AI-generated project is ready. This page was created by KEYCODE AI based on your description.</p><a href="#" class="btn">Get Started <i class="fas fa-arrow-right"></i></a><div class="features"><div class="feature"><i class="fas fa-code"></i><h3>Clean Code</h3><p>Production-grade HTML/CSS</p></div><div class="feature"><i class="fas fa-palette"></i><h3>Modern Design</h3><p>Glassmorphism + gradients</p></div><div class="feature"><i class="fas fa-mobile-alt"></i><h3>Responsive</h3><p>Works on all devices</p></div></div></div></body></html>`;
-      fs.writeFileSync(path.join(previewDir, 'index.html'), fallbackHtml, 'utf8');
-      fileList.push('index.html');
-      sendEvent('html', { html: fallbackHtml });
+      sendEvent('error', { message: 'AI scratch generation failed on all providers — no template served. Retry.', scratchOnly: true });
+      try { fs.rmSync(previewDir, { recursive: true, force: true }); } catch {}
+      res.end();
+      return;
     }
 
     // Write package.json if backend exists
@@ -12661,11 +12622,11 @@ Guidelines:
       html: projectFiles['index.html'] || fs.readFileSync(path.join(previewDir, 'index.html'), 'utf8'),
     };
 
-    // Save result JSON
-    const saveData = { summary: description, description, files: fileList, fileCount: fileList.length, hasBackend, liveUrl, hostingStatus: 'live' };
+    // Save result JSON + agent memory (session persists across refines)
+    const saveData = { summary: description, description, files: fileList, fileCount: fileList.length, hasBackend, liveUrl, hostingStatus: 'live', sessionId: forgeSession, history: [...history, { role: 'user', content: description }].slice(-20), updatedAt: new Date().toISOString() };
     fs.writeFileSync(path.join(generatedDir, fileId + '.json'), JSON.stringify(saveData, null, 2));
 
-    sendEvent('complete', { data: result });
+    sendEvent('complete', { data: { ...result, sessionId: forgeSession } });
   } catch (error) {
     sendEvent('error', { message: error.message });
   }
