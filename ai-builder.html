@@ -6,9 +6,7 @@
 <title>KEYCODE Forge Ultra — Voice · Image · 3D · Full-Stack</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
+
 <style>
 :root{--bg:#050508;--panel:rgba(255,255,255,0.04);--border:rgba(255,255,255,0.08);--ink:#f5f5f4;--dim:#a3a3a3;--faint:#6b7280;--accent:#ffffff;--mono:'JetBrains Mono',monospace;--sans:'Space Grotesk',sans-serif}
 *{margin:0;padding:0;box-sizing:border-box}
@@ -106,7 +104,7 @@ body{height:100vh;background:var(--bg);color:var(--ink);font-family:var(--sans);
   <div class="right">
     <div class="tabs">
       <div class="tab active" data-pane="preview">Preview</div>
-      <div class="tab" data-pane="code">Code</div>
+      <div class="tab" data-pane="code">Code <small id="code-lines">0 lines</small></div>
       <div class="tab" data-pane="backend">Backend</div>
       <div class="tab" data-pane="3d">3D</div>
       <div class="devices">
@@ -120,7 +118,7 @@ body{height:100vh;background:var(--bg);color:var(--ink);font-family:var(--sans);
       <iframe id="preview" class="pane active" style="display:block"></iframe>
       <div id="codepane" class="pane" style="display:none"><pre id="code"></pre></div>
       <div id="backendpane" class="pane" style="display:none;padding:12px;font-family:var(--mono);font-size:11px;color:var(--dim)">Backend will appear if AI detects need (server.js, API docs)</div>
-      <div id="threepane" class="pane" style="display:none"><canvas id="threeCanvas" style="width:100%;height:100%"></canvas></div>
+      <div id="threepane" class="pane" style="display:none"><div id="threeEmpty" style="padding:40px;text-align:center;font-family:var(--mono);font-size:12px;color:var(--faint)">3D appears here for CAD / PCB forges — STL + interactive viewer.<br><br>Forge a PCB or 3D model to see it take shape.</div><canvas id="threeCanvas" style="width:100%;height:100%;display:none"></canvas></div>
     </div>
     <div class="footerbar">
       <span id="meta">Ready — voice/image/sketch + prompt</span>
@@ -183,11 +181,14 @@ if('webkitSpeechRecognition' in window || 'SpeechRecognition' in window){
   rec = new SR(); rec.lang='en-US'; rec.interimResults=false;
   rec.onresult = e=>{ promptEl.value = (promptEl.value + ' ' + e.results[0][0].transcript).trim(); voiceBtn.classList.remove('active'); listening=false; };
   rec.onend=()=>{ voiceBtn.classList.remove('active'); listening=false; };
+  rec.onerror=e=>{ voiceBtn.classList.remove('active'); listening=false; addMsg('🎤 Voice hiccup (' + (e.error||'mic') + ') — try again or type.', 'bot'); };
 }
 voiceBtn.addEventListener('click',()=>{
-  if(!rec) return alert('Voice not supported');
-  if(listening){ rec.stop(); voiceBtn.classList.remove('active'); listening=false; }
-  else { rec.start(); voiceBtn.classList.add('active'); listening=true; }
+  if(!rec){ addMsg('🎤 Voice not supported in this browser — type instead, it works just as well.', 'bot'); return; }
+  try {
+    if(listening){ rec.stop(); voiceBtn.classList.remove('active'); listening=false; }
+    else { rec.start(); voiceBtn.classList.add('active'); listening=true; }
+  } catch(e){ voiceBtn.classList.remove('active'); listening=false; }
 });
 
 // Image
@@ -207,7 +208,7 @@ sketchBtn.addEventListener('click',()=>{ sketch.style.display = sketch.style.dis
 sketch.addEventListener('pointerdown',e=>{ drawing=true; ctx.beginPath(); ctx.moveTo(e.offsetX,e.offsetY); });
 sketch.addEventListener('pointermove',e=>{ if(!drawing) return; ctx.lineTo(e.offsetX,e.offsetY); ctx.stroke(); });
 sketch.addEventListener('pointerup',()=>{ drawing=false; uploadedImage = sketch.toDataURL('image/png'); drop.textContent='Sketch captured — will send with prompt'; drop.classList.add('show'); });
-$('#sketch').addEventListener('dblclick',()=>{ ctx.clearRect(0,0,sketch.width,sketch.height); });
+$('#sketch').addEventListener('dblclick',()=>{ ctx.clearRect(0,0,sketch.width,sketch.height); uploadedImage=''; drop.textContent='Sketch cleared — draw again or drop an image'; });
 
 // Orb canvas 6 agents
 const orbCanvas=$('#orbCanvas'), octx=orbCanvas.getContext('2d');
