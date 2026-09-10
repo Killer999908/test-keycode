@@ -10325,8 +10325,28 @@ app.post("/api/ai/pcb-stream", async (req, res) => {
   const placed = pcbFabService.placeComponents(bom, boardW, boardH);
   send('status',{message:`📍 Placed ${placed.length} components`, tool:'place', data: placed.slice(0,3)});
   send('status',{message:'🔧 Tool: pcbFabService.routeNets → Manhattan 0.3mm, vias 0.8mm…', tool:'route'});
-  const routed = pcbFabService.routeNets(placed, netlist);
-  send('status',{message:`🛤️ Routed ${routed.segments.length} traces, ${routed.vias.length} vias`, tool:'route', data: { segments: routed.segments.length, vias: routed.vias.length }});
+  let routed = pcbFabService.routeNets(placed, netlist);
+  let routerUsed = 'manhattan';
+  send('status',{message:'🔧 Tool: FreeRouting autorouter (DSN → Java CLI)…', tool:'freerouting'});
+  try{
+    const dsn = pcbFabService.exportDsn(placed, netlist, boardW, boardH);
+    const fr = pcbFabService.runFreerouting(dsn, 100000);
+    if(fr.ok){
+      const frSegs = pcbFabService.parseSesSegments(fr.ses);
+      if(frSegs.length >= routed.segments.length && frSegs.length > 0){
+        routed = { segments: frSegs, vias: routed.vias };
+        routerUsed = 'freerouting';
+        send('status',{message:`⚡ FreeRouting routed ${frSegs.length} traces (autorouter)`, tool:'freerouting', data: { segments: frSegs.length }});
+      } else {
+        send('status',{message:`⚠️ FreeRouting underperformed (${frSegs.length} vs ${routed.segments.length}) — kept Manhattan`, tool:'freerouting'});
+      }
+    } else {
+      send('status',{message:`⚠️ FreeRouting skipped (${fr.reason}) — Manhattan routing used`, tool:'freerouting'});
+    }
+  }catch(e){
+    send('status',{message:`⚠️ FreeRouting error — Manhattan routing used`, tool:'freerouting'});
+  }
+  send('status',{message:`🛤️ Routed ${routed.segments.length} traces, ${routed.vias.length} vias via ${routerUsed}`, tool:'route', data: { segments: routed.segments.length, vias: routed.vias.length, router: routerUsed }});
   send('status',{message:'🔧 Tool: pcbFabService.generatePcbSvg → rendering…', tool:'svg'});
   const svg = pcbFabService.generatePcbSvg(bom, netlist, { width: boardW, height: boardH }, placed);
   send('pcbSvg',{ svg, boardW, boardH });
@@ -10344,7 +10364,7 @@ app.post("/api/ai/pcb-stream", async (req, res) => {
     send('status',{message:`✅ Fab validation: ${fab.summary} — Score ${fab.score}/100`, tool:'validate', data: fab});
     const zipB64 = zipRes.zipBuffer.toString('base64');
     const skidlB64 = Buffer.from(skidlScript).toString('base64');
-    send('done',{ bom, netlist, boardW, boardH, svg, fab, zipB64, skidlB64, skidlScript, skidlValid, fileName: zipPath, summary: result.summary||'Production PCB ready' });
+    send('done',{ bom, netlist, boardW, boardH, svg, fab, zipB64, skidlB64, skidlScript, skidlValid, fileName: zipPath, router: routerUsed, summary: result.summary||'Production PCB ready' });
   }catch(e){
     send('status',{message:'⚠️ Gerber via native fallback', tool:'gerber'});
     fab = pcbFabService.validatePcbForFabrication({ components:bom, netlist, boardW, boardH, placed });

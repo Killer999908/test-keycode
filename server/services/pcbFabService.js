@@ -199,6 +199,103 @@ export function placeComponents(components, boardW, boardH) {
 }
 
 // ──────────────────────────────────────────────
+// Specctra DSN export + FreeRouting autorouter (real external tool)
+// ──────────────────────────────────────────────
+
+function resolveFreeroutingJar() {
+  if (process.env.FREEROUTING_JAR) {
+    const p = process.env.FREEROUTING_JAR;
+    if (path.isAbsolute(p)) return p;
+    return path.join(process.cwd(), p);
+  }
+  const candidates = [
+    path.join(process.cwd(), 'tools/freerouting.jar'),
+    path.join(process.cwd(), '..', 'tools/freerouting.jar'),
+    '/home/killer/keycode-alien-interface/tools/freerouting.jar'
+  ];
+  for (const c of candidates) { try { if (fs.existsSync(c)) return c; } catch {} }
+  return candidates[0];
+}
+const FREEROUTING_JAR = resolveFreeroutingJar();
+
+export function exportDsn(placed, netlist, boardW, boardH) {
+  const L = [];
+  L.push('(pcb "KEYCODE"');
+  L.push('  (parser (string_quote ") (space_in_quoted_tokens on) (host_cad "KEYCODE") (host_version "1.0"))');
+  L.push('  (resolution mm 1000)');
+  L.push('  (unit mm)');
+  L.push('  (structure');
+  L.push('    (layer F.Cu (type signal))');
+  L.push('    (layer B.Cu (type signal))');
+  L.push(`    (boundary (rect 0 0 ${(boardW * 1000).toFixed(0)} ${(boardH * 1000).toFixed(0)}))`);
+  L.push('    (via "Via_0.8" (shape (circle F.Cu 800) (shape (circle B.Cu 800))))');
+  L.push('    (rule (width 300) (clearance 200))');
+  L.push('  )');
+  L.push('  (placement');
+  for (const comp of placed) {
+    const ref = (comp.reference || 'R1').replace(/[^A-Za-z0-9_]/g, '_');
+    L.push(`    (component "${ref}" (place "${ref}" ${(comp.posX * 1000).toFixed(0)} ${(comp.posY * 1000).toFixed(0)} front 0))`);
+  }
+  L.push('  )');
+  L.push('  (library');
+  for (const comp of placed) {
+    const ref = (comp.reference || 'R1').replace(/[^A-Za-z0-9_]/g, '_');
+    L.push(`    (image "${ref}" (outline (rect ${(-1500).toFixed(0)} ${(-1000).toFixed(0)} 1500 1000)) (pin "1" 0 0) (pin "2" 0 0))`);
+  }
+  L.push('  )');
+  L.push('  (network');
+  for (const net of netlist) {
+    const nm = String(net.net || 'N').replace(/[^A-Za-z0-9_]/g, '_');
+    L.push(`    (net "${nm}"`);
+    for (const node of (net.nodes || [])) {
+      const [r, p] = String(node).split(':');
+      L.push(`      (pins "${(r || 'R1').replace(/[^A-Za-z0-9_]/g, '_')}-${p || '1'}")`);
+    }
+    L.push('    )');
+  }
+  L.push('  )');
+  L.push('  (wiring)');
+  L.push(')');
+  return L.join('\n');
+}
+
+export function runFreerouting(dsnText, timeoutMs = 45000) {
+  const jobDir = path.join(exportsDir, 'fr_' + Date.now());
+  fs.mkdirSync(jobDir, { recursive: true });
+  const dsnPath = path.join(jobDir, 'board.dsn');
+  const sesPath = path.join(jobDir, 'board.ses');
+  fs.writeFileSync(dsnPath, dsnText, 'utf8');
+  const jar = FREEROUTING_JAR;
+  if (!fs.existsSync(jar)) return { ok: false, reason: 'freerouting jar not found' };
+  try {
+    execSync(`java -jar "${jar}" -de "${dsnPath}" -do "${sesPath}" 2>&1`, { timeout: timeoutMs, cwd: jobDir });
+  } catch (e) {
+    return { ok: false, reason: 'freerouting run failed: ' + String(e.message || e).slice(0, 200) };
+  }
+  if (!fs.existsSync(sesPath)) return { ok: false, reason: 'no session file produced' };
+  return { ok: true, sesPath, ses: fs.readFileSync(sesPath, 'utf8'), jobDir };
+}
+
+export function parseSesSegments(sesText) {
+  const segments = [];
+  const pathRe = /\(path\s+(\S+)\s+(\d+)\s+((?:-?\d+\s+-?\d+\s*)+)\)/g;
+  let m;
+  while ((m = pathRe.exec(sesText))) {
+    const layerNum = m[2];
+    const layer = layerNum === '0' ? 'F.Cu' : 'B.Cu';
+    const nums = m[3].trim().split(/\s+/).map(Number);
+    for (let i = 0; i + 3 < nums.length; i += 2) {
+      segments.push({
+        start: { x: nums[i] / 1000, y: nums[i + 1] / 1000 },
+        end: { x: nums[i + 2] / 1000, y: nums[i + 3] / 1000 },
+        width: 0.3, layer, net: m[1].replace(/"/g, '')
+      });
+    }
+  }
+  return segments;
+}
+
+// ──────────────────────────────────────────────
 // Manhattan routing
 // ──────────────────────────────────────────────
 
