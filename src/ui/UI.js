@@ -56,12 +56,17 @@ export class UI {
       </nav>
 
        <div class="content">
-        <!-- HERO — MINIMAL PRO (like Apple/Stripe) -->
+        <!-- HERO — BEYOND IMAGINATION -->
         <section class="ovl ovl-hero" data-act="0">
           <div class="inner">
-            <p class="eyebrow"><span>${CONTENT.hero.eyebrow}</span></p>
+            <p class="eyebrow"><span>${CONTENT.hero.eyebrow}</span> <span class="forge-badge">● LIVE</span></p>
             <h1 class="h-display">${CONTENT.hero.title}</h1>
             <p class="sub">${CONTENT.hero.sub}</p>
+            <div class="hero-quote glass" style="display:flex;gap:8px;padding:10px;border-radius:14px;margin:1rem 0;max-width:520px">
+              <input id="hero-quote-input" placeholder="Describe your dream project…" aria-label="Describe your project for instant price" style="flex:1;background:transparent;border:none;outline:none;color:var(--ink);font-size:14px" />
+              <button class="btn btn-primary magnetic" id="hero-quote-btn" style="white-space:nowrap">Price →</button>
+            </div>
+            <div id="hero-quote-out" style="font-size:13px;color:var(--ink-dim);min-height:1.4em;margin-bottom:0.6rem"></div>
             <div class="cta-row">
               <a class="btn btn-primary magnetic" href="/ai-builder.html">${CONTENT.hero.primary.label} <span class="arrow">→</span></a>
               <a class="btn btn-ghost magnetic" href="/gallery.html">${CONTENT.hero.secondary.label}</a>
@@ -237,6 +242,35 @@ export class UI {
     // Newsletter
     this.bindNewsletter();
     this.bindForge();
+    this.bindHeroMagic();
+  }
+
+  bindHeroMagic() {
+    const input = this.element.querySelector('#hero-quote-input');
+    const btn = this.element.querySelector('#hero-quote-btn');
+    const out = this.element.querySelector('#hero-quote-out');
+    const go = async () => {
+      const q = (input?.value || '').trim();
+      if (!q) { input?.focus(); return; }
+      if (out) out.textContent = 'Estimating…';
+      try {
+        const r = await fetch('/api/quote?description=' + encodeURIComponent(q.slice(0, 300)));
+        const j = await r.json();
+        if (out && j.success) out.innerHTML = `Estimated <b>$${j.usd} (₹${j.inr.toLocaleString('en-IN')})</b> — <a href="/ai-builder.html" style="color:var(--ink)">Forge it now →</a>`;
+        else if (out) out.textContent = 'Could not estimate — try Forge.';
+      } catch { if (out) out.textContent = 'Could not estimate — try Forge.'; }
+    };
+    btn?.addEventListener('click', go);
+    input?.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
+    (async () => {
+      try {
+        const [h, p] = await Promise.all([
+          fetch('/api/health').then(r => r.json()).catch(() => null),
+          fetch('/api/ai/providers').then(r => r.json()).catch(() => null)
+        ]);
+        if (this.liveText && (h || p)) this.liveText.textContent = `${p?.online || '?'}/${p?.total || '?'} AI live · ${h?.db === 'connected' ? 'DB live' : 'Cloud live'} · Drag 3D`;
+      } catch {}
+    })();
   }
 
   bindForge() {
