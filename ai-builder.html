@@ -262,10 +262,12 @@ async function forge(prompt, isRefine=false, forceAct=false){
     try{
       const r = await fetch('/api/ai/plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt, history: chatHistory})});
       const j = await r.json();
-      planData = j.plan;
+      planData = j.plan || null;
       chatHistory.push({role:'user', content: prompt});
       const ws = j.websurf||[];
-      if(ws.length) addMsg('🌐 <b>Websurf</b> — found '+ws.length+' sources:<br>' + ws.map(w=>`• <a href="${w.url}" target="_blank" style="color:#818cf8">${w.title}</a> — ${w.snippet.slice(0,90)}`).join('<br>'), 'sys');
+      const escS = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      if(ws.length) addMsg('🌐 <b>Websurf</b> — found '+ws.length+' sources:<br>' + ws.map(w=>`• <a href="${escS(w.url)}" target="_blank" rel="noopener" style="color:#818cf8">${escS(w.title)}</a> — ${escS((w.snippet||'').slice(0,90))}`).join('<br>'), 'sys');
+      if(!planData){ addMsg('⚠️ Plan engine busy — switching to <b>Act mode</b> automatically.', 'sys'); currentMode='act'; streaming=false; forgeBtn.disabled=false; return forge(prompt, isRefine, true); }
       addMsg(`📋 <b>Plan</b> — Type: ${planData.type||'website'}<br>Insights: ${(planData.insights||[]).join(' • ')}<br>Stack: ${(planData.stack||[]).join(', ')}`, 'bot');
       if(planData.questions && planData.questions.length){
         addMsg('❓ <b>Questions before act:</b><br>' + planData.questions.map((q,i)=>`${i+1}. ${q}`).join('<br>') + '<br><br>Reply in chat, then hit <b>Act → Forge</b> or press ⚡', 'bot');
@@ -283,7 +285,7 @@ async function forge(prompt, isRefine=false, forceAct=false){
   codeEl.textContent=''; fullCode=''; let detected='website';
   try{ const t=await fetch('/api/tools').then(r=>r.json()).catch(()=>null); const av=t&&t.tools?Object.entries(t.tools).filter(([k,v])=>v.available).map(([k])=>k):[]; if(t&&t.tools) addMsg('🔧 Tools live: '+av.join(', ')+' — AI will auto-fetch the rest', 'sys'); }catch(e){}
   try{
-    const det = await fetch('/api/ai/task-router',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({description:prompt})}).then(r=>r.json());
+    const det = await fetch('/api/ai/task-router',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({description:prompt, fast:true})}).then(r=>r.json());
     detected = det.tool||det.taskType||'website';
     addMsg(`🧠 <b>${detected}</b> — ${(det.agents||['Core','Builder','Designer']).join(', ')}`, 'sys');
     const ag=document.createElement('div'); ag.className='agents'; (det.agents||agents).forEach(a=>{const s=document.createElement('span'); s.className='agent'; s.textContent=a; ag.appendChild(s)}); chat.appendChild(ag);
@@ -392,14 +394,16 @@ async function forge(prompt, isRefine=false, forceAct=false){
       } else if(j.mfgZipUrl) addMsg(`✅ <b>Fab-ready!</b> Score ${j.fabValidation?.score||0}/100 — <a href="${j.mfgZipUrl}" target="_blank">Download ZIP (Gerber + BOM)</a> — ${j.components?.length||0} parts`, 'bot');
       else if(j.bom) addMsg(`✅ <b>Fab design ready</b> — ${j.bom.length} parts — tools: kicad-toolkit, pcbFabService`, 'bot');
       statusEl.textContent='PRODUCTION FAB-READY ✓ LIVE'; meta.textContent='PCB production — 7 Gerbers ready for JLCPCB/PCBWay — chat “add LED” for live update';
-      // Enable live chat refine for PCB: any new prompt instantly adds visual
-      const origForge = forge;
-      promptEl.addEventListener('keydown', function pcbLive(e){
+      // Enable live chat refine for PCB: any new prompt instantly adds visual (once)
+      if (!window.__pcbLiveBound) {
+        window.__pcbLiveBound = true;
+        promptEl.addEventListener('keydown', function pcbLive(e){
         if(e.key==='Enter' && (e.ctrlKey||e.metaKey) && promptEl.value.toLowerCase().includes('add')){
           const add = promptEl.value.match(/add\s+(\w+)/i);
           if(add){ liveComps.push({ref: add[1].toUpperCase().slice(0,3)+(liveComps.length+1), color:'#ef4444'}); showLivePCB(); addMsg(`✨ LIVE added ${add[1]} — preview updated instantly`, 'bot'); promptEl.value=''; e.preventDefault(); }
         }
-      });
+        });
+      }
     }catch(e){ clearInterval(placeInterval); clearInterval(toolInterval); addMsg('❌ PCB error: '+e.message,'bot'); }
     streaming=false; forgeBtn.disabled=false; forgeBtn.textContent='Forge ▶'; return;
   }
@@ -412,7 +416,7 @@ async function forge(prompt, isRefine=false, forceAct=false){
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
   document.querySelector('[data-pane="preview"]').classList.add('active');
   document.querySelectorAll('.pane').forEach(p=>{p.classList.remove('active'); p.style.display='none'});
-  preview.classList.add('active'); preview.style.display='block'; codeWrap.style.display='none';
+  preview.classList.add('active'); preview.style.display='block'; document.getElementById('codepane').style.display='none';
   // Also show code live in split if user wants — auto split during streaming
   let autoSplit = true;
   try{
