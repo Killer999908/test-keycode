@@ -6670,6 +6670,16 @@ app.post("/api/ai/websurf", aiRateLimit, async (req,res)=>{
   res.json({ success: true, query, results, summary, count: results.length });
 });
 
+function dynamicPicks(prompt) {
+  const d = String(prompt || '').toLowerCase();
+  if(/pcb|circuit|hardware/.test(d)) return ['Microcontroller board', 'Sensor module', 'Power supply board', 'LED driver'];
+  if(/game|fortnite|racing|shooter/.test(d)) return ['Racing game', 'Shooter arena', 'Puzzle platformer', 'Multiplayer'];
+  if(/store|shop|ecommerce|sell/.test(d)) return ['Fashion store', 'Electronics shop', 'Food ordering', 'Digital products'];
+  if(/portfolio|photo|design/.test(d)) return ['Developer portfolio', 'Designer portfolio', 'Photography gallery', 'Resume site'];
+  if(/dashboard|app|saas/.test(d)) return ['Analytics dashboard', 'CRM panel', 'Booking app', 'Chat app'];
+  if(/cad|3d|enclosure|stl/.test(d)) return ['Enclosure', 'Bracket', 'Drone frame', 'Phone stand'];
+  return ['Business website', 'Online store', 'Portfolio', 'Landing page', 'Web app', 'PCB design'];
+}
 app.post("/api/ai/plan", aiRateLimit, async (req,res)=>{
   const { prompt, history=[] } = req.body;
   if(!prompt) return res.status(400).json({ error: "prompt required" });
@@ -6678,7 +6688,7 @@ app.post("/api/ai/plan", aiRateLimit, async (req,res)=>{
   if(clean.length < 12 || words.length < 3){
     return res.json({ success: true, mode: 'plan', needMore: true,
       question: `Got it — "${clean.slice(0,60)}" could be many things. What are we building?`,
-      picks: ['Business website', 'Online store', 'Portfolio', 'Landing page', 'Web app', 'PCB design'],
+      picks: dynamicPicks(prompt),
       plan: null, websurf: [] });
   }
   const surfQueries = [prompt, `best ${prompt} design 2025`, `${prompt} competitors pricing`];
@@ -6711,7 +6721,7 @@ app.post("/api/ai/plan", aiRateLimit, async (req,res)=>{
   if(!plan || echoBad(plan)){
     return res.json({ success: true, mode: 'plan', needMore: true,
       question: `I want to nail this — tell me a bit more about "${String(prompt).slice(0,60)}". What should it do?`,
-      picks: ['Business website', 'Online store', 'Portfolio', 'PCB design'],
+      picks: dynamicPicks(prompt),
       plan: null, websurf: allResults.slice(0,4) });
   }
   if(plan.questions && plan.questions.length > 2) plan.questions = plan.questions.slice(0, 2);

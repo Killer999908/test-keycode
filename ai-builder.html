@@ -86,12 +86,7 @@ body{height:100vh;background:var(--bg);color:var(--ink);font-family:var(--sans);
         <div class="welcome-mark">✦</div>
         <h2>What shall we forge?</h2>
         <p>One prompt → 6 agents → live preview. Websites, games, PCBs, CAD, firmware.</p>
-        <div class="hints">
-          <span class="hint" data-prompt="Luxury watch store with 3D viewer">⌚ Watch store</span>
-          <span class="hint" data-prompt="Drone PCB GPS telemetry fab-ready">🔧 Drone PCB</span>
-          <span class="hint" data-prompt="Neon Fortnite racer with drift">🏎️ Neon racer</span>
-          <span class="hint" data-prompt="AI dashboard charts auth">📊 Dashboard</span>
-        </div>
+        <div class="hints" id="welcomeHints"></div>
       </div>
     </div>
     <div class="modebar" style="display:flex;gap:8px;padding:8px 12px;border-top:1px solid var(--border);background:rgba(0,0,0,0.15);align-items:center">
@@ -198,7 +193,25 @@ window.addEventListener('beforeunload', saveForgeState);
 fetch('/api/ai/providers').then(r=>r.json()).then(j=>{ statusEl.textContent = (j.online||0)+'/'+(j.total||0)+' AI online'; }).catch(()=>{});
 
 // Hints
-document.querySelectorAll('.hint').forEach(h=>h.addEventListener('click',()=>{ forge(h.dataset.prompt); }));
+const HINT_POOL = [
+  ['⌚ Watch store', 'Luxury watch store with 3D viewer'], ['🔧 Drone PCB', 'Drone PCB GPS telemetry fab-ready'],
+  ['🏎️ Neon racer', 'Neon Fortnite racer with drift'], ['📊 Dashboard', 'AI dashboard charts auth'],
+  ['🍕 Food ordering', 'Food ordering app with cart and checkout'], ['🏋️ Fitness tracker', 'Fitness tracker with charts'],
+  ['🎮 Shooter arena', 'Multiplayer shooter arena game'], ['💡 Smart lamp PCB', 'Smart lamp controller PCB with WiFi'],
+  ['✈️ Travel blog', 'Travel blog with photo galleries'], ['🏠 Real estate', 'Real estate listings site with filters']
+];
+(function renderHints(){
+  const box = document.getElementById('welcomeHints');
+  if(!box) return;
+  const picks = [...HINT_POOL].sort(() => Math.random() - 0.5).slice(0, 4);
+  picks.forEach(([label, prompt]) => {
+    const s = document.createElement('span');
+    s.className = 'hint'; s.textContent = label;
+    s.addEventListener('click', () => forge(prompt));
+    box.appendChild(s);
+  });
+})();
+document.querySelectorAll('.hint').forEach(h=>{ if(h.dataset.prompt) h.addEventListener('click',()=>{ forge(h.dataset.prompt); }); });
 // Tabs
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); t.classList.add('active');
