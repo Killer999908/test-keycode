@@ -308,6 +308,23 @@ async function forge(prompt, isRefine=false, forceAct=false){
     try{
       const r = await fetch('/api/ai/plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt, history: chatHistory})});
       const j = await r.json();
+      if(j.needMore){
+        chatHistory.push({role:'user', content: prompt});
+        const escQ = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        const wrap = document.createElement('div');
+        wrap.className = 'msg bot';
+        wrap.innerHTML = `<b>${escQ(j.question || 'Tell me a bit more — what should it do?')}</b><div class="hints" style="padding:8px 0 0"></div>`;
+        const box = wrap.querySelector('.hints');
+        (j.picks || []).forEach(p => {
+          const s = document.createElement('span');
+          s.className = 'hint'; s.textContent = p;
+          s.addEventListener('click', () => { promptEl.value = prompt + ' — ' + p; forge(promptEl.value.trim()); });
+          box.appendChild(s);
+        });
+        chat.appendChild(wrap); chat.scrollTop = chat.scrollHeight;
+        statusEl.textContent='waiting on you'; meta.textContent='Pick one or describe more';
+        streaming=false; forgeBtn.disabled=false; forgeBtn.textContent='↑'; return;
+      }
       planData = j.plan || null;
       chatHistory.push({role:'user', content: prompt});
       const ws = j.websurf||[];

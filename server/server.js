@@ -6673,6 +6673,14 @@ app.post("/api/ai/websurf", aiRateLimit, async (req,res)=>{
 app.post("/api/ai/plan", aiRateLimit, async (req,res)=>{
   const { prompt, history=[] } = req.body;
   if(!prompt) return res.status(400).json({ error: "prompt required" });
+  const clean = String(prompt).trim();
+  const words = clean.split(/\s+/).filter(Boolean);
+  if(clean.length < 12 || words.length < 3){
+    return res.json({ success: true, mode: 'plan', needMore: true,
+      question: `Got it — "${clean.slice(0,60)}" could be many things. What are we building?`,
+      picks: ['Business website', 'Online store', 'Portfolio', 'Landing page', 'Web app', 'PCB design'],
+      plan: null, websurf: [] });
+  }
   const surfQueries = [prompt, `best ${prompt} design 2025`, `${prompt} competitors pricing`];
   const allResults = [];
   for(const q of surfQueries.slice(0,2)){
@@ -6683,7 +6691,27 @@ app.post("/api/ai/plan", aiRateLimit, async (req,res)=>{
   const planPrompt = `You are KEYCODE Ultra Architect. User wants: "${prompt}".\n\nWeb research (deep surf):\n${webContext || 'No web results, use knowledge cutoff 2026.'}\n\nChat history: ${JSON.stringify(history).slice(0,2000)}\n\nTask: Create a concise build plan with: 1) Detected type (website/game/PCB/CAD), 2) 3 competitor insights from web, 3) Recommended stack/features, 4) 3 clarifying questions to ask user before building. Return JSON: {"type":"", "insights":[], "stack":[], "questions":[], "readyToAct": false}`;
   const raw = await callAI(planPrompt, 900);
   let plan = null;
-  try{ plan = JSON.parse(raw.replace(/```json|```/g,'').trim()); }catch(e){ plan = { raw, type: 'website', insights:[webContext.slice(0,200)], stack:['AI Forge'], questions:['What style?','Budget?','Timeline?'], readyToAct:false }; }
+  try{ plan = JSON.parse(raw.replace(/```json|```/g,'').trim()); }catch(e){ plan = null; }
+  const echoBad = (p) => {
+    if(!p || !p.type || !Array.isArray(p.insights)) return true;
+    const words = String(prompt).toLowerCase().split(/\s+/).filter(w => w.replace(/[^a-z0-9]/g,'').length >= 4);
+    const blob = ((p.insights||[]).join(' ') + ' ' + (p.type||'')).toLowerCase();
+    return words.some(w => blob.includes(`'${w}`) || blob.includes(`"${w}`) || blob.includes(`${w} websites`) || blob.includes(`${w} greetings`));
+  };
+  if(echoBad(plan)){
+    const strict = `User request: "${prompt}". Respond ONLY with valid JSON, no prose. Rules: NEVER quote the user's words as a category. Insights must name REAL technologies/competitors/standards (e.g. Next.js, JLCPCB, IPC-2221). If the request is vague, set "needMore": true with ONE question and 3 picks. Schema: {"type":"website|game|pcb|cad|firmware","insights":[3 specific items],"stack":[3 items],"questions":[],"readyToAct":false,"needMore":false,"question":"","picks":[]}`;
+    try{
+      const raw2 = await callAI(strict, 600);
+      const p2 = JSON.parse(raw2.replace(/```json|```/g,'').trim());
+      if(!echoBad(p2)) plan = p2;
+    }catch(e){}
+  }
+  if(!plan || echoBad(plan)){
+    return res.json({ success: true, mode: 'plan', needMore: true,
+      question: `I want to nail this — tell me a bit more about "${String(prompt).slice(0,60)}". What should it do?`,
+      picks: ['Business website', 'Online store', 'Portfolio', 'PCB design'],
+      plan: null, websurf: allResults.slice(0,4) });
+  }
   res.json({ success: true, plan, websurf: allResults.slice(0,4), mode: 'plan' });
 });
 
