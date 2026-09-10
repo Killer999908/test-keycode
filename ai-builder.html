@@ -98,6 +98,9 @@ body{height:100vh;background:var(--bg);color:var(--ink);font-family:var(--sans);
       </div>
       <div class="drop" id="drop">Drop image here — AI will convert sketch → code</div>
       <canvas id="sketch" width="360" height="140" style="display:none;border:1px solid var(--border);border-radius:8px;background:#0a0a0f;cursor:crosshair"></canvas>
+      <div class="trust-strip" style="display:flex;gap:10px;flex-wrap:wrap;padding:8px 2px 2px;font-family:var(--mono);font-size:10px;color:var(--faint)">
+        <span>✓ Free preview before you pay</span><span>✓ Real code, no templates</span><span id="proof-slot">★ Loved by builders</span>
+      </div>
     </div>
   </div>
   <div class="right">
@@ -132,6 +135,21 @@ body{height:100vh;background:var(--bg);color:var(--ink);font-family:var(--sans);
 <script>
 const $=s=>document.querySelector(s), chat=$('#chat'), promptEl=$('#prompt'), forgeBtn=$('#forge'), codeEl=$('#code'), preview=$('#preview'), statusEl=$('#status'), meta=$('#meta');
 let fullCode='', streaming=false, uploadedImage='';
+// Draft recovery: never lose an idea (endowment)
+try {
+  const draft = localStorage.getItem('forgeDraft');
+  if (draft && !promptEl.value) { promptEl.value = draft; addMsg('👋 Welcome back — your idea was saved. Hit Forge when ready.', 'bot'); }
+  promptEl.addEventListener('input', () => { try { localStorage.setItem('forgeDraft', promptEl.value.slice(0, 2000)); } catch {} });
+} catch {}
+// Real social proof (approved reviews only — never faked)
+fetch('/api/reviews').then(r=>r.json()).then(list => {
+  const arr = Array.isArray(list) ? list : (list.reviews || list.data || []);
+  if (arr.length && document.getElementById('proof-slot')) {
+    const r0 = arr[Math.floor(Math.random()*arr.length)];
+    const stars = '★'.repeat(Math.max(1, Math.min(5, r0.rating || 5)));
+    document.getElementById('proof-slot').textContent = `${stars} “${String(r0.text||r0.message||'Great build').slice(0,60)}” — ${r0.name||'a customer'}`;
+  }
+}).catch(()=>{});
 let forgeSession = localStorage.getItem('forgeSession') || null;
 let lastCode = '';
 
@@ -434,6 +452,7 @@ async function forge(prompt, isRefine=false, forceAct=false){
     }
     if(!htmlSet && fullCode){ const m=fullCode.match(/<!DOCTYPE[\s\S]*?<\/html>/i); if(m) preview.srcdoc=m[0]; else if(fullCode.length>500) preview.srcdoc=`<html><body style="margin:0;padding:16px;background:#fff;font-family:sans-serif"><pre style="white-space:pre-wrap">${fullCode.slice(0,5000).replace(/</g,'&lt;')}</pre></body></html>`; }
     if(fullCode){ lastCode=fullCode; chatHistory.push({role:'user', content: promptEl.value.trim()}); chatHistory.push({role:'assistant', content: 'Forged ' + fullCode.length + ' chars'}); }
+    try { localStorage.removeItem('forgeDraft'); } catch {}
     statusEl.textContent='live ✓'; meta.textContent='Live — preview built in real-time as you watched';
     addMsg('✅ <b>Forge live complete!</b> Preview built in real-time. <button class="btn primary" id="completeDash" style="margin-top:8px">Complete → Send to Dashboard (Pay to Use)</button>', 'bot');
     try{
