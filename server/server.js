@@ -6686,15 +6686,26 @@ app.post("/api/ai/plan", aiRateLimit, async (req,res)=>{
   const clean = String(prompt).trim();
   const words = clean.split(/\s+/).filter(Boolean);
   const lc = clean.toLowerCase();
-  if(/are you real|who are you|what are you|are you (an? )?(ai|robot|human|real)/.test(lc)){
+  const isIdentity = /are you real|who are you|what are you|are you (an? )?(ai|robot|human|real)/.test(lc);
+  const isGreeting = /^(hi+|hello+|hey+|yo|hola|namaste)[.! ]*$/.test(lc);
+  if(isIdentity || isGreeting){
+    // AI's own brain answers — never canned text. Strict honesty rules only.
+    const brainPrompt = `You are KEYCODE Forge, a real AI running live inside this website's builder. The user just said: "${clean.slice(0,200)}". Reply in YOUR OWN words, 1-2 short sentences: confirm you're live AI (not a demo), say you forge websites/games/PCBs/CAD live, ask what they want to build. RULES: never claim to be human; never invent details about the user or any project (no React, Vercel, GPT-4, names); be warm and brief. Plain text, max 1 emoji.`;
+    let words = '';
+    try{
+      const r = await callAI(brainPrompt, 200);
+      if(r){
+        words = r.replace(/<Think>[\s\S]*?<\/Think>/gi, '').replace(/\*\*Reasoning\*\*[\s\S]*?(?=\n\n[A-Z#])/g, '').trim();
+        const lines = words.split('\n').filter(l => !/^\s*[-*]\s*(the user|i must|we should|according|policy|instruction)/i.test(l));
+        words = lines.join('\n').replace(/^#+\s*/gm, '').trim();
+      }
+    }catch(e){}
+    if(!words) words = isIdentity
+      ? 'Yes — live AI here, forging in real time. What shall we build?'
+      : 'Hey — live and ready. What do you want to build?';
     return res.json({ success: true, mode: 'plan', needMore: true,
-      question: `Yes — I'm real AI, running live on this site (not a demo). I can forge websites, games, PCBs, CAD and firmware with 6 specialist agents. What do you want to build?`,
-      picks: dynamicPicks('website'), plan: null, websurf: [] });
-  }
-  if(/^(hi+|hello+|hey+|yo|hola|namaste)[.! ]*$/.test(lc)){
-    return res.json({ success: true, mode: 'plan', needMore: true,
-      question: `Hey! I'm KEYCODE Forge — real AI, live right now. Tell me what to build (a website, store, game, PCB…) and I'll forge it in front of you.`,
-      picks: dynamicPicks('website'), plan: null, websurf: [] });
+      question: words,
+      picks: dynamicPicks(clean), plan: null, websurf: [] });
   }
   if(clean.length < 12 || words.length < 3){
     return res.json({ success: true, mode: 'plan', needMore: true,
