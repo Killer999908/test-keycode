@@ -17,7 +17,7 @@ import multer from "multer";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { spawn } from "child_process";
+import { spawn, execSync } from "child_process";
 import sanitizeHtml from "sanitize-html";
 import * as freeTools from "./services/freeToolsService.js";
 
@@ -6629,6 +6629,18 @@ app.post("/api/ai/assist", aiRateLimit, async (req, res) => {
     if (!result) return res.status(503).json({ error: "AI temporarily unavailable", fallback: true });
     res.json({ success: true, response: result, provider: "real", feature: feature || "general" });
   } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get("/api/version", (req, res) => {
+  try {
+    const out = execSync('git rev-parse --short HEAD', { timeout: 5000 }).toString().trim();
+    res.json({ version: out });
+  } catch {
+    try {
+      const st = fs.statSync(path.join(parentDir, 'ai-builder.html'));
+      res.json({ version: 'b' + Math.floor(st.mtimeMs / 1000).toString(36) });
+    } catch { res.json({ version: 'unknown' }); }
+  }
 });
 
 app.get("/api/ai/test", async (req, res) => {

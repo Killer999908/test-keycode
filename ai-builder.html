@@ -188,6 +188,31 @@ function restoreForgeState() {
 }
 restoreForgeState();
 window.addEventListener('beforeunload', saveForgeState);
+(function versionWatch(){
+  fetch('/api/version').then(r=>r.json()).then(v => {
+    const seen = localStorage.getItem('forgeBuild');
+    if(v && v.version && v.version !== 'unknown'){
+      if(seen && seen !== v.version){
+        const bar = document.createElement('div');
+        bar.style.cssText = 'background:linear-gradient(135deg,#3f3f46,#18181b);color:#fff;font-size:12px;padding:8px;text-align:center;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.1)';
+        bar.textContent = '✨ New builder update available — click here to reload';
+        bar.addEventListener('click', () => location.reload());
+        document.body.prepend(bar);
+      } else if(!seen){
+        try { localStorage.setItem('forgeBuild', v.version); } catch {}
+      }
+    }
+  }).catch(()=>{});
+})();
+function showPreviewTabOnce(){
+  if(showPreviewTabOnce.done) return;
+  showPreviewTabOnce.done = true;
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  const t = document.querySelector('[data-pane="preview"]');
+  if(t) t.classList.add('active');
+  document.querySelectorAll('.pane').forEach(p=>{p.classList.remove('active'); p.style.display='none'});
+  preview.classList.add('active'); preview.style.display='block';
+}
 
 // Health
 fetch('/api/ai/providers').then(r=>r.json()).then(j=>{ statusEl.textContent = (j.online||0)+'/'+(j.total||0)+' AI online'; }).catch(()=>{});
@@ -544,17 +569,17 @@ async function forge(prompt, isRefine=false, forceAct=false){
             if(fullCode.includes('<html')){
               const m=fullCode.match(/<!DOCTYPE[\s\S]*?<\/html>/i) || fullCode.match(/<html[\s\S]*?<\/html>/i);
               if(m && m[0].length>800){
-                try{ preview.srcdoc=m[0]; htmlSet=true; }catch(e){}
+                try{ preview.srcdoc=m[0]; htmlSet=true; showPreviewTabOnce(); }catch(e){}
               } else if(fullCode.length>1000 && !htmlSet){
                 // Show live code preview as text until valid HTML
                 preview.srcdoc = `<html><body style="margin:0;padding:20px;background:#0a0a0f;color:#a5b4fc;font-family:monospace;white-space:pre-wrap">${fullCode.slice(0,3000).replace(/</g,'&lt;')}</body></html>`;
               }
             }
           }
-          else if(data.type==='html'){ preview.srcdoc=data.html; htmlSet=true; }
+          else if(data.type==='html'){ preview.srcdoc=data.html; htmlSet=true; try{ showPreviewTabOnce(); }catch(e){} }
           else if(data.type==='status'){ meta.textContent=data.message; addMsg(data.message,'sys'); }
-          else if(data.type==='done' && data.files){ if(data.files['index.html']) preview.srcdoc=data.files['index.html']; if(data.files['server.js']) $('#backendpane').textContent=data.files['server.js'].slice(0,4000); htmlSet=true; }
-          else if(data.type==='complete' && data.data){ if(data.data.sessionId){ forgeSession=data.data.sessionId; localStorage.setItem('forgeSession', forgeSession); } if(data.data.html) { preview.srcdoc=data.data.html; htmlSet=true; } }
+          else if(data.type==='done' && data.files){ if(data.files['index.html']){ preview.srcdoc=data.files['index.html']; try{ showPreviewTabOnce(); }catch(e){} } if(data.files['server.js']) $('#backendpane').textContent=data.files['server.js'].slice(0,4000); htmlSet=true; }
+          else if(data.type==='complete' && data.data){ if(data.data.sessionId){ forgeSession=data.data.sessionId; localStorage.setItem('forgeSession', forgeSession); } if(data.data.html) { preview.srcdoc=data.data.html; htmlSet=true; try{ showPreviewTabOnce(); }catch(e){} } }
         }catch(e){}
       }
     }
