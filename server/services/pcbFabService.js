@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { execSync } from 'child_process';
+import { execSync, execFile } from 'child_process';
 import JSZip from 'jszip';
 
 const exportsDir = path.join(process.cwd(), 'exports');
@@ -259,21 +259,22 @@ export function exportDsn(placed, netlist, boardW, boardH) {
   return L.join('\n');
 }
 
-export function runFreerouting(dsnText, timeoutMs = 45000) {
-  const jobDir = path.join(exportsDir, 'fr_' + Date.now());
-  fs.mkdirSync(jobDir, { recursive: true });
-  const dsnPath = path.join(jobDir, 'board.dsn');
-  const sesPath = path.join(jobDir, 'board.ses');
-  fs.writeFileSync(dsnPath, dsnText, 'utf8');
-  const jar = FREEROUTING_JAR;
-  if (!fs.existsSync(jar)) return { ok: false, reason: 'freerouting jar not found' };
-  try {
-    execSync(`java -jar "${jar}" -de "${dsnPath}" -do "${sesPath}" 2>&1`, { timeout: timeoutMs, cwd: jobDir });
-  } catch (e) {
-    return { ok: false, reason: 'freerouting run failed: ' + String(e.message || e).slice(0, 200) };
-  }
-  if (!fs.existsSync(sesPath)) return { ok: false, reason: 'no session file produced' };
-  return { ok: true, sesPath, ses: fs.readFileSync(sesPath, 'utf8'), jobDir };
+export function runFreerouting(dsnText, timeoutMs = 100000) {
+  return new Promise((resolve) => {
+    const jobDir = path.join(exportsDir, 'fr_' + Date.now());
+    try { fs.mkdirSync(jobDir, { recursive: true }); } catch (e) { return resolve({ ok: false, reason: 'job dir failed' }); }
+    const dsnPath = path.join(jobDir, 'board.dsn');
+    const sesPath = path.join(jobDir, 'board.ses');
+    try { fs.writeFileSync(dsnPath, dsnText, 'utf8'); } catch (e) { return resolve({ ok: false, reason: 'dsn write failed' }); }
+    const jar = FREEROUTING_JAR;
+    if (!fs.existsSync(jar)) return resolve({ ok: false, reason: 'freerouting jar not found' });
+    execFile('java', ['-jar', jar, '-de', dsnPath, '-do', sesPath], { timeout: timeoutMs, cwd: jobDir }, (err) => {
+      if (err) return resolve({ ok: false, reason: 'freerouting run failed: ' + String(err.message || err).slice(0, 200) });
+      if (!fs.existsSync(sesPath)) return resolve({ ok: false, reason: 'no session file produced' });
+      try { resolve({ ok: true, sesPath, ses: fs.readFileSync(sesPath, 'utf8'), jobDir }); }
+      catch (e) { resolve({ ok: false, reason: 'ses read failed' }); }
+    });
+  });
 }
 
 export function parseSesSegments(sesText) {

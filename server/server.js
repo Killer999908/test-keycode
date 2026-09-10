@@ -10330,7 +10330,7 @@ app.post("/api/ai/pcb-stream", async (req, res) => {
   send('status',{message:'🔧 Tool: FreeRouting autorouter (DSN → Java CLI)…', tool:'freerouting'});
   try{
     const dsn = pcbFabService.exportDsn(placed, netlist, boardW, boardH);
-    const fr = pcbFabService.runFreerouting(dsn, 100000);
+    const fr = await pcbFabService.runFreerouting(dsn, 100000);
     if(fr.ok){
       const frSegs = pcbFabService.parseSesSegments(fr.ses);
       if(frSegs.length >= routed.segments.length && frSegs.length > 0){
