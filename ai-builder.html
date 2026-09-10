@@ -493,8 +493,10 @@ async function forge(prompt, isRefine=false, forceAct=false){
   }catch(e){ addMsg('❌ '+e.message,'bot'); statusEl.textContent='error'; }
   streaming=false; forgeBtn.disabled=false; forgeBtn.textContent='Forge ▶';
 }
-forgeBtn.addEventListener('click',()=>forge());
-promptEl.addEventListener('keydown',e=>{ if(e.key==='Enter' && (e.ctrlKey||e.metaKey)) forge(); });
+forgeBtn.addEventListener('click',()=>forge(promptEl.value.trim()));
+promptEl.addEventListener('keydown',e=>{
+  if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); forge(promptEl.value.trim()); }
+});
 $('#copy').addEventListener('click',async()=>{ await navigator.clipboard.writeText(codeEl.textContent); meta.textContent='Copied'; });
 $('#open').addEventListener('click',()=>{ const html=preview.srcdoc||codeEl.textContent; if(!html) return; window.open(URL.createObjectURL(new Blob([html],{type:'text/html'})),'_blank'); });
 $('#deploy').addEventListener('click',async()=>{
