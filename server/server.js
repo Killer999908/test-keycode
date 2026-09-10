@@ -46,6 +46,7 @@ import * as exportService from "./services/exportService.js";
 import * as openscadService from "./services/openscadService.js";
 import * as pcbFabService from "./services/pcbFabService.js";
 import * as skidlService from "./services/skidlService.js";
+import { handleUltraPrompt } from "./services/ultraService.js";
 import * as cloudDeploy from "./services/cloudDeployService.js";
 import * as gameFactory from "./services/gameFactory.js";
 import { setupWebSocket } from "./services/websocketService.js";
@@ -10992,11 +10993,22 @@ async function orchestrateWithManager(prompt, taskType, maxTokens) {
 // Task Router endpoint: exposes the full pipeline
 app.post("/api/ai/task-router", async (req, res) => {
   try {
-    const { request, taskType, maxTokens } = req.body;
-    if (!request) return res.status(400).json({ error: "Request description required" });
+    const { request, description, prompt, taskType, maxTokens, fast } = req.body;
+    const brief = request || description || prompt;
+    if (!brief) return res.status(400).json({ error: "Request description required" });
+    req.body.request = brief;
+    const requestText = brief;
+    if (fast) {
+      const d = requestText.toLowerCase();
+      const ftool = /pcb|circuit|schematic|gerber/.test(d) ? 'pcb' : /cad|stl|enclosure|3d model/.test(d) ? 'cad' : /game|fortnite|racing|shooter/.test(d) ? 'game' : /firmware|arduino|esp32|mcu|robot|ros/.test(d) ? 'firmware' : /video|mp4/.test(d) ? 'video' : /quantum|qubit/.test(d) ? 'quantum' : 'website';
+      let fultra = [];
+      try { fultra = handleUltraPrompt(requestText); } catch {}
+      const agentsByTool = { pcb: ['Core','Builder','Designer','QA'], cad: ['Core','Builder','Designer','QA'], game: ['Core','Builder','Designer','QA','Scout'], firmware: ['Core','Builder','QA'], website: ['Core','Builder','Designer','QA','Scout','Sweeper'] };
+      return res.json({ success: true, fast: true, tool: ftool, taskType: taskType || ftool, agents: agentsByTool[ftool] || agentsByTool.website, ultraTools: fultra });
+    }
 
     // Step 1: Manager analyzes and routes
-    const subtasks = await managerAnalyze(request, maxTokens || 4096);
+    const subtasks = await managerAnalyze(requestText, maxTokens || 4096);
     if (!subtasks || subtasks.length === 0) {
       return res.status(500).json({ error: "Could not analyze request" });
     }
@@ -11034,7 +11046,7 @@ app.post("/api/ai/task-router", async (req, res) => {
       `--- ${q.role.toUpperCase()} (Score: ${q.qc.score}/10) ---\n${q.output.slice(0, 1500)}`
     ).join('\n\n');
 
-    const synthesisPrompt = `Synthesize specialist outputs for: ${request}\n\n${qcSummary}\n\nReturn clean JSON. Merge best parts, fix errors, no placeholders.`;
+    const synthesisPrompt = `Synthesize specialist outputs for: ${requestText}\n\n${qcSummary}\n\nReturn clean JSON. Merge best parts, fix errors, no placeholders.`;
 
     let finalResult = await callAI(synthesisPrompt, 4096);
     if (!finalResult) {
@@ -11044,7 +11056,7 @@ app.post("/api/ai/task-router", async (req, res) => {
     }
 
     const fileId = 'task_' + Date.now();
-    const record = { request, taskType, subtasks, specialistOutputs: qcOutputs, finalResult, createdAt: new Date().toISOString() };
+    const record = { request: requestText, taskType, subtasks, specialistOutputs: qcOutputs, finalResult, createdAt: new Date().toISOString() };
     try {
       fs.writeFileSync(path.join(generatedDir, fileId + '.json'), JSON.stringify(record, null, 2));
     } catch (e) { console.error('[task-router] save failed:', e.message); }
@@ -11052,9 +11064,14 @@ app.post("/api/ai/task-router", async (req, res) => {
     let parsed;
     try { parsed = JSON.parse(finalResult.replace(/```json\s*|```\s*/g, "").trim()); } catch { parsed = { result: finalResult }; }
 
+    const d = (requestText || '').toLowerCase();
+    const tool = /pcb|circuit|schematic|gerber/.test(d) ? 'pcb' : /cad|stl|enclosure|3d model/.test(d) ? 'cad' : /game|fortnite|racing|shooter/.test(d) ? 'game' : /firmware|arduino|esp32|mcu/.test(d) ? 'firmware' : 'website';
+    let ultraTools = [];
+    try { ultraTools = handleUltraPrompt(requestText || ''); } catch {}
     res.json({
       success: true, fileId, specialistCount: specialistOutputs.length, synthesisScore: qcOutputs[0]?.qc?.score || null,
       qcResults: qcOutputs.map(q => ({ role: q.role, score: q.qc.score })),
+      tool, taskType: taskType || tool, agents: specialistOutputs.map(s => s.role), ultraTools,
       ...parsed
     });
   } catch (error) {
@@ -12532,14 +12549,14 @@ app.post("/api/ai/stream-website", async (req, res) => {
 
   sendEvent('status', { message: '🤖 AI is designing your website...' });
 
+  let previewDir;
+  let streamDone = false;
   req.on('close', () => {
-    res.end();
-    if (previewDir && fs.existsSync(previewDir)) {
+    if (!res.destroyed) res.end();
+    if (!streamDone && previewDir && fs.existsSync(previewDir)) {
       fs.rm(previewDir, { recursive: true, force: true }).catch(() => {});
     }
   });
-
-  let previewDir;
   try {
     const fileId = 'web_' + Date.now();
     previewDir = path.join(__dirname, '..', 'preview', fileId);
@@ -12613,6 +12630,7 @@ Guidelines:
     if (fileList.length === 0) {
       sendEvent('error', { message: 'AI scratch generation failed on all providers — no template served. Retry.', scratchOnly: true });
       try { fs.rmSync(previewDir, { recursive: true, force: true }); } catch {}
+      streamDone = true;
       res.end();
       return;
     }
@@ -12643,9 +12661,12 @@ Guidelines:
     fs.writeFileSync(path.join(generatedDir, fileId + '.json'), JSON.stringify(saveData, null, 2));
 
     sendEvent('complete', { data: { ...result, sessionId: forgeSession } });
+    streamDone = true;
+    setTimeout(() => { try { if (fs.existsSync(previewDir)) fs.rmSync(previewDir, { recursive: true, force: true }); } catch {} }, 3600000);
   } catch (error) {
     sendEvent('error', { message: error.message });
   }
+  streamDone = true;
   res.end();
 });
 
