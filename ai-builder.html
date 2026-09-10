@@ -263,7 +263,7 @@ async function forge(prompt, isRefine=false, forceAct=false){
   addMsg((prompt||'[image/sketch]')+' '+(uploadedImage? ' 🖼️':'') , 'user');
   streaming=true; forgeBtn.disabled=true; forgeBtn.textContent='Forging…'; statusEl.textContent='detecting…'; meta.textContent='AI detecting intent…';
   codeEl.textContent=''; fullCode=''; let detected='website';
-  try{ const t=await fetch('/api/services/tools').then(r=>r.json()).catch(()=>null); if(t && !t.blender) addMsg('🔧 Auto-downloading tools: Blender, KiCad, OpenSCAD — AI will fetch them', 'sys'); }catch(e){}
+  try{ const t=await fetch('/api/tools').then(r=>r.json()).catch(()=>null); const av=t&&t.tools?Object.entries(t.tools).filter(([k,v])=>v.available).map(([k])=>k):[]; if(t&&t.tools) addMsg('🔧 Tools live: '+av.join(', ')+' — AI will auto-fetch the rest', 'sys'); }catch(e){}
   try{
     const det = await fetch('/api/ai/task-router',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({description:prompt})}).then(r=>r.json());
     detected = det.tool||det.taskType||'website';

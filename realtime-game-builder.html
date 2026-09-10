@@ -144,9 +144,9 @@ body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opa
 <header class="header">
   <div class="logo"><i class="fas fa-cube"></i> KEYCODE</div>
   <nav class="nav-links">
-    <a href="/home-builder.html">Home</a>
+    <a href="/">Home</a>
     <a href="/ai-builder.html?mode=game">Game Studio</a>
-    <a href="/realtime-builder" class="active">Real-time Builder</a>
+    <a href="/ai-builder.html?mode=realtime" class="active">Real-time Builder</a>
     <a href="/dashboard.html" class="dashboard-link">Dashboard</a>
   </nav>
 </header>
@@ -630,7 +630,7 @@ function playGame() {
 
 function saveGame() {
   var token = localStorage.getItem('keycode_token') || localStorage.getItem('token');
-  if (!token) { window.location.href = 'login.html?redirect=/realtime-builder'; return; }
+  if (!token) { window.location.href = 'login.html?redirect=/ai-builder.html?mode=realtime'; return; }
   if (!currentCode) { showToast('Create a game first!', 'error'); return; }
 
   var title = document.getElementById('gameTitle') ? document.getElementById('gameTitle').value : currentTitle;

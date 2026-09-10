@@ -177,7 +177,7 @@ export class UI {
           <p class="menu-kicker">Navigate the studio</p>
           <a href="/ai-builder.html"><b>01</b> AI Builder</a>
           <a href="/ai-builder.html?mode=game"><b>02</b> Game Builder</a>
-          <a href="/realtime-builder"><b>03</b> Real-time Builder</a>
+          <a href="/ai-builder.html?mode=realtime"><b>03</b> Real-time Builder</a>
           <a href="/ai-builder.html?mode=cad"><b>04</b> 3D Scan → CAD</a>
           <a href="/ai-builder.html?mode=tools"><b>05</b> 3D / PCB Studio</a>
           <a href="/pricing.html"><b>06</b> Pricing</a>
@@ -375,7 +375,7 @@ export class UI {
     this.worksGrid = grid;
     const data = items && items.length ? items : CONTENT.worksFallback;
     grid.innerHTML = data.map((w, i) => {
-      const href = w.href || (w.slug ? `/ai-builder.html?mode=tools?service=${encodeURIComponent(w.slug)}` : '#');
+      const href = w.href || (w.slug ? `/ai-builder.html?mode=tools&service=${encodeURIComponent(w.slug)}` : '#');
       const img = w.image ? `<div class="wc-img" style="background-image:url('${w.image}')"></div>` : '';
       return `
       <a class="work-card panel3d has-img" href="${href}" style="--i:${i}">
