@@ -6685,6 +6685,17 @@ app.post("/api/ai/plan", aiRateLimit, async (req,res)=>{
   if(!prompt) return res.status(400).json({ error: "prompt required" });
   const clean = String(prompt).trim();
   const words = clean.split(/\s+/).filter(Boolean);
+  const lc = clean.toLowerCase();
+  if(/are you real|who are you|what are you|are you (an? )?(ai|robot|human|real)/.test(lc)){
+    return res.json({ success: true, mode: 'plan', needMore: true,
+      question: `Yes — I'm real AI, running live on this site (not a demo). I can forge websites, games, PCBs, CAD and firmware with 6 specialist agents. What do you want to build?`,
+      picks: dynamicPicks('website'), plan: null, websurf: [] });
+  }
+  if(/^(hi+|hello+|hey+|yo|hola|namaste)[.! ]*$/.test(lc)){
+    return res.json({ success: true, mode: 'plan', needMore: true,
+      question: `Hey! I'm KEYCODE Forge — real AI, live right now. Tell me what to build (a website, store, game, PCB…) and I'll forge it in front of you.`,
+      picks: dynamicPicks('website'), plan: null, websurf: [] });
+  }
   if(clean.length < 12 || words.length < 3){
     return res.json({ success: true, mode: 'plan', needMore: true,
       question: `Got it — "${clean.slice(0,60)}" could be many things. What are we building?`,
@@ -6727,7 +6738,7 @@ app.post("/api/ai/plan", aiRateLimit, async (req,res)=>{
   if(plan.questions && plan.questions.length > 2) plan.questions = plan.questions.slice(0, 2);
   let message = '';
   try{
-    const say = await callAI(`You are KEYCODE Forge, a friendly expert talking to a customer in chat. Project: "${topic}". Facts: type=${plan.type}; stack=${(plan.stack||[]).join(', ')}; insights=${(plan.insights||[]).join(' | ')}. Write a NATURAL chat reply: 2 short sentences showing you understood, mention ONE concrete fact, then ask AT MOST ONE short question. No bullet lists, no numbered lists, no headers, no emojis spam (max 1), no instructions about buttons. Plain conversational text only.`, 300);
+    const say = await callAI(`You are KEYCODE Forge, a friendly expert talking to a customer in chat. Project: "${topic}". Facts: type=${plan.type}; stack=${(plan.stack||[]).join(', ')}; insights=${(plan.insights||[]).join(' | ')}. Write a NATURAL chat reply: 2 short sentences showing you understood, mention ONE concrete fact from the facts above. RULES: never invent details the user didn't give (no React, Vercel, GPT-4, or tech names unless in facts). If facts are thin, ask ONE short question instead of asserting. No bullet lists, no numbered lists, no headers, max 1 emoji, no button instructions. Plain conversational text only.`, 300);
     if(say) message = say.trim();
   }catch(e){}
   res.json({ success: true, plan, websurf: allResults.slice(0,4), mode: 'plan', message });
