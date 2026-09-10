@@ -2569,6 +2569,20 @@ async function callAI(prompt, maxTokens) {
     }
   }
 
+  // Last resort: health marks may be stale — try core free providers directly
+  try {
+    for (const k of Object.keys(providerHealth)) providerHealth[k] = { alive: true, lastCheck: 0 };
+    const retry = [];
+    if (groq) retry.push(tryModel({ client: groq, name: 'GROQ', model: 'groq/compound' }, prompt, maxTokens));
+    if (mistral) retry.push(tryModel({ client: mistral, name: 'Mistral', model: 'codestral-latest', base: 'https://api.mistral.ai/v1' }, prompt, maxTokens));
+    if (cfAcc && cfTok) retry.push(tryCloudflare(cfAcc, cfTok, prompt, maxTokens));
+    retry.push(tryPollinations(prompt, maxTokens));
+    const wins = await Promise.allSettled(retry);
+    for (const w of wins) {
+      if (w.status === 'fulfilled' && w.value) { setCache(prompt, w.value); return w.value; }
+    }
+  } catch (e) { console.warn('[callAI] last-resort failed:', e.message); }
+
   setCache(prompt, '');
   return '';
 }
@@ -2710,7 +2724,6 @@ async function streamFromProviders(prompt, maxTokens, onToken, onProvider) {
       const stream = await p.create();
       for await (const chunk of stream) {
         if (timedOut) { break; }
-        chunkCount++;
         const token = chunk.choices?.[0]?.delta?.content || '';
         if (token) {
           yielded = true;
@@ -10786,7 +10799,7 @@ PRODUCTION STANDARDS (EVERY point MUST be in the code):
 // Tracks which providers are alive to avoid wasting time on dead ones.
 
 const providerHealth = {};
-const PROVIDER_RETRY_AFTER = 300000; // 5 minutes before retrying a dead provider
+const PROVIDER_RETRY_AFTER = 45000; // 45s before retrying a dead provider (free tiers flap often)
 
 function markProviderAlive(name) {
   providerHealth[name] = { alive: true, lastCheck: Date.now() };
@@ -12612,6 +12625,40 @@ Guidelines:
       } catch (e) { /* JSON not complete yet */ }
       return true;
     }, (name) => sendEvent('status', { message: `🧠 ${name} forging code...`, provider: name }));
+
+    // Tolerant final parse: free models often truncate JSON — salvage what streamed
+    if (Object.keys(projectFiles).length === 0 && fullResponse) {
+      try {
+        const salvaged = extractJSON(fullResponse);
+        if (salvaged && salvaged.files) { projectFiles = salvaged.files; hasBackend = !!salvaged.hasBackend; }
+      } catch (e) { /* salvage failed */ }
+    }
+    if (!projectFiles['index.html'] && fullResponse.includes('"index.html"')) {
+      try {
+        const start = fullResponse.indexOf('"index.html"');
+        const openQuote = fullResponse.indexOf('"', start + 12);
+        let raw = fullResponse.slice(openQuote + 1);
+        let out = '';
+        for (let i = 0; i < raw.length; i++) {
+          const ch = raw[i];
+          if (ch === '\\' && i + 1 < raw.length) {
+            const nx = raw[i + 1];
+            if (nx === 'n') { out += '\n'; i++; }
+            else if (nx === 't') { out += '\t'; i++; }
+            else if (nx === 'r') { out += '\r'; i++; }
+            else if (nx === '"') { out += '"'; i++; }
+            else if (nx === '\\') { out += '\\'; i++; }
+            else if (nx === 'u' && /^[0-9a-fA-F]{4}/.test(raw.slice(i + 2, i + 6))) { out += String.fromCharCode(parseInt(raw.slice(i + 2, i + 6), 16)); i += 5; }
+            else { out += nx; i++; }
+          } else if (ch === '"') { break; }
+          else { out += ch; }
+        }
+        if (out.length > 200) {
+          projectFiles['index.html'] = out;
+          sendEvent('html', { html: out });
+        }
+      } catch (e) { /* salvage failed */ }
+    }
 
     // Write files to preview directory
     const fileList = [];

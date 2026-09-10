@@ -19,11 +19,17 @@ body{height:100vh;background:var(--bg);color:var(--ink);font-family:var(--sans);
 .orb-wrap{height:120px;position:relative;background:radial-gradient(400px 200px at 50% 50%, rgba(99,102,241,0.15), transparent 70%), #08080f;border-bottom:1px solid var(--border);overflow:hidden}
 .orb-wrap canvas{width:100%;height:100%}
 .orb-label{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:9px;letter-spacing:0.18em;color:var(--faint)}
-.chat{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:14px;display:flex;flex-direction:column;gap:10px}
-.msg{max-width:88%;padding:10px 12px;border-radius:12px;font-size:12.5px;line-height:1.5}
-.msg.user{align-self:flex-end;background:linear-gradient(135deg,#ffffff,#a3a3a3);color:#fff}
-.msg.bot{align-self:flex-start;background:rgba(255,255,255,0.05);border:1px solid var(--border)}
-.msg.sys{align-self:center;background:rgba(99,102,241,0.08);border:1px dashed rgba(99,102,241,0.25);color:#a5b4fc;font-family:var(--mono);font-size:10px}
+.chat{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:14px;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth}
+.msg{max-width:88%;padding:10px 14px;border-radius:16px;font-size:13px;line-height:1.55;animation:msgIn 0.25s ease both;overflow-wrap:break-word}
+@keyframes msgIn{from{opacity:0;transform:translateY(8px) scale(0.99)}to{opacity:1;transform:none}}
+.msg.user{align-self:flex-end;background:linear-gradient(135deg,#3f3f46,#18181b);color:#fff;border:1px solid rgba(255,255,255,0.1);border-bottom-right-radius:4px}
+.msg.bot{align-self:flex-start;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-bottom-left-radius:4px}
+.msg.bot::before{content:'✦ ';color:#a3a3a3}
+.msg.sys{align-self:center;background:rgba(255,255,255,0.03);border:1px dashed rgba(255,255,255,0.14);color:var(--dim);font-family:var(--mono);font-size:10.5px;text-align:center}
+.typing-dots{display:inline-flex;gap:4px;padding:4px 0}
+.typing-dots i{width:6px;height:6px;border-radius:50%;background:#a3a3a3;animation:tblink 1.2s infinite}
+.typing-dots i:nth-child(2){animation-delay:0.2s}.typing-dots i:nth-child(3){animation-delay:0.4s}
+@keyframes tblink{0%,60%,100%{opacity:0.25;transform:none}30%{opacity:1;transform:translateY(-3px)}}
 .agents{display:flex;gap:5px;flex-wrap:wrap}
 .agent{padding:3px 7px;border-radius:999px;background:rgba(255,255,255,0.04);border:1px solid var(--border);font-family:var(--mono);font-size:9px;letter-spacing:0.1em;color:var(--faint)}
 .agent.active{background:linear-gradient(135deg,#ffffff,#a3a3a3);color:#fff;border-color:transparent;box-shadow:0 0 10px rgba(99,102,241,0.4)}
@@ -258,6 +264,8 @@ document.getElementById('actNow').addEventListener('click',()=>{ currentMode='ac
 async function forge(prompt, isRefine=false, forceAct=false){
   const useMode = forceAct ? 'act' : currentMode;
   if(!prompt && !uploadedImage) return;
+  promptEl.value = '';
+  try { localStorage.removeItem('forgeDraft'); } catch {}
   if(useMode==='plan' && !isRefine){
     addMsg(prompt+' '+(uploadedImage?'🖼️':''), 'user');
     streaming=true; forgeBtn.disabled=true; forgeBtn.textContent='Planning…'; statusEl.textContent='websurfing…'; meta.textContent='Deep websurfing the internet…';
