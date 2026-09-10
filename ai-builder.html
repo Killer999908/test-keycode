@@ -321,6 +321,13 @@ async function forge(prompt, isRefine=false, forceAct=false){
     try{
       const r = await fetch('/api/ai/plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt, history: chatHistory})});
       const j = await r.json();
+      if(j.mode === 'chat' && j.message){
+        chatHistory.push({role:'user', content: prompt});
+        chatHistory.push({role:'assistant', content: String(j.message).slice(0, 2000)});
+        addMsgSafe(j.message, 'bot');
+        statusEl.textContent='answered'; meta.textContent='Ask anything — or describe something to build';
+        streaming=false; forgeBtn.disabled=false; forgeBtn.textContent='↑'; return;
+      }
       if(j.needMore){
         chatHistory.push({role:'user', content: prompt});
         const escQ = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');

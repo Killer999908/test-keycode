@@ -6685,6 +6685,18 @@ app.post("/api/ai/plan", aiRateLimit, async (req,res)=>{
   if(!prompt) return res.status(400).json({ error: "prompt required" });
   const clean = String(prompt).trim();
   const words = clean.split(/\s+/).filter(Boolean);
+  const lc0 = clean.toLowerCase();
+  const looksLikeQuestion = /^(what|why|how|who|when|where|which|explain|tell me|can you|do you|is |are |does |will |should |mean|define)/.test(lc0) || /\?$/.test(clean);
+  const hasBuildIntent = /build|make|create|design|forge|website|store|app|game|pcb|circuit|cad|firmware|landing|portfolio|dashboard|generate/.test(lc0);
+  if(looksLikeQuestion && !hasBuildIntent){
+    let answer = '';
+    try{
+      const r = await callAI(`You are KEYCODE Forge, a knowledgeable friendly AI. Answer this directly and well, in YOUR OWN words, conversationally and concisely (max 120 words): "${clean.slice(0,500)}". No bullet overload (max 3 bullets if listing). Plain chat text.`, 500);
+      if(r) answer = r.trim();
+    }catch(e){}
+    if(!answer) answer = 'Hmm, my brain blipped — ask me again?';
+    return res.json({ success: true, mode: 'chat', message: answer, plan: null, websurf: [] });
+  }
   const lc = clean.toLowerCase();
   const isIdentity = /are you real|who are you|what are you|are you (an? )?(ai|robot|human|real)/.test(lc);
   const isGreeting = /^(hi+|hello+|hey+|yo|hola|namaste)[.! ]*$/.test(lc);
