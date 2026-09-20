@@ -8,17 +8,20 @@ const generatedDir = path.join(process.cwd(), 'generated');
 
 export function runSimulation(netlist, options = {}) {
   const { type = 'dc', analysis = '' } = options;
-  const tmpNetlist = path.join(generatedDir, `_spice_${Date.now()}.cir`);
-  const tmpOut = path.join(generatedDir, `_spice_${Date.now()}.out`);
+  const stamp = Date.now();
+  const tmpNetlist = path.join(generatedDir, `_spice_${stamp}.cir`);
+  const tmpOut = path.join(generatedDir, `_spice_${stamp}.out`);
+  const tmpData = path.join(generatedDir, `_spice_${stamp}.csv`);
 
   let fullNetlist = netlist;
-  // Ensure .END and .PRINT
   if (!fullNetlist.trim().toUpperCase().endsWith('.END')) {
     fullNetlist += '\n.END';
   }
-  if (!/\.print/i.test(fullNetlist) && !/\.plot/i.test(fullNetlist) && !/\.fourier/i.test(fullNetlist)) {
-    // Add a .print before .END
-    fullNetlist = fullNetlist.replace(/\.END/i, '.PRINT DC V(1) V(2) I(V1)\n.END');
+  // Make ngspice actually WRITE the results: wrdata all vectors to a CSV we can parse
+  if (/\.control/i.test(fullNetlist)) {
+    fullNetlist = fullNetlist.replace(/\.endc/i, `set filetype=ascii\nwrdata ${tmpData} all\n.endc`);
+  } else {
+    fullNetlist = fullNetlist.replace(/\.END/i, `.control\nset filetype=ascii\nwrdata ${tmpData} all\n.endc\n.END`);
   }
 
   fs.writeFileSync(tmpNetlist, fullNetlist);
@@ -29,10 +32,17 @@ export function runSimulation(netlist, options = {}) {
       encoding: 'utf8',
       maxBuffer: 1024 * 1024,
     });
-    // Read output from file
+    // Read output from file + the wrdata CSV (real numeric results)
     let output = '';
     try { output = fs.readFileSync(tmpOut, 'utf8'); } catch {}
-    return parseSpiceOutput(output || result);
+    const parsed = parseSpiceOutput(output || result);
+    try {
+      const dataCsv = fs.readFileSync(tmpData, 'utf8');
+      parsed.data = dataCsv.split('\n').filter(l => l.trim()).slice(0, 2000);
+      parsed.dataRows = parsed.data.length;
+      if (parsed.dataRows > 0 && parsed.values.length === 0) parsed.values = parsed.data.slice(0, 200);
+    } catch {}
+    return parsed;
   } catch (e) {
     // Try reading partial output
     let partial = '';
@@ -45,6 +55,7 @@ export function runSimulation(netlist, options = {}) {
   } finally {
     try { fs.unlinkSync(tmpNetlist); } catch {}
     try { fs.unlinkSync(tmpOut); } catch {}
+    try { fs.unlinkSync(tmpData); } catch {}
   }
 }
 

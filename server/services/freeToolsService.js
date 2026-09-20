@@ -151,8 +151,22 @@ export function openscadPreview(scadCode, outputPng) {
   if (!TOOLS.openscad) throw new Error('OpenSCAD not installed');
   const scadFile = path.join(EXPORTS_DIR, '_temp_preview.scad');
   fs.writeFileSync(scadFile, scadCode);
-  execSync(`openscad -o "${outputPng}" --imgsize=800,600 --colorscheme=Tomorrow "${scadFile}" 2>/dev/null`, { stdio: 'pipe', timeout: 60000 });
-  fs.unlinkSync(scadFile);
+  try {
+    // Headless servers need a virtual X display for offscreen GL rendering
+    try {
+      execSync(`xvfb-run -a openscad -o "${outputPng}" --imgsize=800,600 --colorscheme=Tomorrow "${scadFile}"`, { stdio: 'pipe', timeout: 60000 });
+    } catch {
+      execSync(`openscad -o "${outputPng}" --imgsize=800,600 --colorscheme=Tomorrow "${scadFile}"`, { stdio: 'pipe', timeout: 60000 });
+    }
+    if (!fs.existsSync(outputPng) || fs.statSync(outputPng).size < 500) throw new Error('png render empty');
+  } catch (e) {
+    // PNG rendering unavailable — fall back to STL so clients render with three.js
+    const stlPath = outputPng.replace(/\.png$/, '.stl');
+    execSync(`openscad -o "${stlPath}" "${scadFile}"`, { stdio: 'pipe', timeout: 60000 });
+    try { fs.unlinkSync(scadFile); } catch {}
+    return stlPath;
+  }
+  try { fs.unlinkSync(scadFile); } catch {}
   return outputPng;
 }
 

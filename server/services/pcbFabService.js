@@ -6,6 +6,13 @@ import JSZip from 'jszip';
 const exportsDir = path.join(process.cwd(), 'exports');
 if (!fs.existsSync(exportsDir)) fs.mkdirSync(exportsDir, { recursive: true });
 
+// Netlist node normalizer: AI emits "U1-1", "U1:1", "U1.VCC", "U4-A1" — canonical form is "U1:pin"
+export function normalizeNodeKey(node) {
+  const m = String(node || '').match(/^([A-Za-z]+\d+)\s*[-:.]\s*(.+)$/);
+  if (!m) return String(node || '').trim();
+  return `${m[1]}:${m[2].trim()}`;
+}
+
 function escStr(s) { return '"' + String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"'; }
 
 // Package → footprint mapping (KiCad 10 standard library) — now with smartphone HDI BGA
@@ -191,7 +198,8 @@ export function placeComponents(components, boardW, boardH) {
     const size = footprintSize(fprint);
     const x = margin + spacing / 2 + col * spacing;
     const y = margin + spacing / 2 + row * spacing;
-    placed.push({ ...comp, footprint: fprint, size, posX: x, posY: y, angle: 0, side: 'top' });
+    const ref = comp.reference || comp.ref || 'R1';
+    placed.push({ ...comp, reference: ref, footprint: fprint, size, posX: x, posY: y, angle: 0, side: 'top' });
     col++;
     if (col >= maxCol) { col = 0; row++; }
   }
@@ -248,7 +256,7 @@ export function exportDsn(placed, netlist, boardW, boardH) {
     const nm = String(net.net || 'N').replace(/[^A-Za-z0-9_]/g, '_');
     L.push(`    (net "${nm}"`);
     for (const node of (net.nodes || [])) {
-      const [r, p] = String(node).split(':');
+      const [r, p] = normalizeNodeKey(node).split(':');
       L.push(`      (pins "${(r || 'R1').replace(/[^A-Za-z0-9_]/g, '_')}-${p || '1'}")`);
     }
     L.push('    )');
@@ -307,10 +315,10 @@ export function routeNets(placed, netlist) {
   const segments = [];
   const vias = [];
 
-  // Build pin mapping: ref:pinNum → { x, y }
+  // Build pin mapping: ref:pinNum → { x, y } (+ sequential positions for alpha pin names like VCC/A1)
   const pins = {};
   for (const comp of placed) {
-    const ref = comp.reference || 'R1';
+    const ref = comp.reference || comp.ref || 'R1';
     const fpx = comp.posX;
     const fpy = comp.posY;
     const nPins = (comp.footprint && comp.footprint.includes('TQFP')) ? 32 : 2;
@@ -320,6 +328,21 @@ export function routeNets(placed, netlist) {
       pins[`${ref}:${i}`] = { x: fpx, y: startY + (i - 1) * pinSpacing };
     }
   }
+  // Register alpha pin names (VCC, GND, A1, ...) at deterministic offsets near pin 1 so
+  // AI netlists like "U1-VCC" still route instead of silently dropping to 0 traces
+  const alphaIdx = {};
+  for (const net of netlist) {
+    for (const node of (net.nodes || [])) {
+      const key = normalizeNodeKey(node);
+      if (pins[key]) continue;
+      const [ref, pin] = key.split(':');
+      if (!ref || !pin || pins[`${ref}:1`] === undefined) continue;
+      if (/^\d+$/.test(pin) && pins[`${ref}:${pin}`]) continue;
+      const idx = (alphaIdx[ref] = (alphaIdx[ref] || 0) + 1);
+      const base = pins[`${ref}:1`];
+      pins[key] = { x: base.x + idx * 2.0, y: base.y };
+    }
+  }
 
   let viaIdx = 1;
   for (const net of netlist) {
@@ -327,7 +350,7 @@ export function routeNets(placed, netlist) {
     if (nodes.length < 2) continue;
 
     // Get positions for all nodes
-    const positions = nodes.map(n => pins[n]).filter(p => p);
+    const positions = nodes.map(n => pins[normalizeNodeKey(n)]).filter(p => p);
     if (positions.length < 2) continue;
 
     // Route: source is first, route to each destination
@@ -782,15 +805,28 @@ export function generatePcbSvg(components, netlist, dims, placed) {
   const w = dims.width || 80;
   const h = dims.height || 50;
 
-  // Build pin positions from placed components
+  // Build pin positions from placed components (+ sequential alpha-pin offsets)
   const pinPositions = {};
   for (const comp of placed) {
-    const ref = comp.reference || 'R1';
+    const ref = comp.reference || comp.ref || 'R1';
     const fpx = comp.posX;
     const fpy = comp.posY;
     const nPins = 2;
     for (let i = 1; i <= nPins; i++) {
       pinPositions[`${ref}:${i}`] = { x: fpx + (i === 1 ? -1 : 1), y: fpy };
+    }
+  }
+  const alphaIdx = {};
+  for (const net of netlist) {
+    for (const node of (net.nodes || [])) {
+      const key = normalizeNodeKey(node);
+      if (pinPositions[key]) continue;
+      const [ref, pin] = key.split(':');
+      if (!pinPositions[`${ref}:1`]) continue;
+      if (/^\d+$/.test(pin) && pinPositions[`${ref}:${pin}`]) continue;
+      const idx = (alphaIdx[ref] = (alphaIdx[ref] || 0) + 1);
+      const base = pinPositions[`${ref}:1`];
+      pinPositions[key] = { x: base.x, y: base.y + idx * 1.5 };
     }
   }
 
@@ -814,7 +850,7 @@ export function generatePcbSvg(components, netlist, dims, placed) {
   svg += `<g id="traces" fill="none" stroke-width="0.15" opacity="0.5">`;
   for (const net of netlist) {
     const nodes = net.nodes || [];
-    const positions = nodes.map(n => pinPositions[n]).filter(p => p);
+    const positions = nodes.map(n => pinPositions[normalizeNodeKey(n)]).filter(p => p);
     if (positions.length < 2) continue;
     const col = netColors[net.net] || '#6366f1';
     const src = positions[0];
@@ -890,18 +926,19 @@ export function validatePcbForFabrication({ components, netlist, boardW, boardH,
   if (!hasGND) warnings.push('No GND/VSS rail found in netlist');
 
   for (const comp of components || []) {
+    const ref = comp.reference || comp.ref || '';
     for (const field of FAB_RULES.requiredBomFields) {
       if (!comp[field] || String(comp[field]).trim() === '') warnings.push(`BOM field "${field}" missing for ${comp.reference || 'unknown ref'}`);
     }
     if (comp.package && !/^(0402|0603|0805|1206|1210|SOT-23|SOT23|SOT-223|SOT223|DIP-8|DIP8|TQFP-32|TQFP32|QFN-32|SOIC-8|SOP-8|TO-92|LED-0805|USB-C)$/i.test(comp.package)) {
-      warnings.push(`Package "${comp.package}" for ${comp.reference || 'comp'} may not be in standard KiCad library — verify footprint`);
+      warnings.push(`Package "${comp.package}" for ${ref || 'comp'} may not be in standard KiCad library — verify footprint`);
     }
   }
 
   const missingNets = [];
   for (const comp of components || []) {
-    const ref = comp.reference || '';
-    const pins = (netlist || []).flatMap(n => n.nodes || []);
+    const ref = comp.reference || comp.ref || '';
+    const pins = (netlist || []).flatMap(n => (n.nodes || []).map(normalizeNodeKey));
     const connectedPins = pins.filter(n => n.startsWith(ref + ':')).length;
     const expectedPins = comp.package?.includes('TQFP') ? 32 : comp.package?.includes('SOIC') || comp.package?.includes('SOP') ? 8 : comp.package?.includes('DIP') ? 8 : comp.type === 'IC' ? 8 : 2;
     if (expectedPins > 2 && connectedPins < 2) missingNets.push(`${ref}: only ${connectedPins} pins connected (expected ~${expectedPins})`);
