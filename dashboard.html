@@ -33,6 +33,7 @@ body{font-family:'Inter',sans-serif;background:var(--void);color:var(--pearl);ov
 .user-card:hover{background:rgba(255,255,255,0.04)}
 .user-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;font-size:13px;color:white;font-weight:700;flex-shrink:0}
 .user-info{flex:1;min-width:0}
+.fab-credit-chip{display:inline-flex;align-items:center;gap:4px;margin-top:4px;padding:2px 7px;border-radius:10px;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.35);font-size:10px;font-weight:600;color:#10b981;letter-spacing:.02em}
 .user-name{font-size:13px;font-weight:600;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .user-email{font-size:11px;color:var(--ash);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
@@ -277,7 +278,7 @@ tr:hover td{background:rgba(255,255,255,0.015)}
   <div class="sidebar-footer">
     <div class="user-card">
       <div class="user-avatar" id="dashAvatar">U</div>
-      <div class="user-info"><div class="user-name" id="dashName">User</div><div class="user-email" id="dashEmail">user@keycode.app</div></div>
+      <div class="user-info"><div class="user-name" id="dashName">User</div><div class="user-email" id="dashEmail">user@keycode.app</div><span class="fab-credit-chip" id="fabCreditsChip" style="display:none" title="Each manufacturing-grade PCB ZIP download uses 1 fab credit"><i class="fas fa-industry" style="font-size:9px"></i><span id="fabCreditsVal">3</span> fab credits</span></div>
     </div>
   </div>
 </aside>
@@ -552,6 +553,11 @@ async function checkAuth(){
     document.getElementById('dashName').textContent=userData.name||'User';
     document.getElementById('dashEmail').textContent=userData.email||'';
     document.getElementById('dashAvatar').textContent=(userData.name||'U')[0].toUpperCase();
+    // Fab credits chip (PCB manufacturing ZIP downloads)
+    try{
+      var fcEl=document.getElementById('fabCreditsChip'),fcVal=document.getElementById('fabCreditsVal');
+      if(fcEl&&fcVal){var fc=Number(userData.fabCredits);fcVal.textContent=isNaN(fc)?'0':String(fc);fcEl.style.display='inline-flex';fcEl.style.opacity=(fc>0)?'1':'.55';}
+    }catch(e){}
     if(userData.email)document.getElementById('setEmail').value=userData.email;
     if(userData.name)document.getElementById('setName').value=userData.name;
     if(userData.phone)document.getElementById('setPhone').value=userData.phone;

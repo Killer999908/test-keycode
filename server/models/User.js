@@ -11,6 +11,8 @@ const userSchema = new mongoose.Schema({
   avatar: { type: String, default: "" },
   role: { type: String, enum: ["user", "client", "admin"], default: "user" },
   isActive: { type: Boolean, default: true },
+  // Fab credits: each manufacturing-grade PCB ZIP download consumes 1; new users start with free ones
+  fabCredits: { type: Number, default: 3, min: 0 },
   emailVerified: { type: Boolean, default: false },
   verificationToken: String,
   resetPasswordToken: String,

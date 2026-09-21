@@ -45,13 +45,17 @@ export async function blenderRender(sceneFile, outputPath, format = 'png', engin
   const script = `
 import bpy
 bpy.context.scene.render.engine = '${engine}'
+try:
+    bpy.context.scene.cycles.device = 'CPU'  # headless servers have no GPU context
+except Exception:
+    pass
 bpy.context.scene.render.filepath = '${outputPath.replace(/'/g, "\\'")}'
 bpy.context.scene.render.image_settings.file_format = '${format.toUpperCase()}'
 bpy.ops.render.render(write_still=True)
   `.trim();
   const tmpScript = path.join(EXPORTS_DIR, '_blender_render.py');
   fs.writeFileSync(tmpScript, script);
-  execSync(`"${BLENDER_PATH}" -b "${sceneFile}" -P "${tmpScript}" 2>/dev/null`, { stdio: 'pipe', timeout: 120000 });
+  execSync(`"${BLENDER_PATH}" -b -noaudio --factory-startup "${sceneFile}" -P "${tmpScript}"`, { stdio: 'pipe', timeout: 180000 });
   return outputPath;
 }
 

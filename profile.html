@@ -44,6 +44,7 @@ input,textarea,select,button{font-family:inherit}
 .user-card:hover{background:rgba(255,255,255,0.04)}
 .user-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-size:13px;color:white;font-weight:700;flex-shrink:0}
 .user-info{flex:1;min-width:0}
+.fab-credit-chip{display:inline-flex;align-items:center;gap:4px;margin-top:4px;padding:2px 7px;border-radius:10px;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.35);font-size:10px;font-weight:600;color:#10b981;letter-spacing:.02em}
 .user-name{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .user-email{font-size:11px;color:var(--ash);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
@@ -323,7 +324,7 @@ tr:hover td{background:rgba(255,255,255,0.015)}
   <div class="sidebar-footer">
     <div class="user-card">
       <div class="user-avatar" id="sidebarAvatar">U</div>
-      <div class="user-info"><div class="user-name" id="sidebarName">User</div><div class="user-email" id="sidebarEmail">user@keycode.app</div></div>
+      <div class="user-info"><div class="user-name" id="sidebarName">User</div><div class="user-email" id="sidebarEmail">user@keycode.app</div><span class="fab-credit-chip" id="fabCreditsChip" style="display:none" title="Each manufacturing-grade PCB ZIP download uses 1 fab credit"><i class="fas fa-industry" style="font-size:9px"></i><span id="fabCreditsVal">3</span> fab credits</span></div>
     </div>
   </div>
 </aside>
@@ -584,6 +585,11 @@ function useMockUser(){
 function updateSidebarUser(){
   document.getElementById('sidebarName').textContent = userData.name || 'User';
   document.getElementById('sidebarEmail').textContent = userData.email || '';
+  // Fab credits chip (PCB manufacturing ZIP downloads)
+  try{
+    var fcEl=document.getElementById('fabCreditsChip'),fcVal=document.getElementById('fabCreditsVal');
+    if(fcEl&&fcVal){var fc=Number(userData.fabCredits);fcVal.textContent=isNaN(fc)?'0':String(fc);fcEl.style.display='inline-flex';fcEl.style.opacity=(fc>0)?'1':'.55';}
+  }catch(e){}
   var a = userData.avatar;
   var el = document.getElementById('sidebarAvatar');
   if(a){

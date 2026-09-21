@@ -470,7 +470,7 @@ async function forge(prompt, isRefine=false, forceAct=false){
     const chatObserver = new MutationObserver(()=>{});
     // Use streaming production PCB — true fab pipeline live
     try{
-      const r = await fetch('/api/ai/pcb-stream',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({description:prompt})});
+      const r = await fetch('/api/ai/pcb-stream',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(localStorage.getItem('token')||'')},body:JSON.stringify({description:prompt})});
       if(!r.body){ throw new Error('No stream'); }
       const reader = r.body.getReader(); const dec = new TextDecoder(); let buf='', j={};
       let streamDone=false;
@@ -516,6 +516,9 @@ async function forge(prompt, isRefine=false, forceAct=false){
         }, 400);
       }
       let zipUrl = j.mfgZipUrl;
+      if(j.payRequired && !j.zipB64){
+        addMsg((j.authenticated ? '🔒 <b>Fab credits used up.</b> ' : '🔒 <b>Free preview complete — sign up to download.</b> ') + (j.gateMessage||'') + ' <a href="/signup.html" style="color:#818cf8">Create free account →</a> <span style="color:#667;font-size:10px">(new accounts get 3 fab credits — Gerbers + drill + KiCad project)</span>', 'bot');
+      }
       if(j.zipB64){
         const blob = new Blob([Uint8Array.from(atob(j.zipB64), c=>c.charCodeAt(0))], {type:'application/zip'});
         zipUrl = URL.createObjectURL(blob);

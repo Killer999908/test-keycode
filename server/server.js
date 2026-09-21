@@ -1360,6 +1360,8 @@ const userSchema = new mongoose.Schema({
   avatar: { type: String, default: "" },
   role: { type: String, enum: ["user", "client", "admin"], default: "user" },
   isActive: { type: Boolean, default: true },
+  // Fab credits: each manufacturing-grade PCB ZIP download consumes 1; new users start with free ones
+  fabCredits: { type: Number, default: 3, min: 0 },
   emailVerified: { type: Boolean, default: false },
   verificationToken: String,
   resetPasswordToken: String,
@@ -10299,6 +10301,26 @@ app.post("/api/ai/pcb-stream", async (req, res) => {
   if (!description) return res.status(400).json({ error: "Description required" });
   res.setHeader('Content-Type','text/event-stream'); res.setHeader('Cache-Control','no-cache'); res.setHeader('Connection','keep-alive'); res.setHeader('X-Accel-Buffering','no');
   const send=(t,d)=> res.write(`data: ${JSON.stringify({type:t,...d})}\n\n`);
+
+  // Fab gate: the manufacturing ZIP costs 1 fab credit (new accounts get 3 free).
+  // Preview, SVG, BOM, validation — always free. Auth is optional.
+  let fabUser = null;
+  try {
+    let token = req.headers.authorization?.split(" ")[1];
+    if (!token && req.headers.cookie) {
+      const m = req.headers.cookie.match(/(?:^|;\s*)token=([^;]+)/);
+      if (m) token = decodeURIComponent(m[1]);
+    }
+    if (token) {
+      const decoded = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] });
+      fabUser = await User.findById(decoded.userId).select('fabCredits email');
+    }
+  } catch {}
+  const fabCreditsLeft = fabUser ? Math.max(0, fabUser.fabCredits ?? 3) : 0;
+  const canDownloadZip = !!fabUser && fabCreditsLeft > 0;
+  const gate = { payRequired: !canDownloadZip, authenticated: !!fabUser, fabCreditsLeft, signupUrl: '/signup.html', gateMessage: !fabUser
+    ? 'Create a free account to download manufacturing files — 3 fab credits included.'
+    : 'No fab credits left. Upgrade your plan to keep downloading factory packages.' };
   send('status',{message:'🔍 Deep websurf: drone PCB best practices…', tool:'websurf'});
   const webs = await websurf(description + ' PCB design best practices', 2);
   send('status',{message:`🌐 Websurf found ${webs.length} sources`, tool:'websurf', data: webs});
@@ -10419,9 +10441,12 @@ app.post("/api/ai/pcb-stream", async (req, res) => {
       summary: `✅ FACTORY-READY (KiCad-validated): ${bom.length} parts, ${real.gerberCount} Gerber layers, Excellon drill, PnP file`,
     };
     send('status',{message:`✅ ${fab.summary}`, tool:'validate', data: fab});
-    const zipB64 = zipBuf.toString('base64');
+    if (canDownloadZip) {
+      try { await User.updateOne({ _id: fabUser._id }, { $set: { fabCredits: fabCreditsLeft - 1 } }); } catch (e) { console.error('[pcb-stream] credit decrement failed:', e.message); }
+    }
+    const zipB64 = canDownloadZip ? zipBuf.toString('base64') : undefined;
     const skidlB64 = Buffer.from(skidlScript).toString('base64');
-    send('done',{ bom, netlist, boardW, boardH, svg, fab, zipB64, skidlB64, skidlScript, skidlValid, fileName: zipPath, router: 'tscircuit+kicad-cli', kicadReal, summary: result.summary||'Factory-ready PCB — KiCad-validated Gerbers + drill + BOM' });
+    send('done',{ bom, netlist, boardW, boardH, svg, fab, zipB64, skidlB64, skidlScript, skidlValid, fileName: zipPath, router: 'tscircuit+kicad-cli', kicadReal, ...gate, summary: result.summary||'Factory-ready PCB — KiCad-validated Gerbers + drill + BOM' });
   }catch(e){
     kicadErr = String(e.message||e).slice(0,300);
     console.error('[pcb-stream] real KiCad pipeline failed, falling back:', kicadErr);
@@ -10436,9 +10461,9 @@ app.post("/api/ai/pcb-stream", async (req, res) => {
       fab = pcbFabService.validatePcbForFabrication({ components:bom, netlist, boardW, boardH, gerberFiles: zipRes.gerberFiles, placed });
       fab.summary = '⚠️ LEGACY PATH (not KiCad-validated): ' + fab.summary;
       send('status',{message:`📦 Legacy ZIP: ${mfg.gerbers} Gerbers (NOT KiCad-validated)`, tool:'gerber', data: mfg});
-      const zipB64 = zipRes.zipBuffer.toString('base64');
+      const zipB64 = canDownloadZip ? zipRes.zipBuffer.toString('base64') : undefined;
       const skidlB64 = Buffer.from(skidlScript).toString('base64');
-      send('done',{ bom, netlist, boardW, boardH, svg, fab, zipB64, skidlB64, skidlScript, skidlValid, fileName: zipPath, router: routerUsed, kicadReal, kicadErr, summary: result.summary||'PCB generated (legacy path)' });
+      send('done',{ bom, netlist, boardW, boardH, svg, fab, zipB64, skidlB64, skidlScript, skidlValid, fileName: zipPath, router: routerUsed, kicadReal, kicadErr, ...gate, summary: result.summary||'PCB generated (legacy path)' });
     }catch(e2){
       fab = pcbFabService.validatePcbForFabrication({ components:bom, netlist, boardW, boardH, placed });
       const skidlB64b = Buffer.from(skidlScript).toString('base64');
