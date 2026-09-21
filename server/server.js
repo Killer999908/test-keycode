@@ -6704,9 +6704,10 @@ function dynamicPicks(prompt) {
   return ['Business website', 'Online store', 'Portfolio', 'Landing page', 'Web app', 'PCB design'];
 }
 app.post("/api/ai/plan", aiRateLimit, async (req,res)=>{
-  const { prompt, history=[] } = req.body;
+  const { prompt, history=[], images=[] } = req.body;
   if(!prompt) return res.status(400).json({ error: "prompt required" });
   const clean = String(prompt).trim();
+  const imgNote = Array.isArray(images) && images.length ? ` [User attached ${images.length} image(s) — treat as design reference.]` : '';
   const words = clean.split(/\s+/).filter(Boolean);
   const lc0 = clean.toLowerCase();
   const looksLikeQuestion = /^(what|why|how|who|when|where|which|explain|tell me|can you|do you|is |are |does |will |should |mean|define)/.test(lc0) || /\?$/.test(clean);
@@ -6757,7 +6758,7 @@ app.post("/api/ai/plan", aiRateLimit, async (req,res)=>{
   const webContext = allResults.map(r=>`[${r.title}] ${r.snippet} — ${r.url}`).join('\n').slice(0,5000);
   const prior = [...history].reverse().find(h => h && h.role === 'user' && h.content);
   const topic = (prior && String(prompt).trim().length < 80) ? `${String(prior.content).slice(0,200)} → refinement: ${prompt}` : prompt;
-  const planPrompt = `You are KEYCODE Ultra Architect. User wants: "${topic}".\n\nWeb research (deep surf):\n${webContext || 'No web results, use knowledge cutoff 2026.'}\n\nChat history: ${JSON.stringify(history).slice(0,2000)}\n\nTask: Create a concise build plan with: 1) Detected type (website/game/PCB/CAD), 2) 3 competitor insights from web, 3) Recommended stack/features, 4) AT MOST 2 short clarifying questions. Return JSON: {"type":"", "insights":[], "stack":[], "questions":[], "readyToAct": false}`;
+  const planPrompt = `You are KEYCODE Ultra Architect. User wants: "${topic}${imgNote}".\n\nWeb research (deep surf):\n${webContext || 'No web results, use knowledge cutoff 2026.'}\n\nChat history: ${JSON.stringify(history).slice(0,2000)}\n\nTask: Create a concise build plan with: 1) Detected type (website/game/PCB/CAD), 2) 3 competitor insights from web, 3) Recommended stack/features, 4) AT MOST 2 short clarifying questions. Return JSON: {"type":"", "insights":[], "stack":[], "questions":[], "readyToAct": false}`;
   const [archSettled, criticSettled] = await Promise.allSettled([
     callAI(planPrompt, 900),
     callAI(`You are KEYCODE Critic, a ruthless reviewer. User wants: "${topic}". Rules a good plan MUST pass: 1) type is exactly one of website/game/pcb/cad/firmware, 2) insights name REAL tech/competitors/standards — NEVER quote user words as a category, 3) stack items are real tools, 4) max 2 short questions. Reply ONLY JSON: {"verdict":"pass|fail","notes":"one line why"}.`, 200)
@@ -12605,6 +12606,9 @@ app.post("/api/ai/stream-website", async (req, res) => {
     let projectFiles = {};
     let hasBackend = false;
     let htmlExtracted = false;
+    let lastProgressivePush = 0;
+    let lastProgressiveLen = 0;
+    let lastParseAttempt = 0;
 
     // KEYCODE agent: stream via ALL providers (GROQ→Mistral→Ollama→Swarm), with memory
     const streamPrompt = `Build a complete, production-ready website for: "${description}".${memContext}
@@ -12633,22 +12637,61 @@ Guidelines:
       buffer += token;
       fullResponse += token;
       sendEvent('token', { token, provider: curProvider });
-      if (!htmlExtracted && buffer.includes('"index.html"')) {
-        const htmlMatch = buffer.match(/"index.html":\s*"([^"]+)"/);
-        if (htmlMatch) {
-          const partialHtml = htmlMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"');
-          if (partialHtml.length > 100) {
-            htmlExtracted = true;
-            sendEvent('html', { html: partialHtml });
-            fs.writeFileSync(path.join(previewDir, 'index.html'), partialHtml, 'utf8');
+
+      // Escape-aware incremental extractor: pulls the still-growing "index.html"
+      // value out of the JSON stream (handles \\n, \", \\\\ correctly).
+      const extractIndexHtml = (txt) => {
+        const key = txt.indexOf('"index.html"');
+        if (key === -1) return '';
+        const q = txt.indexOf('"', key + 12);
+        if (q === -1) return '';
+        let out = '';
+        for (let i = q + 1; i < txt.length; i++) {
+          const ch = txt[i];
+          if (ch === '\\' && i + 1 < txt.length) {
+            const nx = txt[i + 1];
+            if (nx === 'n') out += '\n';
+            else if (nx === 't') out += '\t';
+            else if (nx === 'r') out += '\r';
+            else if (nx === '"') out += '"';
+            else if (nx === '\\') out += '\\';
+            else if (nx === '/' ) out += '/';
+            else if (nx === 'u' && /^[0-9a-fA-F]{4}/.test(txt.slice(i + 2, i + 6))) { out += String.fromCharCode(parseInt(txt.slice(i + 2, i + 6), 16)); i += 4; }
+            else out += nx;
+            i++;
+          } else if (ch === '"') {
+            break; // closing quote — value complete
+          } else {
+            out += ch;
           }
         }
+        return out;
+      };
+
+      // Progressive preview: push the growing index.html as it streams so the
+      // browser renders the page WHILE it is being written (never stale)
+      const now = Date.now();
+      if (now - lastProgressivePush > 350) {
+        lastProgressivePush = now;
+        const growing = extractIndexHtml(fullResponse);
+        if (growing.length > 100 && growing.length > lastProgressiveLen) {
+          const first = lastProgressiveLen === 0;
+          lastProgressiveLen = growing.length;
+          sendEvent('html', { html: growing, partial: !first });
+          if (first) htmlExtracted = true;
+          try { fs.writeFileSync(path.join(previewDir, 'index.html'), growing, 'utf8'); } catch (e) {}
+        }
       }
-      const cleaned = fullResponse.replace(/```(?:json)?\s*|```\s*/g, '').trim();
-      try {
-        const parsed = JSON.parse(cleaned);
-        if (parsed && parsed.files) { projectFiles = parsed.files; hasBackend = !!parsed.hasBackend; }
-      } catch (e) { /* JSON not complete yet */ }
+
+      // Parse complete JSON at most every 1.5s (parsing on every token is O(n²))
+      if (now - lastParseAttempt > 1500) {
+        lastParseAttempt = now;
+        const cleaned = fullResponse.replace(/```(?:json)?\s*|```\s*/g, '').trim();
+        try {
+          const parsed = JSON.parse(cleaned);
+          if (parsed && parsed.files) { projectFiles = parsed.files; hasBackend = !!parsed.hasBackend; }
+        } catch (e) { /* JSON not complete yet */ }
+      }
       return true;
     }, (name) => sendEvent('status', { message: `🧠 ${name} forging code...`, provider: name }));
 
