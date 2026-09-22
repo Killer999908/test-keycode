@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const milestoneSchema = new mongoose.Schema({
   project: { type: mongoose.Schema.Types.ObjectId, ref: "Project" },
-  order: { type: mongoose.Schema.Types.ObjectId, ref: "Order" },
+  orderRef: { type: mongoose.Schema.Types.ObjectId, ref: "Order" },
   title: { type: String, required: true },
   description: String,
   status: { type: String, enum: ["pending", "in_progress", "review", "completed", "approved"], default: "pending" },

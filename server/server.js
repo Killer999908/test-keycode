@@ -17,6 +17,7 @@ import multer from "multer";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { TextDecoder } from "util";
 import { spawn, execSync } from "child_process";
 import sanitizeHtml from "sanitize-html";
 import * as freeTools from "./services/freeToolsService.js";
@@ -53,9 +54,12 @@ import { detectTool, agentsForTool } from "./services/taskRouterService.js";
 import { generateRealKicadProject, isKicadCliAvailable } from "./services/kicadExportService.js";
 import * as spiceService from "./services/spiceService.js";
 import * as libraryService from "./services/libraryService.js";
+import * as gitService from "./services/gitService.js";
 import { setupWebSocket } from "./services/websocketService.js";
 import swaggerUi from "swagger-ui-express";
 import { generateSpec } from "./swagger.js";
+import { SkillRegistry } from "./skills/SkillRegistry.js";
+import * as agentRouter from "./services/agentRouterService.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -101,7 +105,7 @@ console.log('  Gemini:', (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_K
   console.log('  Cohere:', process.env.COHERE_API_KEY ? 'key set' : '❌ missing');
   console.log('  Pollinations: ✅ always-on (no key)');
   console.log('  Ollama:', (process.env.OLLAMA_MODEL || 'llama3.2:1b') + ' @ ' + (process.env.OLLAMA_HOST || 'http://localhost:11434'));
-  console.log('  GitHubModels:', process.env.GITHUB_TOKEN ? 'key set' : '❌ missing (free: github.com/settings/tokens)');
+  console.log('  AzureFoundry:', (process.env.AZURE_FOUNDRY_API_KEY || process.env.GITHUB_TOKEN) ? 'key set (' + (process.env.AZURE_FOUNDRY_ENDPOINT || 'https://models.github.ai/inference') + ')' : '❌ missing (successor to retired GitHub Models)');
 console.log('--------------------------');
 
 // ===== SECURITY STARTUP VALIDATION =====
@@ -330,11 +334,11 @@ function initEmail() {
 }
 
 async function sendEmail({ to, subject, html }) {
+  if (!to) return { success: false, error: "no recipient" };
   if (!transporter) {
     console.log(`[EMAIL] Would send to ${to}: ${subject}`);
     return { success: true, simulated: true };
   }
-  
   try {
     await transporter.sendMail({
       from: `"KEYCODE Studio" <${emailConfig.auth.user}>`,
@@ -347,6 +351,11 @@ async function sendEmail({ to, subject, html }) {
     console.error("Email error:", error);
     return { success: false, error: error.message };
   }
+}
+
+/** Fire-and-forget email that never blocks or crashes the caller */
+function sendEmailSafe(payload) {
+  Promise.resolve(sendEmail(payload)).catch(e => console.error("[email] safe-send failed:", e.message));
 }
 
 // SMS Configuration
@@ -517,7 +526,17 @@ async function sendPaymentConfirmation(order) {
 async function sendOrderStatusNotification(order, oldStatus, newStatus) {
   const email = order.billingAddress?.email || order.user?.email;
   if (!email) return;
-  
+
+  // In-app notification rides along with the status change
+  if (order.user) {
+    await notifyUser(order.user._id || order.user, {
+      type: newStatus === "completed" ? "success" : newStatus === "cancelled" ? "error" : "info",
+      title: `Order ${newStatus.replace(/_/g, " ")}`,
+      message: `Order #${order._id.toString().slice(-8).toUpperCase()} is now ${newStatus.replace(/_/g, " ")}.`,
+      link: "/client-panel.html#orders"
+    });
+  }
+
   await sendEmail({
     to: email,
     subject: `🔄 Order Updated: ${newStatus.replace(/_/g, ' ').toUpperCase()} - #${order._id.toString().slice(-8).toUpperCase()}`,
@@ -1115,10 +1134,10 @@ app.use((req, res, next) => {
   try {
     let html = fs.readFileSync(filePath, 'utf-8');
 
-    // Strip dead references to old legacy CSS/JS files
+    // Strip only the retired generated stylesheets.  The shared scripts in
+    // /js are active site dependencies (navigation, loading state, etc.) and
+    // must be preserved when this middleware rewrites an HTML response.
     html = html.replace(/<link[^>]*href=["'][^"']*z-[\w-]+\.css["'][^>]*>/gi, '');
-    html = html.replace(/<script[^>]*src=["'][^"']*\/js\/[\w.-]+\.js["'][^>]*><\/script>/gi, '');
-    html = html.replace(/<script[^>]*src=["'][^"']*\/public\/js\/[\w.-]+\.js["'][^>]*><\/script>/gi, '');
 
     var authPages = ['/login.html', '/register.html', '/otp-login.html', '/reset-password.html', '/verify-email.html', '/admin-login.html', '/admin-access.html'];
     var isAuthPage = authPages.includes(req.path);
@@ -1580,6 +1599,19 @@ userSchema.post("save", function() {
 });
 // Models
 const User = mongoose.models.User || mongoose.model("User", userSchema);
+
+// API keys are stored as one-way hashes.  The plaintext value is returned only
+// at creation time, so a database read cannot expose a user's credentials.
+const apiKeySchema = new mongoose.Schema({
+  user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
+  name: { type: String, required: true, trim: true, maxlength: 80 },
+  prefix: { type: String, required: true },
+  keyHash: { type: String, required: true, unique: true, select: false },
+  lastUsed: Date,
+  revokedAt: Date
+}, { timestamps: true });
+apiKeySchema.index({ user: 1, revokedAt: 1 });
+const ApiKey = mongoose.models.ApiKey || mongoose.model("ApiKey", apiKeySchema);
 const Service = mongoose.models.Service || mongoose.model("Service", serviceSchema);
 const Order = mongoose.models.Order || mongoose.model("Order", orderSchema);
 const Cart = mongoose.models.Cart || mongoose.model("Cart", cartSchema);
@@ -1745,7 +1777,7 @@ const WebsiteOrder = mongoose.models.WebsiteOrder || mongoose.model("WebsiteOrde
 // Milestone Schema & Model
 const milestoneSchema = new mongoose.Schema({
   project: { type: mongoose.Schema.Types.ObjectId, ref: "Project" },
-  order: { type: mongoose.Schema.Types.ObjectId, ref: "Order" },
+  orderRef: { type: mongoose.Schema.Types.ObjectId, ref: "Order" },
   title: { type: String, required: true },
   description: String,
   status: { type: String, enum: ["pending", "in_progress", "review", "completed", "approved"], default: "pending" },
@@ -1779,6 +1811,16 @@ const aiProjectSchema = new mongoose.Schema({
   status: { type: String, enum: ['generating', 'locked', 'paid', 'released'], default: 'generating' },
   price: { type: Number, default: 0 },
   paymentId: String,
+  // Payment ledger: verified entries gate source-code release
+  payments: [{
+    ref: String,
+    amount: Number,
+    method: String,
+    status: { type: String, enum: ['pending', 'succeeded', 'failed', 'refunded'], default: 'pending' },
+    simulated: Boolean,
+    createdAt: { type: Date, default: Date.now },
+    verifiedAt: Date
+  }],
   // Release timing
   paidAt: Date,
   releaseAt: Date,  // paidAt + 1 hour
@@ -1794,12 +1836,22 @@ const generationProgress = new Map();
 const generatedProjects = new Map(); // Stores full project files for live preview
 
 // Encryption key for project files (from env or generated)
-const PROJECT_ENCRYPTION_KEY = process.env.PROJECT_ENCRYPTION_KEY || crypto.randomBytes(32).toString('hex');
+// NOTE: must be 64 hex chars (32 bytes). substring(0,64) of a 64-char key = whole key.
+const PROJECT_ENCRYPTION_KEY = process.env.PROJECT_ENCRYPTION_KEY
+  || process.env.ENCRYPTION_KEY
+  || crypto.randomBytes(32).toString('hex');
+
+function getProjectKey() {
+  // Accept 64-char hex (32 bytes). Fall back to a stable 32-byte derivation.
+  const hex = PROJECT_ENCRYPTION_KEY.replace(/[^0-9a-fA-F]/g, '');
+  if (hex.length >= 64) return Buffer.from(hex.slice(0, 64), 'hex');
+  return crypto.createHash('sha256').update(String(PROJECT_ENCRYPTION_KEY)).digest();
+}
 
 function encryptProjectFiles(files) {
   const json = JSON.stringify(files);
-  const iv = crypto.randomBytes(16);
-  const cipher = crypto.createCipheriv('aes-256-gcm', Buffer.from(PROJECT_ENCRYPTION_KEY.substring(0, 32), 'hex'), iv);
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv('aes-256-gcm', getProjectKey(), iv);
   let encrypted = cipher.update(json, 'utf8', 'hex');
   encrypted += cipher.final('hex');
   const tag = cipher.getAuthTag().toString('hex');
@@ -1807,7 +1859,7 @@ function encryptProjectFiles(files) {
 }
 
 function decryptProjectFiles(encrypted, ivHex, tagHex) {
-  const decipher = crypto.createDecipheriv('aes-256-gcm', Buffer.from(PROJECT_ENCRYPTION_KEY.substring(0, 32), 'hex'), Buffer.from(ivHex, 'hex'));
+  const decipher = crypto.createDecipheriv('aes-256-gcm', getProjectKey(), Buffer.from(ivHex, 'hex'));
   decipher.setAuthTag(Buffer.from(tagHex, 'hex'));
   let decrypted = decipher.update(encrypted, 'hex', 'utf8');
   decrypted += decipher.final('utf8');
@@ -2463,21 +2515,42 @@ const nebius = process.env.NEBIUS_API_KEY ? new OpenAI({
 // Cohere (FREE trial key, native API via fetch)
 const cohereKey = process.env.COHERE_API_KEY || "";
 // Pollinations.ai (100% FREE, no key, OpenAI-compatible) — always on
-// GitHub Models (FREE for all GitHub users with PAT, generous limits)
-const githubModels = process.env.GITHUB_TOKEN ? new OpenAI({
-  apiKey: process.env.GITHUB_TOKEN,
-  baseURL: "https://models.github.ai/inference"
+// Azure AI Foundry (successor to the retired GitHub Models; OpenAI-compatible
+// serverless endpoint. GITHUB_TOKEN + azure model IDs keep working through it,
+// so existing configs migrate with zero code changes on our side.)
+const azureFoundryEndpoint = process.env.AZURE_FOUNDRY_ENDPOINT || "https://models.github.ai/inference";
+const azureFoundryKey = process.env.AZURE_FOUNDRY_API_KEY || process.env.GITHUB_TOKEN;
+const azureFoundry = azureFoundryKey ? new OpenAI({
+  apiKey: azureFoundryKey,
+  baseURL: azureFoundryEndpoint
 }) : null;
+// Default Azure model catalog (publisher/model format). Only exposed when the
+// endpoint answers, so dead deployments never reach the picker.
+const AZURE_FOUNDRY_MODELS = (process.env.AZURE_FOUNDRY_MODELS ||
+  "openai/gpt-4.1-mini,openai/gpt-4o-mini,microsoft/Phi-4,deepseek/DeepSeek-V3-0324").split(",").map(s => s.trim()).filter(Boolean);
 // Ollama local (100% FREE, private, no key — auto-detects localhost:11434)
 const OLLAMA_HOST = process.env.OLLAMA_HOST || "http://localhost:11434";
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "llama3.2:1b";
+// A capable coding model is the local default. Ollama only runs it when it has
+// been installed, and the model catalogue below exposes the actual local list.
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "qwen2.5-coder:7b";
+
+async function getOllamaModels() {
+  try {
+    const response = await fetch(OLLAMA_HOST + "/api/tags", { signal: AbortSignal.timeout(2500) });
+    if (!response.ok) return [];
+    const data = await response.json();
+    return (data.models || []).map((model) => model.name).filter((name) => typeof name === "string");
+  } catch {
+    return [];
+  }
+}
 
 // Background provider health check — marks dead providers so callAI skips them
 (async function warmProviderHealth() {
   const testPrompt = "Say 'ok'";
   const checks = [];
   if (openrouter) checks.push(checkAndMark('OpenRouter', () => openrouter.chat.completions.create({ model: 'openrouter/auto', messages: [{ role: 'user', content: testPrompt }], max_tokens: 5 })));
-  if (groq) checks.push(checkAndMark('GROQ', () => groq.chat.completions.create({ model: 'groq/compound', messages: [{ role: 'user', content: testPrompt }], max_tokens: 5 })));
+  if (groq) checks.push(checkAndMark('GROQ', () => groq.chat.completions.create({ model: 'openai/gpt-oss-20b', messages: [{ role: 'user', content: testPrompt }], max_tokens: 5 })));
   if (deepseek) checks.push(checkAndMark('DeepSeek', () => deepseek.chat.completions.create({ model: 'deepseek-chat', messages: [{ role: 'user', content: testPrompt }], max_tokens: 5 })));
   if (qwen) checks.push(checkAndMark('Qwen', () => qwen.chat.completions.create({ model: 'qwen3-coder-30b', messages: [{ role: 'user', content: testPrompt }], max_tokens: 5 })));
   if (mistral) checks.push(checkAndMark('Mistral', () => mistral.chat.completions.create({ model: 'codestral-latest', messages: [{ role: 'user', content: testPrompt }], max_tokens: 5 })));
@@ -2493,7 +2566,7 @@ const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "llama3.2:1b";
   if (nebius) checks.push(checkAndMark('Nebius', () => nebius.chat.completions.create({ model: 'meta-llama/Meta-Llama-3.1-8B-Instruct', messages: [{ role: 'user', content: testPrompt }], max_tokens: 5 })));
   if (cohereKey) checks.push(checkAndMark('Cohere', () => fetch('https://api.cohere.com/v2/chat', { method: 'POST', headers: { 'Authorization': 'Bearer ' + cohereKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'command-r7b-12-2024', messages: [{ role: 'user', content: testPrompt }], max_tokens: 5 }) }).then(r => { if (!r.ok) throw new Error(); return r.json(); }).then(d => { if (!d?.message?.content?.[0]?.text) throw new Error(); return d.message.content[0].text; })));
   checks.push(checkAndMark('Pollinations', () => { const k = process.env.POLLINATIONS_API_KEY || ""; const h = { 'Content-Type': 'application/json' }; if (k) h['Authorization'] = 'Bearer ' + k; return fetch('https://text.pollinations.ai/openai', { method: 'POST', headers: h, body: JSON.stringify({ model: 'openai', messages: [{ role: 'user', content: 'hi' }], max_tokens: 5 }) }).then(r => { if (!r.ok) throw new Error(); return r.json(); }).then(d => { if (!d?.choices?.[0]?.message?.content) throw new Error(); return d.choices[0].message.content; }); }));
-  if (githubModels) checks.push(checkAndMark('GitHubModels', () => githubModels.chat.completions.create({ model: 'openai/gpt-4o-mini', messages: [{ role: 'user', content: testPrompt }], max_tokens: 5 })));
+  if (azureFoundry) checks.push(checkAndMark('AzureFoundry', () => azureFoundry.chat.completions.create({ model: AZURE_FOUNDRY_MODELS[0], messages: [{ role: 'user', content: testPrompt }], max_tokens: 5 })));
   checks.push(checkAndMark('Ollama', () => fetch(OLLAMA_HOST + '/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: OLLAMA_MODEL, messages: [{ role: 'user', content: testPrompt }], stream: false }) }).then(r => { if (!r.ok) throw new Error(); return r.json(); }).then(d => { if (!d?.message?.content) throw new Error(); return d.message.content; })));
   await Promise.allSettled(checks);
   const alive = Object.entries(providerHealth).filter(([_, h]) => h.alive).map(([n]) => n);
@@ -2544,7 +2617,7 @@ async function callAI(prompt, maxTokens) {
   // Build candidate list, skipping known-dead providers
   const candidates = [];
   if (openrouter && isProviderAlive('OpenRouter')) candidates.push(tryModel({ client: openrouter, name: 'OpenRouter', model: 'openrouter/auto' }, prompt, maxTokens));
-  if (groq && isProviderAlive('GROQ')) candidates.push(tryModel({ client: groq, name: 'GROQ', model: 'groq/compound' }, prompt, maxTokens));
+  if (groq && isProviderAlive('GROQ')) candidates.push(tryModel({ client: groq, name: 'GROQ', model: 'openai/gpt-oss-20b' }, prompt, maxTokens));
   if (deepseek && isProviderAlive('DeepSeek')) candidates.push(tryModel({ client: deepseek, name: 'DeepSeek', model: 'deepseek-chat' }, prompt, maxTokens));
   if (qwen && isProviderAlive('Qwen')) candidates.push(tryModel({ client: qwen, name: 'Qwen', model: 'qwen3-coder-30b', base: 'https://dashscope.aliyuncs.com/compatible-mode/v1' }, prompt, maxTokens));
   if (mistral && isProviderAlive('Mistral')) candidates.push(tryModel({ client: mistral, name: 'Mistral', model: 'codestral-latest', base: 'https://api.mistral.ai/v1' }, prompt, maxTokens));
@@ -2560,7 +2633,7 @@ async function callAI(prompt, maxTokens) {
   if (nebius && isProviderAlive('Nebius')) candidates.push(tryModel({ client: nebius, name: 'Nebius', model: 'meta-llama/Meta-Llama-3.1-8B-Instruct', base: 'https://api.studio.nebius.com/v1' }, prompt, maxTokens));
   if (cohereKey && isProviderAlive('Cohere')) candidates.push(tryCohere(prompt, cohereKey, maxTokens));
   if (isProviderAlive('Pollinations')) candidates.push(tryPollinations(prompt, maxTokens));
-  if (githubModels && isProviderAlive('GitHubModels')) candidates.push(tryModel({ client: githubModels, name: 'GitHubModels', model: 'openai/gpt-4o-mini', base: 'https://models.github.ai/inference' }, prompt, maxTokens));
+  if (azureFoundry && isProviderAlive('AzureFoundry')) candidates.push(tryModel({ client: azureFoundry, name: 'AzureFoundry', model: AZURE_FOUNDRY_MODELS[0], base: azureFoundryEndpoint }, prompt, maxTokens));
   if (isProviderAlive('Ollama')) candidates.push(tryOllama(prompt, maxTokens));
 
   // Race — first success wins
@@ -2584,7 +2657,7 @@ async function callAI(prompt, maxTokens) {
   try {
     for (const k of Object.keys(providerHealth)) providerHealth[k] = { alive: true, lastCheck: 0 };
     const retry = [];
-    if (groq) retry.push(tryModel({ client: groq, name: 'GROQ', model: 'groq/compound' }, prompt, maxTokens));
+    if (groq) retry.push(tryModel({ client: groq, name: 'GROQ', model: 'openai/gpt-oss-20b' }, prompt, maxTokens));
     if (mistral) retry.push(tryModel({ client: mistral, name: 'Mistral', model: 'codestral-latest', base: 'https://api.mistral.ai/v1' }, prompt, maxTokens));
     if (cfAcc && cfTok) retry.push(tryCloudflare(cfAcc, cfTok, prompt, maxTokens));
     retry.push(tryPollinations(prompt, maxTokens));
@@ -2663,12 +2736,28 @@ function extractJSON(text) {
 
 // Tries each streaming-capable provider, calling onToken for each token.
 // Returns true if any provider successfully streamed at least one token.
-async function streamFromProviders(prompt, maxTokens, onToken, onProvider) {
+async function streamFromProviders(prompt, maxTokens, onToken, onProvider, options = {}) {
   const STREAM_TIMEOUT = 28000;
+  const requestedOllamaModel = typeof options.modelPreference === "string" && options.modelPreference.startsWith("ollama:")
+    ? options.modelPreference.slice("ollama:".length)
+    : "";
+  const requestedAzureModel = typeof options.modelPreference === "string" && options.modelPreference.startsWith("azure:")
+    ? options.modelPreference.slice("azure:".length)
+    : "";
+  // Agentic routers first when explicitly preferred (Dify/Langflow/Interpreter
+  // run full workflows/agents server-side and return complete artifacts).
+  const preferAgent = Array.isArray(options.preferRouters) ? options.preferRouters : [];
   const providers = [
+    { name: 'AzureFoundry', client: azureFoundry, alive: azureFoundry && isProviderAlive('AzureFoundry'),
+      create: () => azureFoundry.chat.completions.create({
+        model: requestedAzureModel || AZURE_FOUNDRY_MODELS[0],
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.4, max_tokens: maxTokens, stream: true,
+      })
+    },
     { name: 'GROQ', client: groq, alive: groq && isProviderAlive('GROQ'),
       create: () => groq.chat.completions.create({
-        model: 'groq/compound',
+        model: 'openai/gpt-oss-20b',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.4, max_tokens: maxTokens, stream: true,
       })
@@ -2698,7 +2787,7 @@ async function streamFromProviders(prompt, maxTokens, onToken, onProvider) {
       create: async () => {
         const r = await fetch(OLLAMA_HOST + '/api/chat', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ model: OLLAMA_MODEL, messages: [{ role: 'user', content: prompt }], stream: true, options: { num_predict: maxTokens } })
+          body: JSON.stringify({ model: requestedOllamaModel || OLLAMA_MODEL, messages: [{ role: 'user', content: prompt }], stream: true, options: { num_predict: maxTokens } })
         });
         if (!r.ok || !r.body) throw new Error('ollama stream down');
         const reader = r.body.getReader();
@@ -2725,6 +2814,10 @@ async function streamFromProviders(prompt, maxTokens, onToken, onProvider) {
     },
   ];
 
+  // A selected model (local Ollama or Azure cloud) is intentionally tried
+  // first; if it is unavailable, the provider swarm still keeps the build
+  // from failing.
+  if (requestedOllamaModel || requestedAzureModel) providers.sort((a, b) => ((a.name === 'Ollama' || a.name === 'AzureFoundry') ? -1 : 0) - ((b.name === 'Ollama' || b.name === 'AzureFoundry') ? -1 : 0));
   for (const p of providers) {
     if (!p.alive) continue;
     onProvider && onProvider(p.name);
@@ -2754,7 +2847,23 @@ async function streamFromProviders(prompt, maxTokens, onToken, onProvider) {
       markProviderDead(p.name);
     }
   }
-  // Fallback: non-streaming providers (Cloudflare/Pollinations/etc) via callAI, emitted as live chunks
+  // Fallback tier 1: agentic routers (Dify workflows, Langflow flows, Open
+  // Interpreter agent) — complete artifacts re-emitted as live chunks.
+  if (preferAgent.length) {
+    for (const rid of preferAgent) {
+      const r = await agentRouter.runAgent(prompt, { router: rid, maxTokens, timeoutMs: 180000 });
+      if (r.ok && r.text && r.text.trim().length > 50) {
+        onProvider && onProvider(r.router.toUpperCase());
+        for (let i = 0; i < r.text.length; i += 120) {
+          const cont = onToken(r.text.slice(i, i + 120), r.router.toUpperCase());
+          if (cont === false) return false;
+          await new Promise(res => setTimeout(res, 15));
+        }
+        return true;
+      }
+    }
+  }
+  // Fallback tier 2: non-streaming providers (Cloudflare/Pollinations/etc) via callAI, emitted as live chunks
   try {
     onProvider && onProvider('KEYCODE-Swarm');
     const fb = await callAI(prompt, maxTokens);
@@ -2767,6 +2876,19 @@ async function streamFromProviders(prompt, maxTokens, onToken, onProvider) {
       return true;
     }
   } catch (e) { console.warn('[KEYCODE-Swarm] fallback failed:', e.message); }
+  // Fallback tier 3: full agent-router swarm — every remaining brain
+  try {
+    const swarm = await agentRouter.swarmRun(prompt, { maxTokens, system: '', timeoutMs: 120000 });
+    if (swarm.ok && swarm.text && swarm.text.trim().length > 50) {
+      onProvider && onProvider(swarm.router.toUpperCase());
+      for (let i = 0; i < swarm.text.length; i += 120) {
+        const cont = onToken(swarm.text.slice(i, i + 120), swarm.router.toUpperCase());
+        if (cont === false) return false;
+        await new Promise(res => setTimeout(res, 15));
+      }
+      return true;
+    }
+  } catch (e) { console.warn('[AgentRouter] swarm fallback failed:', e.message); }
   return false;
 }
 
@@ -2933,10 +3055,21 @@ app.post("/api/auth/register", authLimiter, async (req, res) => {
       ip: req.ip
     });
 
-    // Send welcome email
-    await sendEmail({
+    // Welcome email + verification link (fire-and-forget, never blocks signup)
+    const verifyUrl = `${process.env.FRONTEND_URL || 'https://keycode.studio'}/verify-email.html?token=${verificationToken}`;
+    sendEmailSafe({
       to: email,
-      ...emailTemplates.welcome(name || email.split('@')[0])
+      subject: `Welcome to KEYCODE, ${name || 'builder'} — verify your email`,
+      html: `<div style="max-width:560px;margin:0 auto;background:#111117;border-radius:20px;padding:36px;border:1px solid #1f1f2e;font-family:Inter,Arial,sans-serif">
+        <div style="font-size:26px;font-weight:800;color:#fff;text-align:center;letter-spacing:.2em;margin-bottom:24px">KEYCODE</div>
+        <h2 style="color:#a5b4fc;margin:0 0 8px">You're in. 🎉</h2>
+        <p style="color:#9ca3af;line-height:1.6">Welcome, <b style="color:#fff">${name || 'builder'}</b> — your account is live and the builders are warmed up.</p>
+        <div style="text-align:center;margin:26px 0">
+          <a href="${verifyUrl}" style="display:inline-block;background:linear-gradient(135deg,#6d7cff,#a855f7);color:#fff;padding:14px 34px;border-radius:999px;text-decoration:none;font-weight:700;font-size:14px">Verify my email →</a>
+        </div>
+        <p style="color:#6b7280;font-size:12px;line-height:1.6">Or paste this link in your browser:<br><span style="color:#a5b4fc;word-break:break-all">${verifyUrl}</span></p>
+        <p style="color:#6b7280;font-size:12px;text-align:center;margin-top:24px">© 2026 KEYCODE Studio — engineered by its own pipelines</p>
+      </div>`
     });
 
     res.status(201).json({ 
@@ -3485,13 +3618,20 @@ app.get("/api/user/dashboard", auth, async (req, res) => {
       memberSince: req.user.createdAt,
       lastLogin: req.user.lastLogin
     };
-    
+
+    // Unread notification count for the dashboard bell
+    let unreadCount = 0;
+    try {
+      unreadCount = await Notification.countDocuments({ user: userId, read: false });
+    } catch (e) { /* notifications optional */ }
+
     res.json({
       success: true,
       orders,
       websiteOrders,
       aiProjects,
-      stats: userStats
+      stats: userStats,
+      unreadCount
     });
   } catch (error) {
     console.error("Dashboard error:", error);
@@ -3560,6 +3700,56 @@ app.put("/api/user/profile", auth, async (req, res) => {
     res.json({ success: true, user });
   } catch (error) {
     res.status(500).json({ error: "Update failed" });
+  }
+});
+
+// ==================== USER API KEYS ====================
+
+app.get("/api/user/api-keys", auth, async (req, res) => {
+  try {
+    const keys = await ApiKey.find({ user: req.user._id, revokedAt: { $exists: false } })
+      .select("name prefix lastUsed createdAt updatedAt")
+      .sort({ createdAt: -1 })
+      .lean();
+    res.json({ keys });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to load API keys" });
+  }
+});
+
+app.post("/api/user/api-keys", auth, async (req, res) => {
+  try {
+    const name = String(req.body?.name || "My API Key").trim().slice(0, 80);
+    if (!name) return res.status(400).json({ error: "A key name is required" });
+    const activeCount = await ApiKey.countDocuments({ user: req.user._id, revokedAt: { $exists: false } });
+    if (activeCount >= 20) return res.status(400).json({ error: "Maximum of 20 active API keys reached" });
+
+    const key = `kc_live_${crypto.randomBytes(24).toString("base64url")}`;
+    const record = await ApiKey.create({
+      user: req.user._id,
+      name,
+      prefix: key.slice(0, 16),
+      keyHash: crypto.createHash("sha256").update(key).digest("hex")
+    });
+    res.status(201).json({
+      key,
+      apiKey: { _id: record._id, name: record.name, prefix: record.prefix, createdAt: record.createdAt }
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to create API key" });
+  }
+});
+
+app.delete("/api/user/api-keys/:id", auth, async (req, res) => {
+  try {
+    const result = await ApiKey.updateOne(
+      { _id: req.params.id, user: req.user._id, revokedAt: { $exists: false } },
+      { $set: { revokedAt: new Date() } }
+    );
+    if (!result.matchedCount) return res.status(404).json({ error: "API key not found" });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(400).json({ error: "Invalid API key id" });
   }
 });
 
@@ -4028,6 +4218,25 @@ app.post("/api/auth/resend-verification", authLimiter, async (req, res) => {
 
 // ==================== NEWSLETTER / SUBSCRIPTION ====================
 
+// Profile billing is an authenticated account view.  At present subscriptions
+// are newsletter records rather than paid-plan records, so expose the actual
+// supported Free plan instead of returning a 404 and forcing the UI into mock
+// data.
+app.get("/api/subscriptions", auth, async (req, res) => {
+  try {
+    const newsletter = await Subscription.findOne({ email: req.user.email, isActive: true }).lean();
+    res.json({
+      plan: "Free",
+      amount: 0,
+      status: "Active",
+      newsletterSubscribed: Boolean(newsletter),
+      subscribedAt: newsletter?.subscribedAt || null
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to load subscription" });
+  }
+});
+
 app.post("/api/subscribe", async (req, res) => {
   try {
     const { email, name, preferences } = req.body;
@@ -4199,10 +4408,10 @@ app.post("/api/orders/:id/request-review", auth, async (req, res) => {
 
 app.post("/api/milestones/:id/notify", auth, adminOnly, async (req, res) => {
   try {
-    const milestone = await Milestone.findById(req.params.id).populate({ path: "order", populate: { path: "user", select: "email name" } });
+    const milestone = await Milestone.findById(req.params.id).populate({ path: "orderRef", populate: { path: "user", select: "email name" } });
     if (!milestone) return res.status(404).json({ error: "Milestone not found" });
 
-    const email = milestone.order?.user?.email || milestone.order?.billingAddress?.email;
+    const email = milestone.orderRef?.user?.email || milestone.orderRef?.billingAddress?.email;
     if (!email) return res.status(400).json({ error: "No email found" });
 
     await sendEmail({
@@ -4602,12 +4811,22 @@ app.post("/api/payment/create-intent", auth, async (req, res) => {
     }
 
     // Stripe (fallback)
+    if (isStripeSimulated) {
+      return res.json({
+        gateway: "stripe_simulated",
+        amount,
+        clientSecret: "pi_sim_" + Date.now() + "_secret_sim",
+        paymentIntentId: "pi_sim_" + Date.now(),
+        simulated: true,
+        message: "Stripe not configured — add STRIPE_SECRET_KEY to accept real card payments."
+      });
+    }
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(amount * 100), currency: "usd",
       metadata: { orderId: orderId || "", type: type || "deposit", userId: req.user._id.toString() },
       automatic_payment_methods: { enabled: true }
     });
-    res.json({ gateway: "stripe", clientSecret: paymentIntent.client_secret, paymentIntentId: paymentIntent.id, amount });
+    res.json({ gateway: "stripe", clientSecret: paymentIntent.client_secret, paymentIntentId: paymentIntent.id, amount, stripeConfigured: true });
   } catch (error) {
     console.error("Payment error:", error);
     res.status(500).json({ error: "Payment processing failed" });
@@ -4626,6 +4845,10 @@ app.post("/api/payment/confirm", auth, async (req, res) => {
       if (orderId) {
         const order = await Order.findById(orderId);
         if (order) { order.paymentStatus = "paid"; order.paymentId = razorpayPaymentId; order.paymentGateway = "razorpay"; order.timeline.push({ status: order.status, note: `Razorpay payment: ₹${amount || 0}` }); await order.save(); await sendPaymentConfirmation(order); }
+        else {
+          const wOrder = await WebsiteOrder.findById(orderId).catch(() => null);
+          if (wOrder) { wOrder.paymentStatus = "paid"; wOrder.paymentId = razorpayPaymentId; wOrder.status = "processing"; await wOrder.save(); await notifyUser(wOrder.user, { type: "success", title: "Payment received", message: `₹${amount || 0} confirmed via Razorpay for ${wOrder.orderNumber || "your order"}.`, link: "/client-panel.html#orders" }); }
+        }
       }
       return res.json({ success: true, status: "succeeded", gateway: "razorpay" });
     }
@@ -4645,6 +4868,10 @@ app.post("/api/payment/confirm", auth, async (req, res) => {
       if (orderId) {
         const order = await Order.findById(orderId);
         if (order) { order.paymentStatus = "paid"; order.paymentId = paymentIntentId; order.timeline.push({ status: order.status, note: `Stripe payment: $${paymentIntent.amount / 100}` }); await order.save(); await sendPaymentConfirmation(order); }
+        else {
+          const wOrder = await WebsiteOrder.findById(orderId).catch(() => null);
+          if (wOrder) { wOrder.paymentStatus = "paid"; wOrder.paymentId = paymentIntentId; wOrder.status = "processing"; await wOrder.save(); await notifyUser(wOrder.user, { type: "success", title: "Payment received", message: `$${paymentIntent.amount / 100} confirmed via Stripe for ${wOrder.orderNumber || "your order"}.`, link: "/client-panel.html#orders" }); }
+        }
       }
       return res.json({ success: true, status: "succeeded" });
     }
@@ -4886,28 +5113,76 @@ app.get("/api/admin/export/orders", auth, adminOnly, async (req, res) => {
 
 // ==================== NOTIFICATION ROUTES ====================
 
-// Get user notifications
+// ==================== NOTIFICATIONS (persistent, per-user) ====================
+
+const notificationSchema = new mongoose.Schema({
+  user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
+  type: { type: String, enum: ["info", "success", "warning", "error"], default: "info" },
+  title: { type: String, required: true, maxlength: 200 },
+  message: { type: String, default: "", maxlength: 1000 },
+  link: { type: String, default: "" },
+  read: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now }
+}, { timestamps: true });
+const Notification = mongoose.models.Notification || mongoose.model("Notification", notificationSchema);
+
+/** Persist an in-app notification (never throws into caller flow) */
+async function notifyUser(userId, { type = "info", title, message = "", link = "" }) {
+  try {
+    if (!userId || !title) return null;
+    return await Notification.create({ user: userId, type, title: String(title).slice(0, 200), message: String(message).slice(0, 1000), link });
+  } catch (e) {
+    console.error("[notifyUser] failed:", e.message);
+    return null;
+  }
+}
+
 app.get("/api/notifications", auth, async (req, res) => {
   try {
-    // Simple notifications based on orders
-    const orders = await Order.find({ user: req.user._id })
-      .sort({ updatedAt: -1 })
-      .limit(5);
-    
-    const notifications = orders
+    const docs = await Notification.find({ user: req.user._id }).sort({ createdAt: -1 }).limit(30).lean();
+    const unreadCount = await Notification.countDocuments({ user: req.user._id, read: false });
+    // Backfill from order timelines so the feed isn't empty on first run
+    const orderNotifs = await Order.find({ user: req.user._id }).sort({ updatedAt: -1 }).limit(5);
+    const backfilled = orderNotifs
       .filter(o => o.timeline && o.timeline.length > 1)
       .map(o => ({
-        id: o._id,
-        type: o.status === "completed" ? "success" : "info",
-        title: `Order #${o._id.toString().slice(-8).toUpperCase()} - ${o.status.replace("_", " ")}`,
-        message: o.timeline[o.timeline.length - 1]?.note || "",
-        read: false,
-        createdAt: o.updatedAt
+        id: o._id, type: o.status === "completed" ? "success" : "info",
+        title: `Order #${o._id.toString().slice(-8).toUpperCase()} — ${o.status.replace("_", " ")}`,
+        message: o.timeline[o.timeline.length - 1]?.note || "", read: true, createdAt: o.updatedAt, link: "/client-panel.html#orders"
       }));
-    
-    res.json({ notifications });
+    const seen = new Set(docs.map(d => d.title));
+    const merged = [...docs.map(d => ({ ...d, id: d._id })), ...backfilled.filter(b => !seen.has(b.title))];
+    res.json({ notifications: merged.slice(0, 30), unreadCount });
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch notifications" });
+  }
+});
+
+app.post("/api/notifications/read", auth, async (req, res) => {
+  try {
+    const { id, all } = req.body || {};
+    const q = all ? { user: req.user._id, read: false } : { user: req.user._id, _id: id };
+    await Notification.updateMany(q, { $set: { read: true } });
+    const unreadCount = await Notification.countDocuments({ user: req.user._id, read: false });
+    res.json({ success: true, unreadCount });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update notification" });
+  }
+});
+
+// The notifications page marks an individual item through this resource URL.
+// Keep the bulk POST endpoint above for existing clients as well.
+app.put("/api/notifications/:id/read", auth, async (req, res) => {
+  try {
+    const result = await Notification.updateOne(
+      { user: req.user._id, _id: req.params.id },
+      { $set: { read: true } }
+    );
+    if (!result.matchedCount) return res.status(404).json({ error: "Notification not found" });
+    const unreadCount = await Notification.countDocuments({ user: req.user._id, read: false });
+    res.json({ success: true, unreadCount });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update notification" });
   }
 });
 
@@ -5801,18 +6076,19 @@ app.get("/api/admin/partners", auth, adminOnly, async (req, res) => {
 // -- BLOG --
 app.get("/api/admin/blog", auth, adminOnly, async (req, res) => {
   try {
-    const posts = await (global.Blog ? Blog.find().sort({ createdAt: -1 }).lean() : Promise.resolve([]));
+    const posts = await BlogPost.find().sort({ createdAt: -1 }).lean();
     res.json(posts.length ? posts : [{ _id: "demo_1", title: "Welcome to KEYCODE", slug: "welcome", status: "published", author: "Admin", createdAt: new Date(), views: 142 }]);
   } catch(e) { res.json([{ _id: "demo_1", title: "Welcome to KEYCODE", slug: "welcome", status: "published", author: "Admin", createdAt: new Date(), views: 142 }]); }
 });
 app.post("/api/admin/blog", auth, adminOnly, async (req, res) => {
   try {
-    if (global.Blog) { const p = await Blog.create({ ...req.body, author: req.user.name || "Admin" }); return res.json({ success: true, post: p }); }
+    const p = await BlogPost.create({ ...req.body, author: req.user._id });
+    return res.json({ success: true, post: p });
   } catch(e) { console.error('[Admin] Blog create failed:', e.message); }
   res.json({ success: true, message: "Blog post created (demo mode)" });
 });
 app.delete("/api/admin/blog/:id", auth, adminOnly, async (req, res) => {
-  try { if (global.Blog) await Blog.findByIdAndDelete(req.params.id); } catch(e) { console.error('[Admin] Blog delete failed:', e.message); }
+  try { await BlogPost.findByIdAndDelete(req.params.id); } catch(e) { console.error('[Admin] Blog delete failed:', e.message); }
   res.json({ success: true });
 });
 
@@ -6566,7 +6842,8 @@ app.post("/api/admin/seed", auth, adminOnly, async (req, res) => {
 
 // ==================== AI CHAT ROUTES ====================
 
-app.post("/api/chat", async (req, res) => {
+const chatLimiter = rateLimit({ windowMs: 60 * 1000, max: 20, standardHeaders: true, legacyHeaders: false, message: { error: "Chat rate limit — try again in a minute" } });
+app.post("/api/chat", chatLimiter, async (req, res) => {
   try {
     const { message, sessionId } = req.body;
     let response = "";
@@ -7944,14 +8221,124 @@ app.post("/api/ai/project-store", auth, async (req, res) => {
   }
 });
 
+// ===== SET PROJECT PRICE (owner or admin) =====
+app.put("/api/ai/project-price/:projectId", auth, async (req, res) => {
+  try {
+    const project = await AIProject.findOne({ projectId: req.params.projectId });
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+    if (project.userId && project.userId.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    const price = Number(req.body.price);
+    if (!Number.isFinite(price) || price < 0) return res.status(400).json({ error: 'price must be a positive number' });
+    project.price = price;
+    await project.save();
+    res.json({ success: true, projectId: project.projectId, price: project.price });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ===== PAY FOR A LOCKED PROJECT (auth + ownership, creates verified ledger entry) =====
+app.post("/api/ai/project-pay", auth, async (req, res) => {
+  try {
+    const { projectId } = req.body;
+    if (!projectId) return res.status(400).json({ error: 'Project ID required' });
+    const project = await AIProject.findOne({ projectId });
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+    if (project.userId && project.userId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    if (project.status === 'released') return res.json({ success: true, status: 'released' });
+    if (!project.price || project.price <= 0) {
+      return res.status(402).json({ error: 'Project has no price set' });
+    }
+
+    const alreadyPaid = (project.payments || []).some(p => p.status === 'succeeded' && p.amount >= project.price);
+    if (alreadyPaid) return res.json({ success: true, status: 'paid', message: 'Already paid' });
+
+    if (!isStripeSimulated) {
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(project.price * 100),
+        currency: 'usd',
+        metadata: { projectId, userId: req.user._id.toString(), type: 'project_unlock' },
+        automatic_payment_methods: { enabled: true }
+      });
+      project.payments = project.payments || [];
+      project.payments.push({
+        ref: paymentIntent.id, amount: project.price, method: 'stripe',
+        status: 'pending', createdAt: new Date()
+      });
+      await project.save();
+      return res.json({
+        success: true, gateway: 'stripe',
+        clientSecret: paymentIntent.client_secret,
+        paymentIntentId: paymentIntent.id, amount: project.price
+      });
+    }
+
+    // Simulated mode — records a pending entry that admin (or webhook) confirms.
+    const ref = 'pi_sim_' + crypto.randomBytes(10).toString('hex');
+    project.payments = project.payments || [];
+    project.payments.push({
+      ref, amount: project.price, method: 'stripe_simulated',
+      status: 'succeeded', simulated: true, createdAt: new Date(), verifiedAt: new Date()
+    });
+    await project.save();
+    res.json({
+      success: true, gateway: 'stripe_simulated', paymentIntentId: ref,
+      amount: project.price, simulated: true,
+      message: 'Simulated payment recorded (STRIPE_SECRET_KEY not configured).'
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // ===== UNLOCK PROJECT - After payment, set timer =====
-app.post("/api/ai/project-unlock", async (req, res) => {
+app.post("/api/ai/project-unlock", auth, async (req, res) => {
   try {
     const { projectId, paymentId, customerName, customerEmail } = req.body;
     if (!projectId) return res.status(400).json({ error: 'Project ID required' });
 
     const project = await AIProject.findOne({ projectId });
     if (!project) return res.status(404).json({ error: 'Project not found' });
+
+    // SECURITY: only the project owner can unlock, and only with a verified payment.
+    if (project.userId && project.userId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    if (!project.price || project.price <= 0) {
+      return res.status(402).json({ error: 'Project has no price set — contact support', status: 'unpriced' });
+    }
+
+    if (project.status !== 'released') {
+      const ledger = (project.payments || []).filter(p => p.status === 'succeeded');
+      let verified = ledger.reduce((sum, p) => sum + (p.amount || 0), 0) >= project.price;
+
+      // If a Stripe PaymentIntent id is supplied, verify it directly with Stripe.
+      if (!verified && paymentId && String(paymentId).startsWith('pi_') && !isStripeSimulated) {
+        try {
+          const pi = await stripe.paymentIntents.retrieve(String(paymentId));
+          if (pi.status === 'succeeded' && pi.amount >= Math.round(project.price * 100)) {
+            project.payments = project.payments || [];
+            project.payments.push({
+              ref: pi.id, amount: pi.amount / 100, method: 'stripe',
+              status: 'succeeded', verifiedAt: new Date()
+            });
+            verified = true;
+          }
+        } catch (e) { console.warn('[unlock] Stripe verify failed:', e.message); }
+      }
+
+      if (!verified) {
+        return res.status(402).json({
+          error: 'Payment required before source code can be released',
+          status: 'payment_required', price: project.price
+        });
+      }
+    }
+
     if (project.status === 'released') return res.json({ success: true, status: 'released', releaseAt: project.releaseAt });
 
     const now = new Date();
@@ -8086,7 +8473,10 @@ app.get("/api/ai/project-demo/:projectId", async (req, res) => {
     const project = await AIProject.findOne({ projectId: req.params.projectId });
     if (!project) return res.status(404).json({ error: 'Project not found' });
     if (!project.demoHtml) return res.status(404).json({ error: 'No demo available' });
+    // Demo preview is the marketing surface — serve it, but strip any
+    // attempt to read the real source files via fetch to /api/*.
     res.set('Content-Type', 'text/html');
+    res.set('X-Robots-Tag', 'noindex');
     res.send(project.demoHtml);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -8438,6 +8828,8 @@ app.post("/api/ai/hosting-checkout", async (req, res) => {
         clientSecret: 'pi_simulated_' + Date.now() + '_secret_simulated',
         publishableKey,
         amount: plan.monthly,
+        stripeConfigured: false,
+        paymentIntentId: null,
         message: 'Simulated mode — inline payment form will show',
       });
     }
@@ -9367,13 +9759,26 @@ app.post("/api/website-order", async (req, res) => {
     // Auto-upgrade user to client if they have an account
     if (req.body.userId) {
       await User.findByIdAndUpdate(req.body.userId, { role: "client" });
+      notifyUser(req.body.userId, { type: "success", title: "Order placed", message: `${orderNumber} received — ${order.paymentStatus === 'paid' ? 'payment confirmed' : 'awaiting payment'}.`, link: "/client-panel.html#orders" }).catch(() => {});
     }
-    
-    // Send email with payment instructions if not free
-    if (order.paymentStatus === 'pending') {
-      // Would send email with bank details here
-      console.log('[ORDER] Created pending order - awaiting manual payment');
-    }
+
+    // Real confirmation email to the customer (fire-and-forget)
+    sendEmailSafe({
+      to: customerEmail,
+      subject: `Order ${orderNumber} received — KEYCODE Studio`,
+      html: `<div style="max-width:560px;margin:0 auto;background:#111117;border-radius:20px;padding:36px;border:1px solid #1f1f2e;font-family:Inter,Arial,sans-serif">
+        <div style="font-size:26px;font-weight:800;color:#fff;text-align:center;letter-spacing:.2em;margin-bottom:24px">KEYCODE</div>
+        <h2 style="color:#a5b4fc;margin:0 0 8px">Order received 🎉</h2>
+        <p style="color:#9ca3af;line-height:1.6">Thanks ${customerName || ''} — your <b style="color:#fff">${project?.name || 'project'}</b> order is in.</p>
+        <div style="background:rgba(99,102,241,.08);border-radius:12px;padding:18px;margin:18px 0;text-align:center">
+          <div style="color:#9ca3af;font-size:12px">ORDER NUMBER</div>
+          <div style="color:#fff;font-size:20px;font-weight:700;letter-spacing:.05em">${orderNumber}</div>
+          <div style="color:#9ca3af;font-size:12px;margin-top:10px">TOTAL</div>
+          <div style="color:#34d399;font-size:18px;font-weight:700">$${Number(total || 0).toFixed(2)} ${order.paymentStatus === 'paid' ? '· PAID ✅' : '· AWAITING PAYMENT'}</div>
+        </div>
+        <p style="color:#6b7280;font-size:12px;text-align:center;margin-top:24px">Track progress in your <a href="${process.env.FRONTEND_URL || 'https://keycode.studio'}/client-panel.html" style="color:#a5b4fc">client panel</a> · © 2026 KEYCODE Studio</p>
+      </div>`
+    });
     
     res.json({
       success: true,
@@ -9617,8 +10022,8 @@ const domainProvider = {
 
 
 
-// Register domain (real)
-app.post("/api/domains/register", async (req, res) => {
+// Register domain — paid action, requires auth
+app.post("/api/domains/register", auth, async (req, res) => {
   try {
     const { domain, customerInfo } = req.body;
     if (!domain) return res.status(400).json({ error: 'Domain is required' });
@@ -9745,8 +10150,8 @@ const hostingProvider = {
   }
 };
 
-// Provision hosting (real)
-app.post("/api/hosting/provision", async (req, res) => {
+// Provision hosting — paid action, requires auth
+app.post("/api/hosting/provision", auth, async (req, res) => {
   try {
     const { plan, domain, customerInfo } = req.body;
     
@@ -9811,8 +10216,8 @@ app.delete("/api/hosting/:id", async (req, res) => {
 
 // ==================== STRIPE PAYMENT INTEGRATION ====================
 
-// Create Stripe payment intent
-app.post("/api/payments/create-intent", async (req, res) => {
+// Create Stripe payment intent — auth so users cannot mint intents for others
+app.post("/api/payments/create-intent", auth, async (req, res) => {
   try {
     const { amount, currency = 'usd', metadata = {} } = req.body;
     
@@ -10139,7 +10544,14 @@ ENGINEERING STANDARDS (MUST follow every point):
 6. LOAD BEARING — For mechanical parts: specify static load rating, fatigue life cycles, safety factor (min 2.0).
 7. SVG PREVIEW — Render a real SVG isometric view with dimension lines, hidden lines as dashed, color-coded by feature type. Use viewBox, stroke, fill. Must be a real representation of the model.`;
 
-    const raw = await orchestrateWithManager(cadPrompt, 'cad', 4096);
+    // Agentic routers first (Dify/Langflow/Interpreter run full design tasks);
+    // multi-agent orchestration remains as the resilient fallback.
+    let raw = '';
+    try {
+      const routed = await agentRouter.swarmRun(cadPrompt, { maxTokens: 5120, timeoutMs: 150000, prefer: ['dify', 'langflow', 'open-interpreter'] });
+      if (routed.ok) raw = routed.text;
+    } catch (e) { console.warn('[cad-design] router unavailable:', e.message); }
+    if (!raw) raw = await orchestrateWithManager(cadPrompt, 'cad', 4096);
     let result;
     try {
       const cleaned = raw.replace(/```json\s*|```\s*/g, "").trim();
@@ -10235,7 +10647,14 @@ DESIGN STANDARDS (EVERY point MUST be addressed):
 7. MANUFACTURING — IPC-6012 Class 2 minimum. Fiducials (3× 1mm) for pick-and-place. Edge rails for panelization. V-score or mouse bites for depanelization.
 8. ROUTING — Via stitching at λ/20 spacing around board edge. Via tenting with coverlay. Teardrops on all pad-via connections. No acute angles < 90°.
 9. BOM — Every part must have: real MPN, manufacturer, tolerance, voltage/power rating, temp coefficient, package type, LCSC/DigiKey part number.`;
-    const raw = await orchestrateWithManager(pcbPrompt, 'pcb', 5120);
+    // Router first: workflow/agent platforms (Dify/Langflow/Interpreter) can
+    // run the whole design task; swarm fallback covers everything else.
+    let raw = '';
+    try {
+      const routed = await agentRouter.swarmRun(pcbPrompt, { maxTokens: 6144, timeoutMs: 150000, prefer: ['dify', 'langflow', 'open-interpreter'] });
+      if (routed.ok) raw = routed.text;
+    } catch (e) { console.warn('[pcb-design] router unavailable:', e.message); }
+    if (!raw) raw = await orchestrateWithManager(pcbPrompt, 'pcb', 5120);
     let result;
     try {
       const cleaned = raw.replace(/```json\s*|```\s*/g, "").trim();
@@ -10281,6 +10700,10 @@ DESIGN STANDARDS (EVERY point MUST be addressed):
     // Save to local storage
     const fileId = 'pcb_' + Date.now();
     const filePath = path.join(generatedDir, fileId + '.json');
+    // Smartphone boards get the full HDI manufacturing profile attached.
+    if (pcbFabService.isSmartphoneBoard(description)) {
+      result.hdiProfile = pcbFabService.hdiProfile();
+    }
     fs.writeFileSync(filePath, JSON.stringify(result, null, 2));
     uploadToR2('pcb/' + fileId + '.json', JSON.stringify(result));
 
@@ -10322,11 +10745,22 @@ app.post("/api/ai/pcb-stream", async (req, res) => {
   const gate = { payRequired: !canDownloadZip, authenticated: !!fabUser, fabCreditsLeft, signupUrl: '/signup.html', gateMessage: !fabUser
     ? 'Create a free account to download manufacturing files — 3 fab credits included.'
     : 'No fab credits left. Upgrade your plan to keep downloading factory packages.' };
-  send('status',{message:'🔍 Deep websurf: drone PCB best practices…', tool:'websurf'});
+  // Smartphone/flagship boards take the HDI production path: profile-aware
+  // prompt, HDI placement/routing, microvia rule set in the fab package.
+  const isPhoneBoard = pcbFabService.isSmartphoneBoard(description);
+  const hdi = isPhoneBoard ? pcbFabService.hdiProfile() : null;
+  if (isPhoneBoard) send('status',{message:`📱 Smartphone detected — HDI ${hdi.buildup}, ${hdi.layers} layers, laser microvia ${hdi.rules.microviaDrillMm}mm`, tool:'hdi'});
+  send('status',{message:'🔍 Deep websurf: '+(isPhoneBoard?'smartphone HDI':'PCB')+' best practices…', tool:'websurf'});
   const webs = await websurf(description + ' PCB design best practices', 2);
   send('status',{message:`🌐 Websurf found ${webs.length} sources`, tool:'websurf', data: webs});
   send('status',{message:'🧠 Manager → hardware specialist generating BOM…', tool:'kicad-toolkit'});
-  const pcbPrompt = `You are senior PCB engineer at Intel/Apple level. Design fab-ready PCB for: "${description}". Return JSON bom/netlist/svg_trace/board_dimensions/layer_count/stackup as before.`;
+  const pcbPrompt = isPhoneBoard
+    ? `You are a senior HDI PCB engineer (Apple iPhone / Samsung Galaxy motherboard level). Design a PRODUCTION smartphone motherboard for: "${description}".
+Mandatory HDI profile: ${hdi.buildup}, ${hdi.layers} layers, ${hdi.material}, ${hdi.thicknessMm}mm total, laser microvia ${hdi.rules.microviaDrillMm}mm/${hdi.rules.microviaPadMm}mm pad via-in-pad, mSAP ${hdi.rules.minLineMm}mm lines/spaces.
+Required silicon (real MPNs): Snapdragon 8-class SoC BGA, LPDDR5 PoP, UFS 4.0, PMIC with ${hdi.powerTree.length}-rail power tree, WiFi6/BT, 5G RF transceiver, USB-C.
+Signal integrity: ${hdi.impedance.map(i => i.bus + ' ' + i.ohms + ' ±' + i.matchTolMm + 'mm').join('; ')}.
+Return JSON with bom (ref/value/package/qty/description/mpn/manufacturer), netlist (net/nodes/voltage/type), svg_trace, board_dimensions (72x150mm), layer_count (10), stackup, summary.`
+    : `You are senior PCB engineer at Intel/Apple level. Design fab-ready PCB for: "${description}". Return JSON bom/netlist/svg_trace/board_dimensions/layer_count/stackup as before.`;
   let raw = await callAI(pcbPrompt, 8192);
   let result;
   try{ result = JSON.parse(raw.replace(/```json|```/g,'').trim()); if(!result.bom || result.bom.length<3) throw new Error('too few parts'); }catch(e){
@@ -10389,13 +10823,14 @@ app.post("/api/ai/pcb-stream", async (req, res) => {
   const skidlScript = skidlService.generateSkidlScript(bom, netlist, 'KEYCODE_PCB');
   const skidlValid = skidlService.validateSkidl(bom);
   send('status',{message:`🐍 SKiDL: ${skidlValid.fabReady?'fab-ready':'needs MPN'} — Score ${skidlValid.score}/100`, tool:'skidl', data: skidlValid});
-  send('status',{message:'🔧 Tool: pcbFabService.placeComponents → grid 12mm…', tool:'place'});
+  send('status',{message:'🔧 Tool: '+(isPhoneBoard?'pcbFabService.placeHdiComponents → functional zones (SoC/DRAM/RF/PMIC)':'pcbFabService.placeComponents → grid 12mm')+'…', tool:'place'});
   const boardW = parseFloat((result.board_dimensions||'60x40').split('x')[0])||60, boardH=parseFloat((result.board_dimensions||'60x40').split('x')[1])||40;
-  const placed = pcbFabService.placeComponents(bom, boardW, boardH);
+  const placed = isPhoneBoard ? pcbFabService.placeHdiComponents(bom, boardW, boardH) : pcbFabService.placeComponents(bom, boardW, boardH);
   send('status',{message:`📍 Placed ${placed.length} components`, tool:'place', data: placed.slice(0,3)});
   send('status',{message:'🔧 Tool: pcbFabService.routeNets → Manhattan 0.3mm, vias 0.8mm…', tool:'route'});
   let routed = pcbFabService.routeNets(placed, netlist);
   let routerUsed = 'manhattan';
+  if (isPhoneBoard) send('status',{message:'🛣️ HDI routing: via-in-pad escapes, 0.075mm mSAP traces, length-matched diff pairs', tool:'route-hdi'});
   send('status',{message:'🔧 Tool: FreeRouting autorouter (DSN → Java CLI)…', tool:'freerouting'});
   try{
     const dsn = pcbFabService.exportDsn(placed, netlist, boardW, boardH);
@@ -10447,7 +10882,7 @@ app.post("/api/ai/pcb-stream", async (req, res) => {
     }
     const zipB64 = canDownloadZip ? zipBuf.toString('base64') : undefined;
     const skidlB64 = Buffer.from(skidlScript).toString('base64');
-    send('done',{ bom, netlist, boardW, boardH, svg, fab, zipB64, skidlB64, skidlScript, skidlValid, fileName: zipPath, router: 'tscircuit+kicad-cli', kicadReal, ...gate, summary: result.summary||'Factory-ready PCB — KiCad-validated Gerbers + drill + BOM' });
+    send('done',{ bom, netlist, boardW, boardH, svg, fab, zipB64, skidlB64, skidlScript, skidlValid, fileName: zipPath, router: 'tscircuit+kicad-cli', kicadReal, hdiProfile: hdi || undefined, ...gate, summary: result.summary||(isPhoneBoard?'Flagship smartphone HDI motherboard — factory-ready':'Factory-ready PCB — KiCad-validated Gerbers + drill + BOM') });
   }catch(e){
     kicadErr = String(e.message||e).slice(0,300);
     console.error('[pcb-stream] real KiCad pipeline failed, falling back:', kicadErr);
@@ -10464,7 +10899,7 @@ app.post("/api/ai/pcb-stream", async (req, res) => {
       send('status',{message:`📦 Legacy ZIP: ${mfg.gerbers} Gerbers (NOT KiCad-validated)`, tool:'gerber', data: mfg});
       const zipB64 = canDownloadZip ? zipRes.zipBuffer.toString('base64') : undefined;
       const skidlB64 = Buffer.from(skidlScript).toString('base64');
-      send('done',{ bom, netlist, boardW, boardH, svg, fab, zipB64, skidlB64, skidlScript, skidlValid, fileName: zipPath, router: routerUsed, kicadReal, kicadErr, ...gate, summary: result.summary||'PCB generated (legacy path)' });
+      send('done',{ bom, netlist, boardW, boardH, svg, fab, zipB64, skidlB64, skidlScript, skidlValid, fileName: zipPath, router: routerUsed, kicadReal, kicadErr, hdiProfile: hdi || undefined, ...gate, summary: result.summary||(isPhoneBoard?'Smartphone HDI motherboard (legacy path)':'PCB generated (legacy path)') });
     }catch(e2){
       fab = pcbFabService.validatePcbForFabrication({ components:bom, netlist, boardW, boardH, placed });
       const skidlB64b = Buffer.from(skidlScript).toString('base64');
@@ -10781,7 +11216,13 @@ PRODUCTION STANDARDS (EVERY point MUST be in the code):
     - SAMD21: Use Atmel START or Arduino core. Configure USB with TinyUSB. Use SERCOM for I2C/SPI/UART. ADC with 12-bit resolution, window monitor. RTC with alarm. SleepWalking for peripherals.
     - Teensy 4.1: NXP i.MX RT1062 at 600MHz. Use FlexSPI for PSRAM (8MB). Ethernet: lwIP + PHY (DP83825). SDIO for SD card. Use DMA for audio I2S. Configurable FlexCAN for automotive. GPU: PXP for 2D acceleration.`;
 
-    const raw = await orchestrateWithManager(codePrompt, 'mcu', 5120);
+    // Agentic routers first; multi-agent orchestration as fallback.
+    let raw = '';
+    try {
+      const routed = await agentRouter.swarmRun(codePrompt, { maxTokens: 6144, timeoutMs: 150000, prefer: ['dify', 'langflow', 'open-interpreter'] });
+      if (routed.ok) raw = routed.text;
+    } catch (e) { console.warn('[arduino-code] router unavailable:', e.message); }
+    if (!raw) raw = await orchestrateWithManager(codePrompt, 'mcu', 5120);
     let result;
     try {
       const cleaned = raw.replace(/```json\s*|```\s*/g, "").trim();
@@ -10840,7 +11281,7 @@ app.get("/api/ai/providers", async (req, res) => {
 
   await Promise.all([
     checkProvider("OpenRouter", async () => openrouter ? (await openrouter.chat.completions.create({ model: "openrouter/auto", messages: [{ role: "user", content: testPrompt }], max_tokens: 10 }))?.choices?.[0]?.message?.content : null),
-    checkProvider("GROQ", async () => groq ? (await groq.chat.completions.create({ model: "groq/compound", messages: [{ role: "user", content: testPrompt }], max_tokens: 10 }))?.choices?.[0]?.message?.content : null),
+    checkProvider("GROQ", async () => groq ? (await groq.chat.completions.create({ model: "openai/gpt-oss-20b", messages: [{ role: "user", content: testPrompt }], max_tokens: 10 }))?.choices?.[0]?.message?.content : null),
     checkProvider("Cloudflare", async () => { const r = await fetch('https://api.cloudflare.com/client/v4/accounts/' + (process.env.CLOUDFLARE_ACCOUNT_ID || '') + '/ai/run/@cf/qwen/qwen2.5-coder-32b-instruct', { method: 'POST', headers: { 'Authorization': 'Bearer ' + (process.env.CLOUDFLARE_API_TOKEN || ''), 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: [{ role: "user", content: testPrompt }], max_tokens: 10 }) }); if (!r.ok) throw new Error(await r.text()); const d = await r.json(); if (d?.result?.response) return d.result.response; throw new Error('no response'); }),
     checkProvider("Gemini", async () => { const k = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY; if (!k) return null; const r = await fetch('https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=' + k, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: testPrompt }] }], generationConfig: { maxOutputTokens: 10 } }) }); if (!r.ok) throw new Error(await r.text()); const d = await r.json(); return d?.candidates?.[0]?.content?.parts?.[0]?.text; }),
     checkProvider("HuggingFace", async () => { const t = process.env.HUGGINGFACE_TOKEN || process.env.HF_TOKEN; if (!t) return null; const r = await fetch('https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.3/v1/chat/completions', { method: 'POST', headers: { 'Authorization': 'Bearer ' + t, 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'mistralai/Mistral-7B-Instruct-v0.3', messages: [{ role: "user", content: testPrompt }], max_tokens: 10 }) }); if (!r.ok) throw new Error(await r.text()); const d = await r.json(); return d?.choices?.[0]?.message?.content; }),
@@ -10854,11 +11295,125 @@ app.get("/api/ai/providers", async (req, res) => {
     checkProvider("Nebius", async () => nebius ? (await nebius.chat.completions.create({ model: "meta-llama/Meta-Llama-3.1-8B-Instruct", messages: [{ role: "user", content: testPrompt }], max_tokens: 10 }))?.choices?.[0]?.message?.content : null),
     checkProvider("Cohere", async () => { if (!cohereKey) return null; const r = await fetch('https://api.cohere.com/v2/chat', { method: 'POST', headers: { 'Authorization': 'Bearer ' + cohereKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'command-r7b-12-2024', messages: [{ role: 'user', content: testPrompt }], max_tokens: 10 }) }); if (!r.ok) throw new Error(await r.text()); const d = await r.json(); return d?.message?.content?.[0]?.text; }),
     checkProvider("Pollinations", async () => { const k = process.env.POLLINATIONS_API_KEY || ""; const h = { 'Content-Type': 'application/json' }; if (k) h['Authorization'] = 'Bearer ' + k; const r = await fetch('https://text.pollinations.ai/openai', { method: 'POST', headers: h, body: JSON.stringify({ model: 'openai', messages: [{ role: 'user', content: 'hi' }], max_tokens: 10 }) }); if (!r.ok) throw new Error(await r.text()); const d = await r.json(); return d?.choices?.[0]?.message?.content; }),
-    checkProvider("GitHubModels", async () => githubModels ? (await githubModels.chat.completions.create({ model: "openai/gpt-4o-mini", messages: [{ role: "user", content: testPrompt }], max_tokens: 10 }))?.choices?.[0]?.message?.content : null),
+    checkProvider("AzureFoundry", async () => azureFoundry ? (await azureFoundry.chat.completions.create({ model: AZURE_FOUNDRY_MODELS[0], messages: [{ role: "user", content: testPrompt }], max_tokens: 10 }))?.choices?.[0]?.message?.content : null),
     checkProvider("Ollama", async () => { const r = await fetch(OLLAMA_HOST + '/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: OLLAMA_MODEL, messages: [{ role: 'user', content: 'hi' }], stream: false }) }); if (!r.ok) throw new Error('ollama down'); const d = await r.json(); return d?.message?.content; }),
   ]);
 
   res.json({ success: true, providers, total: providers.length, online: providers.filter(p => p.status === "online").length, timestamp: new Date().toISOString() });
+});
+
+// Models the Builder can safely offer. Local Ollama entries are discovered at
+// runtime rather than advertised optimistically; this keeps every selection
+// connected to a model that is actually installed on this machine. Azure
+// Foundry entries appear only when the endpoint is configured.
+app.get("/api/ai/models", async (req, res) => {
+  const localModels = await getOllamaModels();
+  const azureUp = azureFoundry && isProviderAlive('AzureFoundry');
+  const models = [
+    { id: "auto", name: "KEYCODE Swarm", provider: "Automatic", description: "Routes work to the fastest available provider", available: true, free: true },
+    ...localModels.map((name) => ({ id: `ollama:${name}`, name, provider: "Ollama · local", description: "Private, local, and free", available: true, free: true })),
+    ...(azureUp ? AZURE_FOUNDRY_MODELS.map((id) => ({ id: `azure:${id}`, name: id.split('/')[1] || id, provider: "Azure Foundry · cloud", description: `Hosted ${id} — free tier via Azure AI Foundry`, available: true, free: true })) : [])
+  ];
+  res.json({ success: true, models, localAvailable: localModels.length > 0, cloudAvailable: azureUp });
+});
+
+// ==================== AGENT ROUTER (9 providers) ====================
+// Dify · Langflow · Open Interpreter · Groq · Mistral · DeepSeek ·
+// OpenRouter · Azure Foundry · Ollama — one swarm, automatic failover.
+
+app.get("/api/agent/routers", async (req, res) => {
+  try {
+    const status = agentRouter.routerStatus();
+    if (req.query.probe === "1") {
+      const probes = await agentRouter.probeAllRouters();
+      const byId = Object.fromEntries(probes.map(p => [p.router, p]));
+      for (const s of status) {
+        const p = byId[s.id];
+        if (p) { s.probe = p.ok ? "ok" : "fail"; s.probeError = p.error || null; s.probeMs = p.ms || null; }
+      }
+    }
+    res.json({ success: true, total: status.length, configured: status.filter(s => s.configured).length, routers: status });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post("/api/agent/route", aiRateLimit, async (req, res) => {
+  try {
+    const { prompt, system = "", maxTokens = 4096, timeoutMs = 90000, prefer = [] } = req.body || {};
+    if (!prompt) return res.status(400).json({ error: "prompt required" });
+    const result = prefer.length === 1 && agentRouter.ROUTERS[prefer[0]]
+      ? await agentRouter.runAgent(prompt, { router: prefer[0], system, maxTokens, timeoutMs })
+      : await agentRouter.swarmRun(prompt, { prefer, system, maxTokens, timeoutMs });
+    res.json({ ...result, text: (result.text || "").slice(0, 200000) });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ==================== SKILL REGISTRY ====================
+// The builder's capability layer. Skills are self-describing units of work
+// (search, sandboxed execution, file access, analysis) that the agent can
+// compose. They are loaded lazily so a broken third-party skill never stops
+// the server from booting.
+let skillRegistry = null;
+let skillRegistryReady = null;
+
+function getSkillRegistry() {
+  if (!skillRegistry) {
+    skillRegistry = new SkillRegistry({
+      context: { workspacePath: parentDir },
+      logger: { info() {}, warn: (...a) => console.warn("[skills]", ...a), error: (...a) => console.error("[skills]", ...a) },
+    });
+  }
+  if (!skillRegistryReady) {
+    skillRegistryReady = skillRegistry.initialize().catch((error) => {
+      console.error("[skills] Initialization failed:", error.message);
+      skillRegistryReady = null;
+    });
+  }
+  return skillRegistryReady.then(() => skillRegistry);
+}
+
+app.get("/api/skills", async (req, res) => {
+  try {
+    const registry = await getSkillRegistry();
+    res.json({ success: true, skills: registry.list({ sort: "name" }), stats: registry.getStats() });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to load skills" });
+  }
+});
+
+app.get("/api/skills/:id", async (req, res) => {
+  try {
+    const registry = await getSkillRegistry();
+    const skill = registry.get(req.params.id);
+    if (!skill) return res.status(404).json({ error: "Skill not found" });
+    res.json({ success: true, skill: skill.getMetadata(), configSchema: skill.getConfigSchema(), config: skill.getConfig() });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to load skill" });
+  }
+});
+
+app.post("/api/skills/:id/execute", auth, aiRateLimit, async (req, res) => {
+  try {
+    const registry = await getSkillRegistry();
+    if (!registry.has(req.params.id)) return res.status(404).json({ error: "Skill not found" });
+    const { prompt, params = {}, files = [], images = [] } = req.body || {};
+    const output = await registry.execute(req.params.id, { prompt, params, files, images });
+    res.status(output.success ? 200 : 422).json(output);
+  } catch (error) {
+    res.status(500).json({ error: "Skill execution failed", detail: error.message });
+  }
+});
+
+app.get("/api/skills-health", async (req, res) => {
+  try {
+    const registry = await getSkillRegistry();
+    res.json({ success: true, health: await registry.healthCheck() });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to check skill health" });
+  }
 });
 
 // ==================== TASK ROUTER + MANAGER ARCHITECTURE ====================
@@ -11497,7 +12052,7 @@ app.post("/api/ai/consult", async (req, res) => {
       try {
         const c = await Promise.race([
           groq.chat.completions.create({
-            model: 'groq/compound',
+            model: 'openai/gpt-oss-20b',
             messages: fullMessages,
             temperature: 0.7,
             max_tokens: 1024
@@ -12448,11 +13003,28 @@ app.get("/phaser.min.js", (req, res) => {
 
 // ==================== EXPORT ENDPOINTS ====================
 // Export generated designs to real engineering tool formats
+// SECURITY: exports of paid projects require login + verified payment.
 
 app.get("/api/ai/export/:fileId/:format", async (req, res) => {
   try {
     const { fileId, format } = req.params;
     const sanitized = fileId.replace(/[^a-zA-Z0-9_-]/g, '');
+
+    // Paywall: if this fileId is a locked/paid AIProject, enforce release rules.
+    const gatedProject = await AIProject.findOne({ projectId: sanitized }).catch(() => null);
+    if (gatedProject && gatedProject.userId) {
+      if (gatedProject.status === 'locked') {
+        return res.status(402).json({ error: 'Payment required to export this project', status: 'locked' });
+      }
+      if (gatedProject.status === 'paid') {
+        const remaining = gatedProject.releaseAt ? gatedProject.releaseAt.getTime() - Date.now() : 0;
+        if (remaining > 0) return res.status(423).json({ error: 'Source not yet released', status: 'paid', timeRemaining: Math.ceil(remaining / 1000) });
+      }
+      // Ownership: non-owners can only export released projects
+      if (gatedProject.userId.toString() !== req.user?._id?.toString() && gatedProject.status !== 'released') {
+        return res.status(403).json({ error: 'Access denied' });
+      }
+    }
 
     const exporters = {
       kicad:    () => exportService.exportToKiCad(sanitized),
@@ -12572,9 +13144,38 @@ app.get("/news", (req, res) => {
 });
 
 // ==================== STREAMING WEBSITE GENERATION (real-time preview) ====================
-app.post("/api/ai/stream-website", async (req, res) => {
-  const { description, sessionId, history = [], previousCode = "" } = req.body;
+app.post("/api/ai/stream-website", aiRateLimit, async (req, res) => {
+  const { description, sessionId, history = [], previousCode = "", modelPreference = "auto", skills = [], preferRouters = [] } = req.body;
   if (!description) return res.status(400).json({ error: "Description required" });
+  const localModels = await getOllamaModels();
+  const selectedModel = typeof modelPreference === "string" ? modelPreference : "auto";
+  if (selectedModel.startsWith("ollama:") && !localModels.includes(selectedModel.slice(7))) {
+    return res.status(400).json({ error: "Selected model is unavailable. Refresh the model list and try again." });
+  }
+  if (selectedModel.startsWith("azure:")) {
+    const azureId = selectedModel.slice(6);
+    if (!azureFoundry || !AZURE_FOUNDRY_MODELS.includes(azureId)) {
+      return res.status(400).json({ error: "Azure model is unavailable. Refresh the model list and try again." });
+    }
+  }
+
+  // Load the skill registry and build the expertise layer: every enabled
+  // skill contributes a discipline block to the system prompt, and capable
+  // skills (search/audit/design) pre-compute context for this specific build.
+  let expertise = '';
+  let skillNotes = [];
+  try {
+    const registry = await getSkillRegistry();
+    const requested = Array.isArray(skills) ? skills.filter(s => typeof s === 'string') : [];
+    const enabled = requested.length
+      ? requested.map(id => registry.get(id)).filter(Boolean)
+      : registry.list({}).map(m => registry.get(m.id));
+    for (const skill of enabled) {
+      if (skill?.constructor?.expertisePrompt) expertise += '\n' + skill.constructor.expertisePrompt() + '\n';
+    }
+    skillNotes = enabled.map(s => s?.definition?.id).filter(Boolean);
+  } catch (e) { console.warn('[stream-website] skill layer unavailable:', e.message); }
+
   const forgeSession = sessionId || ('forge_' + Date.now());
   const memContext = (history.length ? `\nCONVERSATION MEMORY:\n${JSON.stringify(history).slice(0, 3000)}\n` : '') + (previousCode ? `\nPREVIOUS CODE (refine, don't restart):\n${String(previousCode).slice(0, 6000)}\n` : '');
 
@@ -12611,28 +13212,43 @@ app.post("/api/ai/stream-website", async (req, res) => {
     let lastParseAttempt = 0;
 
     // KEYCODE agent: stream via ALL providers (GROQ→Mistral→Ollama→Swarm), with memory
-    const streamPrompt = `Build a complete, production-ready website for: "${description}".${memContext}
+    // + the skill expertise layer (full-stack, design, security, deploy disciplines).
+    const streamPrompt = `Build an AWARD-WINNING, PRODUCTION-GRADE FULL-STACK application for: "${description}".${memContext}${expertise ? `\nACTIVE AGENT SKILLS (${skillNotes.join(', ')}) — these disciplines are mandatory for this build:\n${expertise}\n` : ''}
 Return a VALID JSON object (no markdown, no backticks) with this structure:
 {
   "title": "Project name",
   "description": "Brief description",
   "hasBackend": true/false,
   "files": {
-    "index.html": "Complete HTML with all CSS in <style> and JS in <script>. Use CDNs. Responsive design.",
-    "style.css": "Additional CSS if needed",
-    "app.js": "Frontend JavaScript",
-    "server.js": "Full Express server if hasBackend=true"
+    "index.html": "Complete HTML referencing style.css and app.js. Use CDNs for fonts/icons only.",
+    "style.css": "Design tokens in :root + all component styles",
+    "app.js": "Frontend logic: state, fetch() to the API, rendering, events",
+    "server.js": "Full Express server if hasBackend=true: routes, validation, error middleware, /api/health",
+    "db.js": "Data layer if hasBackend=true: schema, seed data, queries",
+    "app.test.js": "5+ real tests (node:test) if hasBackend=true",
+    "package.json": "Exact deps, engines, test/start scripts if hasBackend=true",
+    ".env.example": "Every env var documented if hasBackend=true"
   }
 }
 
-Guidelines:
-- index.html MUST be complete, beautiful, responsive
-- Use modern design: gradients, animations, glassmorphism
-- Include Font Awesome CDN and Google Fonts
-- All files must be valid and complete. Write REAL code from scratch — never placeholders.`;
+ENGINEERING STANDARDS (non-negotiable — this is an application, not a demo):
+- If the request implies data (accounts, posts, orders, tasks, products, dashboards), hasBackend MUST be true: a real Express API with CRUD routes, input validation (400 with field errors), centralized error middleware, and /api/health.
+- The frontend consumes the API: fetch() with error handling and loading states; no hardcoded fake data pretending to be real.
+- Data layer: schemas with validation; SQLite (better-sqlite3) or seeded in-memory store; 5 realistic rows so the UI shows real content on first load.
+- Include app.test.js with 5+ passing tests when hasBackend=true (happy paths, validation, 404s, health).
+- package.json: exact dependency versions, "engines", "start" and "test" scripts.
+- Correct HTTP semantics: status codes, RESTful routes, JSON bodies, CORS configured.
+
+DESIGN STANDARDS (award-level, non-negotiable):
+- VISUAL: distinctive art direction with a bold palette (avoid default blue/purple clichés), strong typographic hierarchy using a display font (Space Grotesk / Sora / Clash Display via Google Fonts) paired with Inter for body, generous whitespace, oversized headlines with em-accents, glassmorphism or layered depth, subtle film grain or noise texture, custom cursor where it fits.
+- MOTION: scroll-triggered reveals (IntersectionObserver), staggered card entrances, magnetic buttons, 3D tilt on cards with moving glare, animated gradient/aurora backgrounds, number count-ups, smooth anchor scrolling, parallax accents. All motion must be transform/opacity based, 60fps, with prefers-reduced-motion support.
+- INTERACTIVE: working micro-interactions on every clickable element (hover lift, ripple, focus rings), functional tabs/accordions/modals where relevant, live filtering or state the user can play with, and at least one "wow" interactive moment (canvas particles, 3D object, or animated data viz) that responds to the pointer.
+- CRAFT: flawless mobile responsiveness (test 390px), semantic HTML, aria labels, real copy (no lorem ipsum), consistent spacing system, footer with real links, favicon via inline SVG data URI, meta viewport, perfect Lighthouse-friendly structure.
+- Do NOT generate: plain unstyled sections, generic bootstrap-looking layouts, dead buttons, placeholder text, fake hardcoded data where an API belongs, or static pages with zero motion.
+- All files must be valid and complete. Write REAL code from scratch — never placeholders.${expertise ? '\n\nSKILL EXPERTISE LAYER (active disciplines — follow strictly):\n' + expertise : ''}`;
     let buffer = '';
     let curProvider = '';
-    await streamFromProviders(streamPrompt, 8192, (token, provider) => {
+    await streamFromProviders(streamPrompt, 12288, (token, provider) => {
       if (provider !== curProvider) { curProvider = provider; sendEvent('status', { message: `🧠 ${provider} forging code...`, provider }); }
       buffer += token;
       fullResponse += token;
@@ -12693,7 +13309,7 @@ Guidelines:
         } catch (e) { /* JSON not complete yet */ }
       }
       return true;
-    }, (name) => sendEvent('status', { message: `🧠 ${name} forging code...`, provider: name }));
+    }, (name) => sendEvent('status', { message: `🧠 ${name} forging code...`, provider: name }), { modelPreference: selectedModel, preferRouters: Array.isArray(preferRouters) ? preferRouters.filter(r => typeof r === 'string') : [] });
 
     // Tolerant final parse: free models often truncate JSON — salvage what streamed
     if (Object.keys(projectFiles).length === 0 && fullResponse) {
@@ -13212,7 +13828,6 @@ Rules:
       sendEvent('error', { message: error.message });
     }
   } finally {
-    completed = true;
     if (!res.destroyed) res.end();
   }
 });
@@ -14295,6 +14910,185 @@ app.get("/tools", (req, res) => {
   res.redirect('/tools.html');
 });
 
+// ==================== PROJECT HISTORY ====================
+// Unified history across AI generations, orders and version control.
+
+app.get("/api/user/history", auth, async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit) || 50, 100);
+    const [projects, orders, repos] = await Promise.all([
+      AIProject.find({ $or: [{ userId: req.user._id }, { customerEmail: req.user.email }] })
+        .sort({ createdAt: -1 }).limit(limit)
+        .select("projectId title projectType status price createdAt updatedAt")
+        .lean(),
+      Order.find({ user: req.user._id }).sort({ createdAt: -1 }).limit(limit)
+        .select("total status paymentStatus projectType createdAt")
+        .lean(),
+      gitService.listRepos(req.user._id).then(repos => repos.slice(0, limit))
+    ]);
+
+    const events = [];
+    for (const p of projects) {
+      events.push({
+        kind: "project",
+        id: p.projectId,
+        title: p.title || p.projectId,
+        type: p.projectType || "web-app",
+        status: p.status,
+        price: p.price || 0,
+        date: p.updatedAt || p.createdAt
+      });
+    }
+    for (const o of orders) {
+      events.push({
+        kind: "order",
+        id: o._id,
+        title: `Order #${o._id.toString().slice(-8).toUpperCase()}`,
+        type: o.projectType || "general",
+        status: o.status,
+        price: o.total || 0,
+        paid: o.paymentStatus === "paid",
+        date: o.createdAt
+      });
+    }
+    for (const r of repos) {
+      events.push({
+        kind: "repo",
+        id: r.projectId,
+        title: r.title || r.projectId,
+        type: "version-control",
+        status: r.remotes?.length ? "connected" : "local",
+        date: r.updatedAt
+      });
+    }
+
+    events.sort((a, b) => new Date(b.date) - new Date(a.date));
+    res.json({ success: true, events: events.slice(0, limit) });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ==================== VERSION CONTROL (Git) ====================
+// Real per-project version control: commit, log, checkout, diff,
+// push/pull to GitHub via REST API. All endpoints require auth + ownership.
+
+app.get("/api/git/repos", auth, async (req, res) => {
+  try {
+    const repos = await gitService.listRepos(req.user._id);
+    res.json({
+      success: true,
+      repos: repos.map(r => ({
+        projectId: r.projectId,
+        title: r.title,
+        defaultBranch: r.defaultBranch,
+        remotes: (r.remotes || []).map(m => ({
+          name: m.name, provider: m.provider, url: m.url, owner: m.owner,
+          repo: m.repo, branch: m.branch, hasToken: !!m.encryptedToken,
+          lastPushAt: m.lastPushAt, lastPullAt: m.lastPullAt
+        })),
+        updatedAt: r.updatedAt
+      }))
+    });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post("/api/git/init", auth, async (req, res) => {
+  try {
+    const { projectId, files, message, title } = req.body;
+    if (!projectId || !files || typeof files !== "object") {
+      return res.status(400).json({ error: "projectId and files required" });
+    }
+    const result = await gitService.commit(req.user._id, projectId, files, message || "Initial commit", "user", { title });
+    res.json({ success: true, ...result });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+app.post("/api/git/import", auth, async (req, res) => {
+  try {
+    const { projectId, dirName, title } = req.body;
+    if (!projectId || !dirName) return res.status(400).json({ error: "projectId and dirName required" });
+    const result = await gitService.importWorkspaceProject(req.user._id, projectId, dirName);
+    if (!result.ok) return res.status(400).json({ error: result.error });
+    res.json(result);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post("/api/git/commit", auth, async (req, res) => {
+  try {
+    const { projectId, files, message } = req.body;
+    if (!projectId || !files) return res.status(400).json({ error: "projectId and files required" });
+    const result = await gitService.commit(req.user._id, projectId, files, message || "Update");
+    res.json({ success: true, ...result });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+app.get("/api/git/log/:projectId", auth, async (req, res) => {
+  try {
+    const commits = await gitService.log(req.user._id, req.params.projectId, parseInt(req.query.limit) || 30);
+    res.json({ success: true, commits });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get("/api/git/files/:projectId", auth, async (req, res) => {
+  try {
+    const snapshot = await gitService.checkout(req.user._id, req.params.projectId, req.query.sha || null);
+    if (!snapshot) return res.status(404).json({ error: "No commits found" });
+    res.json({ success: true, ...snapshot });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post("/api/git/diff", auth, async (req, res) => {
+  try {
+    const { projectId, files } = req.body;
+    if (!projectId || !files) return res.status(400).json({ error: "projectId and files required" });
+    const stats = await gitService.diffStats(req.user._id, projectId, files);
+    res.json({ success: true, ...stats });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// --- Remote (GitHub) management ---
+
+app.get("/api/git/github/repos", auth, async (req, res) => {
+  try {
+    const token = req.headers["x-github-token"] || req.query.token || "";
+    if (!token) return res.status(400).json({ error: "Send your GitHub token via X-GitHub-Token header" });
+    const result = await gitService.listGithubRepos(token);
+    if (!result.ok) return res.status(400).json({ error: result.error });
+    res.json(result);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post("/api/git/remote", auth, async (req, res) => {
+  try {
+    const { projectId, url, token, branch } = req.body;
+    if (!projectId || !url) return res.status(400).json({ error: "projectId and url required" });
+    const result = await gitService.addRemote(req.user._id, projectId, { url, token, branch: branch || "main" });
+    if (!result.ok) return res.status(400).json({ error: result.error });
+    res.json({ success: true, remote: result.remote });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post("/api/git/push", auth, async (req, res) => {
+  try {
+    const { projectId, message } = req.body;
+    if (!projectId) return res.status(400).json({ error: "projectId required" });
+    const result = await gitService.push(req.user._id, projectId, { message });
+    if (!result.ok) return res.status(400).json({ error: result.error, conflict: result.conflict });
+    res.json({ success: true, ...result });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post("/api/git/pull", auth, async (req, res) => {
+  try {
+    const { projectId } = req.body;
+    if (!projectId) return res.status(400).json({ error: "projectId required" });
+    const result = await gitService.pull(req.user._id, projectId);
+    if (!result.ok) return res.status(400).json({ error: result.error });
+    res.json({ success: true, count: result.count, commit: result.commit, remoteHead: result.remoteHead });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // Fallback for SPA routes
 app.use((req, res, next) => {
   if (!req.path.startsWith('/api')) {
@@ -14496,6 +15290,3 @@ function renderCadSvg(dimensions) {
   svg += `</svg>`;
   return svg;
 }
-
-// ==================== PROJECT HISTORY ====================
-
