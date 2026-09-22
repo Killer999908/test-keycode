@@ -29,3 +29,9 @@ node_modules/
 .env
 tools/blender.tar.xz
 tools/blender-4.3.2-linux-x64/
+
+# Generated build output — CAD/PCB/scan exports and app previews.
+# These are produced at runtime, not source; keep them out of history.
+exports/
+server/exports/
+preview/
