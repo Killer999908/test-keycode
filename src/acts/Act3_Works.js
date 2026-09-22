@@ -1,20 +1,33 @@
 import * as THREE from 'three';
 
+/**
+ * WorksShowcase — holographic ring of project previews.
+ * Interactive: pointer parallax on the ring, per-screen hover raycasting
+ * with glow/brighten response, and real image textures when preview
+ * images are available (falls back to pristine glass).
+ */
 export class WorksShowcase {
-  constructor(scene, envMap) {
+  constructor(scene, envMap, { reducedMotion = false } = {}) {
     this.scene = scene;
     this.envMap = envMap;
+    this.reducedMotion = reducedMotion;
     this.screens = [];
     this.orbiters = [];
     this.group = new THREE.Group();
+    this.group.rotation.x = 0.16; // tilt toward the camera for depth
     this.scene.add(this.group);
+    this.raycaster = new THREE.Raycaster();
+    this.pointer = new THREE.Vector2(-10, -10);
+    this.hovered = null;
+    this.parallaxX = 0;
+    this.parallaxY = 0;
+    this.items = [];
     this.create();
   }
 
   create() {
     const N = 8;
 
-    // Holographic screens arranged in a ring
     for (let i = 0; i < N; i++) {
       const angle = (i / N) * Math.PI * 2;
       const radius = 4.6 + (i % 2) * 1.2;
@@ -46,7 +59,6 @@ export class WorksShowcase {
         spin: (i % 2 === 0 ? 1 : -1) * (0.1 + (i % 3) * 0.02)
       };
       this.group.add(screen);
-      this.screens.push(screen);
 
       // Hairline frame
       const edge = new THREE.EdgesGeometry(new THREE.PlaneGeometry(2.1, 1.35));
@@ -54,7 +66,6 @@ export class WorksShowcase {
       const frame = new THREE.LineSegments(edge, edgeMat);
       frame.position.copy(screen.position);
       frame.quaternion.copy(screen.quaternion);
-      screen.userData.frame = frame;
       this.group.add(frame);
 
       // Soft glow quad behind
@@ -70,8 +81,11 @@ export class WorksShowcase {
       const glowMesh = new THREE.Mesh(glow, glowMat);
       glowMesh.position.copy(screen.position).addScaledVector(screen.getWorldDirection(new THREE.Vector3()), -0.15);
       glowMesh.quaternion.copy(screen.quaternion);
+      screen.userData.frame = frame;
       screen.userData.glow = glowMesh;
       this.group.add(glowMesh);
+
+      this.screens.push(screen);
     }
 
     // Small orbiting solids
@@ -98,17 +112,71 @@ export class WorksShowcase {
     this.group.scale.setScalar(0.01);
   }
 
-  update(time, dt, scrollProgress) {
-    // Act 3 range: 0.52 - 0.71
-    const actProgress = THREE.MathUtils.clamp((scrollProgress - 0.52) / 0.19, 0, 1);
+  setPointer(ndcX, ndcY) {
+    this.pointer.set(ndcX, ndcY);
+  }
 
-    if (actProgress < 1) {
-      const eased = 1 - Math.pow(1 - actProgress, 3);
+  setWorks(items) {
+    this.items = items || [];
+    this.applyTextures();
+  }
+
+  applyTextures() {
+    if (!this.items || !this.screens) return;
+    this.screens.forEach((screen, i) => {
+      const item = this.items[i % Math.max(1, this.items.length)];
+      const url = item && (item.image || item.previewUrl);
+      if (!url || screen.userData.textureApplied) return;
+      const loader = new THREE.TextureLoader();
+      loader.setCrossOrigin('anonymous');
+      loader.load(url, (tex) => {
+        tex.colorSpace = THREE.SRGBColorSpace;
+        const mat = screen.material;
+        mat.map = tex;
+        mat.color.setHex(0xffffff);
+        mat.opacity = 0.85;
+        mat.needsUpdate = true;
+      });
+      screen.userData.textureApplied = true;
+    });
+  }
+
+  pick(camera) {
+    if (this.group.scale.x < 0.6) return null;
+    this.raycaster.setFromCamera(this.pointer, camera);
+    const hits = this.raycaster.intersectObjects(this.screens, false);
+    return hits.length ? hits[0].object : null;
+  }
+
+  setHovered(screen) {
+    if (this.hovered === screen) return;
+    this.hovered = screen;
+    this.screens.forEach((s) => {
+      const target = s === screen;
+      s.material.opacity = target ? 0.5 : 0.22;
+      if (s.userData.frame) s.userData.frame.material.opacity = target ? 0.9 : 0.35;
+    });
+    document.body.style.cursor = screen ? 'pointer' : '';
+  }
+
+  update(time, dt, scrollProgress) {
+    // Act 3 range: 0.54 - 0.76 (after the horizontal act)
+    const act = THREE.MathUtils.clamp((scrollProgress - 0.54) / 0.22, 0, 1);
+    if (act < 1) {
+      const eased = 1 - Math.pow(1 - act, 3);
       this.group.scale.setScalar(0.01 + eased * 0.99);
     }
 
-    if (actProgress > 0.2) {
+    if (act > 0.2) {
       this.group.rotation.y += dt * 0.08;
+
+      // Pointer parallax — the whole ring leans toward the cursor
+      if (!this.reducedMotion) {
+        this.group.rotation.x = 0.16 + this.parallaxY * 0.06;
+        this.group.position.x = this.parallaxX * 0.5;
+        this.parallaxX += ((this.pointer.x * 0.6) - this.parallaxX) * Math.min(dt * 3, 1);
+        this.parallaxY += ((this.pointer.y * 0.4) - this.parallaxY) * Math.min(dt * 3, 1);
+      }
 
       this.screens.forEach((screen, i) => {
         const d = screen.userData;
@@ -123,7 +191,8 @@ export class WorksShowcase {
           const dir = new THREE.Vector3();
           d.glow.position.copy(screen.position).addScaledVector(screen.getWorldDirection(dir), -0.15);
           d.glow.quaternion.copy(screen.quaternion);
-          d.glow.material.opacity = 0.035 + 0.02 * Math.sin(time * 1.4 + i);
+          const base = 0.035 + 0.02 * Math.sin(time * 1.4 + i);
+          d.glow.material.opacity = this.hovered === screen ? 0.16 : base;
         }
       });
 

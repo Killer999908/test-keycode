@@ -8,8 +8,9 @@ import { FXAAPass } from 'three/examples/jsm/postprocessing/FXAAPass.js';
 import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js';
 import { PMREMGenerator } from 'three/src/extras/PMREMGenerator.js';
 import { CinematicCamera } from './CinematicCamera.js';
+import { HybridScroll } from './HybridScroll.js';
 import { BackgroundField } from '../acts/Act0_VoidCore.js';
-import { Constellation } from '../acts/Act2_Constellation.js';
+import { InteractiveServiceGraph } from '../acts/Act2_Interactive.js';
 import { WorksShowcase } from '../acts/Act3_Works.js';
 import { AgentSwarm } from '../acts/Act3_Agents.js';
 import { UI } from '../ui/UI.js';
@@ -65,6 +66,9 @@ export class CinematicExperience {
     this.setupCameraRig();
     this.setupUI();
     this.setupEffects();
+    // Hybrid scroll (horizontal act + velocity tilt + parallax) — after UI DOM exists
+    this.hybrid = new HybridScroll({ reducedMotion: this.reducedMotion });
+    this.hybrid.build();
     this.bindEvents();
     this.initLiveData();
     this.updateLoaderProgress(88);
@@ -188,10 +192,17 @@ export class CinematicExperience {
     this.backgroundField = new BackgroundField(this.scene, this.assets.hdris[1]);
     this.acts.push(this.backgroundField);
 
-    this.constellation = new Constellation(this.scene, this.assets.hdris[1]);
-    this.acts.push(this.constellation);
+    // Interactive service graph — hover tooltips + click-to-focus filtering
+    this.serviceGraph = new InteractiveServiceGraph(this.scene, this.assets.hdris[1], {
+      reducedMotion: this.reducedMotion,
+      camera: this.camera
+    });
+    this.serviceGraph.onClick(node => {
+      if (node && node.href) window.location.href = node.href;
+    });
+    this.acts.push(this.serviceGraph);
 
-    this.works = new WorksShowcase(this.scene, this.assets.hdris[0]);
+    this.works = new WorksShowcase(this.scene, this.assets.hdris[0], { reducedMotion: this.reducedMotion });
     this.acts.push(this.works);
 
     this.agentSwarm = new AgentSwarm(this.scene, this.assets.hdris[0]);
@@ -264,7 +275,19 @@ export class CinematicExperience {
     window.addEventListener('pointermove', (e) => {
       this.pointerX = (e.clientX / window.innerWidth) * 2 - 1;
       this.pointerY = -(e.clientY / window.innerHeight) * 2 + 1;
+      if (this.serviceGraph) this.serviceGraph.setPointer(this.pointerX, this.pointerY);
     }, { passive: true });
+
+    // Click (not drag) on a service node → navigate to its pipeline
+    let downX = 0, downY = 0;
+    window.addEventListener('pointerdown', (e) => { downX = e.clientX; downY = e.clientY; });
+    window.addEventListener('pointerup', (e) => {
+      if (Math.hypot(e.clientX - downX, e.clientY - downY) > 6) return;
+      if (!this.serviceGraph || !this.serviceGraph.hovered) return;
+      if (this.serviceGraph.group.scale.x < 0.6) return;
+      const node = this.serviceGraph.hovered;
+      this.serviceGraph.clickCallbacks.forEach(cb => cb(node));
+    });
 
     let dragging = false, lastX = 0, dragRot = 0;
     window.addEventListener('pointerdown', (e) => { dragging = true; lastX = e.clientX; document.body.style.cursor = 'grabbing'; });
@@ -286,7 +309,10 @@ export class CinematicExperience {
     import('../api/client.js').then(({ api }) => {
       Promise.all([api.featuredServices(), api.health().catch(() => ({}))])
         .then(([services, health]) => {
-          if (services.length) this.ui.renderWorks(services);
+          if (services.length) {
+            this.ui.renderWorks(services);
+            if (this.works) this.works.setWorks(services);
+          }
           this.ui.setLive((health.status && health.status !== 'ok') ? health.status : '');
           this.liveStatus = health.status;
         })
@@ -307,7 +333,6 @@ export class CinematicExperience {
     this.loaderPctEl = document.querySelector('.loader-pct');
     this.loaderTextEl = document.querySelector('.loader-text');
     this.loaderPct = 0;
-    this.loaderChoiceShown = false;
     const tick = () => {
       if (this.loaderBar) {
         const display = parseFloat(this.loaderBar.style.width) || 0;
@@ -319,29 +344,9 @@ export class CinematicExperience {
         }
       }
       if (!(this.loaderPct >= 100 && this.loaded)) setTimeout(tick, 90);
-      else this.showSoundChoice();
+      else this.finishLoader();
     };
     tick();
-  }
-
-  showSoundChoice() {
-    if (this.loaderChoiceShown) return;
-    this.loaderChoiceShown = true;
-    const choice = document.getElementById('loader-sound-choice');
-    const pctEl = document.querySelector('.loader-pct');
-    const textEl = document.querySelector('.loader-text');
-    if (choice) choice.style.display = 'flex';
-    if (pctEl) pctEl.textContent = '100%';
-    if (textEl) textEl.textContent = 'Experience ready';
-    const on = document.getElementById('loader-sound-on');
-    const off = document.getElementById('loader-sound-off');
-    const finish = (withSound) => {
-      if (withSound && this.sound) this.sound.toggle();
-      this.finishLoader();
-    };
-    on?.addEventListener('click', () => finish(true));
-    off?.addEventListener('click', () => finish(false));
-    setTimeout(() => { if (!this.loaderEl.classList.contains('hidden')) finish(false); }, 3500);
   }
 
   finishLoader() {
@@ -352,7 +357,7 @@ export class CinematicExperience {
   updateLoaderProgress(pct) {
     this.loaderPct = Math.max(this.loaderPct, Math.min(100, pct));
     if (!this.loaderEl) this.loaderEl = document.querySelector('.loader');
-    if (this.loaderPct >= 100 && this.loaded) this.showSoundChoice();
+    if (this.loaderPct >= 100 && this.loaded) this.finishLoader();
   }
 
   adaptiveQuality(dt) {
@@ -390,6 +395,7 @@ export class CinematicExperience {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.composer.setSize(window.innerWidth, window.innerHeight);
     this.acts.forEach(act => act.onResize?.(window.innerWidth, window.innerHeight));
+    if (this.hybrid) this.hybrid.onResize();
     this.maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
   }
 
@@ -415,8 +421,23 @@ export class CinematicExperience {
     this.cameraRig.update(scrollProgress, this.pointerX || 0, this.pointerY || 0, dt);
     const scrollVel = Math.max(0, Math.abs(this.scrollVelocity || 0));
 
+    // Interactive graph: raycast hover
+    if (this.serviceGraph) {
+      const hit = this.serviceGraph.pick(this.camera);
+      this.serviceGraph.setHovered(hit);
+    }
+    // Feed pointer + hover to the acts that react
+    if (this.backgroundField) this.backgroundField.setPointer(this.pointerX || 0, this.pointerY || 0);
+    if (this.works) {
+      this.works.setPointer(this.pointerX || 0, this.pointerY || 0);
+      this.works.setHovered(this.works.pick(this.camera));
+    }
+
     // Acts
     this.acts.forEach(act => act.update?.(time, dt, scrollProgress));
+
+    // Hybrid scroll choreography
+    if (this.hybrid) this.hybrid.update(scrollProgress, this.scrollVelocity || 0, dt);
 
     // UI
     if (this.ui) {

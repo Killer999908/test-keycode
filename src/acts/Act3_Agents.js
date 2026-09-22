@@ -98,8 +98,8 @@ export class AgentSwarm {
   }
 
   update(time, dt, scrollProgress) {
-    // Act 4 range: 0.71 - 0.86
-    const actProgress = THREE.MathUtils.clamp((scrollProgress - 0.71) / 0.15, 0, 1);
+    // Studio act range: 0.78 - 0.92
+    const actProgress = THREE.MathUtils.clamp((scrollProgress - 0.78) / 0.14, 0, 1);
 
     this.agents.forEach((group, i) => {
       const data = group.userData;

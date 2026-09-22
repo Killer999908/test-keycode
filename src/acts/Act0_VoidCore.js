@@ -7,7 +7,16 @@ export class BackgroundField {
     this.envMap = envMap;
     this.time = 0;
     this.intensity = 1;
+    this.pointerTarget = new THREE.Vector2(0.5, 0.5);
+    this.pointerSmooth = new THREE.Vector2(0.5, 0.5);
     this.createField();
+  }
+
+  /** NDC pointer, fed from the experience loop for reactive motion */
+  setPointer(ndcX, ndcY) {
+    if (!this.reducedMotion) {
+      this.pointerTarget.set(ndcX * 0.5 + 0.5, ndcY * 0.5 + 0.5);
+    }
   }
 
   createField() {
@@ -35,7 +44,7 @@ export class BackgroundField {
     this.mesh.renderOrder = -10;
     this.scene.add(this.mesh);
 
-    // Core geometry (Act 0 centerpiece)
+    // Core geometry (Act 0 centerpiece) — pointer-reactive
     this.createCore();
 
     // Particle field
@@ -165,6 +174,7 @@ export class BackgroundField {
     const positions = new Float32Array(count * 3);
     const colors = new Float32Array(count * 3);
     const sizes = new Float32Array(count);
+    this.particleBase = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
       const r = 30 + Math.random() * 70;
       const theta = Math.random() * Math.PI * 2;
@@ -178,6 +188,7 @@ export class BackgroundField {
       else { colors[i*3]=0.43; colors[i*3+1]=0.91; colors[i*3+2]=0.72; }
       sizes[i] = 0.05 + Math.random() * 0.15;
     }
+    this.particleBase.set(positions);
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
     geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
@@ -198,6 +209,10 @@ export class BackgroundField {
     this.material.uniforms.uTime.value = time;
     this.material.uniforms.uScrollProgress.value = scrollProgress;
 
+    // Smoothed pointer → background shader + crystal parallax
+    this.pointerSmooth.lerp(this.pointerTarget, Math.min(dt * 3.5, 1));
+    this.material.uniforms.uMouse.value.copy(this.pointerSmooth);
+
     // Core entrance animation (Act 0)
     if (scrollProgress < 0.13) {
       const actProgress = scrollProgress / 0.13;
@@ -208,12 +223,16 @@ export class BackgroundField {
       this.coreParticles.material.opacity = 0.8 * eased;
     }
 
-    // Core rotation and pulse
+    // Core rotation and pulse (crystal leans toward the cursor)
     if (this.coreGroup.scale.x > 0.5) {
       this.coreGroup.rotation.y += dt * 0.05;
       this.coreGroup.rotation.x += dt * 0.03;
       this.coreCrystal.rotation.y -= dt * 0.08;
       this.coreCrystal.rotation.x += dt * 0.04;
+      if (!this.reducedMotion) {
+        this.coreGroup.position.x += ((this.pointerSmooth.x - 0.5) * 1.6 - this.coreGroup.position.x) * Math.min(dt * 3, 1);
+        this.coreGroup.position.y += ((this.pointerSmooth.y - 0.5) * -1.1 - this.coreGroup.position.y) * Math.min(dt * 3, 1);
+      }
 
       this.energyRings.forEach((ring, i) => {
         ring.rotation.z += dt * ring.userData.speed;
@@ -236,10 +255,31 @@ export class BackgroundField {
       this.coreParticles.geometry.attributes.position.needsUpdate = true;
     }
 
-    // Particle field slow rotation
+    // Particle field slow rotation + cursor wake (parting-sea effect)
     if (this.particles) {
       this.particles.rotation.y += dt * 0.002;
       this.particles.rotation.x += dt * 0.001;
+      if (!this.reducedMotion) {
+        const pos = this.particles.geometry.attributes.position.array;
+        const px = (this.pointerSmooth.x - 0.5) * 60;
+        const py = (this.pointerSmooth.y - 0.5) * 36;
+        for (let i = 0; i < this.particleBase.length; i += 3) {
+          const dx = pos[i] - px, dy = pos[i + 1] - py;
+          const d2 = dx * dx + dy * dy;
+          if (d2 < 400) {
+            const push = (1 - d2 / 400) * 6;
+            const len = Math.max(Math.hypot(dx, dy), 0.001);
+            pos[i] += (dx / len) * push * dt * 4;
+            pos[i + 1] += (dy / len) * push * dt * 4;
+          } else {
+            // drift home
+            const hx = this.particleBase[i], hy = this.particleBase[i + 1];
+            pos[i] += (hx - pos[i]) * dt * 0.6;
+            pos[i + 1] += (hy - pos[i + 1]) * dt * 0.6;
+          }
+        }
+        this.particles.geometry.attributes.position.needsUpdate = true;
+      }
     }
     if (this.alcheGroup) {
       this.alcheGroup.rotation.y += dt * 0.012;
@@ -248,6 +288,18 @@ export class BackgroundField {
         s.rotation.y += s.userData.rot.y;
         s.rotation.z += s.userData.rot.z;
         s.position.y = s.userData.baseY + Math.sin(time*0.7 + s.userData.phase)*0.6;
+        // Shards drift away from the cursor like startled fish
+        if (!this.reducedMotion) {
+          const dx = s.position.x - (this.pointerSmooth.x - 0.5) * 16;
+          const dy = s.position.y - (this.pointerSmooth.y - 0.5) * 8;
+          const d2 = dx*dx + dy*dy;
+          const push = Math.max(0, 1 - d2 / 9);
+          if (push > 0) {
+            const len = Math.max(Math.hypot(dx, dy), 0.001);
+            s.position.x += (dx / len) * push * dt * 2.2;
+            s.position.y += (dy / len) * push * dt * 1.4;
+          }
+        }
       });
       if (this.alcheRing) { this.alcheRing.rotation.z += dt*0.04; this.alcheRing.material.opacity = 0.12 + 0.06*Math.sin(time*0.6); }
     }

@@ -36,21 +36,25 @@ export class CinematicCamera {
     this.F_OMEGA = 6.0; this.F_ZETA = 0.75;
 
     this.keyframes = [
-      // Act 0 · Hero (0.00 - 0.18) — minimal
+      // Act 0 · Hero (0.00 - 0.12) — minimal
       { p: 0.00, pos: [0, 0, 14],    rot: [0, 0, 0],    fov: 50 },
-      { p: 0.09, pos: [0, 0.4, 11],  rot: [-0.05, 0, 0], fov: 53 },
-      { p: 0.18, pos: [0, 1.0, 9],    rot: [-0.08, 0, 0],     fov: 54 },
-      // Act 1 · Flagships (0.18 - 0.43)
-      { p: 0.25, pos: [1.2, 1.6, 7],  rot: [-0.1, 0.06, 0],  fov: 52 },
-      { p: 0.35, pos: [-1.0, 1.9, 6.5], rot: [-0.08, -0.06, 0], fov: 50 },
-      { p: 0.43, pos: [0, 2.0, 6],    rot: [-0.06, 0, 0],      fov: 48 },
-      // Act 2 · Works (0.43 - 0.69) — image grid
-      { p: 0.50, pos: [0, 3.5, 2],      rot: [-0.04, 0, 0], fov: 56 },
-      { p: 0.60, pos: [0, 4.5, -1],     rot: [0.04, 0, 0],  fov: 60 },
-      { p: 0.69, pos: [0, 4.8, -3],    rot: [0.08, 0, 0],     fov: 54 },
-      // Act 3 · Studio CTA (0.69 - 1.00) — minimal close
-      { p: 0.80, pos: [0, 4.2, -5],    rot: [0.06, 0, 0],    fov: 52 },
-      { p: 0.92, pos: [0, 3.5, -7],      rot: [0, 0, 0], fov: 50 },
+      { p: 0.06, pos: [0, 0.4, 11],  rot: [-0.05, 0, 0], fov: 53 },
+      { p: 0.12, pos: [0, 1.0, 9],    rot: [-0.08, 0, 0],     fov: 54 },
+      // Act 1 · Flagships (0.12 - 0.32)
+      { p: 0.18, pos: [1.2, 1.6, 7],  rot: [-0.1, 0.06, 0],  fov: 52 },
+      { p: 0.26, pos: [-1.0, 1.9, 6.5], rot: [-0.08, -0.06, 0], fov: 50 },
+      { p: 0.32, pos: [0, 2.0, 6],    rot: [-0.06, 0, 0],      fov: 48 },
+      // Horizontal act (0.32 - 0.54) — wide lateral dolly while panels slide
+      { p: 0.38, pos: [4.5, 2.2, 8],  rot: [-0.05, 0.22, 0],  fov: 52 },
+      { p: 0.46, pos: [-4.5, 2.4, 8], rot: [-0.05, -0.22, 0], fov: 52 },
+      { p: 0.54, pos: [0, 2.4, 9],    rot: [-0.04, 0, 0],     fov: 50 },
+      // Act 2 · Works (0.54 - 0.76) — image grid
+      { p: 0.62, pos: [0, 3.5, 2],      rot: [-0.04, 0, 0], fov: 56 },
+      { p: 0.70, pos: [0, 4.5, -1],     rot: [0.04, 0, 0],  fov: 60 },
+      { p: 0.76, pos: [0, 4.8, -3],    rot: [0.08, 0, 0],     fov: 54 },
+      // Act 3 · Studio CTA (0.76 - 1.00) — minimal close
+      { p: 0.85, pos: [0, 4.2, -5],    rot: [0.06, 0, 0],    fov: 52 },
+      { p: 0.94, pos: [0, 3.5, -7],      rot: [0, 0, 0], fov: 50 },
       { p: 1.00, pos: [0, 2.5, -8],      rot: [0, 0, 0], fov: 46 }
     ];
 
@@ -129,7 +133,8 @@ export class CinematicCamera {
   }
 
   updateActIndex() {
-    const boundaries = [0.18, 0.43, 0.69, 1.0];
+    // 4 act dots: home · flagships(+horizontal act) · works · studio
+    const boundaries = [0.12, 0.56, 0.78, 1.0];
     for (let i = 0; i < boundaries.length; i++) {
       if (this.scrollProgress <= boundaries[i]) {
         this.currentActIndex = i;

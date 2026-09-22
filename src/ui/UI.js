@@ -1,5 +1,7 @@
 import { CONTENT, SECTION_WINDOWS, ACT_STARTS, sectionOpacity, smoothstep, clamp01 } from './Content.js';
 
+const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
 export class UI {
   constructor(experience) {
     this.experience = experience;
@@ -16,15 +18,10 @@ export class UI {
       <div class="loader">
         <div class="loader-inner">
           <div class="loader-wordmark">KEYCODE</div>
-          <div class="loader-sub">ALCHE GRADE · WORLD CLASS</div>
+          <div class="loader-sub">AI ENGINEERING STUDIO</div>
           <div class="loader-bar"><span></span></div>
           <div class="loader-pct">00%</div>
-          <div class="loader-text">Crafting 3D world…</div>
-          <div class="loader-sound-choice" id="loader-sound-choice" style="display:none">
-            <p>This site contains sound. Enable?</p>
-            <button class="btn btn-primary magnetic" id="loader-sound-on">Sound On</button>
-            <button class="btn btn-ghost magnetic" id="loader-sound-off">Continue without sound</button>
-          </div>
+          <div class="loader-text">Preparing the stage</div>
         </div>
       </div>
 
@@ -58,22 +55,23 @@ export class UI {
        <div class="content">
         <!-- HERO — BEYOND IMAGINATION -->
         <section class="ovl ovl-hero" data-act="0">
-          <div class="hero-orbs"><div class="hero-orb o1"></div><div class="hero-orb o2"></div><div class="hero-orb o3"></div></div>
+          <div class="hero-orbs"><div class="hero-orb o1" data-parallax data-depth="0.65" data-rot="7"></div><div class="hero-orb o2" data-parallax data-depth="0.4" data-rot="-5"></div><div class="hero-orb o3" data-parallax data-depth="0.85"></div></div>
           <div class="inner">
-            <p class="eyebrow"><span>${CONTENT.hero.eyebrow}</span> <span class="forge-badge">● LIVE</span></p>
+            <p class="eyebrow"><span>${CONTENT.hero.eyebrow}</span></p>
             <h1 class="h-display">${CONTENT.hero.title}</h1>
             <p class="sub">${CONTENT.hero.sub}</p>
-            <div class="hero-quote glass" style="display:flex;gap:8px;padding:10px;border-radius:14px;margin:1rem 0;max-width:520px">
-              <input id="hero-quote-input" placeholder="Describe your dream project…" aria-label="Describe your project for instant price" style="flex:1;background:transparent;border:none;outline:none;color:var(--ink);font-size:14px" />
-              <button class="btn btn-primary magnetic" id="hero-quote-btn" style="white-space:nowrap">Price →</button>
-            </div>
-            <div id="hero-quote-out" style="font-size:13px;color:var(--ink-dim);min-height:1.4em;margin-bottom:0.6rem"></div>
             <div class="cta-row">
-              <a class="btn btn-primary magnetic" href="/ai-builder.html">${CONTENT.hero.primary.label} <span class="arrow">→</span></a>
-              <a class="btn btn-ghost magnetic" href="/gallery.html">${CONTENT.hero.secondary.label}</a>
+              <a class="btn btn-primary magnetic" href="${CONTENT.hero.primary.href}">${CONTENT.hero.primary.label} <span class="arrow">→</span></a>
+              <button class="btn btn-ghost magnetic" data-scroll="1">${CONTENT.hero.secondary.label}</button>
             </div>
             <div class="live-ind"><span class="dot"></span><span class="live-text">${CONTENT.hero.live}</span></div>
-            <div class="ai-dots" id="ai-dots"><span>AI:</span></div>
+            <div class="marquee" aria-hidden="true">
+              <div class="marquee-track">
+                ${(CONTENT.ticker.concat(CONTENT.ticker)).map(t=>`<span>${t}</span><i>◆</i>`).join('')}
+              </div>
+            </div>
+            <div class="cat-chips" id="cat-chips" aria-label="Filter the 3D service graph"></div>
+            <p class="drag-hint"><i>⌖</i> hover the constellation · click a node to enter · drag to orbit</p>
           </div>
           <div class="scroll-hint"><span>Scroll to explore</span><div class="mouse"></div></div>
         </section>
@@ -112,12 +110,23 @@ export class UI {
             <div class="cta-links-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:1.5rem">
               ${act.ctaLinks.map(l=>`<a class="glass" href="${l.href}" style="padding:16px;border-radius:12px;text-decoration:none;display:flex;flex-direction:column;gap:4px"><span style="font-weight:600;color:var(--ink)">${l.label}</span><small style="color:var(--ink-dim);font-size:12px">${l.desc}</small></a>`).join('')}
             </div>` : '';
-          const worksLink = act.worksLink ? `<div style="margin-top:1.2rem"><a class="btn btn-ghost" href="${act.worksLink}">View all works →</a></div>` : '';
-          const trustBar = (act.id==='cta' && CONTENT.trust) ? `
-            <div style="margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:12px">
-              <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-family:var(--mono);font-size:10px;letter-spacing:0.14em;color:var(--faint)">${CONTENT.trust.logos.map(l=>`<span style="padding:4px 8px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:999px">${l}</span>`).join('')}</div>
-              <div style="display:flex;gap:12px;font-family:var(--mono);font-size:11px">${CONTENT.trust.metrics.map(m=>`<span><b style="color:var(--ink)">${m.value}</b> <span style="color:var(--faint)">${m.label}</span></span>`).join(' • ')}</div>
-              <div style="font-size:13px;color:var(--ink-dim);font-style:italic">“${CONTENT.trust.testimonial.quote}” — <b style="color:var(--ink)">${CONTENT.trust.testimonial.author}</b> ★★★★★</div>
+          const worksLink = act.worksLink ? `<div style="margin-top:1.4rem"><a class="fc-cta-line" href="${act.worksLink}">All works<span>→</span></a></div>` : '';
+          const trustBar = (act.id==='cta') ? `
+            <div class="proof-strip">
+              <div class="proof-stats">
+                <span><b>4</b> pipelines</span>
+                <span><b>6</b> agents</span>
+                <span><b>30+</b> services</span>
+                <span><b>~1s</b> first preview</span>
+              </div>
+              <div class="proof-news">
+                ${CONTENT.press.slice(0,3).map(p=>`
+                  <a class="proof-item" href="${p.href}">
+                    <span class="proof-date">${p.date}</span>
+                    <span class="proof-title">${p.title}</span>
+                    <span class="proof-arrow">→</span>
+                  </a>`).join('')}
+              </div>
             </div>` : '';
           return `
           <section class="ovl act-header${side}" data-act="${i + 1}">
@@ -134,6 +143,38 @@ export class UI {
             ${pricing}
           </section>`;
         }).join('')}
+
+        <!-- HORIZONTAL ACT — pipelines deep-dive, traversed sideways by vertical scroll -->
+        <div class="hc-act" data-hscroll data-hscroll-label="drag through the pipelines" aria-label="Pipeline deep dive" hidden>
+          <div class="kc-hpanel">
+            <span class="hp-idx">01 / 04 · AI FULL-STACK</span>
+            <h3 class="hp-title">Code that writes <em>itself</em></h3>
+            <p class="hp-desc">Six specialist agents plan, build, test and polish a production app while you watch — live preview, real deploy, zero boilerplate.</p>
+            <div class="hp-list"><span>Streaming generation you can interrupt</span><span>Full-stack: frontend, API, database</span><span>One click to production</span></div>
+            <a class="hp-cta magnetic" href="/ai-builder.html">Open AI Builder →</a>
+          </div>
+          <div class="kc-hpanel">
+            <span class="hp-idx">02 / 04 · GAME WORLDS</span>
+            <h3 class="hp-title">Worlds you can <em>get lost in</em></h3>
+            <p class="hp-desc">Describe a game — get a playable world with physics, enemies, scoring and cinematics. Fortnite-grade ambition, browser-native delivery.</p>
+            <div class="hp-list"><span>3D engines with drift physics</span><span>Procedural levels &amp; power-ups</span><span>Score systems and leaderboards</span></div>
+            <a class="hp-cta magnetic" href="/ai-builder.html?mode=game">Forge a game →</a>
+          </div>
+          <div class="kc-hpanel">
+            <span class="hp-idx">03 / 04 · 3D + CAD</span>
+            <h3 class="hp-title">Scan reality, <em>edit it</em></h3>
+            <p class="hp-desc">Point a camera at any object and get clean, editable CAD — mesh repair, retopology and STEP export built into the pipeline.</p>
+            <div class="hp-list"><span>Photogrammetry → watertight meshes</span><span>Auto retopo &amp; repair</span><span>Fab-ready STEP / STL export</span></div>
+            <a class="hp-cta magnetic" href="/ai-builder.html?mode=cad">Scan to CAD →</a>
+          </div>
+          <div class="kc-hpanel">
+            <span class="hp-idx">04 / 04 · PCB FAB</span>
+            <h3 class="hp-title">Boards, <em>factory-ready</em></h3>
+            <p class="hp-desc">From plain English to Gerbers: component selection, routing, DFM checks and a fab score — a manufacturing ZIP, not a mockup.</p>
+            <div class="hp-list"><span>Real BOM with MPN sourcing</span><span>KiCad-grade routing</span><span>Gerber + drill ZIP download</span></div>
+            <a class="hp-cta magnetic" href="/ai-builder.html?mode=pcb">Design a PCB →</a>
+          </div>
+        </div>
 
         <!-- WORKS GRID (act 3) -->
         <div id="works-grid" class="works-grid"></div>
@@ -167,12 +208,12 @@ export class UI {
             </div>
           </div>
           <div class="footer-bottom">
-            <span>© 2026 KEYCODE Studio · The website no one can copy</span>
+            <span>© 2026 KEYCODE Studio — engineered by its own pipelines</span>
             <span class="legal">
               <a href="/privacy.html">Privacy</a>
               <a href="/cookies.html">Cookies</a>
               <a href="/status.html">Status</a>
-              <a href="/changelog.html">v2.0</a>
+              <a href="/changelog.html">v3.0</a>
             </span>
           </div>
         </footer>
@@ -245,42 +286,81 @@ export class UI {
     this.bindNewsletter();
     this.bindForge();
     this.bindHeroMagic();
+    this.bindCategoryChips();
+  }
+
+  /* Category chips filter the interactive 3D service graph in real time */
+  bindCategoryChips() {
+    const wrap = this.element.querySelector('#cat-chips');
+    if (!wrap) return;
+
+    // Floating tooltip for hovered 3D nodes
+    const tt = document.createElement('div');
+    tt.className = 'graph-tooltip';
+    document.body.appendChild(tt);
+    const exp = this.experience;
+    if (exp && exp.serviceGraph) {
+      exp.serviceGraph.onHover((node) => {
+        if (node) {
+          tt.innerHTML = '<span class="tt-cat">' + esc(node.catName) + '</span>' + esc(node.service) +
+            '<span class="tt-go">click to open →</span>';
+          tt.style.left = ((node.px || 0)) + 'px';
+          tt.style.top = ((node.py || 0)) + 'px';
+          tt.classList.add('show');
+        } else {
+          tt.classList.remove('show');
+        }
+      });
+    }
+    const CATS = [
+      { id: 'AI', label: 'AI', color: '#8b5cf6' },
+      { id: 'GAME', label: 'Games', color: '#22d3ee' },
+      { id: 'SCAN', label: 'CAD', color: '#6ee7b7' },
+      { id: 'MAKE', label: 'Fab', color: '#4ade80' },
+      { id: 'DESIGN', label: 'Design', color: '#f472b6' },
+      { id: 'AUTO', label: 'Auto', color: '#f59e0b' },
+      { id: 'SHOP', label: 'Shop', color: '#34d399' }
+    ];
+    const labelFor = (id) => (CATS.find(c => c.id === id) || {}).label || id;
+    CATS.forEach((cat, i) => {
+      const b = document.createElement('button');
+      b.className = 'cat-chip';
+      b.type = 'button';
+      b.innerHTML = '<i style="background:' + cat.color + '"></i>' + cat.label;
+      b.style.animationDelay = (0.9 + i * 0.07) + 's';
+      b.addEventListener('click', () => {
+        const exp = this.experience;
+        if (exp && exp.serviceGraph) {
+          const focused = exp.serviceGraph.focusCategory(cat.id);
+          wrap.querySelectorAll('.cat-chip').forEach(c => c.classList.toggle('active', c === b && !!focused));
+        } else {
+          window.location.href = '/gallery.html';
+        }
+      });
+      wrap.appendChild(b);
+    });
+    const clearBtn = document.createElement('button');
+    clearBtn.className = 'cat-chip cat-clear';
+    clearBtn.type = 'button';
+    clearBtn.textContent = '✕ all';
+    clearBtn.addEventListener('click', () => {
+      const exp = this.experience;
+      if (exp && exp.serviceGraph) {
+        exp.serviceGraph.focused = null;
+        exp.serviceGraph.applyFilter();
+        wrap.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+      }
+    });
+    wrap.appendChild(clearBtn);
   }
 
   bindHeroMagic() {
-    const input = this.element.querySelector('#hero-quote-input');
-    const btn = this.element.querySelector('#hero-quote-btn');
-    const out = this.element.querySelector('#hero-quote-out');
-    const go = async () => {
-      const q = (input?.value || '').trim();
-      if (!q) { input?.focus(); return; }
-      if (out) out.textContent = 'Estimating…';
-      try {
-        const r = await fetch('/api/quote?description=' + encodeURIComponent(q.slice(0, 300)));
-        const j = await r.json();
-        if (out && j.success) out.innerHTML = `Estimated <b>$${j.usd} (₹${j.inr.toLocaleString('en-IN')})</b> — <a href="/ai-builder.html" style="color:var(--ink)">Forge it now →</a>`;
-        else if (out) out.textContent = 'Could not estimate — try Forge.';
-      } catch { if (out) out.textContent = 'Could not estimate — try Forge.'; }
-    };
-    btn?.addEventListener('click', go);
-    input?.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
+    // One honest live pulse: the eyebrow dot greens up only when AI is truly online
     (async () => {
       try {
-        const [h, p] = await Promise.all([
-          fetch('/api/health').then(r => r.json()).catch(() => null),
-          fetch('/api/ai/providers').then(r => r.json()).catch(() => null)
-        ]);
-        if (this.liveText && (h || p)) this.liveText.textContent = `${p?.online || '?'}/${p?.total || '?'} AI live · ${h?.db === 'connected' ? 'DB live' : 'Cloud live'} · Drag 3D`;
-        const dots = this.element.querySelector('#ai-dots');
-        const names = ['GROQ', 'Mistral', 'Cloudflare', 'Pollinations', 'Ollama'];
-        const live = new Set((p?.providers || []).filter(x => x.status === 'online').map(x => x.name));
-        if (dots) names.forEach(n => {
-          const s = document.createElement('span');
-          s.className = 'ai-dot' + (live.has(n) ? ' on' : '');
-          s.innerHTML = '<i></i>';
-          s.appendChild(document.createTextNode(n));
-          dots.appendChild(s);
-        });
+        const p = await fetch('/api/ai/providers').then(r => r.json()).catch(() => null);
+        const dotEl = this.element.querySelector('.live-ind .dot');
+        if (dotEl && p && p.online > 0) dotEl.classList.add('on');
       } catch {}
     })();
     const hero = this.element.querySelector('.ovl-hero');
