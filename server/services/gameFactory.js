@@ -14,7 +14,7 @@ function hexNum(hex) { return parseInt((hex || DEFAULT_PRIMARY).replace('#', '')
 
 export function is3DRequest(description) {
   const d = (description || '').toLowerCase();
-  return /3d|\b3 d\b|\bthree\b|three\.js|webgl|\bvr\b|immersive|racing|race\s*car|driving|highway|space\s*shooter|flight|fighter jet|fps|first[\s-]?person|minecraft|voxel|open[\s-]?world|3d.*(platform|adventure|puzzle)/i.test(d);
+  return /3d|\b3 d\b|\bthree\b|three\.js|webgl|\bvr\b|immersive|racing|race\s*car|driving|highway|space\s*shooter|flight|fighter jet|fps|first[\s-]?person|minecraft|voxel|open[\s-]?world|3d.*(platform|adventure|puzzle)|realistic|simulation|simulator|open\s*world|sandbox|survival|city\s*builder|physics\s*game|aircraft|spaceship|galaxy|planet|zombie|battle\s*royale|car\s*game|bike|truck|bus|train|robot|mech|dinosaur|shooter|rpg|dungeon/i.test(d);
 }
 
 // ---------------------------------------------------------------------------
@@ -22,34 +22,46 @@ export function is3DRequest(description) {
 // ---------------------------------------------------------------------------
 export function gamePrompt(description, is3D) {
   if (is3D) {
-    return `You are a senior professional game developer at a top studio. Build a complete, POLISHED, PRODUCTION-READY 3D HTML5 game using the Three.js library for: "${description}".
+    return `You are a LEAD GAME ENGINEER at a AAA studio (Rockstar / Naughty Dog / CD Projekt Red caliber) with deep Three.js expertise. Build a complete, REALISTIC, PRODUCTION-READY 3D HTML5 game for: "${description}".
+
+This is NOT a toy demo. It is judged by a AAA game critic against commercial WebGL titles.
 
 The game MUST be a single self-contained HTML file. Include Three.js r128 from CDN:
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>
 
 Return a VALID JSON object (no markdown, no backticks) with this exact structure:
 {
-  "title": "Catchy game title",
+  "title": "Cinematic game title",
   "description": "One-line description of gameplay",
-  "type": "3d-racer | 3d-shooter | 3d-platformer | 3d-adventure | 3d-puzzle",
+  "type": "3d-racer | 3d-shooter | 3d-platformer | 3d-adventure | 3d-puzzle | 3d-simulation | 3d-sandbox",
   "controls": { "Arrow Keys": "Move", "Space": "Jump / Action", "Click": "Shoot / Interact" },
   "code": "The complete HTML file as a string. MUST be playable immediately."
 }
 
-PROFESSIONAL REQUIREMENTS (judged by a real game critic):
-- Use THREE.WebGLRenderer, PerspectiveCamera, and real lighting (AmbientLight + DirectionalLight or PointLight).
-- Build all models procedurally from geometry (BoxGeometry, SphereGeometry, CylinderGeometry, ConeGeometry, BufferGeometry for particles). No external 3D assets, no textures required.
-- Use MeshStandardMaterial / MeshPhongMaterial with color, roughness and metalness for a premium look.
-- Add visual atmosphere: fog, a particle starfield, emissive glows, or neon edge lights.
-- Implement a proper game loop with requestAnimationFrame: update physics, then renderer.render(scene, camera).
-- Full HUD: live score, speed/health/lives, and a styled GAME OVER screen with a RESTART button.
-- Controls MUST work on keyboard AND touch/mobile (mouse drag, on-screen hints).
-- Responsive: handle window resize with renderer.setSize and camera aspect update.
-- Camera must follow/look-at the player smoothly (lerp).
-- The game must be FUN, with increasing difficulty and satisfying feedback (particle bursts, score popups).
-- Add CSS to make the page look professional: centered canvas on a dark gradient background, HUD overlays with a modern font and glow.`;
+AAA VISUAL REALISM (non-negotiable):
+- renderer.outputEncoding = THREE.sRGBEncoding; renderer.toneMapping = THREE.ACESFilmicToneMapping; tuned exposure; renderer.shadowMap.enabled with PCFSoftShadowMap and a 2048 shadow map on the key light.
+- Physically-based materials everywhere: MeshStandardMaterial with tuned metalness/roughness per surface (asphalt, chrome, fabric, foliage); emissive materials for neon/glass/screens.
+- Procedural PBR detail: runtime <canvas>-generated albedo/roughness textures (road markings, brick, tile, metal panels) applied via CanvasTexture with repeat wrapping — zero external assets.
+- Lighting rig: hemisphere fill + shadow-casting key directional + rim/accent lights; THREE.FogExp2 atmosphere matched to the scene mood; layered environment (gradient skydome, distant silhouette meshes, parallax clouds/stars, ground scatter props with merged geometry).
+- Cinematic post feel: vignette + film grain overlay, FOV kick on boost/impacts, motion speed-lines, dynamic chase camera with lag/look-ahead/handheld sway.
+- Particles that read real: additive-blended exhaust/smoke/dust sprites, gravity-driven sparks, explosion shockwave rings, tumbling debris.
+
+AAA GAMEPLAY & FEEL (non-negotiable):
+- Real physics: gravity, inertia, suspension/traction on vehicles, momentum-based movement — never teleport-y motion.
+- Geometry-respecting collisions (Box3/BoundingSphere) with impact response: camera shake, hit-stop, knockback, damage vignette.
+- Synthesized WebAudio: engine loop (osc + filter sweep), impact noise bursts, UI clicks, ambient pad; audio unlocks on first gesture; mute toggle.
+- AI opponents/traffic: steering behaviors (pursue/evade/patrol/waypoints), spawn director scaling intensity with player performance.
+- Full meta layer: main menu → options (quality toggle, sensitivity) → gameplay → pause (Esc) → game over with stats → best score in localStorage → restart.
+- AAA HUD: canvas minimap/radar with blips, speedometer/health/ammo, objective tracker, floating damage numbers, streak popups.
+- Waves/levels with escalating difficulty and a signature boss or set-piece moment; S/A/B/C rank system.
+
+ENGINEERING FLOOR:
+- Fixed-timestep physics with accumulator + rAF render; delta-time everywhere; auto-pause on tab blur.
+- Object pooling for bullets/particles/traffic; zero per-frame allocation in hot loops; reused geometries/materials; devicePixelRatio capped at 2; auto quality degradation on sustained low fps.
+- Controls: keyboard + mouse + touch (virtual joystick on mobile) + gamepad API where natural; fully responsive.
+- Zero placeholder code. The file runs offline from file:// (except the Three.js CDN).`;
   }
-  return `You are a senior professional game developer at a top studio. Build a complete, POLISHED, PRODUCTION-READY HTML5 2D game using the Phaser.js framework for: "${description}".
+  return `You are a LEAD GAME ENGINEER at a AAA studio. Build a complete, POLISHED, PRODUCTION-READY HTML5 2D game using the Phaser.js framework for: "${description}".
 
 The game MUST be a single self-contained HTML file. Include Phaser from CDN:
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"><\/script>

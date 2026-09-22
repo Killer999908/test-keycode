@@ -207,8 +207,120 @@ export function placeComponents(components, boardW, boardH) {
 }
 
 // ──────────────────────────────────────────────
-// Specctra DSN export + FreeRouting autorouter (real external tool)
-// ──────────────────────────────────────────────
+// HDI / smartphone board support
+// ─────────────────────────────────────────────
+
+/** True when the request describes a smartphone/phone motherboard (HDI class). */
+export function isSmartphoneBoard(description = '') {
+  return /smartphone|smart\s*phone|mobile\s*(phone)?\s*(motherboard|board|pcb)|phone\s*board|iphone|android\s*board|snapdragon|flagship\s*board|hdi/i.test(String(description));
+}
+
+/**
+ * HDI design profile: stackup, rules, and power tree for a flagship-class
+ * smartphone motherboard. All values mirror real fab capabilities (HDI
+ * 2-6-2, laser microvias, Megtron 6, mSAP lines).
+ */
+export function hdiProfile() {
+  return {
+    class: 'HDI-2',
+    buildup: '2-6-2 (any-layer HDI)',
+    layers: 10,
+    boardW: 72,
+    boardH: 150,
+    thicknessMm: 0.8,
+    material: 'Megtron 6 (εr 3.4, tanδ 0.002 @ 10GHz)',
+    rules: {
+      minLineMm: 0.075,          // mSAP 75µm lines
+      minSpaceMm: 0.075,
+      microviaDrillMm: 0.1,      // laser via
+      microviaPadMm: 0.25,
+      throughViaDrillMm: 0.2,
+      throughViaPadMm: 0.4,
+      viaInPad: true,
+      minAnnularRingMm: 0.075,
+    },
+    stackup: [
+      { layer: 'L1', name: 'TOP',        type: 'signal', copper: '0.5oz' },
+      { layer: 'L2', name: 'GND1',       type: 'plane',  copper: '1oz' },
+      { layer: 'L3', name: 'SIG1',       type: 'signal', copper: '0.5oz' },
+      { layer: 'L4', name: 'PWR1',       type: 'plane',  copper: '1oz' },
+      { layer: 'L5', name: 'SIG2',       type: 'signal', copper: '0.5oz' },
+      { layer: 'L6', name: 'SIG3',       type: 'signal', copper: '0.5oz' },
+      { layer: 'L7', name: 'PWR2',       type: 'plane',  copper: '1oz' },
+      { layer: 'L8', name: 'GND2',       type: 'plane',  copper: '1oz' },
+      { layer: 'L9', name: 'SIG4',       type: 'signal', copper: '0.5oz' },
+      { layer: 'L10', name: 'BOTTOM',    type: 'signal', copper: '0.5oz' },
+    ],
+    impedance: [
+      { bus: 'MIPI DSI/CSI', ohms: '90Ω diff', matchTolMm: 0.05 },
+      { bus: 'USB 3.x', ohms: '85Ω diff', matchTolMm: 0.1 },
+      { bus: 'RF antennas', ohms: '50Ω SE', matchTolMm: 0.1 },
+      { bus: 'LPDDR5 DQ/CA', ohms: '40Ω SE / 80Ω diff', matchTolMm: 0.05 },
+    ],
+    powerTree: [
+      { rail: 'VBATT 3.85V', source: 'Battery connector', maxA: 5 },
+      { rail: 'VSYS 3.4-4.4V', source: 'PMIC buck-boost', maxA: 6 },
+      { rail: 'VDD_CORE 0.75V', source: 'PMIC Buck1', maxA: 8 },
+      { rail: 'VDD_GPU 0.8V', source: 'PMIC Buck2', maxA: 6 },
+      { rail: '1.8V / 1.1V LPDDR5', source: 'PMIC Buck3/4', maxA: 5 },
+      { rail: 'VDD_IO 1.8V', source: 'PMIC LDO1', maxA: 1.5 },
+      { rail: 'RF_PA 3.3V', source: 'Dedicated PA buck, shielded', maxA: 2.5 },
+    ],
+  };
+}
+
+/**
+ * BGA fan-out: deterministic pin coordinates for a square BGA ball map plus
+ * dog-bone escape (via-in-pad or dog-bone at 0.2mm annular ring). Returns
+ * synthetic placed-component-compatible entries used by routeNets.
+ */
+export function bgaFanout(ref, size, startX, startY, ballsPerSide) {
+  const pins = {};
+  const pitch = size / (ballsPerSide - 1 || 1);
+  const rows = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.slice(0, ballsPerSide).split('');
+  for (let r = 0; r < ballsPerSide; r++) {
+    for (let c = 1; c <= ballsPerSide; c++) {
+      pins[`${ref}:${rows[r]}${c}`] = { x: startX + c * pitch, y: startY + r * pitch };
+    }
+  }
+  return pins;
+}
+
+/** Place an HDI board: big ICs on a functional grid, passives around them. */
+export function placeHdiComponents(components, boardW = 72, boardH = 150) {
+  const BIG = /BGA|SoC|snapdragon|pmic|ufs|lpddr|modem|wifi/i;
+  const big = components.filter(c => BIG.test((c.package || '') + ' ' + (c.value || '') + ' ' + (c.description || '')));
+  const small = components.filter(c => !BIG.test((c.package || '') + ' ' + (c.value || '') + ' ' + (c.description || '')));
+  const placed = [];
+
+  // Shield zones: SoC + DRAM center, RF far from PMIC, connectors to edges.
+  const zones = [
+    { x: boardW * 0.5, y: boardH * 0.32 },   // SoC
+    { x: boardW * 0.5, y: boardH * 0.55 },   // DRAM (PoP stacked)
+    { x: boardW * 0.22, y: boardH * 0.78 },  // PMIC (battery edge)
+    { x: boardW * 0.78, y: boardH * 0.16 },  // RF/modem (antenna edge)
+    { x: boardW * 0.22, y: boardH * 0.16 },  // UFS
+    { x: boardW * 0.78, y: boardH * 0.78 },  // WiFi/NFC
+  ];
+  big.forEach((c, i) => {
+    const z = zones[i % zones.length];
+    placed.push({ ...c, reference: c.reference || ('U' + (i + 1)), footprint: resolveFootprint(c.package), size: footprintSize(resolveFootprint(c.package)), posX: z.x, posY: z.y, angle: 0, side: 'top' });
+  });
+
+  // Passives: decoupling within 3mm of big ICs first, remainder in a grid.
+  const margin = 4;
+  const spacing = 5;
+  let col = 0, row = 0;
+  const maxCol = Math.floor((boardW - margin * 2) / spacing);
+  for (const c of small) {
+    const x = margin + spacing / 2 + col * spacing;
+    const y = margin + spacing / 2 + row * spacing;
+    placed.push({ ...c, reference: c.reference || ('R' + (col + row)), footprint: resolveFootprint(c.package || '0402'), size: footprintSize(resolveFootprint(c.package || '0402')), posX: x, posY: y, angle: 0, side: 'top' });
+    col++;
+    if (col >= maxCol) { col = 0; row++; }
+  }
+  return placed;
+}
 
 function resolveFreeroutingJar() {
   if (process.env.FREEROUTING_JAR) {

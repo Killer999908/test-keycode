@@ -2,6 +2,11 @@ import { execSync, spawn } from 'child_process';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
+
+// This file is an ES module, so the CommonJS `require` is not defined. Create a
+// module-scoped require for the optional-dependency probe below (`sharp`).
+const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const parentDir = path.resolve(__dirname, '..', '..');
 
@@ -12,19 +17,39 @@ fs.mkdirSync(EXPORTS_DIR, { recursive: true });
 
 function which(cmd) {
   try { execSync(`which ${cmd} 2>/dev/null`, { stdio: 'pipe' }); return true; }
-  catch (e) { return false; }
+  catch { return false; }
 }
 
-const TOOLS = {
-  ffmpeg:      which('ffmpeg'),
-  openscad:    which('openscad'),
-  convert:     which('convert'),
-  python3:     which('python3'),
-  blender:     fs.existsSync(BLENDER_PATH),
-  cadquery:    (() => { try { execSync('python3 -c "import cadquery"', { stdio:'pipe' }); return true; } catch(e){return false} })(),
-  opencv:      (() => { try { execSync('python3 -c "import cv2"', { stdio:'pipe' }); return true; } catch(e){return false} })(),
-  sharp:       (() => { try { return !!require('sharp'); } catch(e) { try { return !!import('sharp'); } catch(e2){return false} } })(),
-};
+function detectTools() {
+  return Object.freeze({
+    ffmpeg:   which('ffmpeg'),
+    openscad: which('openscad'),
+    convert:  which('convert'),
+    python3:  which('python3'),
+    blender:  fs.existsSync(BLENDER_PATH),
+    cadquery: (() => { try { execSync('python3 -c "import cadquery"', { stdio: 'pipe' }); return true; } catch { return false; } })(),
+    opencv:   (() => { try { execSync('python3 -c "import cv2"', { stdio: 'pipe' }); return true; } catch { return false; } })(),
+    sharp:    (() => { try { return !!require('sharp'); } catch { return false; } })(),
+  });
+}
+
+let _toolsCache = null;
+function tools() {
+  if (!_toolsCache) _toolsCache = detectTools();
+  return _toolsCache;
+}
+
+// LAZY: preserves the TOOLS.ffmpeg / TOOLS.blender access pattern used by every
+// helper below, but only probes the host on first property read instead of
+// blocking module import (which used to stall server boot by ~16s).
+const TOOLS = new Proxy({}, {
+  get: (_t, prop) => tools()[prop],
+  has: (_t, prop) => prop in tools(),
+  ownKeys: () => Reflect.ownKeys(tools()),
+  getOwnPropertyDescriptor: (_t, prop) => ({
+    configurable: true, enumerable: true, value: tools()[prop],
+  }),
+});
 
 export function getAvailableTools() {
   return {

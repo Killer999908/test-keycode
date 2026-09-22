@@ -1,0 +1,76 @@
+services:
+  dify-nginx:
+    image: nginx:alpine
+    container_name: dify-test-nginx
+    ports:
+      - "8090:80"
+    depends_on:
+      - dify-api
+      - dify-web
+    restart: unless-stopped
+  dify-api:
+    image: langgenius/dify-api:0.15.3
+    container_name: dify-test-api
+    environment:
+      MODE: api
+      SECRET_KEY: keycode-forge-test-secret-key-change-me
+      DB_USERNAME: dify
+      DB_PASSWORD: difypassword
+      DB_HOST: dify-db
+      DB_PORT: "5432"
+      DB_DATABASE: dify
+      REDIS_HOST: dify-redis
+      REDIS_PORT: "6379"
+      CELERY_BROKER_URL: redis://dify-redis:6379/1
+      STORAGE_TYPE: opendal
+      OPENDAL_SCHEME: fs
+      OPENDAL_FS_ROOT: storage
+      MIGRATION_ENABLED: "true"
+    depends_on:
+      - dify-db
+      - dify-redis
+    restart: unless-stopped
+  dify-worker:
+    image: langgenius/dify-api:0.15.3
+    container_name: dify-test-worker
+    environment:
+      MODE: worker
+      SECRET_KEY: keycode-forge-test-secret-key-change-me
+      DB_USERNAME: dify
+      DB_PASSWORD: difypassword
+      DB_HOST: dify-db
+      DB_PORT: "5432"
+      DB_DATABASE: dify
+      REDIS_HOST: dify-redis
+      REDIS_PORT: "6379"
+      CELERY_BROKER_URL: redis://dify-redis:6379/1
+      STORAGE_TYPE: opendal
+      OPENDAL_SCHEME: fs
+      OPENDAL_FS_ROOT: storage
+    depends_on:
+      - dify-db
+      - dify-redis
+    restart: unless-stopped
+  dify-web:
+    image: langgenius/dify-web:0.15.3
+    container_name: dify-test-web
+    environment:
+      CONSOLE_API_URL: http://localhost:8090
+      APP_API_URL: http://localhost:8090
+    restart: unless-stopped
+  dify-db:
+    image: postgres:16-alpine
+    container_name: dify-test-db
+    environment:
+      POSTGRES_USER: dify
+      POSTGRES_PASSWORD: difypassword
+      POSTGRES_DB: dify
+    volumes:
+      - dify-db-data:/var/lib/postgresql/data
+    restart: unless-stopped
+  dify-redis:
+    image: redis:7-alpine
+    container_name: dify-test-redis
+    restart: unless-stopped
+volumes:
+  dify-db-data:
