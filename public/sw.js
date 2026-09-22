@@ -1,4 +1,4 @@
-const CACHE = 'keycode-v10';
+const CACHE = 'keycode-v11';
 const PRECACHE = [
   '/',
   '/offline.html',
@@ -25,6 +25,14 @@ const OFFLINE_RESPONSE = new Response(
   '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Offline</title><style>body{background:#000;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:sans-serif;text-align:center;padding:20px}.btn{display:inline-block;padding:14px 32px;background:#fff;color:#000;border:1px solid #fff;text-decoration:none;font-size:12px;letter-spacing:.12em;text-transform:uppercase}</style></head><body><div><h1 style="font-weight:400;letter-spacing:.08em;text-transform:uppercase">You\'re Offline</h1><p style="color:#7E7E7E">Please check your connection and try again.</p><a href="/" class="btn">Retry</a></div></body></html>',
   { status: 503, headers: { 'Content-Type': 'text/html; charset=UTF-8' } }
 );
+
+// Never feed HTML to JS/CSS requests — that breaks the module graph.
+// Let the browser's own error handling retry instead.
+function OFFLINE_FALLBACK(e) {
+  const dest = e.request.destination;
+  if (dest === 'document' || dest === '' || dest === 'iframe') return OFFLINE_RESPONSE;
+  return Response.error();
+}
 
 self.addEventListener('install', e => {
   e.waitUntil(
@@ -64,14 +72,16 @@ self.addEventListener('fetch', e => {
 
   e.respondWith(
     caches.match(e.request).then(cached => {
-      if (cached) return cached;
-      return (e.preloadResponse || fetch(e.request)).then(response => {
+      const fetchAndCache = (e.preloadResponse || fetch(e.request)).then(response => {
         if (response && response.ok) {
           const clone = response.clone();
           caches.open(CACHE).then(c => c.put(e.request, clone)).catch(() => {});
         }
-        return response || fetch(e.request);
-      }).catch(() => OFFLINE_RESPONSE);
-    }).catch(() => OFFLINE_RESPONSE)
+        return response;
+      });
+      // Stale-while-revalidate: instant from cache, refreshed in background
+      const network = fetchAndCache.catch(() => cached || undefined);
+      return cached ? (fetchAndCache.catch(() => cached), cached) : network.then(r => r || OFFLINE_FALLBACK(e));
+    }).catch(() => OFFLINE_FALLBACK(e))
   );
 });

@@ -29,6 +29,10 @@ node_modules/
 .env
 tools/blender.tar.xz
 tools/blender-4.3.2-linux-x64/
+tools/freerouting.jar
+
+# Local agent/tooling config — not project source.
+frontend/.claude/
 
 # Generated build output — CAD/PCB/scan exports and app previews.
 # These are produced at runtime, not source; keep them out of history.

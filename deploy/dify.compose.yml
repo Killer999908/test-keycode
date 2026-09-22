@@ -4,12 +4,16 @@ services:
     container_name: dify-test-nginx
     ports:
       - "8090:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
       - dify-api
       - dify-web
     restart: unless-stopped
   dify-api:
     image: langgenius/dify-api:0.15.3
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     container_name: dify-test-api
     environment:
       MODE: api
@@ -26,12 +30,17 @@ services:
       OPENDAL_SCHEME: fs
       OPENDAL_FS_ROOT: storage
       MIGRATION_ENABLED: "true"
+      CONSOLE_API_URL: http://localhost:8090
+      SERVICE_API_URL: http://localhost:8090/v1
+      APP_WEB_URL: http://localhost:8090
     depends_on:
       - dify-db
       - dify-redis
     restart: unless-stopped
   dify-worker:
     image: langgenius/dify-api:0.15.3
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     container_name: dify-test-worker
     environment:
       MODE: worker
@@ -57,6 +66,8 @@ services:
     environment:
       CONSOLE_API_URL: http://localhost:8090
       APP_API_URL: http://localhost:8090
+    depends_on:
+      - dify-api
     restart: unless-stopped
   dify-db:
     image: postgres:16-alpine
@@ -67,10 +78,27 @@ services:
       POSTGRES_DB: dify
     volumes:
       - dify-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dify"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
     restart: unless-stopped
   dify-redis:
     image: redis:7-alpine
     container_name: dify-test-redis
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
     restart: unless-stopped
+
+  ollama-proxy:
+    image: alpine/socat:latest
+    container_name: dify-test-ollama-proxy
+    command: TCP-LISTEN:11435,fork,reuseaddr TCP:127.0.0.1:11434
+    network_mode: host
+
 volumes:
   dify-db-data:

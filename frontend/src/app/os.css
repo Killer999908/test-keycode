@@ -1,0 +1,224 @@
+/* ============ KEYCODE AI OS — Design System ============ */
+
+:root {
+  --os-bg: #05060a;
+  --os-panel: rgba(13, 16, 26, 0.72);
+  --os-panel-solid: #0b0e17;
+  --os-border: rgba(255, 255, 255, 0.07);
+  --os-border-bright: rgba(120, 140, 255, 0.25);
+  --os-text: #e8ecf4;
+  --os-text-dim: #7a8299;
+  --os-text-faint: #454d63;
+  --os-accent: #6d7cff;
+  --os-accent-2: #9b6dff;
+  --os-accent-3: #38d6ff;
+  --os-pink: #ff5db1;
+  --os-green: #34e0a1;
+  --os-amber: #ffc46b;
+  --os-red: #ff5d6c;
+  --os-glow: rgba(109, 124, 255, 0.35);
+  --os-font-ui: 'Inter', system-ui, sans-serif;
+  --os-font-display: 'Syne', 'Inter', sans-serif;
+  --os-radius: 14px;
+  --os-radius-lg: 20px;
+}
+
+.os-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.os-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.os-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(120, 140, 255, 0.25);
+  border-radius: 99px;
+}
+.os-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(120, 140, 255, 0.45);
+}
+
+/* ---------- Panels ---------- */
+.os-panel {
+  background: var(--os-panel);
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+  border: 1px solid var(--os-border);
+  border-radius: var(--os-radius-lg);
+}
+
+.os-panel-hover {
+  transition: border-color 0.4s ease, box-shadow 0.4s ease, transform 0.4s cubic-bezier(0.2, 0.9, 0.25, 1.2);
+}
+.os-panel-hover:hover {
+  border-color: var(--os-border-bright);
+  box-shadow: 0 0 0 1px rgba(120, 140, 255, 0.12), 0 20px 60px -20px rgba(0, 0, 0, 0.8), 0 0 80px -30px var(--os-glow);
+}
+
+/* ---------- Text ---------- */
+.os-display {
+  font-family: var(--os-font-display);
+  letter-spacing: -0.03em;
+  font-weight: 700;
+}
+
+.os-grad-text {
+  background: linear-gradient(120deg, #ffffff 0%, #aab4ff 40%, #6d7cff 60%, #9b6dff 85%, #ffffff 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: os-shimmer 7s linear infinite;
+}
+
+@keyframes os-shimmer {
+  0% { background-position: 0% center; }
+  100% { background-position: 200% center; }
+}
+
+/* ---------- Buttons ---------- */
+.os-btn {
+  position: relative;
+  font-family: var(--os-font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--os-text);
+  border: 1px solid var(--os-border);
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
+  overflow: hidden;
+  white-space: nowrap;
+}
+.os-btn:hover {
+  border-color: var(--os-border-bright);
+  background: rgba(120, 140, 255, 0.08);
+  box-shadow: 0 0 24px -8px var(--os-glow);
+}
+.os-btn:active {
+  transform: scale(0.97);
+}
+.os-btn-primary {
+  background: linear-gradient(120deg, #6d7cff, #9b6dff);
+  border: none;
+  color: #fff;
+  box-shadow: 0 4px 24px -6px var(--os-glow);
+}
+.os-btn-primary:hover {
+  background: linear-gradient(120deg, #7c8aff, #a87dff);
+  box-shadow: 0 6px 34px -4px var(--os-glow);
+}
+
+/* ---------- Glow cursor ---------- */
+.os-cursor-glow {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(109, 124, 255, 0.08) 0%, transparent 60%);
+  transition: opacity 0.4s ease;
+}
+
+/* ---------- Live dot ---------- */
+.os-live-dot {
+  position: relative;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--os-green);
+  box-shadow: 0 0 12px var(--os-green);
+}
+.os-live-dot::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 1px solid rgba(52, 224, 161, 0.5);
+  animation: os-ping 1.6s ease-out infinite;
+}
+@keyframes os-ping {
+  0% { transform: scale(0.6); opacity: 1; }
+  100% { transform: scale(2); opacity: 0; }
+}
+
+/* ---------- Loading shimmer ---------- */
+.os-loading-bar {
+  position: relative;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.os-loading-bar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, var(--os-accent-3), transparent);
+  border-radius: 99px;
+  animation: os-slide 1.4s ease-in-out infinite;
+}
+@keyframes os-slide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(350%); }
+}
+
+/* ---------- Typing caret ---------- */
+.os-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  vertical-align: text-bottom;
+  background: var(--os-accent-3);
+  animation: os-blink 1s steps(2) infinite;
+}
+@keyframes os-blink {
+  50% { opacity: 0; }
+}
+
+/* ---------- Blur reveal ---------- */
+@keyframes os-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes os-rise {
+  from { opacity: 0; transform: translateY(24px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.os-rise {
+  animation: os-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.os-fade {
+  animation: os-fade-in 0.6s ease both;
+}
+
+/* ---------- HUD frame ---------- */
+.os-hud {
+  position: relative;
+}
+.os-hud::before,
+.os-hud::after {
+  content: '';
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border: 1px solid rgba(120, 140, 255, 0.4);
+  pointer-events: none;
+}
+.os-hud::before {
+  top: -1px; left: -1px;
+  border-right: none; border-bottom: none;
+  border-radius: 6px 0 0 0;
+}
+.os-hud::after {
+  bottom: -1px; right: -1px;
+  border-left: none; border-top: none;
+  border-radius: 0 0 6px 0;
+}
