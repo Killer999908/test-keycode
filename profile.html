@@ -897,10 +897,11 @@ async function loadApiKeys(){
     }
     el.innerHTML = keys.map(function(k){
       var masked = maskKey(k.key || k.prefix || k.keyPrefix || 'sk-...');
+      var copyButton = k.key ? '<button class="btn-icon" onclick="copyToClipboard(\''+(k.key||'')+'\')" title="Copy"><i class="fas fa-copy"></i></button>' : '';
       return '<div class="api-key-item"><div class="api-key-info"><div class="api-key-name">'+(k.name||'API Key')+'</div><div class="api-key-meta">Created '+formatDate(k.createdAt)+' · Last used '+formatDate(k.lastUsed||k.updatedAt)+'</div></div>'
         +'<div class="api-key-value">'+masked+'</div>'
         +'<div class="api-key-actions">'
-        +'<button class="btn-icon" onclick="copyToClipboard(\''+(k.key||'')+'\')" title="Copy"><i class="fas fa-copy"></i></button>'
+        +copyButton
         +'<button class="btn-icon" style="color:var(--error)" onclick="showRevokeKey(\''+(k._id||k.id)+'\',\''+(k.name||'API Key').replace(/'/g,"\\'")+'\')" title="Revoke"><i class="fas fa-trash"></i></button>'
         +'</div></div>';
     }).join('');
@@ -1170,7 +1171,7 @@ async function loadBilling(){
   var el = document.getElementById('billingBody');
   el.innerHTML = '<div id="billingInfo"><p style="color:var(--ash)">Loading subscription info...</p></div>';
   try {
-    var subRes = await fetch('/api/subscriptions');
+    var subRes = await fetch('/api/subscriptions',{headers:apiHeaders()});
     if (subRes.ok) {
       var subData = await subRes.json();
       document.getElementById('billingInfo').innerHTML = '<div class="plan-card"><h3>Current Plan</h3><p class="plan-name">' + (subData.plan || 'Free') + '</p><p class="plan-price">' + (subData.amount ? '$'+subData.amount+'/mo' : 'Free') + '</p><p class="plan-status" style="color:var(--success)">' + (subData.status || 'Active') + '</p></div>';
@@ -1315,6 +1316,7 @@ document.addEventListener('keydown',function(e){
   <div id="site-footer"></div>
     <script src="/js/loading-screen.js"></script>
 <script src="/js/site.js"></script>
+<script src="/js/install.js" defer></script>
 
   <script src="/js/scroll-3d-animations.js"></script>  <script src="/js/k-scroll.js" defer></script>
 

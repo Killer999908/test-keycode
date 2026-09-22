@@ -273,6 +273,8 @@ tr:hover td{background:rgba(255,255,255,0.015)}
     <a class="nav-item" href="/ai-builder.html?mode=game"><i class="fas fa-gamepad"></i><span>Game Builder</span></a>
     <a class="nav-item" href="/ai-builder.html?mode=cad"><i class="fas fa-camera"></i><span>3D Scanner</span></a>
     <a class="nav-item" href="/shop.html"><i class="fas fa-store"></i><span>Marketplace</span></a>
+    <a class="nav-item" data-page="vcs" href="#"><i class="fas fa-code-branch"></i><span>Version Control</span></a>
+    <a class="nav-item" data-page="hosting" href="#"><i class="fas fa-globe"></i><span>Hosting &amp; Domains</span></a>
     <a class="nav-item" href="#" onclick="logout()"><i class="fas fa-right-from-bracket"></i><span>Logout</span></a>
   </nav>
   <div class="sidebar-footer">
@@ -287,7 +289,14 @@ tr:hover td{background:rgba(255,255,255,0.015)}
 <div class="main">
 <div class="header">
   <div class="header-left"><div class="header-breadcrumb"><span>KEYCODE</span> <i class="fas fa-chevron-right" style="font-size:8px;opacity:.4"></i> <span class="current" id="pageTitle">Overview</span></div></div>
+  <div style="display:flex;gap:10px;align-items:center">
+    <button data-install-btn hidden onclick="window.KEYCODE_INSTALL && window.KEYCODE_INSTALL.open()" style="display:none;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;border:1px solid rgba(99,102,241,.4);background:rgba(99,102,241,.12);color:#a5b4fc;font-size:12px;font-weight:600;cursor:pointer"><i class="fas fa-download"></i> Install App</button>
+  </div>
   <div class="header-right">
+    <button class="header-btn" id="notifBell" title="Notifications" style="position:relative">
+      <i class="fas fa-bell"></i>
+      <span id="notifBadge" style="display:none;position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;border-radius:999px;background:#ef4444;color:#fff;font:700 9px/16px Inter,sans-serif;text-align:center;padding:0 4px">0</span>
+    </button>
     <a href="/shop.html" class="header-btn"><i class="fas fa-store"></i> <span>Marketplace</span></a>
     <a href="/ai-builder.html" class="header-btn primary"><i class="fas fa-wand-magic-sparkles"></i> <span>AI Builder</span></a>
   </div>
@@ -424,6 +433,31 @@ tr:hover td{background:rgba(255,255,255,0.015)}
 </div>
 
 <!-- SERVICES -->
+<!-- VERSION CONTROL (Git) -->
+<div class="page" id="page-vcs">
+  <div class="section-header"><h3><i class="fas fa-code-branch"></i> Version Control <span class="subtitle">Git commits, history and GitHub sync</span></h3></div>
+  <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+    <button class="btn btn-primary" onclick="vcsImportProject()"><i class="fas fa-file-import"></i> Import project</button>
+    <button class="btn btn-secondary" onclick="vcsConnectRemote()"><i class="fab fa-github"></i> Connect GitHub</button>
+  </div>
+  <div id="vcsRepoList"><div class="empty-state"><i class="fas fa-code-branch"></i><p>No repositories yet — import a project to start versioning</p></div></div>
+</div>
+
+<!-- HOSTING & DOMAINS -->
+<div class="page" id="page-hosting">
+  <div class="section-header"><h3><i class="fas fa-globe"></i> Hosting &amp; Domains <span class="subtitle">Register a domain, provision hosting, go live</span></h3></div>
+  <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+    <div class="stat-card" style="flex:1;min-width:130px;padding:16px"><div class="stat-value" id="hstDomains" style="font-size:20px">0</div><div class="stat-label">Domains</div></div>
+    <div class="stat-card" style="flex:1;min-width:130px;padding:16px"><div class="stat-value" id="hstSites" style="font-size:20px">0</div><div class="stat-label">Live Sites</div></div>
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px">
+    <button class="btn btn-primary" onclick="showDomainSearch()"><i class="fas fa-magnifying-glass"></i> Find a domain</button>
+    <button class="btn btn-secondary" onclick="showProvisionHosting()"><i class="fas fa-server"></i> Provision hosting</button>
+  </div>
+  <div id="hostingPanel" style="margin-bottom:20px"></div>
+  <div id="hostingList"><div class="empty-state"><i class="fas fa-globe"></i><p>No hosting provisioned yet</p></div></div>
+</div>
+
 <div class="page" id="page-services">
   <div class="section-header"><h3><i class="fas fa-plug"></i> Third-Party Services <span class="subtitle">Connected services & API integrations</span></h3></div>
   <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap">
@@ -448,6 +482,48 @@ tr:hover td{background:rgba(255,255,255,0.015)}
     <div class="stat-card" style="flex:1;min-width:100px;padding:14px"><div class="stat-value" id="svcoTotal" style="font-size:18px">0</div><div class="stat-label">Total</div></div>
   </div>
   <div id="serviceOrdersList"><div class="empty-state"><i class="fas fa-clipboard-list"></i><p>No service orders yet</p></div></div>
+</div>
+
+<!-- VCS IMPORT MODAL -->
+<div class="modal-overlay" id="vcsImportModal" style="display:none">
+  <div class="modal">
+    <h3><i class="fas fa-file-import"></i> Import project into version control</h3>
+    <p class="sub">Snapshot an existing AI-generated project folder into a Git repository.</p>
+    <div class="form-group"><label>Repository name / project ID</label><input id="vcsImportId" placeholder="my-website"></div>
+    <div class="form-group"><label>Project folder (from preview/ or agent-workspace/)</label><input id="vcsImportDir" placeholder="web_1789905123737"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('vcsImportModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="vcsImportSubmit()">Import</button>
+    </div>
+  </div>
+</div>
+
+<!-- VCS REMOTE MODAL -->
+<div class="modal-overlay" id="vcsRemoteModal" style="display:none">
+  <div class="modal">
+    <h3><i class="fab fa-github"></i> Connect GitHub remote</h3>
+    <p class="sub">Your token is encrypted at rest and never exposed to the browser again.</p>
+    <div class="form-group"><label>Project ID</label><input id="vcsRemoteProject" placeholder="my-website"></div>
+    <div class="form-group"><label>Repository URL</label><input id="vcsRemoteUrl" placeholder="https://github.com/you/your-repo"></div>
+    <div class="form-group"><label>Personal access token (repo scope)</label><input id="vcsRemoteToken" type="password" placeholder="ghp_..."></div>
+    <div class="form-group"><label>Branch</label><input id="vcsRemoteBranch" placeholder="main" value="main"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('vcsRemoteModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="vcsRemoteSubmit()">Connect</button>
+    </div>
+  </div>
+</div>
+
+<!-- VCS HISTORY MODAL -->
+<div class="modal-overlay" id="vcsHistoryModal" style="display:none">
+  <div class="modal" style="max-width:560px;max-height:70vh;overflow:auto">
+    <h3 id="vcsHistoryTitle">History</h3>
+    <p class="sub">Commit history for this repository</p>
+    <div id="vcsHistoryBody"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('vcsHistoryModal')">Close</button>
+    </div>
+  </div>
 </div>
 
 <!-- SERVICE ORDER DETAIL MODAL (Admin) -->
@@ -581,7 +657,7 @@ function navigate(page){
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active')});
   var pg=document.getElementById('page-'+page);
   if(pg)pg.classList.add('active');
-  var titles={overview:'Overview',projects:'Projects',orders:'Orders',manufacturing:'Manufacturing',products:'Products',payments:'Payments',social:'Social Links',embeds:'Embeds',services:'Services','service-orders':'Service Orders',settings:'Settings'};
+  var titles={overview:'Overview',projects:'Projects',orders:'Orders',manufacturing:'Manufacturing',products:'Products',payments:'Payments',social:'Social Links',embeds:'Embeds',services:'Services','service-orders':'Service Orders',settings:'Settings',vcs:'Version Control',hosting:'Hosting & Domains'};
   document.getElementById('pageTitle').textContent=titles[page]||page;
   if(page==='overview')loadOverview();
   if(page==='projects')loadProjects();
@@ -590,6 +666,8 @@ function navigate(page){
   if(page==='manufacturing')loadManufacturingOrders();
   if(page==='social')loadSocial();
   if(page==='services')loadServices();
+  if(page==='vcs')loadVCS();
+  if(page==='hosting')loadHostingPage();
   if(page==='service-orders')loadAdminServiceOrders();
 }
 
@@ -599,6 +677,12 @@ async function loadOverview(){
     var r=await fetch('/api/user/dashboard',{headers:apiHeaders()});
     var d=await r.json();
     var s=d.stats||{};
+    // Notification bell
+    try{
+      var badge=document.getElementById('notifBadge');
+      var n=(d.unreadCount||0);
+      if(n>0){badge.textContent=n>9?'9+':n;badge.style.display='block'}else{badge.style.display='none'}
+    }catch(e){}
     document.getElementById('statsGrid').innerHTML=[
       {icon:'fas fa-folder',val:s.totalAiProjects||0,label:'AI Projects',color:'#ffffff',trend:'+'+((s.totalAiProjects||0)>0?'1 this week':'0 this week')},
       {icon:'fas fa-box',val:s.totalOrders||0,label:'Orders',color:'#22d3ee',trend:s.totalOrders>0?'Last 30 days':'No orders yet'},
@@ -861,6 +945,182 @@ async function saveSocialLinks(){
   try{var r=await fetch('/api/user/social-links',{method:'PUT',headers:apiHeaders(),body:JSON.stringify(body)});var data=await r.json();showToast(data.message||'Saved!','success')}catch(e){showToast('Failed','error')}
 }
 
+// === VERSION CONTROL (Git) ===
+let _vcsRepos = [];
+async function loadVCS(){
+  try{
+    var r=await fetch('/api/git/repos',{headers:apiHeaders()});var data=await r.json();
+    _vcsRepos=data.repos||[];
+    var el=document.getElementById('vcsRepoList');
+    if(!_vcsRepos.length){el.innerHTML='<div class="empty-state"><i class="fas fa-code-branch"></i><p>No repositories yet — click “Import project” to create one</p></div>';return;}
+    el.innerHTML=_vcsRepos.map(function(repo){
+      var remote=repo.remotes&&repo.remotes[0];
+      var remoteHtml=remote
+        ? '<div style="font-size:11px;color:var(--ash);margin-top:4px"><i class="fab fa-github"></i> '+remote.owner+'/'+remote.repo+' ('+remote.branch+')'+(remote.hasToken?' · token ✓':' · <span style="color:var(--warning)">no token</span>')+'</div>'
+        : '<div style="font-size:11px;color:var(--ash);margin-top:4px">Local only — not connected to GitHub</div>';
+      return '<div class="table-wrap" style="padding:14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">'
+        +'<div><div style="font-weight:600">'+esc(repo.title||repo.projectId)+'</div>'+(remoteHtml)+'</div>'
+        +'<div style="display:flex;gap:8px;flex-wrap:wrap">'
+        +'<button class="btn btn-sm btn-secondary" onclick="vcsHistory(\''+repo.projectId+'\')"><i class="fas fa-clock-rotate-left"></i> History</button>'
+        +(remote&&remote.hasToken
+          ?'<button class="btn btn-sm btn-secondary" onclick="vcsPush(\''+repo.projectId+'\')"><i class="fas fa-arrow-up"></i> Push</button>'
+            +'<button class="btn btn-sm btn-secondary" onclick="vcsPull(\''+repo.projectId+'\')"><i class="fas fa-arrow-down"></i> Pull</button>'
+          :'<button class="btn btn-sm btn-primary" onclick="vcsConnectRemote(\''+repo.projectId+'\')"><i class="fab fa-github"></i> Connect</button>')
+        +'</div></div>';
+    }).join('');
+  }catch(e){showToast('Failed to load repositories','error')}
+}
+function vcsImportProject(){
+  openModal('vcsImportModal');
+}
+async function vcsImportSubmit(){
+  var dir=document.getElementById('vcsImportDir').value.trim();
+  var pid=document.getElementById('vcsImportId').value.trim();
+  if(!dir||!pid){showToast('Project ID and folder are required','error');return;}
+  try{
+    var r=await fetch('/api/git/import',{method:'POST',headers:apiHeaders(),body:JSON.stringify({projectId:pid,dirName:dir})});
+    var data=await r.json();
+    if(data.error)throw new Error(data.error);
+    showToast('Imported '+data.fileCount+' files','success');closeModal('vcsImportModal');loadVCS();
+  }catch(e){showToast(e.message,'error')}
+}
+function vcsConnectRemote(projectId){
+  if(projectId)document.getElementById('vcsRemoteProject').value=projectId;
+  openModal('vcsRemoteModal');
+}
+async function vcsRemoteSubmit(){
+  var pid=document.getElementById('vcsRemoteProject').value.trim();
+  var url=document.getElementById('vcsRemoteUrl').value.trim();
+  var token=document.getElementById('vcsRemoteToken').value.trim();
+  var branch=document.getElementById('vcsRemoteBranch').value.trim()||'main';
+  if(!pid||!url){showToast('Project and repo URL required','error');return;}
+  try{
+    var r=await fetch('/api/git/remote',{method:'POST',headers:apiHeaders(),body:JSON.stringify({projectId:pid,url:url,token:token,branch:branch})});
+    var data=await r.json();
+    if(data.error)throw new Error(data.error);
+    showToast('GitHub connected','success');closeModal('vcsRemoteModal');loadVCS();
+  }catch(e){showToast(e.message,'error')}
+}
+async function vcsPush(pid){
+  var msg=prompt('Commit message for push:','Update from KEYCODE Studio');
+  if(msg===null)return;
+  try{
+    var r=await fetch('/api/git/push',{method:'POST',headers:apiHeaders(),body:JSON.stringify({projectId:pid,message:msg})});
+    var data=await r.json();
+    if(data.error)throw new Error(data.error);
+    showToast('Pushed to GitHub ✓','success');
+    if(data.url)window.open(data.url,'_blank');
+  }catch(e){showToast(e.message,'error')}
+}
+async function vcsPull(pid){
+  if(!confirm('Pull from GitHub? Remote files become a new local commit.'))return;
+  try{
+    var r=await fetch('/api/git/pull',{method:'POST',headers:apiHeaders(),body:JSON.stringify({projectId:pid})});
+    var data=await r.json();
+    if(data.error)throw new Error(data.error);
+    showToast('Pulled '+data.count+' files','success');loadVCS();
+  }catch(e){showToast(e.message,'error')}
+}
+async function vcsHistory(pid){
+  try{
+    var r=await fetch('/api/git/log/'+encodeURIComponent(pid),{headers:apiHeaders()});
+    var data=await r.json();
+    var commits=data.commits||[];
+    openModal('vcsHistoryModal');
+    document.getElementById('vcsHistoryTitle').textContent='History — '+(pid||'');
+    document.getElementById('vcsHistoryBody').innerHTML=commits.length
+      ? commits.map(function(c){
+          var d=new Date(c.timestamp);var ds=d.toLocaleDateString()+' '+d.toLocaleTimeString();
+          return '<div style="padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06)">'
+            +'<div style="display:flex;justify-content:space-between;gap:10px"><span style="font-family:monospace;color:var(--primary-glow);font-size:12px">'+c.sha+'</span><span style="font-size:11px;color:var(--ash)">'+ds+'</span></div>'
+            +'<div style="font-size:13px;margin-top:3px">'+esc(c.message)+'</div>'
+            +'<div style="font-size:11px;color:var(--ash)">by '+esc(c.author||'user')+'</div></div>';
+        }).join('')
+      : '<div class="empty-state"><p>No commits yet</p></div>';
+  }catch(e){showToast('Failed to load history','error')}
+}
+
+// === HOSTING & DOMAINS ===
+let _hostingStats={domains:0,sites:0};
+async function loadHostingPage(){
+  try{
+    var r=await fetch('/api/user/history?limit=100',{headers:apiHeaders()});
+    var data=await r.json();
+    var events=data.events||[];
+    _hostingStats.domains=events.filter(function(e){return e.type==='domain'}).length;
+    _hostingStats.sites=events.filter(function(e){return e.status==='deployed'||e.type==='hosting'}).length;
+    document.getElementById('hstDomains').textContent=_hostingStats.domains;
+    document.getElementById('hstSites').textContent=_hostingStats.sites;
+  }catch(e){/* stats optional */}
+}
+function showDomainSearch(){
+  document.getElementById('hostingPanel').innerHTML=
+    '<div class="table-wrap" style="padding:16px">'
+    +'<div style="font-weight:600;margin-bottom:10px"><i class="fas fa-magnifying-glass"></i> Domain availability</div>'
+    +'<div style="display:flex;gap:8px;flex-wrap:wrap">'
+    +'<input id="domainQuery" placeholder="myawesomesite" style="flex:1;min-width:180px;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:var(--graphite);color:var(--white)">'
+    +'<select id="domainTld" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:var(--graphite);color:var(--white)">'
+    +'<option>.com</option><option>.io</option><option>.dev</option><option>.ai</option><option>.app</option><option>.xyz</option></select>'
+    +'<button class="btn btn-primary" onclick="checkDomain()">Check</button></div>'
+    +'<div id="domainResult" style="margin-top:12px"></div></div>';
+}
+async function checkDomain(){
+  var q=document.getElementById('domainQuery').value.trim();
+  var tld=document.getElementById('domainTld').value;
+  if(!q){showToast('Enter a name','error');return;}
+  var el=document.getElementById('domainResult');
+  el.innerHTML='<div class="loading"><i class="fas fa-spinner fa-spin"></i></div>';
+  try{
+    var r=await fetch('/api/domains/check',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({domain:q+tld})});
+    var data=await r.json();
+    var available=!!data.available;
+    el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-radius:8px;background:'+(available?'rgba(16,185,129,.1)':'rgba(239,68,68,.1)')+'">'
+      +'<span style="font-family:monospace">'+esc(q+tld)+'</span>'
+      +'<span style="color:'+(available?'var(--success)':'var(--danger)')+';font-weight:600">'+(available?'Available ✓':'Taken')+'</span></div>'
+      +(available?'<button class="btn btn-primary" style="margin-top:10px" onclick="registerDomain(\''+esc(q+tld)+'\')">Register '+esc(q+tld)+'</button>':'');
+  }catch(e){el.innerHTML='<div style="color:var(--danger)">Check failed</div>'}
+}
+async function registerDomain(domain){
+  var email=prompt('Registrant email for '+domain+':',userData.email||'');
+  if(!email)return;
+  try{
+    var r=await fetch('/api/domains/register',{method:'POST',headers:apiHeaders(),body:JSON.stringify({domain:domain,customerInfo:{email:email}})});
+    var data=await r.json();
+    if(data.error)throw new Error(data.error);
+    showToast('Domain registered ✓','success');
+    _hostingStats.domains++;document.getElementById('hstDomains').textContent=_hostingStats.domains;
+  }catch(e){showToast(e.message,'error')}
+}
+function showProvisionHosting(){
+  document.getElementById('hostingPanel').innerHTML=
+    '<div class="table-wrap" style="padding:16px">'
+    +'<div style="font-weight:600;margin-bottom:10px"><i class="fas fa-server"></i> Provision hosting</div>'
+    +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'
+    +'<input id="hstDomain" placeholder="yourdomain.com" style="flex:1;min-width:180px;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:var(--graphite);color:var(--white)">'
+    +'<select id="hstPlan" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:var(--graphite);color:var(--white)">'
+    +'<option value="starter">Starter — 1 vCPU / 1GB</option>'
+    +'<option value="professional">Professional — 2 vCPU / 2GB</option>'
+    +'<option value="enterprise">Enterprise — 4 vCPU / 4GB</option></select>'
+    +'<button class="btn btn-primary" onclick="provisionHosting()">Provision</button></div>'
+    +'<div id="hstResult" style="margin-top:12px"></div></div>';
+}
+async function provisionHosting(){
+  var domain=document.getElementById('hstDomain').value.trim();
+  var plan=document.getElementById('hstPlan').value;
+  if(!domain){showToast('Enter a domain','error');return;}
+  var el=document.getElementById('hstResult');
+  el.innerHTML='<div class="loading"><i class="fas fa-spinner fa-spin"></i></div>';
+  try{
+    var r=await fetch('/api/hosting/provision',{method:'POST',headers:apiHeaders(),body:JSON.stringify({plan:{id:plan},domain:domain})});
+    var data=await r.json();
+    if(data.error)throw new Error(data.error);
+    el.innerHTML='<div style="padding:12px;border-radius:8px;background:rgba(16,185,129,.1)">'
+      +'<div style="font-weight:600;color:var(--success)">Hosting provisioned ✓</div>'
+      +'<div style="font-size:12px;color:var(--ash);margin-top:4px">IP: '+(data.droplet&&data.droplet.ip||'—')+' · provider: '+esc(data.provider||'—')+'</div></div>';
+    _hostingStats.sites++;document.getElementById('hstSites').textContent=_hostingStats.sites;
+  }catch(e){el.innerHTML='<div style="color:var(--danger)">'+esc(e.message)+'</div>'}
+}
+
 // === SERVICES ===
 async function loadServices(){
   var el=document.getElementById('servicesList');
@@ -1003,6 +1263,7 @@ async function sendBot(){
 
 // === UTILITIES ===
 function closeModal(id){document.getElementById(id).style.display='none'}
+function openModal(id){var m=document.getElementById(id);if(m){m.style.display='flex'}}
 function openCodeViewer(id){window.open('/ai-builder.html?viewCode='+id,'_blank')}
 function clearToken(){localStorage.removeItem('authToken');localStorage.removeItem('token');localStorage.removeItem('keycode_token')}
 function logout(){clearToken();window.location.href='/'}
@@ -1127,10 +1388,68 @@ function fetchCodePenEmbed() {
     .catch(function(err){showToast('Error: '+err.message)});
 }
 </script>
+<script>
+/* ---- Notification bell dropdown ---- */
+(function(){
+  var bell=document.getElementById('notifBell');
+  if(!bell)return;
+  var panel=null,open=false;
+  function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+  async function toggle(){
+    if(open){panel.style.display='none';open=false;return}
+    if(!panel){
+      panel=document.createElement('div');
+      panel.style.cssText='position:fixed;z-index:1000;width:340px;max-width:92vw;max-height:420px;overflow-y:auto;background:#0e0e14;border:1px solid rgba(255,255,255,.12);border-radius:16px;box-shadow:0 24px 80px rgba(0,0,0,.6);padding:10px';
+      document.body.appendChild(panel);
+    }
+    panel.style.display='block';
+    var r=bell.getBoundingClientRect();
+    panel.style.top=(r.bottom+10)+'px';
+    panel.style.right=Math.max(10,(innerWidth-r.right))+'px';
+    panel.style.left='auto';
+    panel.innerHTML='<div style="padding:8px 10px;color:#71717a;font:500 10px/1 Inter;letter-spacing:.14em;text-transform:uppercase">Notifications</div><div style="padding:20px;text-align:center;color:#71717a;font-size:13px"><i class="fas fa-spinner fa-spin"></i></div>';
+    open=true;
+    try{
+      var res=await fetch('/api/notifications',{headers:apiHeaders()});
+      var data=await res.json();
+      var list=(data.notifications||[]);
+      var badge=document.getElementById('notifBadge');
+      if(badge){badge.style.display='none'}
+      if(!list.length){
+        panel.innerHTML='<div style="padding:8px 10px;color:#71717a;font:500 10px/1 Inter;letter-spacing:.14em;text-transform:uppercase">Notifications</div><div style="padding:28px 16px;text-align:center;color:#71717a;font-size:13px">All caught up 🎉</div>';
+        return;
+      }
+      panel.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px"><span style="color:#71717a;font:500 10px/1 Inter;letter-spacing:.14em;text-transform:uppercase">Notifications</span><button id="markAll" style="background:none;border:none;color:#a5b4fc;font:500 11px Inter;cursor:pointer">Mark all read</button></div>'+
+        list.map(function(n){
+          var c=n.type==='success'?'#10b981':n.type==='error'?'#ef4444':n.type==='warning'?'#f59e0b':'#6366f1';
+          return '<div style="display:flex;gap:10px;padding:11px 10px;border-radius:10px;'+(n.read?'':'background:rgba(99,102,241,.07)')+'">'+
+            '<span style="width:8px;height:8px;border-radius:50%;background:'+c+';margin-top:5px;flex-shrink:0"></span>'+
+            '<div style="min-width:0"><div style="color:#fff;font:600 12.5px Inter">'+esc(n.title)+'</div>'+
+            (n.message?'<div style="color:#9ca3af;font:400 12px/1.45 Inter;margin-top:2px">'+esc(n.message)+'</div>':'')+
+            (n.link?'<a href="'+esc(n.link)+'" style="color:#a5b4fc;font:500 11px Inter;text-decoration:none;display:inline-block;margin-top:4px">Open →</a>':'')+
+            '</div></div>';
+        }).join('');
+      var ma=panel.querySelector('#markAll');
+      if(ma)ma.addEventListener('click',async function(){
+        await fetch('/api/notifications/read',{method:'POST',headers:apiHeaders(),body:JSON.stringify({all:true})});
+        badge=document.getElementById('notifBadge');if(badge)badge.style.display='none';
+        panel.querySelectorAll('div[style*="rgba(99,102,241"]').forEach(function(el){el.style.background='transparent'});
+      });
+    }catch(e){
+      panel.innerHTML='<div style="padding:24px;text-align:center;color:#ef4444;font-size:13px">Could not load notifications</div>';
+    }
+  }
+  bell.addEventListener('click',toggle);
+  document.addEventListener('click',function(e){
+    if(open&&panel&&!bell.contains(e.target)&&!panel.contains(e.target)){panel.style.display='none';open=false}
+  });
+})();
+</script>
 <script>navigator.serviceWorker.register('/sw.js').catch(function(e){console.error('SW registration failed:',e)});</script>
   <div id="site-footer"></div>
     <script src="/js/loading-screen.js"></script>
 <script src="/js/site.js"></script>
+<script src="/js/install.js" defer></script>
 
   <script src="/js/scroll-3d-animations.js"></script>  <script src="/js/k-scroll.js" defer></script>
 

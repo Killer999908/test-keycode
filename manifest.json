@@ -1,15 +1,55 @@
 {
-  "name": "KEYCODE Studio",
+  "name": "KEYCODE Studio — AI Engineering Platform",
   "short_name": "KEYCODE",
-  "description": "where excellence meets intelligence.",
-  "start_url": "/",
+  "description": "AI agents that build full-stack apps, 3D worlds, CAD, PCBs, host websites, register domains, and version with Git — one platform, every device.",
+  "start_url": "/?source=pwa",
+  "id": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "any",
   "background_color": "#0a0a0b",
   "theme_color": "#0a0a0b",
   "scope": "/",
-  "categories": ["business", "productivity", "developer"],
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["business", "productivity", "developer", "design", "utilities"],
+  "prefer_related_applications": false,
   "icons": [
     { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    {
+      "name": "AI Builder",
+      "short_name": "Builder",
+      "description": "Describe anything — get a full-stack app",
+      "url": "/ai-builder.html?source=shortcut",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Your projects, orders and hosting",
+      "url": "/dashboard.html?source=shortcut",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Manufacturing",
+      "short_name": "Fab",
+      "description": "PCB fabrication and 3D printing orders",
+      "url": "/dashboard.html#manufacturing?source=shortcut",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/og-image.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "KEYCODE Studio immersive homepage"
+    }
   ]
 }

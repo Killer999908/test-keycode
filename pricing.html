@@ -1211,8 +1211,18 @@ function renderCards() {
     html += '</ul>';
 
     var ctaClass = isFeatured ? 'primary' : (isEnterprise ? 'secondary' : 'outline');
-    var ctaText = isEnterprise ? 'Contact Sales' : 'Get Started';
-    var ctaHref = isEnterprise ? 'mailto:keycode.techio@gmail.com' : '/register.html';
+    var ctaText = isEnterprise ? 'Contact Sales' : 'Start now';
+    // Paid plans go straight to checkout with the plan context; free plan goes to signup
+    var ctaHref;
+    if (isEnterprise) {
+      ctaHref = 'mailto:keycode.techio@gmail.com';
+    } else if (price === 0 || price === null || price === undefined) {
+      ctaHref = '/register.html';
+    } else {
+      ctaHref = '/checkout.html?plan=' + encodeURIComponent(svc.name || 'plan') +
+        '&price=' + encodeURIComponent(Math.round(price)) +
+        '&service=' + encodeURIComponent(svc.id || svc.slug || 'plan');
+    }
     html += '<a href="' + ctaHref + '" class="pricing-cta ' + ctaClass + '">' + ctaText + ' <i class="fas fa-arrow-right"></i></a>';
 
     card.innerHTML = html;
@@ -1310,6 +1320,7 @@ loadPricing();
   <div id="site-footer"></div>
     <script src="/js/loading-screen.js"></script>
 <script src="/js/site.js"></script>
+<script src="/js/install.js" defer></script>
 
   <script src="/js/scroll-3d-animations.js"></script>  <script src="/js/k-scroll.js" defer></script>
 

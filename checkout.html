@@ -562,6 +562,21 @@
     let appliedCoupon = null;
     let total = orderData.price || 499;
 
+    // URL params win: /checkout.html?plan=Starter&price=49&service=starter
+    // This is how pricing cards, quotes and builder CTAs hand off context.
+    (function readParams() {
+      try {
+        const q = new URLSearchParams(location.search);
+        const plan = q.get('plan');
+        const price = parseFloat(q.get('price'));
+        const service = q.get('service');
+        if (plan) orderData.name = plan;
+        if (!isNaN(price) && price >= 0) orderData.price = price;
+        if (service) orderData.id = service;
+        if (plan || !isNaN(price)) sessionStorage.setItem('checkoutOrder', JSON.stringify(orderData));
+      } catch (e) {}
+    })();
+
     if (orderData.name) {
       document.getElementById('selectedServiceName').textContent = orderData.name;
       document.getElementById('selectedServicePrice').textContent = '$' + orderData.price;
@@ -615,7 +630,7 @@
 
     document.getElementById('checkoutForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      
+
       const submitBtn = document.getElementById('submitBtn');
       const errorMsg = document.getElementById('errorMessage');
       errorMsg.classList.remove('show');
@@ -659,6 +674,63 @@
 
         if (!response.ok) throw new Error(result.error || 'Order failed');
 
+        const orderId = result.order?._id || result.order?.orderNumber;
+        const method = payload.paymentMethod;
+
+        // ---- Payment step (only for real money orders) ----
+        if (total > 0 && method !== 'bank' && orderId) {
+          const authHeaders = token ? { 'Authorization': 'Bearer ' + token } : {};
+          const piRes = await fetch('/api/payment/create-intent', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...authHeaders },
+            body: JSON.stringify({ orderId, amount: total, type: 'website_order', method: method === 'card' ? (payload.userId ? 'auto' : 'upi_qr') : method })
+          });
+          const pi = await piRes.json();
+
+          if (pi.gateway === 'stripe' && pi.paymentIntentId) {
+            // Real Stripe: confirm with the card form fields
+            const confirmRes = await fetch('/api/payment/confirm', {
+              method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders },
+              body: JSON.stringify({ paymentIntentId: pi.paymentIntentId, orderId, gateway: 'stripe' })
+            });
+            const conf = await confirmRes.json();
+            if (!conf.success) throw new Error(conf.error || 'Card payment failed');
+          } else if (pi.gateway === 'stripe_simulated') {
+            // Stripe not configured — surface it honestly instead of faking success
+            showToast(pi.message || 'Card payments need Stripe keys — order saved, choose UPI or bank to pay.', 'error');
+          } else if (pi.gateway === 'upi_qr' && pi.qrUrl) {
+            window.open(pi.qrUrl, '_blank');
+            await fetch('/api/payment/confirm', {
+              method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders },
+              body: JSON.stringify({ gateway: 'upi_qr', orderId, amount: total })
+            });
+          } else if (pi.gateway === 'razorpay' && pi.orderId) {
+            // Razorpay checkout via script
+            await new Promise((resolve, reject) => {
+              const s = document.createElement('script');
+              s.src = 'https://checkout.razorpay.com/v1/checkout.js';
+              s.onload = resolve; s.onerror = reject;
+              document.head.appendChild(s);
+            });
+            await new Promise((resolve, reject) => {
+              const rzp = new window.Razorpay({
+                key: pi.keyId, amount: Math.round(pi.amount * 100), currency: 'INR',
+                name: 'KEYCODE Studio', order_id: pi.orderId,
+                handler: async (r) => {
+                  const c = await fetch('/api/payment/confirm', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders },
+                    body: JSON.stringify({ gateway: 'razorpay', orderId, amount: total, razorpayPaymentId: r.razorpay_payment_id, razorpaySignature: r.razorpay_signature, razorpay_order_id: r.razorpay_order_id, paymentIntentId: pi.orderId })
+                  });
+                  const cj = await c.json();
+                  cj.success ? resolve() : reject(new Error(cj.error || 'verification failed'));
+                },
+                modal: { ondismiss: () => reject(new Error('Payment cancelled')) }
+              });
+              rzp.open();
+            });
+          }
+        }
+
         sessionStorage.removeItem('checkoutOrder');
         document.getElementById('orderId').textContent = result.order?.orderNumber || 'KC-' + Date.now().toString(36).toUpperCase();
         document.getElementById('successOverlay').classList.add('show');
@@ -678,6 +750,7 @@
   <div id="site-footer"></div>
     <script src="/js/loading-screen.js"></script>
 <script src="/js/site.js"></script>
+<script src="/js/install.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
 </body>
