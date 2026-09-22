@@ -116,6 +116,18 @@ button{font-family:var(--sans);cursor:pointer;border:none;background:none;color:
 
 /* Suggestion chips inside AI messages */
 .chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+
+/* ===== Agent mode (ReAct) trace ===== */
+.react{align-self:flex-start;max-width:100%;display:flex;flex-direction:column;gap:6px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:rgba(12,14,20,.7);animation:rise .3s var(--ease) both}
+.react .rhead{display:flex;align-items:center;gap:8px;font:600 10.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:#b9c0ff}
+.react .rhead .rspin{width:10px;height:10px;border-radius:50%;border:2px solid rgba(109,124,255,.25);border-top-color:var(--acc);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.react .rstep{display:flex;gap:8px;align-items:baseline;font:10.5px/1.55 var(--mono);color:var(--dim)}
+.react .rstep .rtag{flex:0 0 auto;min-width:86px;color:var(--faint);text-transform:uppercase;letter-spacing:.1em;font-size:9px}
+.react .rstep.ok .rtag{color:#5eead4}.react .rstep.err .rtag{color:var(--red)}
+.react .rstep .rbody{word-break:break-word;white-space:pre-wrap}
+.react .rstep.rthought .rbody{color:var(--dim);font-style:italic}
+.react .rfinal{margin-top:4px;padding-top:8px;border-top:1px solid var(--line);font:12.5px/1.6 var(--font);color:var(--ink);white-space:pre-wrap;word-break:break-word}
 .chip{padding:7px 13px;border-radius:999px;background:var(--glass2);border:1px solid var(--line);font-size:12px;color:var(--dim);transition:all .18s var(--ease)}
 .chip:hover{color:#fff;border-color:rgba(109,124,255,.5);background:rgba(109,124,255,.1);transform:translateY(-1px)}
 
@@ -310,6 +322,7 @@ button{font-family:var(--sans);cursor:pointer;border:none;background:none;color:
       <div class="toolsrow">
         <button class="tool" id="imgBtn" title="Attach an image"><i class="fas fa-paperclip"></i></button>
         <button class="tool" id="voiceBtn" title="Voice input"><i class="fas fa-microphone"></i></button>
+        <button class="tool" id="agentModeBtn" title="Agent mode — autonomous ReAct loop with real tools (file ops, code execution, web search)"><i class="fas fa-robot"></i></button>
         <select class="modelpick" id="modelPick" aria-label="AI model"><option value="auto">Swarm · auto</option></select>
         <button class="tool" id="skillsBtn" title="Agent skills — disciplines the AI applies while building"><i class="fas fa-bolt"></i></button>
         <div class="skillspop" id="skillsPop" hidden>
@@ -570,6 +583,92 @@ document.addEventListener('click',e=>{ if(!routersPop.hidden&&!routersPop.contai
 $('#routersProbe').addEventListener('click',()=>{ $('#routersMeta').textContent='· probing…'; loadRouters(true); });
 $('#routersAuto').addEventListener('click',()=>{ preferredRouters=null; renderRouters(); });
 
+/* ---- Agent mode (ReAct runtime) ---- */
+const agentModeBtn=$('#agentModeBtn');
+let agentMode=false;
+agentModeBtn.addEventListener('click',()=>{
+  agentMode=!agentMode;
+  agentModeBtn.classList.toggle('active',agentMode);
+  toast('info',agentMode
+    ?'<b>Agent mode on</b> — autonomous loop with real tools: files, code execution, search. Best for multi-step tasks.'
+    :'Agent mode off — back to instant builds.');
+});
+
+async function runAgent(text){
+  const token=localStorage.getItem('token')||'';
+  const trace=document.createElement('div');
+  trace.className='react';
+  trace.innerHTML='<div class="rhead"><span class="rspin"></span><span>Agent · thinking</span></div>';
+  const head=trace.querySelector('.rhead span:last-child');
+  const body=trace.querySelector('.rhead');
+  chat.appendChild(trace); scrollChat();
+  const addStep=(tag,cls,txt)=>{
+    const s=document.createElement('div'); s.className='rstep '+(cls||'');
+    s.innerHTML='<span class="rtag">'+esc(tag)+'</span><span class="rbody">'+esc(txt)+'</span>';
+    trace.appendChild(s); scrollChat(); return s;
+  };
+  const finish=(ok,label)=>{
+    const sp=trace.querySelector('.rspin'); if(sp) sp.remove();
+    head.textContent=label;
+    trace.style.borderColor=ok?'rgba(94,234,212,.35)':'rgba(248,113,113,.35)';
+  };
+
+  startThinking('Agent working');
+  try{
+    const res=await fetch('/api/agent/react',{
+      method:'POST',
+      headers:{'Content-Type':'application/json',...(token?{'Authorization':'Bearer '+token}:{})},
+      signal:abortCtrl.signal,
+      body:JSON.stringify({task:text,maxSteps:14,preferRouters:preferredRouters===null?[]:[...preferredRouters]})
+    });
+    if(!res.ok||!res.body){ const j=await res.json().catch(()=>({})); throw new Error(j.error||'Agent error '+res.status); }
+
+    const reader=res.body.getReader(),dec=new TextDecoder();
+    let buf='',finalAnswer='',usedSteps=0;
+    while(true){
+      const {done,value}=await reader.read(); if(done) break;
+      buf+=dec.decode(value,{stream:true});
+      const parts=buf.split('\n\n'); buf=parts.pop();
+      for(const part of parts){
+        if(!part.startsWith('data:')) continue;
+        let d; try{ d=JSON.parse(part.slice(5)); }catch(e){ continue; }
+
+        if(d.type==='start'){ head.textContent='Agent · '+d.tools+' tools · ≤'+d.maxSteps+' steps'; }
+        else if(d.type==='step'){
+          usedSteps=d.step;
+          if(d.kind==='malformed') addStep('step '+d.step,'err','unparseable model turn — retrying');
+          else if(d.thought) addStep('thought '+d.step,'rthought',d.thought);
+        }
+        else if(d.type==='tool'){ addStep('act '+d.step,'',d.tool+' '+JSON.stringify(d.args||{}).slice(0,220)); }
+        else if(d.type==='observation'){
+          addStep('obs '+d.step,d.ok?'ok':'err',(d.ok?'✓ ':'✗ ')+String(d.result||'').slice(0,320));
+          updateThinking('Step '+d.step+' — '+d.tool);
+        }
+        else if(d.type==='done'){
+          finalAnswer=d.answer||'';
+          if(d.exhausted){ addStep('budget','err','step budget reached — partial results kept'); }
+        }
+        else if(d.type==='error'){ throw new Error(d.message||'agent failed'); }
+      }
+    }
+
+    finish(true,'Agent · done in '+usedSteps+' steps');
+    stopThinking();
+    if(finalAnswer){
+      const w=addMsg('','ai'); w.innerHTML=esc(finalAnswer).replace(/\n/g,'<br>');
+    }else{
+      addMsg('The agent ran out of steps before a final answer. Partial progress is in the trace above — try refining the task.','ai');
+    }
+    setBuild('ok','Ready');
+    meta.textContent='Agent mode · '+usedSteps+' steps used';
+  }catch(e){
+    finish(false,'Agent · stopped');
+    if(e.name==='AbortError'){ toast('info','Agent stopped'); }
+    else{ addMsg('Agent error: '+esc(e.message),'ai'); setBuild('bad','Error'); }
+  }
+  stopThinking();
+}
+
 /* ================= COMPOSER ================= */
 function autoGrow(){ promptEl.style.height='auto'; promptEl.style.height=Math.min(promptEl.scrollHeight,132)+'px'; }
 promptEl.addEventListener('input',autoGrow);
@@ -684,6 +783,14 @@ async function run(text){
   addMsg(text+(imgs.length?'  📎':''),'user');
   startThinking('Understanding your idea');
   abortCtrl=new AbortController();
+
+  /* ---- Agent mode: hand the whole task to the ReAct runtime ---- */
+  if(agentMode&&!imgs.length){
+    try{ await runAgent(text); } finally { done(); }
+    return;
+  }
+  if(agentMode&&imgs.length){ toast('info','Agent mode focuses on tasks — images are ignored here. Switch off the robot for design work.'); }
+
 
   /* ---- Phase 1: silent understanding (never shown as a workflow) ---- */
   let planCtx='';
