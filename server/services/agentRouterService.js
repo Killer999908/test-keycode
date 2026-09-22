@@ -88,15 +88,18 @@ async function runDify(prompt, { system, maxTokens, timeoutMs }) {
   const host = env('DIFY_HOST');
   const key = env('DIFY_API_KEY');
   if (!host || !key) throw new Error('DIFY_HOST / DIFY_API_KEY not set');
+  const fullPrompt = system ? system + '\n\n' + prompt : prompt;
   const j = await postJson(host.replace(/\/$/, '') + '/v1/chat-messages', {
-    inputs: {},
-    query: system ? system + '\n\n' + prompt : prompt,
+    // Chatflows define their own start variables; `query` as an input covers
+    // apps built with a `query` text-input (like the KEYCODE Forge Agent),
+    // while `query` top-level covers plain chat/agent apps.
+    inputs: { query: fullPrompt },
+    query: fullPrompt,
     response_mode: 'blocking',
     user: 'keycode-forge',
-    ...(maxTokens ? {} : {}),
   }, { Authorization: 'Bearer ' + key }, timeoutMs);
   const text = j?.answer || j?.data?.outputs?.text || j?.data?.outputs?.result || '';
-  if (!text) throw new Error('dify returned no answer');
+  if (!text || !text.trim()) throw new Error('dify returned no answer');
   return text;
 }
 

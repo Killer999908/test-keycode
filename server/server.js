@@ -60,6 +60,12 @@ import swaggerUi from "swagger-ui-express";
 import { generateSpec } from "./swagger.js";
 import { SkillRegistry } from "./skills/SkillRegistry.js";
 import * as agentRouter from "./services/agentRouterService.js";
+import { runReAct } from "./agent/reactEngine.js";
+import { runSwarm } from "./agent/swarmOrchestrator.js";
+import { toolCatalog, toolStats, recentCalls, dispatchTool } from "./agent/toolDispatch.js";
+import { connectorManager } from "./agent/mcpClient.js";
+import { memoryStats, recall, remember, fitPrompt } from "./agent/contextPipeline.js";
+import { sandboxStats } from "./agent/sandbox.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -11349,6 +11355,86 @@ app.post("/api/agent/route", aiRateLimit, async (req, res) => {
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
+});
+
+// ==================== AGENT RUNTIME (ReAct / swarm / tools / MCP) ====================
+
+// Tool catalog + stats + manual dispatch (for testing tools directly)
+app.get("/api/agent/tools", (req, res) => {
+  try {
+    res.json({ success: true, ...toolStats(), tools: toolCatalog(), recentCalls: recentCalls(20) });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post("/api/agent/tools/:name", auth, aiRateLimit, async (req, res) => {
+  try {
+    const { args = {} } = req.body || {};
+    const out = await dispatchTool(req.params.name, args, { grantedPermissions: ['*'], toolTimeoutMs: 60000 });
+    res.json(out);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// MCP connector fleet status
+app.get("/api/agent/mcp", async (req, res) => {
+  try {
+    res.json({ success: true, connectors: connectorManager.listConnectors(), mcp: connectorManager.mcpStatus(), sandbox: sandboxStats() });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Memory (5-layer pipeline L4) inspection + manual write
+app.get("/api/agent/memory", (req, res) => {
+  try {
+    const q = String(req.query.q || req.query.query || '');
+    res.json({ success: true, stats: memoryStats(), matches: q ? recall(q, { limit: 10 }) : [] });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post("/api/agent/memory", auth, (req, res) => {
+  try {
+    const { key, text, tags = [] } = req.body || {};
+    if (!key || !text) return res.status(400).json({ error: 'key and text required' });
+    res.json({ success: true, entry: remember(String(key).slice(0, 120), String(text).slice(0, 4000), tags.slice(0, 5)) });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ReAct run — SSE stream of Thought/Action/Observation events
+app.post("/api/agent/react", auth, aiRateLimit, async (req, res) => {
+  const { task, facts = [], maxSteps = 12, tokenBudget = 6000, preferRouters = [], permissions = ['*'] } = req.body || {};
+  if (!task) return res.status(400).json({ error: "task required" });
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no');
+  const send = (obj) => { try { res.write(`data: ${JSON.stringify(obj)}\n\n`); } catch {} };
+  try {
+    for await (const evt of runReAct({ task: String(task).slice(0, 8000), facts, maxSteps: Math.min(30, Math.max(1, +maxSteps || 12)), tokenBudget: Math.min(24000, Math.max(1500, +tokenBudget || 6000)), preferRouters, permissions })) {
+      send(evt);
+      if (evt.type === 'done' || evt.type === 'error') break;
+    }
+  } catch (e) {
+    send({ type: 'error', message: e.message });
+  }
+  res.end();
+});
+
+// Parallel multi-agent swarm — SSE stream of plan/fanout/worker/synthesis events
+app.post("/api/agent/swarm", auth, aiRateLimit, async (req, res) => {
+  const { objective, workers = 4, preferRouters = [] } = req.body || {};
+  if (!objective) return res.status(400).json({ error: "objective required" });
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no');
+  const send = (obj) => { try { res.write(`data: ${JSON.stringify(obj)}\n\n`); } catch {} };
+  try {
+    for await (const evt of runSwarm({ objective: String(objective).slice(0, 8000), workers: Math.min(6, Math.max(2, +workers || 4)), preferRouters })) {
+      send(evt);
+      if (evt.type === 'done') break;
+    }
+  } catch (e) {
+    send({ type: 'error', message: e.message });
+  }
+  res.end();
 });
 
 // ==================== SKILL REGISTRY ====================
