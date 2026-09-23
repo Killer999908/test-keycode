@@ -5,13 +5,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 export default function LoadingGate({ children }: { children: React.ReactNode }) {
   const [done, setDone] = useState(false);
-  const startTime = useRef(Date.now());
+  const startTime = useRef<number | null>(null);
+  if (startTime.current === null) startTime.current = Date.now();
 
   useEffect(() => {
     let ready = false;
 
     function tryDismiss() {
-      const elapsed = Date.now() - startTime.current;
+      const elapsed = Date.now() - (startTime.current ?? Date.now());
       if (ready && elapsed >= 2500) {
         setDone(true);
         return true;

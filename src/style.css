@@ -1361,7 +1361,39 @@ h2:hover .anchor-link, .anchor-link:focus-visible { opacity: 1; }
 .proof-item:hover .proof-arrow { transform: translateX(4px); color: var(--ink); }
 @media (max-width: 700px) { .proof-stats { gap: 1.1rem; } .proof-title { font-size: 0.8rem; } }
 
-/* ============================ CREATIVE LAYER ============================ */
+/* Video background styling */
+.video-bg-wrap {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 0;
+  pointer-events: none;
+}
+.hero-bg-video {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 100%;
+  min-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: cover;
+  opacity: 0.45;
+  filter: saturate(1.2) contrast(1.1);
+}
+.video-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(8,8,10,0.65) 0%, rgba(8,8,10,0.85) 100%);
+  z-index: 1;
+}
+.ovl-hero {
+  position: relative;
+  z-index: 2;
+}
 
 /* Capability marquee — quiet type rhythm under the hero */
 .marquee { margin-top: 2.2rem; overflow: hidden; max-width: 60vw; mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); }

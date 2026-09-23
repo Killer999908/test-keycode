@@ -15,12 +15,15 @@ export default function LoaderScene() {
     const pos = new Float32Array(count * 3);
     for (let i = 0; i < count * 3; i++) pos[i] = (Math.random() - 0.5) * 12;
     const geo = new THREE.BufferGeometry();
+    // impure only on first build
+    // eslint-disable-next-line react-hooks/purity
     geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
     return new THREE.Points(
       geo,
       new THREE.PointsMaterial({ color: 0xffffff, size: 0.015, transparent: true, opacity: 0 })
     );
   }, []);
+  // the particle field is generated once and never regenerated
 
   useEffect(() => {
     if (!meshRef.current || !mesh2Ref.current) return;

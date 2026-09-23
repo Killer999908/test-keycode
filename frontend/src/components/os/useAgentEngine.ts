@@ -292,6 +292,50 @@ export function useAgentEngine() {
     setTerminal((prev) => [...prev, ...lines]);
   }, []);
 
+  const runAgents = useCallback(() => {
+    let lineIdx = 1;
+    const termStream = setInterval(() => {
+      if (lineIdx < TERMINAL_SCRIPT.length) {
+        addTerminal([TERMINAL_SCRIPT[lineIdx]]);
+        lineIdx++;
+      } else {
+        clearInterval(termStream);
+      }
+    }, 420);
+
+    const agentsToRun = AGENT_DEFS.filter((a) => a.id !== 'planner');
+    agentsToRun.forEach((def, orderIdx) => {
+      const delay = 1500 + orderIdx * 900;
+      setTimeout(() => {
+        setAgents((prev) =>
+          prev.map((a) => (a.id === def.id ? { ...a, status: 'working', progress: 8, log: 'Starting…', eta: '~2m' } : a))
+        );
+
+        const script = AGENT_SCRIPTS[def.id] ?? [];
+        let sIdx = 0;
+        const progressInterval = setInterval(() => {
+          setAgents((prev) =>
+            prev.map((a) => {
+              if (a.id !== def.id) return a;
+              const newProg = Math.min(100, a.progress + 5 + Math.random() * 9);
+              const log = sIdx < script.length ? script[sIdx] : a.log;
+              return {
+                ...a,
+                progress: newProg,
+                log,
+                status: newProg >= 100 ? 'done' : 'working',
+                eta: newProg >= 100 ? 'done' : `${Math.ceil((100 - newProg) / 6)}s`,
+              };
+            })
+          );
+          sIdx = Math.min(sIdx + 1, script.length - 1);
+          if (Math.random() > 0.5) sIdx = Math.min(sIdx + 1, script.length - 1);
+        }, 480);
+        setTimeout(() => clearInterval(progressInterval), 10000 + Math.random() * 6000);
+      }, delay);
+    });
+  }, [addTerminal]);
+
   const startBuild = useCallback((promptText: string) => {
     if (running.current) return;
     running.current = true;
@@ -398,51 +442,7 @@ export function useAgentEngine() {
         runAgents();
       }
     }, 800);
-  }, [addTerminal]);
-
-  const runAgents = useCallback(() => {
-    let lineIdx = 1;
-    const termStream = setInterval(() => {
-      if (lineIdx < TERMINAL_SCRIPT.length) {
-        addTerminal([TERMINAL_SCRIPT[lineIdx]]);
-        lineIdx++;
-      } else {
-        clearInterval(termStream);
-      }
-    }, 420);
-
-    const agentsToRun = AGENT_DEFS.filter((a) => a.id !== 'planner');
-    agentsToRun.forEach((def, orderIdx) => {
-      const delay = 1500 + orderIdx * 900;
-      setTimeout(() => {
-        setAgents((prev) =>
-          prev.map((a) => (a.id === def.id ? { ...a, status: 'working', progress: 8, log: 'Starting…', eta: '~2m' } : a))
-        );
-
-        const script = AGENT_SCRIPTS[def.id] ?? [];
-        let sIdx = 0;
-        const progressInterval = setInterval(() => {
-          setAgents((prev) =>
-            prev.map((a) => {
-              if (a.id !== def.id) return a;
-              const newProg = Math.min(100, a.progress + 5 + Math.random() * 9);
-              const log = sIdx < script.length ? script[sIdx] : a.log;
-              return {
-                ...a,
-                progress: newProg,
-                log,
-                status: newProg >= 100 ? 'done' : 'working',
-                eta: newProg >= 100 ? 'done' : `${Math.ceil((100 - newProg) / 6)}s`,
-              };
-            })
-          );
-          sIdx = Math.min(sIdx + 1, script.length - 1);
-          if (Math.random() > 0.5) sIdx = Math.min(sIdx + 1, script.length - 1);
-        }, 480);
-        setTimeout(() => clearInterval(progressInterval), 10000 + Math.random() * 6000);
-      }, delay);
-    });
-  }, [addTerminal]);
+  }, [addTerminal, runAgents]);
 
   const reset = useCallback(() => {
     running.current = false;

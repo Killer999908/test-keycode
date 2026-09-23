@@ -52,13 +52,13 @@ function ExtrudedK() {
     return s;
   }, []);
 
-  const extrudeSettings = {
+  const extrudeSettings = useMemo(() => ({
     depth: 0.35,
     bevelEnabled: true,
     bevelThickness: 0.06,
     bevelSize: 0.04,
     bevelSegments: 8,
-  };
+  }), []);
 
   useFrame((state) => {
     if (!groupRef.current) return;
@@ -128,6 +128,7 @@ function Particles() {
       pos[i * 3 + 1] = (Math.random() - 0.5) * 7;
       pos[i * 3 + 2] = (Math.random() - 0.5) * 7;
     }
+    /* eslint-disable react-hooks/purity -- one-time particle field, no re-render */
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
     return new THREE.Points(geo, new THREE.PointsMaterial({
@@ -138,6 +139,7 @@ function Particles() {
       sizeAttenuation: true,
     }));
   }, []);
+  /* eslint-enable react-hooks/purity */
 
   useFrame((state) => {
     if (ref.current) {

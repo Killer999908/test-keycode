@@ -55,6 +55,12 @@ export class UI {
        <div class="content">
         <!-- HERO — BEYOND IMAGINATION -->
         <section class="ovl ovl-hero" data-act="0">
+          <div class="video-bg-wrap">
+            <video class="hero-bg-video" autoplay muted loop playsinline preload="auto">
+              <source src="/bc.mp4" type="video/mp4">
+            </video>
+            <div class="video-overlay"></div>
+          </div>
           <div class="hero-orbs"><div class="hero-orb o1" data-parallax data-depth="0.65" data-rot="7"></div><div class="hero-orb o2" data-parallax data-depth="0.4" data-rot="-5"></div><div class="hero-orb o3" data-parallax data-depth="0.85"></div></div>
           <div class="inner">
             <p class="eyebrow"><span>${CONTENT.hero.eyebrow}</span></p>

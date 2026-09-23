@@ -258,7 +258,7 @@ const native = {
             await page.screenshot({ path: shot, fullPage: !!args.fullPage });
             return 'screenshot saved: ' + shot;
           }
-          const text = await page.evaluate(() => document.body.innerText.slice(0, 6000));
+          const text = await page.evaluate(/* istanbul ignore next */ () => (globalThis.document ? globalThis.document.body.innerText.slice(0, 6000) : ''));
           return 'URL: ' + args.url + '\nTITLE: ' + (await page.title()) + '\n\n' + text;
         } finally { await browser.close().catch(() => {}); }
       }
@@ -271,7 +271,7 @@ const native = {
           await page.screenshot({ path: shot, fullPage: !!args.fullPage });
           return 'screenshot saved: ' + shot;
         }
-        return 'URL: ' + args.url + '\nTITLE: ' + (await page.title()) + '\n\n' + (await page.evaluate(() => document.body.innerText.slice(0, 6000)));
+        return 'URL: ' + args.url + '\nTITLE: ' + (await page.title()) + '\n\n' + (await page.evaluate(/* istanbul ignore next */ () => (globalThis.document ? globalThis.document.body.innerText.slice(0, 6000) : '')));
       } finally { await browser.close().catch(() => {}); }
     } finally { setTimeout(() => destroyQuiet(ws), 5000); }
   },

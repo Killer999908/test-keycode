@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Local agent/tooling config and helper scripts — not project source.
+    ".claude/**",
   ]),
 ]);
 

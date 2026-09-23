@@ -15,6 +15,30 @@ export default defineConfig({
     chunkSizeWarningLimit: 600,
     esbuild: { drop: ['console', 'debugger'] },
     rollupOptions: {
+      input: {
+        main: '/index.html',
+        pricing: '/pricing.html',
+        works: '/gallery.html',
+        blog: '/blog.html',
+        docs: '/docs.html',
+        login: '/login.html',
+        signup: '/signup.html',
+        dashboard: '/dashboard.html',
+        aiBuilder: '/ai-builder.html',
+        gameBuilder: '/game-builder.html',
+        scan3d: '/scan-3d.html',
+        controlPanel: '/control-panel.html',
+        adminPanel: '/admin-panel.html',
+        checkout: '/checkout.html',
+        status: '/status.html',
+        changelog: '/changelog.html',
+        downloads: '/downloads.html',
+        deployments: '/deployments.html',
+        support: '/support.html',
+        terms: '/terms.html',
+        privacy: '/privacy.html',
+        cookies: '/cookies.html'
+      },
       output: {
         manualChunks: {
           'three': ['three'],

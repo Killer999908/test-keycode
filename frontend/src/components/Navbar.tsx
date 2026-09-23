@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const SERVER = 'http://localhost:5000';
@@ -112,11 +113,11 @@ export default function Navbar() {
       }`}
     >
       <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-        <a href="/" className="font-syne text-sm tracking-[0.3em] uppercase hover:opacity-80 transition-opacity">
+        <Link href="/" className="font-syne text-sm tracking-[0.3em] uppercase hover:opacity-80 transition-opacity">
           KEYCODE
-        </a>
+        </Link>
         <div className="flex items-center gap-8">
-          <a href="/#work" className="font-inter text-sm text-white/60 hover:text-white transition-colors">Work</a>
+          <Link href="/#work" className="font-inter text-sm text-white/60 hover:text-white transition-colors">Work</Link>
           {navGroups.map((group) => (
             <Dropdown key={group.label} label={group.label} items={group.items} />
           ))}
