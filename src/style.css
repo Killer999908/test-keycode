@@ -1361,7 +1361,7 @@ h2:hover .anchor-link, .anchor-link:focus-visible { opacity: 1; }
 .proof-item:hover .proof-arrow { transform: translateX(4px); color: var(--ink); }
 @media (max-width: 700px) { .proof-stats { gap: 1.1rem; } .proof-title { font-size: 0.8rem; } }
 
-/* Video background styling */
+/* Hero video background — sits under the hero copy (DOM order + z-index) */
 .video-bg-wrap {
   position: absolute;
   inset: 0;
@@ -1384,15 +1384,19 @@ h2:hover .anchor-link, .anchor-link:focus-visible { opacity: 1; }
   opacity: 0.45;
   filter: saturate(1.2) contrast(1.1);
 }
-.video-overlay {
+/* Scoped to the hero wrap so the legacy fixed .video-overlay is untouched */
+.video-bg-wrap .video-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(8,8,10,0.65) 0%, rgba(8,8,10,0.85) 100%);
+  background: linear-gradient(180deg, rgba(8,8,10,0.55) 0%, rgba(8,8,10,0.82) 100%);
   z-index: 1;
 }
-.ovl-hero {
-  position: relative;
-  z-index: 2;
+/* Keep hero copy + scroll hint painted above the video layer
+   (.ovl stays position:absolute — the scroll engine relies on it) */
+.ovl-hero .inner { position: relative; z-index: 2; }
+.ovl-hero .scroll-hint { z-index: 2; }
+@media (prefers-reduced-motion: reduce) {
+  .hero-bg-video { display: none; }
 }
 
 /* Capability marquee — quiet type rhythm under the hero */

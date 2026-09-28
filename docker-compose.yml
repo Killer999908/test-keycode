@@ -7,9 +7,18 @@ services:
       - "5000:5000"
     restart: unless-stopped
     depends_on:
-      - mongodb
-      - redis
-    env_file: ./server/.env
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - MONGODB_URI=mongodb://mongodb:27017/keycode
+      - REDIS_URL=redis://redis:6379
+    env_file:
+      - path: ./server/.env
+        required: false
 
   admin:
     build:
@@ -18,9 +27,17 @@ services:
     command: node server/admin-server.js
     ports:
       - "5001:5001"
+    restart: unless-stopped
     depends_on:
-      - mongodb
-    env_file: ./server/.env
+      mongodb:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=production
+      - PORT=5001
+      - MONGODB_URI=mongodb://mongodb:27017/keycode
+    env_file:
+      - path: ./server/.env
+        required: false
 
   mongodb:
     image: mongo:7
@@ -30,9 +47,10 @@ services:
       - mongodb_data:/data/db
     healthcheck:
       test: echo 'db.runCommand("ping").ok' | mongosh --quiet
-      interval: 30s
-      timeout: 10s
+      interval: 15s
+      timeout: 5s
       retries: 3
+      start_period: 5s
     restart: unless-stopped
 
   redis:
@@ -41,9 +59,10 @@ services:
       - "6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 30s
-      timeout: 10s
+      interval: 15s
+      timeout: 5s
       retries: 3
+      start_period: 5s
     restart: unless-stopped
 
 volumes:

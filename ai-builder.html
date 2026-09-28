@@ -128,6 +128,23 @@ button{font-family:var(--sans);cursor:pointer;border:none;background:none;color:
 .react .rstep .rbody{word-break:break-word;white-space:pre-wrap}
 .react .rstep.rthought .rbody{color:var(--dim);font-style:italic}
 .react .rfinal{margin-top:4px;padding-top:8px;border-top:1px solid var(--line);font:12.5px/1.6 var(--font);color:var(--ink);white-space:pre-wrap;word-break:break-word}
+/* Live plan checklist inside the agent trace */
+.react .rtodos{margin:2px 0;padding:9px 11px;border:1px solid rgba(109,124,255,.22);border-radius:10px;background:rgba(109,124,255,.06)}
+.react .rthead{font:600 9.5px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:#b9c0ff;margin-bottom:6px}
+.react .rtodo{display:flex;gap:8px;align-items:baseline;font:11px/1.5 var(--mono);color:var(--dim);padding:1.5px 0}
+.react .rtodo.done{color:var(--faint);text-decoration:line-through}
+.react .rtodo .rtbox{flex:0 0 auto;width:13px;height:13px;line-height:13px;text-align:center;border:1px solid var(--line2);border-radius:4px;font-size:9px;color:#5eead4}
+.react .rtodo.done .rtbox{border-color:rgba(94,234,212,.5);background:rgba(94,234,212,.1)}
+/* Inline file-edit diffs inside the agent trace */
+.react .rdiff{margin:4px 0 0 94px;padding:7px 9px;border-radius:8px;background:rgba(0,0,0,.35);border:1px solid var(--line);font:10px/1.5 var(--mono);white-space:pre;overflow-x:auto}
+.react .rdiff .add{color:#5eead4;display:block}
+.react .rdiff .del{color:var(--red);opacity:.75;display:block}
+/* Deliverable ZIP card */
+.react .rartifact{display:flex;align-items:center;gap:9px;margin-top:4px;padding:9px 12px;border:1px solid rgba(52,211,153,.35);border-radius:10px;background:rgba(52,211,153,.08);font-size:11.5px;color:var(--ink)}
+.react .rartifact i{color:#34d399}
+.react .rartifact span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.react .rartifact .rartbtn{flex:0 0 auto;padding:5px 11px;border-radius:8px;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff;font-weight:600;font-size:10.5px;text-decoration:none;transition:filter .15s}
+.react .rartifact .rartbtn:hover{filter:brightness(1.15)}
 .chip{padding:7px 13px;border-radius:999px;background:var(--glass2);border:1px solid var(--line);font-size:12px;color:var(--dim);transition:all .18s var(--ease)}
 .chip:hover{color:#fff;border-color:rgba(109,124,255,.5);background:rgba(109,124,255,.1);transform:translateY(-1px)}
 
@@ -639,10 +656,36 @@ async function runAgent(text){
           if(d.kind==='malformed') addStep('step '+d.step,'err','unparseable model turn — retrying');
           else if(d.thought) addStep('thought '+d.step,'rthought',d.thought);
         }
+        else if(d.type==='todos'){
+          // Live plan checklist — latest version replaces the previous one
+          let tl=trace.querySelector('.rtodos');
+          if(!tl){ tl=document.createElement('div'); tl.className='rtodos'; trace.appendChild(tl); }
+          tl.innerHTML='<div class="rthead">Plan · '+((d.todos||[]).filter(t=>t.completed).length)+'/'+(d.todos||[]).length+'</div>'+
+            (d.todos||[]).map(t=>'<div class="rtodo'+(t.completed?' done':'')+'"><span class="rtbox">'+(t.completed?'✓':'')+'</span>'+esc(t.task)+'</div>').join('');
+          scrollChat();
+        }
+        else if(d.type==='artifact'){
+          const art=document.createElement('div'); art.className='rartifact';
+          art.innerHTML='<i class="fas fa-file-zipper"></i><span>Build packaged — '+esc(d.artifact.replace(/-\d+\.zip$/,''))+'</span>'+
+            '<a class="rartbtn" href="/api/agent/artifacts/'+encodeURIComponent(d.artifact)+'" download>Download ZIP</a>';
+          trace.appendChild(art); scrollChat();
+        }
         else if(d.type==='tool'){ addStep('act '+d.step,'',d.tool+' '+JSON.stringify(d.args||{}).slice(0,220)); }
         else if(d.type==='observation'){
-          addStep('obs '+d.step,d.ok?'ok':'err',(d.ok?'✓ ':'✗ ')+String(d.result||'').slice(0,320));
-          updateThinking('Step '+d.step+' — '+d.tool);
+          // File edits render as mini diffs; everything else stays a compact line
+          const r=String(d.result||'');
+          if(/^created |^edited |^rewrote /.test(r)){
+            const edit=addStep('edit '+d.step,d.ok?'ok':'err',(d.ok?'✓ ':'✗ ')+r.split('\n')[0]);
+            const dl=r.split('\n').slice(1).filter(l=>/^[+-]/.test(l)).slice(0,14);
+            if(dl.length){
+              const dv=document.createElement('div'); dv.className='rdiff';
+              dv.innerHTML=dl.map(l=>'<span class="'+(l[0]==='+'?'add':'del')+'">'+esc(l)+'</span>').join('\n');
+              edit.appendChild(dv);
+            }
+          } else {
+            addStep('obs '+d.step,d.ok?'ok':'err',(d.ok?'✓ ':'✗ ')+r.slice(0,320));
+            updateThinking('Step '+d.step+' — '+d.tool);
+          }
         }
         else if(d.type==='done'){
           finalAnswer=d.answer||'';

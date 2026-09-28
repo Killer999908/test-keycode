@@ -63,6 +63,8 @@ import * as agentRouter from "./services/agentRouterService.js";
 import { runReAct } from "./agent/reactEngine.js";
 import { runSwarm } from "./agent/swarmOrchestrator.js";
 import { toolCatalog, toolStats, recentCalls, dispatchTool } from "./agent/toolDispatch.js";
+import { registerAdvancedTools } from "./agent/advancedTools.js";
+registerAdvancedTools();
 import { connectorManager } from "./agent/mcpClient.js";
 import { memoryStats, recall, remember, fitPrompt } from "./agent/contextPipeline.js";
 import { sandboxStats } from "./agent/sandbox.js";
@@ -933,6 +935,8 @@ app.use(helmet.contentSecurityPolicy({
     fontSrc: ["'self'", "data:", "https://fonts.gstatic.com", "https://cdnjs.cloudflare.com", "https://cdn.jsdelivr.net"],
     connectSrc: [
       "'self'",
+      "ws:",
+      "wss:",
       "https://api.deepseek.com",
       "https://api.groq.com",
       "https://api.mistral.ai",
@@ -969,7 +973,7 @@ app.use(helmet.contentSecurityPolicy({
       "https://www.youtube.com",
       "https://player.vimeo.com"
     ],
-    mediaSrc: ["'self'"],
+    mediaSrc: ["'self'", "data:", "blob:"],
     objectSrc: ["'none'"],
     baseUri: ["'self'"],
     formAction: ["'self'"],
@@ -990,14 +994,18 @@ app.use(helmet.noSniff());
 app.use(helmet.xssFilter());
 app.use(helmet.frameguard({ action: 'deny' }));
 
-const allowedOrigins = process.env.FRONTEND_URL
-  ? [process.env.FRONTEND_URL]
-  : ['http://localhost:5000', 'http://localhost:3000'];
+const rawFrontendUrls = (process.env.FRONTEND_URL || '')
+  .split(',')
+  .map(u => u.trim().replace(/\/+$/, ''))
+  .filter(Boolean);
+const allowedOrigins = rawFrontendUrls.length > 0
+  ? rawFrontendUrls
+  : ['http://localhost:5000', 'http://localhost:3000', 'http://localhost:5173'];
 
 app.use(cors({
   origin: function(origin, callback) {
     if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
+    if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) return callback(null, true);
     if (origin.startsWith("http://localhost") || origin.startsWith("http://127.0.0.1")) {
       return callback(null, true);
     }
@@ -5403,6 +5411,13 @@ app.get("/api/orders", auth, async (req, res) => {
 
 app.use('/projects', express.static(path.join(parentDir, 'projects')));
 
+app.get("/admin", (req, res) => {
+  const adminRoot = path.join(parentDir, 'admin-panel.html');
+  if (fs.existsSync(adminRoot)) return res.sendFile(adminRoot);
+  const adminDist = path.join(distDir, 'admin-panel.html');
+  if (fs.existsSync(adminDist)) return res.sendFile(adminDist);
+  res.redirect('/');
+});
 app.get("/admin-portal", (req, res) => res.redirect('/admin-panel.html'));
 app.get("/supa-admin", (req, res) => res.sendFile(path.join(parentDir, 'admin-supabase', 'index.html')));
 
@@ -11397,6 +11412,20 @@ app.post("/api/agent/memory", auth, (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// Agent artifact download — token returned by the workspace_zip tool
+// (same directory the tool writes to: <project root>/exports/agent-artifacts)
+app.get("/api/agent/artifacts/:name", (req, res) => {
+  const name = String(req.params.name || '').replace(/[^a-zA-Z0-9._-]/g, '');
+  if (!name.endsWith('.zip')) return res.status(400).json({ error: 'invalid artifact name' });
+  const EXPORTS_DIR = path.resolve(__dirname, '..', 'exports', 'agent-artifacts');
+  const safe = path.resolve(EXPORTS_DIR, name);
+  if (!safe.startsWith(EXPORTS_DIR + path.sep)) return res.status(400).json({ error: 'invalid artifact name' });
+  if (!fs.existsSync(safe)) return res.status(404).json({ error: 'artifact not found' });
+  res.setHeader('Content-Type', 'application/zip');
+  res.setHeader('Content-Disposition', 'attachment; filename="' + name + '"');
+  res.sendFile(safe);
+});
+
 // ReAct run — SSE stream of Thought/Action/Observation events
 app.post("/api/agent/react", auth, aiRateLimit, async (req, res) => {
   const { task, facts = [], maxSteps = 12, tokenBudget = 6000, preferRouters = [], permissions = ['*'] } = req.body || {};
@@ -13210,6 +13239,8 @@ app.get("/open-builder", (req, res) => {
 app.get("/realtime-builder", (req, res) => {
   const rtbPath = path.join(parentDir, 'realtime-game-builder.html');
   if (fs.existsSync(rtbPath)) return res.sendFile(rtbPath);
+  const rtbDist = path.join(distDir, 'realtime-game-builder.html');
+  if (fs.existsSync(rtbDist)) return res.sendFile(rtbDist);
   res.redirect('/game-builder.html');
 });
 
@@ -13217,6 +13248,8 @@ app.get("/realtime-builder", (req, res) => {
 app.get("/dashboard", (req, res) => {
   const dashPath = path.join(parentDir, 'dashboard.html');
   if (fs.existsSync(dashPath)) return res.sendFile(dashPath);
+  const dashDist = path.join(distDir, 'dashboard.html');
+  if (fs.existsSync(dashDist)) return res.sendFile(dashDist);
   res.redirect('/');
 });
 app.get("/control-panel", (req, res) => res.redirect('/dashboard'));
@@ -13226,6 +13259,8 @@ app.get("/control-panel.html", (req, res) => res.redirect('/dashboard'));
 app.get("/news", (req, res) => {
   const newsPath = path.join(parentDir, 'news.html');
   if (fs.existsSync(newsPath)) return res.sendFile(newsPath);
+  const newsDist = path.join(distDir, 'news.html');
+  if (fs.existsSync(newsDist)) return res.sendFile(newsDist);
   res.redirect('/');
 });
 
@@ -15190,6 +15225,8 @@ app.use((req, res, next) => {
       }
       const notFoundPath = path.join(parentDir, '404.html');
       if (fs.existsSync(notFoundPath)) return res.status(404).sendFile(notFoundPath);
+      const notFoundDist = path.join(distDir, '404.html');
+      if (fs.existsSync(notFoundDist)) return res.status(404).sendFile(notFoundDist);
       return res.status(404).send('Not Found');
     }
     const indexPath = path.join(parentDir, 'index.html');

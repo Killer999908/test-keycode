@@ -35,9 +35,15 @@ tools/freerouting.jar
 
 # Local agent/tooling config — not project source.
 frontend/.claude/
+agent-workspace/
+.kilo/
+.logs/
+keycode-alien-interface.worktrees/
+temp/
 
 # Generated build output — CAD/PCB/scan exports and app previews.
 # These are produced at runtime, not source; keep them out of history.
 exports/
 server/exports/
 preview/
+

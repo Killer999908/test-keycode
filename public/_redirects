@@ -1,0 +1,50 @@
+# KEYCODE Redirects & Clean URLs
+# Used by Cloudflare Pages, Netlify, and static hosting platforms
+
+# Admin & Dashboards
+/admin               /admin-panel.html           200
+/admin-portal        /admin-panel.html           301
+/dashboard           /dashboard.html             200
+/control-panel       /dashboard.html             301
+/control-panel.html  /dashboard.html             301
+/realtime-builder    /realtime-game-builder.html 200
+/open-builder        /ai-builder.html            200
+/supa-admin          /admin-supabase/index.html  200
+
+# Pretty Clean URLs
+/shop                /shop.html                  200
+/pricing             /pricing.html               200
+/gallery             /gallery.html               200
+/blog                /blog.html                  200
+/docs                /docs.html                  200
+/login               /login.html                 200
+/signup              /signup.html                200
+/register            /register.html              200
+/status              /status.html                200
+/support             /support.html               200
+/terms               /terms.html                 200
+/privacy             /privacy.html               200
+/cookies             /cookies.html               200
+/ai-builder          /ai-builder.html            200
+/game-builder        /game-builder.html          200
+/changelog           /changelog.html             200
+/downloads           /downloads.html             200
+/deployments         /deployments.html           200
+/playground          /playground.html            200
+/profile             /profile.html               200
+/tools               /tools.html                 200
+/viewer              /viewer.html                200
+/news                /news.html                  200
+/notifications       /notifications.html         200
+/checkout            /checkout.html              200
+/ai-health           /ai-health.html             200
+/api-keys            /api-keys.html              200
+/scan-3d             /scan-3d.html               200
+/admin-login         /admin-login.html           200
+/admin-access        /admin-access.html          200
+/verify-email        /verify-email.html          200
+/reset-password      /reset-password.html        200
+/otp-login           /otp-login.html             200
+
+# SPA fallback
+/*                   /index.html                 200

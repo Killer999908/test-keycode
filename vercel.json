@@ -1,20 +1,52 @@
 {
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
   "cleanUrls": true,
+  "trailingSlash": false,
   "rewrites": [
+    { "source": "/admin", "destination": "/admin-panel.html" },
+    { "source": "/admin-portal", "destination": "/admin-panel.html" },
+    { "source": "/dashboard", "destination": "/dashboard.html" },
+    { "source": "/control-panel", "destination": "/dashboard.html" },
+    { "source": "/control-panel.html", "destination": "/dashboard.html" },
+    { "source": "/open-builder", "destination": "/ai-builder.html" },
+    { "source": "/realtime-builder", "destination": "/realtime-game-builder.html" },
+    { "source": "/supa-admin", "destination": "/admin-supabase/index.html" },
     { "source": "/shop", "destination": "/shop.html" },
     { "source": "/pricing", "destination": "/pricing.html" },
     { "source": "/gallery", "destination": "/gallery.html" }
   ],
   "headers": [
     {
-      "source": "/api/(.*)",
+      "source": "/(.*)",
       "headers": [
-        { "key": "Access-Control-Allow-Origin", "value": "https://keycode.studio" },
-        { "key": "Access-Control-Allow-Credentials", "value": "true" }
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
       ]
     },
     {
-      "source": "/bc.mp4",
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET, POST, PUT, DELETE, OPTIONS" },
+        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization" }
+      ]
+    },
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "source": "/webfonts/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "source": "/(.*)\\.(mp4|webm|png|jpg|jpeg|gif|ico|svg)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
       ]

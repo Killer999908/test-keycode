@@ -1477,3 +1477,194 @@ button, .btn, .kc-btn { transition: transform 0.2s, box-shadow 0.2s, background 
 button:hover, .btn:hover, .kc-btn:hover { transform: translateY(-1px); }
 .kc-section-title, .kc-page h1:first-child { background: linear-gradient(90deg,#fff,#a3a3a3,#fff); background-size: 200% auto; -webkit-background-clip: text; background-clip: text; color: transparent; animation: kc-gradient 6s linear infinite, kc-rise 0.7s ease both; }
 @media (prefers-reduced-motion: reduce) { h1,h2,h3,h4,p,li,a { animation: none !important; } }
+
+/* ============================================================
+   GLASSMORPHISM DESIGN SYSTEM — appended site-wide layer
+   Targets the real markup classes used across all pages.
+   Degrades gracefully: @supports falls back to solid surfaces.
+   ============================================================ */
+:root {
+  --kc-glass-bg: rgba(255, 255, 255, 0.055);
+  --kc-glass-bg-strong: rgba(255, 255, 255, 0.085);
+  --kc-glass-border: rgba(255, 255, 255, 0.12);
+  --kc-glass-hi: rgba(255, 255, 255, 0.28);
+  --kc-glass-blur: 18px;
+  --kc-glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  --kc-glass-shadow-hover: 0 16px 48px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+/* --- shared glass surface recipe --- */
+.kc-glass,
+nav:not(#kc-nav):not(.kc-nav),   /* page-owned navs get glass via theme.js transform */
+.kc-nav,
+#kc-nav {
+  background: var(--kc-glass-bg);
+  -webkit-backdrop-filter: blur(var(--kc-glass-blur)) saturate(160%);
+  backdrop-filter: blur(var(--kc-glass-blur)) saturate(160%);
+  border: 1px solid var(--kc-glass-border);
+  box-shadow: var(--kc-glass-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* --- cards become glass panels with 3D hover --- */
+.card,
+.section-card,
+.stat-card,
+.op-card,
+.info-card,
+.help-card,
+.contact-card,
+.blog-card,
+.qa-card,
+.modal-content,
+.kc-modal-content,
+dialog {
+  position: relative;
+  background: var(--kc-glass-bg);
+  -webkit-backdrop-filter: blur(var(--kc-glass-blur)) saturate(150%);
+  backdrop-filter: blur(var(--kc-glass-blur)) saturate(150%);
+  border: 1px solid var(--kc-glass-border);
+  box-shadow: var(--kc-glass-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  border-radius: 16px;
+  transform-style: preserve-3d;
+  will-change: transform;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.35s ease, border-color 0.35s ease,
+              background 0.35s ease;
+}
+.card:hover,
+.section-card:hover,
+.stat-card:hover,
+.op-card:hover,
+.info-card:hover,
+.help-card:hover,
+.contact-card:hover,
+.blog-card:hover,
+.qa-card:hover {
+  background: var(--kc-glass-bg-strong);
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: var(--kc-glass-shadow-hover);
+}
+
+/* top edge highlight — the glass "specular" line */
+.card::before,
+.section-card::before,
+.stat-card::before,
+.op-card::before,
+.info-card::before,
+.help-card::before,
+.contact-card::before,
+.blog-card::before,
+.qa-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 12% auto 12%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--kc-glass-hi), transparent);
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* pointer-tilt glare element (injected by scroll-3d-animations.js) */
+.kc-tilt-glare {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  z-index: 1;
+}
+
+/* --- IO engine reveal states (no-GSAP fallback) --- */
+[data-reveal],
+.kc3d-auto {
+  opacity: 0;
+  transform: perspective(900px) translateY(42px) rotateX(-7deg) translateZ(-50px);
+  transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.kc3d-in {
+  opacity: 1;
+  transform: perspective(900px) translateY(0) rotateX(0) translateZ(0);
+}
+
+/* Reduced motion / engine failure: everything visible, no motion */
+.kc3d-reduced [data-reveal],
+.kc3d-reduced .kc3d-auto {
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .kc-tilt-glare { display: none; }
+  .card, .section-card, .stat-card, .op-card, .info-card,
+  .help-card, .contact-card, .blog-card, .qa-card {
+    transform: none !important;
+    transition: none !important;
+  }
+}
+
+/* --- buttons: glass pills --- */
+.btn,
+.kc-btn,
+button:not(.kc-no-glass) {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+.btn:hover,
+.kc-btn:hover {
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+/* --- nav: stronger glass + border on scroll is handled by theme.js --- */
+#kc-nav,
+.kc-nav {
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  backdrop-filter: blur(22px) saturate(180%);
+}
+
+/* --- inputs: glass wells --- */
+input:not([type="checkbox"]):not([type="radio"]),
+select,
+textarea {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+}
+input:focus,
+select:focus,
+textarea:focus {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.06);
+  outline: none;
+}
+
+/* --- graceful degradation: no backdrop-filter support → solid --- */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .card, .section-card, .stat-card, .op-card, .info-card,
+  .help-card, .contact-card, .blog-card, .qa-card,
+  .kc-glass, .modal-content, .kc-modal-content, dialog {
+    background: rgba(24, 24, 28, 0.96);
+  }
+  #kc-nav, .kc-nav,
+  nav:not(#kc-nav):not(.kc-nav) {
+    background: rgba(16, 16, 20, 0.97);
+  }
+}
+
+/* --- light-theme safety: glass stays readable on light backgrounds --- */
+body.kc-light-theme .card,
+body.kc-light-theme .section-card,
+body.kc-light-theme .stat-card,
+body.kc-light-theme .kc-glass {
+  background: rgba(255, 255, 255, 0.55);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+}
+body.kc-light-theme .card::before,
+body.kc-light-theme .section-card::before,
+body.kc-light-theme .stat-card::before {
+  background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.18), transparent);
+}

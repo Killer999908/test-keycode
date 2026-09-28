@@ -17,6 +17,7 @@ import { swarmRun } from '../services/agentRouterService.js';
 import { dispatchTool, toolCatalog } from './toolDispatch.js';
 import { fitPrompt, remember, persistRun, estTokens } from './contextPipeline.js';
 import { createWorkspace, destroyWorkspace, RingBuffer, reapStale } from './sandbox.js';
+import { ADVANCED_TOOL_HINTS } from './advancedTools.js';
 
 const DEFAULT_MAX_STEPS = 12;
 const DEFAULT_TOKEN_BUDGET = 6000;
@@ -34,7 +35,11 @@ RULES:
 - Never invent tool results. Never loop on a failing call without changing approach.`;
 
 function buildToolMenu(catalog) {
-  return catalog.map((t) => `- ${t.name} — ${t.description}${t.args && Object.keys(t.args).length ? ' | args: ' + JSON.stringify(t.args) : ''}`).join('\n');
+  const hints = new Map(ADVANCED_TOOL_HINTS.map((h) => [h.tool, h.hint]));
+  return catalog.map((t) => {
+    const hint = hints.get(t.name);
+    return `- ${t.name} — ${t.description}${t.args && Object.keys(t.args).length ? ' | args: ' + JSON.stringify(t.args) : ''}${hint ? '\n  · ' + hint : ''}`;
+  }).join('\n');
 }
 
 /** Parse the model's ReAct turn; tolerate markdown fences and prose. */
@@ -130,7 +135,7 @@ export async function* runReAct({
       yield emit({ type: 'step', step, kind: turn.kind, thought: turn.thought, router: routed.router });
 
       if (turn.kind === 'final') {
-        const doneEvt = emit({ type: 'done', step, answer: turn.final, stepsUsed: step, layers: fitted.layers });
+        const doneEvt = emit({ type: 'done', step, answer: turn.final, stepsUsed: step, layers: fitted.layers, todos: runCtx.todos || null });
         persistRun(runId, { task, answer: turn.final, steps: step, events, at: Date.now() });
         if (turn.thought) remember('final:' + task.slice(0, 60), turn.thought.slice(0, 300), ['final']);
         yield doneEvt;
@@ -139,7 +144,19 @@ export async function* runReAct({
 
       // ── OBSERVATION (dispatch) ──
       yield emit({ type: 'tool', step, tool: turn.action.tool, args: turn.action.args });
+      // Tag journal entries with the agent step (enables workspace_rewind {to_step})
+      const preJournalLen = runCtx.journal ? runCtx.journal.length : 0;
       const obs = await dispatchTool(turn.action.tool, turn.action.args, runCtx);
+      for (let ji = preJournalLen; ji < (runCtx.journal || []).length; ji++) {
+        if (runCtx.journal[ji].step == null) runCtx.journal[ji].step = step;
+      }
+      // Surface todo/artifact events to the UI
+      if (turn.action.tool === 'todo_write' && runCtx.todos) {
+        yield emit({ type: 'todos', step, todos: runCtx.todos });
+      }
+      if (obs.ok && obs.meta && obs.meta.artifact) {
+        yield emit({ type: 'artifact', step, artifact: obs.meta.artifact, size: obs.meta.size });
+      }
       runCtx.observations.push({ tool: turn.action.tool, args: turn.action.args, result: obs.result, ok: obs.ok });
       runCtx.transcript.push({ role: 'user', content: `OBSERVATION [${turn.action.tool}]: ${String(obs.result).slice(0, 1500)}` });
       yield emit({ type: 'observation', step, tool: turn.action.tool, ok: obs.ok, durationMs: obs.durationMs, result: String(obs.result).slice(0, 1200) });
