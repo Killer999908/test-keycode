@@ -1,0 +1,77 @@
+# KEYCODE Studio — desktop packaging (Windows / macOS / Linux)
+appId: studio.keycode.desktop
+productName: KEYCODE Studio
+copyright: KEYCODE Studio
+
+directories:
+  output: desktop-dist
+  buildResources: desktop
+
+# dev server runs from the repo; packaged app bundles what it needs
+files:
+  - desktop/**/*
+
+extraResources:
+  # full server + frontend tree the main process spawns with ELECTRON_RUN_AS_NODE
+  - from: .
+    to: app
+    filter:
+      - server/package.json
+      - server/server.js
+      - server/services/**/*
+      - server/agent/**/*
+      - server/skills/**/*
+      - server/models/**/*
+      - server/routes/**/*
+      - server/swagger.js
+      - server/node_modules/**/*
+      - dist/**/*
+      - public/**/*
+      - admin-supabase/**/*
+      - webfonts/**/*
+      - "*.html"
+      - "*.js"
+      - "*.css"
+      - theme.css
+      - theme.js
+      - ai-widget.js
+      - login-bg.js
+      - bc.mp4
+      - video-bg-new.mp4
+      - _headers
+      - _redirects
+      - package.json
+
+asar: true
+
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  icon: desktop/icons/icon.png
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: always
+  shortcutName: KEYCODE Studio
+
+mac:
+  target:
+    - target: dmg
+      arch: [x64, arm64]
+  category: public.app-category.developer-tools
+  icon: desktop/icons/icon.png
+
+dmg:
+  title: KEYCODE Studio
+
+linux:
+  target:
+    - target: AppImage
+      arch: [x64]
+    - target: deb
+      arch: [x64]
+  category: Development
+  icon: desktop/icons/icon.png

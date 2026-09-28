@@ -142,6 +142,18 @@ export async function dispatchTool(name, args, runCtx = {}) {
   if (!entry) {
     return { tool: name, ok: false, result: `unknown tool "${name}". Available: ${Array.from(registry.keys()).slice(0, 40).join(', ')}…`, durationMs: 0 };
   }
+  // operator permission gate (CLI / desktop prompts, --yolo auto-approve)
+  if (typeof runCtx.toolGate === 'function') {
+    const a = args || {};
+    const subject = a.path || a.pattern || a.task || a.code || a.name || a.objective || '';
+    const info = { summary: String(subject).slice(0, 100) || undefined, risky: false };
+    let allowed = false;
+    try { allowed = await Promise.resolve(runCtx.toolGate(name, a, info)); }
+    catch (e) { allowed = false; }
+    if (!allowed) {
+      return { tool: name, ok: false, result: 'DENIED by operator — the human said no. Do not retry this same action; change approach or emit final.', durationMs: 0 };
+    }
+  }
   // per-run call limit
   const count = (runCtx.toolCounts ||= {})[name] = ((runCtx.toolCounts[name] || 0) + 1);
   if (count > entry.maxCallsPerRun) {

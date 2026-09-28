@@ -75,6 +75,7 @@ export async function* runReAct({
   permissions = ['*'],
   memoryQuery = '',
   runId = null,
+  toolGate = null,
 }) {
   runId = runId || ('react_' + Date.now() + '_' + crypto.randomBytes(3).toString('hex'));
   const ioBuffer = new RingBuffer(2000);
@@ -87,6 +88,7 @@ export async function* runReAct({
     grantedPermissions: permissions,
     observations: [],
     transcript: [],
+    toolGate,
   };
 
   const catalog = toolCatalog();
