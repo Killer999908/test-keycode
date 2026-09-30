@@ -27,6 +27,7 @@
 - [ ] Health check: `https://your-app.railway.app/api/health` returns `{"status":"ok"}`
 - [ ] Homepage loads: `https://your-app.railway.app/`
 - [ ] Can browse: `/pricing.html`, `/playground.html`, `/gallery.html`
+- [ ] Marketplace has demo data: `https://your-app.railway.app/api/marketplace/list` returns listings (seeded automatically on boot; disable with `SEED_MARKETPLACE=0`)
 
 ## Step 2: MongoDB Atlas — IP Whitelist
 

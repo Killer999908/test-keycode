@@ -69,6 +69,13 @@ node -e "
   });
 " 2>/dev/null || true
 
+# Seed demo marketplace listings (idempotent)
+if [ "${SEED_MARKETPLACE:-1}" = "1" ]; then
+  echo ""
+  echo "=== Marketplace demo data ==="
+  node seed-marketplace.mjs || echo "[WARN] Marketplace seed skipped — run 'npm run seed:marketplace' once MongoDB is reachable"
+fi
+
 echo ""
 echo "=== Setup complete ==="
 echo "  Start with: npm start"

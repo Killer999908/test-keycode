@@ -74,6 +74,14 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/keycode')
   .catch(console.error);
 " || echo -e "${YELLOW}⚠️ Database seeding skipped${NC}"
 
+# Seed demo marketplace listings (idempotent — safe on every run)
+if [ "${SEED_MARKETPLACE:-1}" = "1" ]; then
+  echo "🛍️ Seeding demo marketplace listings..."
+  (cd server && node seed-marketplace.mjs) || echo -e "${YELLOW}⚠️ Marketplace seeding skipped — run 'npm run seed:marketplace' from server/ later${NC}"
+else
+  echo "🛍️ SEED_MARKETPLACE=0 — skipping demo marketplace listings"
+fi
+
 echo ""
 echo -e "${GREEN}🎉 Deployment preparation complete!${NC}"
 echo ""
