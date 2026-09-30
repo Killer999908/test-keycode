@@ -13,6 +13,7 @@
     "build:frontend": "cd .. && npm ci && npx vite build",
     "railway-build": "npm ci && cd .. && npm ci && npx vite build",
     "test": "node --experimental-vm-modules node_modules/.bin/jest",
+    "seed:marketplace": "node seed-marketplace.mjs",
     "lint": "eslint . || true"
   },
   "devDependencies": {
