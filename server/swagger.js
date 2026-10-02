@@ -349,6 +349,298 @@ const options = {
             401: { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }
           }
         }
+      },
+      "/api/marketplace/list": {
+        get: {
+          tags: ["Marketplace"],
+          summary: "List active marketplace listings",
+          security: [],
+          parameters: [
+            { name: "page", in: "query", schema: { type: "integer", default: 1 } },
+            { name: "limit", in: "query", schema: { type: "integer", default: 20 } },
+            { name: "category", in: "query", schema: { type: "string" } },
+            { name: "search", in: "query", schema: { type: "string" } }
+          ],
+          responses: {
+            200: { description: "List of listings", content: { "application/json": { schema: { type: "object", properties: { success: { type: "boolean" }, listings: { type: "array" }, total: { type: "integer" }, page: { type: "integer" }, totalPages: { type: "integer" } } } } } },
+            500: { description: "Server error", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }
+          }
+        }
+      },
+      "/api/marketplace/listings/{slug}": {
+        get: {
+          tags: ["Marketplace"],
+          summary: "Get a marketplace listing by slug",
+          security: [],
+          parameters: [
+            { name: "slug", in: "path", required: true, schema: { type: "string" } }
+          ],
+          responses: {
+            200: { description: "Listing details", content: { "application/json": { schema: { type: "object", properties: { success: { type: "boolean" }, listing: { type: "object" } } } } } },
+            404: { description: "Listing not found", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }
+          }
+        }
+      },
+      "/api/marketplace/purchase": {
+        post: {
+          tags: ["Marketplace"],
+          summary: "Purchase a marketplace listing",
+          requestBody: {
+            required: true,
+            content: { "application/json": { schema: { type: "object", required: ["slug", "quantity"], properties: { slug: { type: "string" }, quantity: { type: "integer", minimum: 1 }, notes: { type: "string" } } } } }
+          },
+          responses: {
+            201: { description: "Order created", content: { "application/json": { schema: { type: "object", properties: { success: { type: "boolean" }, order: { type: "object" } } } } } },
+            400: { description: "Validation error", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } },
+            404: { description: "Listing not found", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }
+          }
+        }
+      },
+      "/api/marketplace/my-orders": {
+        get: {
+          tags: ["Marketplace"],
+          summary: "Get the current user's marketplace orders",
+          parameters: [
+            { name: "page", in: "query", schema: { type: "integer", default: 1 } },
+            { name: "limit", in: "query", schema: { type: "integer", default: 20 } },
+            { name: "status", in: "query", schema: { type: "string", enum: ["pending", "paid", "fulfilled", "cancelled"] } }
+          ],
+          responses: {
+            200: { description: "User's orders", content: { "application/json": { schema: { type: "object", properties: { success: { type: "boolean" }, orders: { type: "array" }, total: { type: "integer" }, page: { type: "integer" }, totalPages: { type: "integer" } } } } } },
+            401: { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }
+          }
+        }
+      },
+      "/api/teams/me": {
+        get: {
+          tags: ["Team"],
+          summary: "Get the current user's team and role",
+          responses: {
+            200: { description: "Team membership", content: { "application/json": { schema: { type: "object", properties: { success: { type: "boolean" }, team: { type: "object" }, role: { type: "string" }, isOwner: { type: "boolean" }, membership: { type: "object" } } } } } },
+            401: { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }
+          }
+        }
+      },
+      "/api/teams": {
+        get: {
+          tags: ["Team"],
+          summary: "List teams the current user belongs to",
+          responses: {
+            200: { description: "Teams list", content: { "application/json": { schema: { type: "object", properties: { success: { type: "boolean" }, teams: { type: "array" } } } } } },
+            401: { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }
+          }
+        },
+        post: {
+          tags: ["Team"],
+          summary: "Create a new team",
+          requestBody: {
+            required: true,
+            content: { "application/json": { schema: { type: "object", required: ["name"], properties: { name: { type: "string" }, slug: { type: "string" }, description: { type: "string" } } } } }
+          },
+          responses: {
+            201: { description: "Team created", content: { "application/json": { schema: { type: "object", properties: { success: { type: "boolean" }, team: { type: "object" } } } } } },
+            400: { description: "Validation error", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }
+          }
+        }
+      },
+      "/api/teams/{teamId}/invite": {
+        post: {
+          tags: ["Team"],
+          summary: "Send an invite to a team",
+          parameters: [
+            { name: "teamId", in: "path", required: true, schema: { type: "string" } }
+          ],
+          requestBody: {
+            required: true,
+            content: { "application/json": { schema: { type: "object", required: ["email"], properties: { email: { type: "string", format: "email" }, role: { type: "string", enum: ["admin", "member", "viewer"], default: "member" } } } } }
+          },
+          responses: {
+            201: { description: "Invite sent", content: { "application/json": { schema: { type: "object", properties: { success: { type: "boolean" }, invite: { type: "object" } } } } } },
+            400: { description: "Validation error", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } },
+            403: { description: "Forbidden", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } },
+            404: { description: "Team not found", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }
+          }
+        }
+      },
+      "/api/teams/invites": {
+        get: {
+          tags: ["Team"],
+          summary: "List invites for the current user",
+          responses: {
+            200: { description: "Invites list", content: { "application/json": { schema: { type: "object", properties: { success: { type: "boolean" }, invites: { type: "array" } } } } } },
+            401: { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }
+          }
+        }
+      },
+      "/api/teams/invites/{token}/accept": {
+        post: {
+          tags: ["Team"],
+          summary: "Accept a team invite",
+          parameters: [
+            { name: "token", in: "path", required: true, schema: { type: "string" } }
+          ],
+          responses: {
+            200: { description: "Invite accepted", content: { "application/json": { schema: { type: "object", properties: { success: { type: "boolean" }, team: { type: "object" } } } } } },
+            404: { description: "Invite not found or expired", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }
+          }
+        }
+      },
+      "/api/teams/invites/{token}/reject": {
+        post: {
+          tags: ["Team"],
+          summary: "Reject a team invite",
+          parameters: [
+            { name: "token", in: "path", required: true, schema: { type: "string" } }
+          ],
+          responses: {
+            200: { description: "Invite rejected", content: { "application/json": { schema: { type: "object", properties: { success: { type: "boolean" } } } } } },
+            404: { description: "Invite not found", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }
+          }
+        }
+      },
+      "/api/teams/{teamId}/members": {
+        get: {
+          tags: ["Team"],
+          summary: "List members of a team",
+          parameters: [
+            { name: "teamId", in: "path", required: true, schema: { type: "string" } }
+          ],
+          responses: {
+            200: { description: "Team members", content: { "application/json": { schema: { type: "object", properties: { success: { type: "boolean" }, team: { type: "object" }, members: { type: "array" } } } } } },
+            403: { description: "Not a member", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } },
+            404: { description: "Team not found", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }
+          }
+        }
+      },
+      "/api/teams/{teamId}/members/{userId}": {
+        delete: {
+          tags: ["Team"],
+          summary: "Remove a member from a team",
+          parameters: [
+            { name: "teamId", in: "path", required: true, schema: { type: "string" } },
+            { name: "userId", in: "path", required: true, schema: { type: "string" } }
+          ],
+          responses: {
+            200: { description: "Member removed", content: { "application/json": { schema: { type: "object", properties: { success: { type: "boolean" } } } } } },
+            400: { description: "Cannot remove owner/self", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } },
+            403: { description: "Forbidden", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } },
+            404: { description: "Team or member not found", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }
+          }
+        }
+      },
+      "/api/analytics/overview": {
+        get: {
+          tags: ["Analytics"],
+          summary: "Analytics overview (user-scoped; admin may request ?scope=global)",
+          parameters: [
+            { name: "scope", in: "query", schema: { type: "string", enum: ["user", "global"], default: "user" } }
+          ],
+          responses: {
+            200: { description: "Analytics overview", content: { "application/json": { schema: { type: "object", properties: { success: { type: "boolean" }, scope: { type: "string" }, overview: { type: "object" }, ordersByStatus: { type: "object" }, monthlyRevenue: { type: "array" }, dailyOrders: { type: "array" }, projectBreakdown: { type: "object" }, recentActivity: { type: "array" }, period: { type: "object" } } } } } },
+            401: { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }
+          }
+        }
+      },
+      "/api/analytics/projects": {
+        get: {
+          tags: ["Analytics"],
+          summary: "Analytics projects breakdown by type and status",
+          responses: {
+            200: { description: "Projects analytics", content: { "application/json": { schema: { type: "object", properties: { success: { type: "boolean" }, byType: { type: "object" }, byStatus: { type: "object" }, recent: { type: "array" }, total: { type: "integer" }, period: { type: "object" } } } } } },
+            401: { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }
+          }
+        }
+      },
+      "/api/analytics/activity": {
+        get: {
+          tags: ["Analytics"],
+          summary: "Analytics activity stream (projects + orders)",
+          parameters: [
+            { name: "limit", in: "query", schema: { type: "integer", default: 50 } }
+          ],
+          responses: {
+            200: { description: "Activity events", content: { "application/json": { schema: { type: "object", properties: { success: { type: "boolean" }, events: { type: "array" }, total: { type: "integer" } } } } } },
+            401: { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }
+          }
+        }
+      },
+      "/api/settings/preferences": {
+        get: {
+          tags: ["Settings"],
+          summary: "Get current user preferences",
+          responses: {
+            200: { description: "User preferences", content: { "application/json": { schema: { type: "object", properties: { success: { type: "boolean" }, preferences: { type: "object" } } } } } },
+            401: { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }
+          }
+        },
+        put: {
+          tags: ["Settings"],
+          summary: "Save user preferences",
+          requestBody: {
+            required: false,
+            content: { "application/json": { schema: { type: "object" } } }
+          },
+          responses: {
+            200: { description: "Preferences saved", content: { "application/json": { schema: { type: "object", properties: { success: { type: "boolean" }, preferences: { type: "object" } } } } } },
+            401: { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }
+          }
+        }
+      },
+      "/api/settings/notifications": {
+        get: {
+          tags: ["Settings"],
+          summary: "Get notification preferences and recent notifications",
+          responses: {
+            200: { description: "Notification settings", content: { "application/json": { schema: { type: "object", properties: { success: { type: "boolean" }, notifications: { type: "object" }, unreadCount: { type: "integer" }, recent: { type: "array" } } } } } },
+            401: { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }
+          }
+        },
+        put: {
+          tags: ["Settings"],
+          summary: "Update notification preferences",
+          requestBody: {
+            required: false,
+            content: { "application/json": { schema: { type: "object", properties: { notifications: { type: "object" } } } } }
+          },
+          responses: {
+            200: { description: "Notification preferences saved", content: { "application/json": { schema: { type: "object", properties: { success: { type: "boolean" }, notifications: { type: "object" } } } } } },
+            400: { description: "Validation error", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } },
+            401: { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }
+          }
+        }
+      },
+      "/api/settings/profile": {
+        get: {
+          tags: ["Settings"],
+          summary: "Get user profile (extended settings shape)",
+          responses: {
+            200: { description: "User profile", content: { "application/json": { schema: { type: "object", properties: { success: { type: "boolean" }, profile: { type: "object" }, preferences: { type: "object" } } } } } },
+            401: { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }
+          }
+        },
+        put: {
+          tags: ["Settings"],
+          summary: "Update profile fields",
+          requestBody: {
+            required: false,
+            content: { "application/json": { schema: { type: "object", properties: { name: { type: "string", minLength: 2, maxLength: 100 }, phone: { type: "string" }, avatar: { type: "string" }, social: { type: "object" } } } } }
+          },
+          responses: {
+            200: { description: "Profile updated", content: { "application/json": { schema: { type: "object", properties: { success: { type: "boolean" }, profile: { type: "object" } } } } } },
+            400: { description: "Validation error", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } },
+            401: { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }
+          }
+        }
+      },
+      "/api/settings/ping": {
+        post: {
+          tags: ["Settings"],
+          summary: "Refresh the user's lastLogin timestamp",
+          responses: {
+            200: { description: "Ping acknowledged", content: { "application/json": { schema: { type: "object", properties: { success: { type: "boolean" }, ts: { type: "string" } } } } } },
+            401: { description: "Unauthorized", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }
+          }
+        }
       }
     }
   },

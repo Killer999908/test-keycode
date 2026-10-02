@@ -223,6 +223,7 @@
         <div class="nav-item active" data-page="overview"><i class="fas fa-chart-pie"></i> Overview</div>
         <div class="nav-divider"></div>
         <div style="font-size:10px;color:var(--ash);padding:4px 14px;text-transform:uppercase;letter-spacing:1px;">Orders & Payments</div>
+        <div class="nav-item" data-page="monetization"><i class="fas fa-money-bill-wave"></i> Monetization 💰</div>
         <div class="nav-item" data-page="orders"><i class="fas fa-shopping-bag"></i> Orders</div>
         <div class="nav-item" data-page="pending-reviews"><i class="fas fa-clipboard-check"></i> Pending Reviews</div>
         <div class="nav-item" data-page="transactions"><i class="fas fa-credit-card"></i> Transactions</div>
@@ -442,6 +443,72 @@
           <h3 class="section-title" style="margin-bottom:16px;">Environment</h3>
           <div id="envInfo"></div>
         </div>
+      </div>
+
+      <!-- MONETIZATION -->
+      <div id="monetization" class="page-section">
+        <div class="page-header"><h1 class="page-title">Monetization 💰</h1><span style="font-size:13px;color:var(--ash);">Ads · Affiliate · Donations · Premium — all automatic</span></div>
+        <div class="section-card">
+          <h3 class="section-title">Master Switch</h3>
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+            <input type="checkbox" id="monoEnabled" style="width:18px;height:18px;"> <span>Enable all earning features site-wide</span>
+          </label>
+        </div>
+        <div class="section-card">
+          <h3 class="section-title">Ad Network</h3>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
+            <label>Network
+              <select id="monoAdNetwork" style="width:100%;padding:8px;background:var(--panel);border:1px solid var(--border);border-radius:8px;color:var(--text);">
+                <option value="none">None (placeholder slots)</option>
+                <option value="adsense">Google AdSense</option>
+                <option value="adsterra">Adsterra</option>
+              </select>
+            </label>
+            <label>Client / Zone ID
+              <input id="monoAdClientId" placeholder="ca-pub-xxxxxxxxxxxxxxxx" style="width:100%;padding:8px;background:var(--panel);border:1px solid var(--border);border-radius:8px;color:var(--text);">
+            </label>
+          </div>
+          <div style="display:flex;gap:18px;margin-top:12px;flex-wrap:wrap;">
+            <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="monoAdHeader"> Header banner</label>
+            <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="monoAdFooter"> Footer banner</label>
+            <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="monoAdInFeed"> In-feed slots</label>
+            <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="monoAdsEnabled"> Ads enabled</label>
+          </div>
+        </div>
+        <div class="section-card">
+          <h3 class="section-title">Affiliate Products</h3>
+          <div style="display:grid;grid-template-columns:2fr 3fr 1fr auto;gap:8px;margin-bottom:10px;">
+            <input id="affTitle" placeholder="Product title" style="padding:8px;background:var(--panel);border:1px solid var(--border);border-radius:8px;color:var(--text);">
+            <input id="affUrl" placeholder="Your affiliate link (https://...)" style="padding:8px;background:var(--panel);border:1px solid var(--border);border-radius:8px;color:var(--text);">
+            <input id="affImage" placeholder="Image URL" style="padding:8px;background:var(--panel);border:1px solid var(--border);border-radius:8px;color:var(--text);">
+            <button class="btn-sm btn-success" onclick="addAffiliate()">Add</button>
+          </div>
+          <div id="affList"></div>
+        </div>
+        <div class="section-card">
+          <h3 class="section-title">Donations</h3>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;">
+            <label>Ko-fi URL <input id="donKofi" placeholder="https://ko-fi.com/you" style="width:100%;padding:8px;background:var(--panel);border:1px solid var(--border);border-radius:8px;color:var(--text);"></label>
+            <label>BuyMeACoffee <input id="donBmac" placeholder="https://buymeacoffee.com/you" style="width:100%;padding:8px;background:var(--panel);border:1px solid var(--border);border-radius:8px;color:var(--text);"></label>
+            <label>PayPal <input id="donPaypal" placeholder="https://paypal.me/you" style="width:100%;padding:8px;background:var(--panel);border:1px solid var(--border);border-radius:8px;color:var(--text);"></label>
+            <label>UPI ID <input id="donUpi" placeholder="yourname@upi" style="width:100%;padding:8px;background:var(--panel);border:1px solid var(--border);border-radius:8px;color:var(--text);"></label>
+          </div>
+          <label style="display:flex;align-items:center;gap:8px;margin-top:10px;"><input type="checkbox" id="donEnabled"> Donations enabled</label>
+        </div>
+        <div class="section-card">
+          <h3 class="section-title">Premium (Ad-free membership)</h3>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;">
+            <label>Monthly ₹ <input id="preMonthly" type="number" style="width:100%;padding:8px;background:var(--panel);border:1px solid var(--border);border-radius:8px;color:var(--text);"></label>
+            <label>Yearly ₹ <input id="preYearly" type="number" style="width:100%;padding:8px;background:var(--panel);border:1px solid var(--border);border-radius:8px;color:var(--text);"></label>
+            <label style="display:flex;align-items:center;gap:8px;align-self:end;"><input type="checkbox" id="preEnabled"> Premium enabled</label>
+          </div>
+        </div>
+        <div class="section-card">
+          <h3 class="section-title">Revenue Log <button class="btn-sm btn-success" style="float:right" onclick="addRevenue()">+ Record Earning</button></h3>
+          <div id="revenueTotals" style="margin-bottom:10px;font-size:15px;"></div>
+          <div style="overflow-x:auto;"><table><thead><tr><th>Date</th><th>Source</th><th>Amount</th><th>Note</th></tr></thead><tbody id="revenueList"></tbody></table></div>
+        </div>
+        <button class="btn-sm btn-primary" style="padding:10px 24px;font-size:14px;" onclick="saveMonetization()">💾 Save Monetization Settings</button>
       </div>
 
       <!-- TRANSACTIONS -->
@@ -2439,6 +2506,7 @@
         document.getElementById(item.dataset.page).classList.add('active');
         switch(item.dataset.page) {
           case 'overview': loadOverview(); break;
+          case 'monetization': loadMonetization(); break;
           case 'orders': loadOrders(); break;
           case 'pending-reviews': loadPendingReviews(); break;
           case 'transactions': loadTransactions(); break;
@@ -2501,6 +2569,100 @@
     function statusBadge(s) {
       const map = { pending: 'badge-yellow', confirmed: 'badge-blue', in_progress: 'badge-blue', processing: 'badge-blue', review: 'badge-yellow', completed: 'badge-green', cancelled: 'badge-red' };
       return map[s] || 'badge-gray';
+    }
+
+    // ==================== MONETIZATION ====================
+    async function loadMonetization() {
+      const m = await api('/admin/monetization');
+      if (!m) return;
+      document.getElementById('monoEnabled').checked = !!m.enabled;
+      document.getElementById('monoAdNetwork').value = m.ads?.network || 'none';
+      document.getElementById('monoAdClientId').value = m.ads?.networkClientId || '';
+      document.getElementById('monoAdHeader').checked = !!m.ads?.headerEnabled;
+      document.getElementById('monoAdFooter').checked = !!m.ads?.footerEnabled;
+      document.getElementById('monoAdInFeed').checked = !!m.ads?.inFeedEnabled;
+      document.getElementById('monoAdsEnabled').checked = !!m.ads?.enabled;
+      document.getElementById('donKofi').value = m.donations?.kofi || '';
+      document.getElementById('donBmac').value = m.donations?.buymeacoffee || '';
+      document.getElementById('donPaypal').value = m.donations?.paypal || '';
+      document.getElementById('donUpi').value = m.donations?.upiId || '';
+      document.getElementById('donEnabled').checked = !!m.donations?.enabled;
+      document.getElementById('preMonthly').value = m.premium?.monthlyPriceINR ?? 199;
+      document.getElementById('preYearly').value = m.premium?.yearlyPriceINR ?? 1499;
+      document.getElementById('preEnabled').checked = !!m.premium?.enabled;
+      renderAffiliates(m.affiliate?.items || []);
+      loadRevenue();
+    }
+
+    function renderAffiliates(items) {
+      const el = document.getElementById('affList');
+      el.innerHTML = items.length ? items.map(i =>
+        `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+          <span style="flex:1;">${(i.title || '').replace(/</g,'&lt;')} <small style="color:var(--ash);">${(i.url||'').replace(/</g,'&lt;')}</small></span>
+          <button class="btn-sm btn-danger" onclick="delAffiliate('${i._id}')">✕</button>
+        </div>`).join('') : '<p class="empty-state">No affiliate products yet — add Amazon/other links above.</p>';
+    }
+
+    async function addAffiliate() {
+      const title = document.getElementById('affTitle').value.trim();
+      const url = document.getElementById('affUrl').value.trim();
+      const image = document.getElementById('affImage').value.trim();
+      if (!title || !url) return showToast('Title and URL required', 'error');
+      const r = await api('/admin/monetization/affiliate', { method: 'POST', body: JSON.stringify({ title, url, image }) });
+      if (r?.success) { showToast('Affiliate product added', 'success'); document.getElementById('affTitle').value = ''; document.getElementById('affUrl').value = ''; document.getElementById('affImage').value = ''; loadMonetization(); }
+      else showToast('Failed to add', 'error');
+    }
+
+    async function delAffiliate(id) {
+      const r = await api(`/admin/monetization/affiliate/${id}`, { method: 'DELETE' });
+      if (r?.success) { showToast('Removed', 'success'); loadMonetization(); }
+    }
+
+    async function loadRevenue() {
+      const r = await api('/admin/monetization/revenue');
+      if (!r) return;
+      document.getElementById('revenueTotals').innerHTML = `<b>Total earnings recorded:</b> ₹${r.totals.sum} <small style="color:var(--ash);">(${r.totals.count} entries)</small>`;
+      document.getElementById('revenueList').innerHTML = r.entries.length ? r.entries.map(e =>
+        `<tr><td>${new Date(e.at).toLocaleString()}</td><td>${(e.source||'').replace(/</g,'&lt;')}</td><td><b>₹${e.amount}</b></td><td>${(e.note||'').replace(/</g,'&lt;')}</td></tr>`).join('')
+        : '<tr><td colspan="4" class="empty-state">No earnings recorded yet. Click “+ Record Earning” when you receive money from ads/affiliate.</td></tr>';
+    }
+
+    async function addRevenue() {
+      const source = prompt('Where did the money come from? (AdSense / Affiliate / Premium / Donation)');
+      if (!source) return;
+      const amount = parseFloat(prompt('Amount in ₹ (e.g. 250)'));
+      if (isNaN(amount)) return showToast('Invalid amount', 'error');
+      const r = await api('/admin/monetization/revenue', { method: 'POST', body: JSON.stringify({ source, amount, note: '' }) });
+      if (r?.success) { showToast('Earning recorded 💰', 'success'); loadRevenue(); }
+    }
+
+    async function saveMonetization() {
+      const body = {
+        enabled: document.getElementById('monoEnabled').checked,
+        ads: {
+          enabled: document.getElementById('monoAdsEnabled').checked,
+          network: document.getElementById('monoAdNetwork').value,
+          networkClientId: document.getElementById('monoAdClientId').value.trim(),
+          headerEnabled: document.getElementById('monoAdHeader').checked,
+          footerEnabled: document.getElementById('monoAdFooter').checked,
+          inFeedEnabled: document.getElementById('monoAdInFeed').checked
+        },
+        donations: {
+          enabled: document.getElementById('donEnabled').checked,
+          kofi: document.getElementById('donKofi').value.trim(),
+          buymeacoffee: document.getElementById('donBmac').value.trim(),
+          paypal: document.getElementById('donPaypal').value.trim(),
+          upiId: document.getElementById('donUpi').value.trim()
+        },
+        premium: {
+          enabled: document.getElementById('preEnabled').checked,
+          monthlyPriceINR: parseInt(document.getElementById('preMonthly').value) || 199,
+          yearlyPriceINR: parseInt(document.getElementById('preYearly').value) || 1499
+        }
+      };
+      const r = await api('/admin/monetization', { method: 'PUT', body: JSON.stringify(body) });
+      if (r?.success) showToast('Monetization saved — live on site instantly ✅', 'success');
+      else showToast('Save failed', 'error');
     }
 
     // Check for existing session

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import type { AgentEngine } from './useAgentEngine';
 
@@ -38,10 +38,12 @@ const NAV_SECTIONS: { section: string; items: { id: string; label: string; icon:
 
 function StatusClock() {
   const [now, setNow] = useState(new Date());
-  useState(() => {
+
+  useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 1000);
-    return t;
-  });
+    return () => clearInterval(t);
+  }, []);
+
   return (
     <span className="font-mono text-[11px] text-[var(--os-text-dim)] tabular-nums">
       {now.toLocaleTimeString('en-US', { hour12: false })}
@@ -50,8 +52,16 @@ function StatusClock() {
 }
 
 export default function OsShell({ engine }: { engine: AgentEngine }) {
-  const [activeNav, setActiveNav] = useState('dashboard');
-  const [collapsed, setCollapsed] = useState(false);
+  const { activeNav, setActiveNav } = engine;
+
+  const handleNav = (id: string) => {
+    // Clicking the active item during a build leaves the workbench and returns to that pane.
+    if (engine.mode === 'workbench' && id === activeNav) {
+      engine.reset();
+      return;
+    }
+    setActiveNav(id);
+  };
 
   return (
     <>
@@ -97,7 +107,7 @@ export default function OsShell({ engine }: { engine: AgentEngine }) {
               {group.items.map((item) => (
                 <button
                   key={item.id}
-                  onClick={() => setActiveNav(item.id)}
+                  onClick={() => handleNav(item.id)}
                   className={`w-full flex items-center gap-3 px-5 py-1.5 text-[13px] text-left transition-all duration-200 ${
                     activeNav === item.id
                       ? 'text-white bg-[rgba(109,124,255,0.1)] border-r-2 border-[var(--os-accent)]'

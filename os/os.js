@@ -1,10 +1,24 @@
 /* ============================================================
-   KEYCODE OS — Application Core
-   Boot, home screen, shell, agents, live streaming, panels,
-   terminal, code viewer, 3D viewer, command palette.
+   KEYCODE OS — Application Core  (REAL RUNTIME EDITION)
+   Every panel is wired to the live agent runtime:
+
+   • Boot pings the real /api/health + /api/agent/tools
+   • Chat streams the genuine ReAct loop over SSE
+     (/api/agent/react) — thought → tool → observation
+   • Code panel renders the agent's actual bytes from
+     `file` events (created / edited / rewrote)
+   • Terminal shows real observations, never scripted lines
+   • Files panel = the run's true workspace listing
+   • Preview renders the agent's real .html output
+   • Deliver = real downloadable artifact ZIPs
+   • Routers panel = live 15-provider swarm health (free tiers first)
+   • Runtime panel = real tool catalog + sandbox stats
+
+   If the backend is unreachable the UI says so honestly and
+   offers Offline Demo — clearly labeled, never passed off as
+   a real build.
    ============================================================ */
 import { Universe } from './universe.js';
-import { AGENT_DEFS, generateProject, flattenFiles } from './sim.js';
 import { Viewer3D } from './viewer3d.js';
 
 const $ = (s, root = document) => root.querySelector(s);
@@ -12,34 +26,26 @@ const $$ = (s, root = document) => [...root.querySelectorAll(s)];
 
 const state = {
   phase: 'boot',
-  project: null,
+  online: false,
   buildActive: false,
-  agents: new Map(),
+  abortCtrl: null,
   panelTab: 'preview',
   cmdOpen: false,
   sidebarOpen: window.innerWidth > 860,
-  chat: [],
+  agents: new Map(),
+  files: new Map(),      // path → { content, bytes, verb, at }
+  order: [],             // file order for tree
+  stats: { tools: 0, routers: { configured: 0, total: 0 } },
+  demoTimer: null,
 };
 
 /* ============================================================
-   Boot sequence
+   Boot sequence — probes the REAL runtime
    ============================================================ */
-const BOOT_LINES = [
-  ['KEYCODE OS v1.0.0 — initializing', 'dim'],
-  ['✔ neural core linked', 'ok'],
-  ['✔ loading 12 specialist agents', 'ok'],
-  ['✔ mounting glass interface layer', 'dl'],
-  ['✔ calibration: spatial compute', 'dl'],
-  ['✔ gesture + voice input ready', 'ok'],
-  ['✔ universe shader compiled', 'dl'],
-  ['✔ all systems nominal', 'ok'],
-];
-
 function runBoot() {
   const log = $('#boot-log');
   const bar = $('#boot-bar');
   const status = $('#boot-status');
-  let i = 0;
 
   gsap.fromTo('.boot-mark-path', { strokeDashoffset: 320 }, {
     strokeDashoffset: 0, duration: 1.4, ease: 'power2.inOut',
@@ -48,31 +54,67 @@ function runBoot() {
     scale: 1, duration: 0.6, delay: 1.0, ease: 'back.out(3)',
   });
 
-  const step = () => {
-    if (i >= BOOT_LINES.length) {
-      status.textContent = 'Launching interface';
-      gsap.to('#boot', {
-        opacity: 0, duration: 0.7, ease: 'power2.inOut',
-        onComplete: () => {
-          $('#boot').style.display = 'none';
-          state.phase = 'home';
-          revealHome();
-        },
-      });
-      return;
-    }
-    const [txt, cls] = BOOT_LINES[i];
+  // Two things actually happen during boot: health probe + tool census.
+  const probes = Promise.allSettled([
+    fetch('/api/health').then((r) => r.json()),
+    fetch('/api/agent/tools').then((r) => r.json()),
+    fetch('/api/agent/routers').then((r) => r.json()),
+  ]);
+
+  const lines = [
+    ['KEYCODE OS v2.0 — initializing', 'dim'],
+    ['✔ mounting glass interface layer', 'dl'],
+  ];
+  let i = 0;
+
+  const finishLine = (txt, cls) => {
     const line = document.createElement('div');
     line.className = cls;
     line.textContent = txt;
     log.appendChild(line);
     log.scrollTop = log.scrollHeight;
-    bar.style.width = `${Math.round(((i + 1) / BOOT_LINES.length) * 100)}%`;
+  };
+
+  const step = () => {
+    if (i >= lines.length) {
+      probes.then(([health, tools, routers]) => {
+        state.online = health.status === 'fulfilled' && health.value?.status;
+        if (state.online) {
+          state.stats.tools = tools.status === 'fulfilled' ? (tools.value?.total || 0) : 0;
+          if (routers.status === 'fulfilled') {
+            state.stats.routers.configured = routers.value?.configured || 0;
+            state.stats.routers.total = routers.value?.total || 0;
+          }
+          finishLine(`✔ runtime online · ${state.stats.tools} tools · ${state.stats.routers.configured}/${state.stats.routers.total} routers`, 'ok');
+        } else {
+          finishLine('✘ runtime unreachable — offline mode', 'err');
+        }
+        finishLine('✔ all systems nominal', 'ok');
+        bar.style.width = '100%';
+        status.textContent = 'Launching interface';
+        setTimeout(launch, 500);
+      });
+      return;
+    }
+    const [txt, cls] = lines[i];
+    finishLine(txt, cls);
+    bar.style.width = `${Math.round(((i + 1) / (lines.length + 2)) * 90)}%`;
     status.textContent = txt.replace(/^[✔✘▶◆]/g, '').trim();
     i++;
-    setTimeout(step, 380 + Math.random() * 260);
+    setTimeout(step, 340 + Math.random() * 200);
   };
-  setTimeout(step, 700);
+  setTimeout(step, 600);
+
+  const launch = () => {
+    gsap.to('#boot', {
+      opacity: 0, duration: 0.7, ease: 'power2.inOut',
+      onComplete: () => {
+        $('#boot').style.display = 'none';
+        state.phase = 'home';
+        revealHome();
+      },
+    });
+  };
 }
 
 function revealHome() {
@@ -81,11 +123,23 @@ function revealHome() {
   gsap.fromTo('.line-greeting', { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.8, delay: 0.25, ease: 'power2.out' });
   gsap.fromTo('.line-ask', { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.8, delay: 0.4, ease: 'power2.out' });
   gsap.fromTo('#prompt-box', { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.8, delay: 0.55, ease: 'power2.out' });
-  gsap.to('.chip', {
-    opacity: 1, y: 0, duration: 0.5, stagger: 0.05, delay: 0.85, ease: 'power2.out',
-  });
+  gsap.to('.chip', { opacity: 1, y: 0, duration: 0.5, stagger: 0.05, delay: 0.85, ease: 'power2.out' });
   gsap.fromTo('.home-footer', { opacity: 0 }, { opacity: 1, duration: 0.8, delay: 1.2 });
   setTimeout(() => $('#prompt-input').focus(), 900);
+
+  // Reflect the REAL runtime state in the UI
+  const badge = $('#home-badge-text');
+  const meta = $('#meta-tools');
+  const foot = $('#foot-routers');
+  if (state.online) {
+    badge.textContent = `runtime online · ${state.stats.routers.configured}/${state.stats.routers.total} AI routers`;
+    meta.textContent = `${state.stats.tools} agent tools · live`;
+    foot.textContent = `routers ${state.stats.routers.configured}/${state.stats.routers.total}`;
+  } else {
+    badge.textContent = 'offline — start the server (npm start)';
+    meta.textContent = 'agent tools · unreachable';
+    foot.textContent = 'routers —';
+  }
 }
 
 /* ============================================================
@@ -95,93 +149,92 @@ function launchBuild(promptRaw) {
   const prompt = promptRaw.trim();
   if (!prompt || state.buildActive) return;
   state.buildActive = true;
-  state.project = generateProject(prompt);
 
   const input = $('#prompt-input');
   input.value = prompt;
   const box = $('#prompt-box');
   box.classList.add('busy');
-  const enter = $('#prompt-enter');
-  enter.style.pointerEvents = 'none';
+  $('#prompt-enter').style.pointerEvents = 'none';
 
   gsap.to('.home-title', { y: -30, opacity: 0, duration: 0.5, ease: 'power2.in' });
   gsap.to('.examples', { opacity: 0, y: 20, duration: 0.4, delay: 0.05 });
   gsap.to('.home-footer', { opacity: 0, duration: 0.3 });
-
   gsap.to('#prompt-box', {
     scale: 0.98, opacity: 0.2, duration: 0.6, delay: 0.15, ease: 'power2.in',
     onComplete: () => {
-      // Collapse the input into the workspace and reveal shell
       $('#home').style.display = 'none';
       const shell = $('#shell');
       shell.hidden = false;
       gsap.fromTo(shell, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.6, ease: 'power2.out' });
-      gsap.fromTo('#sidebar', { x: -60, opacity: 0 }, { x: 0, opacity: 1, duration: 0.6, ease: 'power2.out' });
       gsap.fromTo('#conversation', { x: -30, opacity: 0 }, { x: 0, opacity: 1, duration: 0.6, delay: 0.1, ease: 'power2.out' });
       gsap.fromTo('#generation', { x: 30, opacity: 0 }, { x: 0, opacity: 1, duration: 0.6, delay: 0.15, ease: 'power2.out' });
-      $('#crumb-proj').textContent = state.project.name;
-      $('#tb-status-text').textContent = 'Building';
+      $('#crumb-proj').textContent = 'agent run';
+      $('#tb-status-text').textContent = 'Connecting';
       state.phase = 'build';
-      setTimeout(() => runBuild(prompt), 500);
+      setTimeout(() => runAgentTask(prompt), 500);
     },
   });
 }
 
 /* ============================================================
-   Agent system
+   Agent fleet dock — derives LIVE cards from the tool stream
    ============================================================ */
-function createAgentCards() {
-  const grid = $('#agents-grid');
-  grid.innerHTML = '';
-  const defs = state.project.activeAgents;
-  defs.forEach((def, i) => {
-    const card = document.createElement('div');
-    card.className = 'agent-card';
-    card.id = `agent-${def.id}`;
-    card.innerHTML = `
-      <div class="ag-top">
-        <div class="ag-avatar" style="color:${def.color}">${def.icon}</div>
-        <div class="ag-info">
-          <div class="ag-name">${def.name}</div>
-          <div class="ag-status">standby</div>
-        </div>
+const AGENT_FAMILIES = [
+  { id: 'planner',  name: 'Planner',  icon: '◈', color: '#a78bfa' },
+  { id: 'builder',  name: 'Builder',  icon: '⬡', color: '#6d5cff' },
+  { id: 'executor', name: 'Executor', icon: '▶', color: '#f59e0b' },
+  { id: 'scout',    name: 'Scout',    icon: '⌕', color: '#22d3ee' },
+];
+
+function ensureAgentCard(id, label) {
+  if (state.agents.has(id)) return state.agents.get(id);
+  const fam = AGENT_FAMILIES.find((f) => f.id === id) || { id, name: label || id, icon: '◆', color: '#94a3b8' };
+  const card = document.createElement('div');
+  card.className = 'agent-card';
+  card.innerHTML = `
+    <div class="ag-top">
+      <div class="ag-avatar" style="color:${fam.color}">${fam.icon}</div>
+      <div class="ag-info">
+        <div class="ag-name">${fam.name}</div>
+        <div class="ag-status">standby</div>
       </div>
-      <div class="ag-bar"><div class="ag-bar-fill"></div></div>
-      <div class="ag-log"></div>`;
-    grid.appendChild(card);
-    state.agents.set(def.id, { def, el: card, progress: 0, status: 'standby' });
-    gsap.fromTo(card, { opacity: 0, y: 14 }, {
-      opacity: 1, y: 0, duration: 0.45, delay: 0.4 + i * 0.05, ease: 'power2.out',
-    });
-  });
-  const maxAgents = Math.max(4, defs.length);
-  $('#st-agents').textContent = `Agents: 0/${maxAgents}`;
+    </div>
+    <div class="ag-bar"><div class="ag-bar-fill"></div></div>
+    <div class="ag-log"></div>`;
+  $('#agents-grid').appendChild(card);
+  const entry = { el: card, status: 'standby', calls: 0 };
+  state.agents.set(id, entry);
+  gsap.fromTo(card, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' });
+  return entry;
 }
 
-function setAgent(id, { status, progress, log }) {
-  const a = state.agents.get(id);
-  if (!a) return;
+function setAgent(id, { status, progress, log }, label) {
+  const a = ensureAgentCard(id, label);
   if (status !== undefined) {
     a.status = status;
     a.el.classList.toggle('active', status === 'working');
     a.el.classList.toggle('done', status === 'done');
-    const label = { standby: 'standby', working: 'working…', done: 'complete' };
-    $('.ag-status', a.el).textContent = label[status] || status;
+    const lbl = { standby: 'standby', working: 'working…', done: 'complete' };
+    $('.ag-status', a.el).textContent = lbl[status] || status;
   }
-  if (progress !== undefined) {
-    a.progress = progress;
-    $('.ag-bar-fill', a.el).style.width = `${progress}%`;
-  }
+  if (progress !== undefined) $('.ag-bar-fill', a.el).style.width = `${progress}%`;
   if (log !== undefined) $('.ag-log', a.el).textContent = log;
+}
+
+function agentForTool(tool) {
+  if (!tool) return 'builder';
+  if (['todo_write', 'spawn_agent'].includes(tool)) return 'planner';
+  if (['web_search', 'fetch_url', 'browser_navigate', 'repo_search', 'workspace_grep', 'file_search'].includes(tool)) return 'scout';
+  if (['code_run'].includes(tool)) return 'executor';
+  return 'builder';
 }
 
 function updateDockProgress() {
   const list = [...state.agents.values()];
+  if (!list.length) return;
   const done = list.filter((a) => a.status === 'done').length;
-  const total = list.length;
-  $('#dock-progress').textContent = `${Math.round((done / total) * 100)}%`;
-  $('#st-agents').textContent = `Agents: ${done}/${total}`;
-  return done / total;
+  $('#dock-progress').textContent = `${Math.round((done / list.length) * 100)}%`;
+  $('#st-agents').textContent = `Agents: ${done}/${list.length}`;
 }
 
 /* ============================================================
@@ -190,28 +243,17 @@ function updateDockProgress() {
 function addUserMessage(text) {
   const wrap = document.createElement('div');
   wrap.className = 'msg user';
-  wrap.innerHTML = `
-    <div class="msg-avatar">✦</div>
-    <div class="msg-body">
-      <div class="msg-name">You</div>
-      <div class="msg-text"></div>
-    </div>`;
+  wrap.innerHTML = `<div class="msg-avatar">✦</div><div class="msg-body"><div class="msg-name">You</div><div class="msg-text"></div></div>`;
   $('.msg-text', wrap).textContent = text;
   $('#conv-messages').appendChild(wrap);
   setTimeout(() => wrap.classList.add('in'), 10);
   scrollConv();
-  return wrap;
 }
 
 function addAIMessage(html) {
   const wrap = document.createElement('div');
   wrap.className = 'msg';
-  wrap.innerHTML = `
-    <div class="msg-avatar">◈</div>
-    <div class="msg-body">
-      <div class="msg-name">KEYCODE Core</div>
-      <div class="msg-text">${html}</div>
-    </div>`;
+  wrap.innerHTML = `<div class="msg-avatar">◈</div><div class="msg-body"><div class="msg-name">KEYCODE Core</div><div class="msg-text">${html}</div></div>`;
   $('#conv-messages').appendChild(wrap);
   setTimeout(() => wrap.classList.add('in'), 10);
   scrollConv();
@@ -221,37 +263,16 @@ function addAIMessage(html) {
 function addTypingIndicator() {
   const wrap = document.createElement('div');
   wrap.className = 'msg';
-  wrap.innerHTML = `
-    <div class="msg-avatar">◈</div>
-    <div class="msg-body">
-      <div class="msg-name">KEYCODE Core</div>
-      <div class="msg-text"><span class="msg-typing"><i></i><i></i><i></i></span></div>
-    </div>`;
-  $('#conv-messages').appendChild(wrap);
+  wrap.innerHTML = `<div class="msg-avatar">◈</div><div class="msg-body"><div class="msg-name">KEYCODE Core</div><div class="msg-text"><span class="msg-typing"><i></i><i></i><i></i></span></div></div>`;
   wrap.id = 'typing-indicator';
+  $('#conv-messages').appendChild(wrap);
   setTimeout(() => wrap.classList.add('in'), 10);
   scrollConv();
   return wrap;
 }
 
 function removeTypingIndicator() {
-  const t = $('#typing-indicator');
-  if (t) t.remove();
-}
-
-function streamText(el, text, speed = 16, cb) {
-  const tgt = el;
-  tgt.textContent = '';
-  let i = 0;
-  const tick = () => {
-    if (i <= text.length) {
-      tgt.textContent = text.slice(0, i);
-      i += 2;
-      scrollConv();
-      setTimeout(tick, speed);
-    } else if (cb) cb();
-  };
-  tick();
+  $('#typing-indicator')?.remove();
 }
 
 function scrollConv() {
@@ -260,319 +281,349 @@ function scrollConv() {
 }
 
 /* ============================================================
-   Terminal
+   Terminal — REAL observations only
    ============================================================ */
 function termWrite(text, cls = '') {
   const body = $('#term-body');
   const line = document.createElement('div');
   line.className = `term-line ${cls}`.trim();
-  line.innerHTML = text;
+  line.textContent = text;
   body.appendChild(line);
   body.scrollTop = body.scrollHeight;
-  return line;
-}
-
-function termCmd(text) {
-  termWrite(`<span class="t-path">~/keycode</span> <span style="color:#eef2ff">$</span> ${text}`);
-}
-
-async function runTerminalScript(script) {
-  termWrite('<div style="height:6px"></div>');
-  for (const [cls, txt] of script) {
-    if (cls === 'cmd') termCmd(txt);
-    else termWrite(txt, cls);
-    await sleep(360 + Math.random() * 320);
-  }
-  termWrite('<span class="term-caret"></span>', '');
 }
 
 /* ============================================================
-   Code viewer + file tree
+   Code viewer + file tree — fed by REAL file events
    ============================================================ */
 const TOKEN_RULES = [
   [/^\s+/, 'plain'],
-  [/^\b(return|const|let|var|function|import|export|from|class|if|else|for|while|await|async|new|this|extends|switch|case|break|true|false|null|void|enum|model|datasource|generator|provider)\b/, 'tk-kw'],
+  [/^\b(return|const|let|var|function|import|export|from|class|if|else|for|while|await|async|new|this|extends|switch|case|break|true|false|null|void|def|print)\b/, 'tk-kw'],
   [/^"[^"]*"|^'[^']*'|^`[^`]*`/, 'tk-str'],
   [/^\b\d+(\.\d+)?\b/, 'tk-num'],
-  [/^\b(#[A-Za-z_][\w-]*|<!--|\/\/.*|#.*)$/, 'tk-com'],
-  [/^[(){}[\].,;:]/ , 'tk-punc'],
-  [/^<\/?[a-zA-Z][^>]*>|^<[a-zA-Z]/, 'tk-tag'],
+  [/^(\/\/[^\n]*|#[^\n]*|\/\*[\s\S]*?\*\/)/, 'tk-com'],
+  [/^[(){}[\].,;:]/, 'tk-punc'],
+  [/^<\/?[a-zA-Z][^>]*>/, 'tk-tag'],
   [/^[a-zA-Z_][\w-]*\s*(?=\()/, 'tk-fn'],
-  [/^[a-zA-Z_][\w-]*\s*(?=:)/, 'tk-attr'],
+  [/^[a-zA-Z_][\w-]*\s*(?==)/, 'tk-attr'],
 ];
+
+function esc(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
 
 function highlight(code) {
   let out = '';
-  let rest = code;
-  while (rest.length) {
+  let rest = String(code);
+  let guard = 0;
+  while (rest.length && guard++ < 200000) {
     let matched = false;
     for (const [re, cls] of TOKEN_RULES) {
       const m = re.exec(rest);
       if (m) {
         const txt = m[0];
-        out += cls === 'plain' ? txt.replace(/&/g, '&amp;').replace(/</g, '&lt;') : `<span class="${cls}">${txt.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</span>`;
+        out += cls === 'plain' ? esc(txt) : `<span class="${cls}">${esc(txt)}</span>`;
         rest = rest.slice(txt.length);
         matched = true;
         break;
       }
     }
-    if (!matched) {
-      const ch = rest[0];
-      out += ch === '<' ? '&lt;' : ch;
-      rest = rest.slice(1);
-    }
+    if (!matched) { out += esc(rest[0]); rest = rest.slice(1); }
   }
   return out;
+}
+
+function iconFor(path) {
+  if (/\.html?$/.test(path)) return '🌐';
+  if (/\.css$/.test(path)) return '🎨';
+  if (/\.jsx?$|\.tsx?$|\.mjs$/.test(path)) return '🟨';
+  if (/\.py$/.test(path)) return '🐍';
+  if (/\.json$/.test(path)) return '📦';
+  if (/\.md$/.test(path)) return '📘';
+  if (/\.(c|cpp|h)$/.test(path)) return '◉';
+  if (/\.(sh)$/.test(path)) return '⚙️';
+  return '📄';
 }
 
 function renderFileTree() {
   const root = $('#ft-root');
   root.innerHTML = '';
-  const tree = state.project.tree;
-  const walk = (node, depth) => {
-    for (const [key, val] of Object.entries(node)) {
-      const isDir = val && typeof val === 'object' && !Array.isArray(val) && !('icon' in val);
-      const item = document.createElement('div');
-      item.className = 'ft-item';
-      item.style.paddingLeft = `${10 + depth * 14}px`;
-      item.dataset.path = key;
-      item.innerHTML = `<span class="ft-ic">${isDir ? '▸' : val.icon}</span>${key}`;
-      item.addEventListener('click', () => {
-        $$('.ft-item', root).forEach((x) => x.classList.remove('active'));
-        item.classList.add('active');
-        const code = state.project.code[key];
-        if (code) renderCode(key, code);
-      });
-      root.appendChild(item);
-      if (isDir) walk(val, depth + 1);
-    }
-  };
-  walk(tree, 0);
-}
-
-function renderCode(filename, code) {
-  const tabs = $('#editor-tabs');
-  tabs.innerHTML = `<div class="editor-tab active">${filename.split('/').pop()}</div>`;
-  const codeEl = $('#editor-code');
-  codeEl.innerHTML = highlight(code);
-}
-
-async function streamCode(filename, code) {
-  const tabs = $('#editor-tabs');
-  tabs.innerHTML = `<div class="editor-tab active">${filename.split('/').pop()}</div>`;
-  const codeEl = $('#editor-code');
-  codeEl.innerHTML = '';
-  const n = code.length;
-  const chunk = 4;
-  const perTick = 10;
-  const ticks = Math.ceil(n / chunk);
-  const delay = Math.max(4, Math.min(22, Math.round(3600 / n)));
-  for (let t = 1; t <= ticks; t++) {
-    const slice = code.slice(0, t * chunk);
-    codeEl.innerHTML = highlight(slice) + '<span class="tk-cursor">▍</span>';
-    if (t % perTick === 0) codeEl.scrollTop = codeEl.scrollHeight;
-    if (t % perTick === 0) await sleep(delay);
+  if (!state.order.length) {
+    root.innerHTML = '<div class="ft-empty">no files yet</div>';
+    return;
   }
-  codeEl.innerHTML = highlight(code);
-  // mark file active in tree
-  $$('.ft-item').forEach((x) => {
-    x.classList.toggle('active', x.dataset.path === filename);
-  });
+  for (const path of state.order) {
+    const item = document.createElement('div');
+    item.className = 'ft-item';
+    item.dataset.path = path;
+    item.innerHTML = `<span class="ft-ic">${iconFor(path)}</span>${esc(path)}`;
+    item.addEventListener('click', () => renderCode(path));
+    root.appendChild(item);
+  }
+}
+
+function renderCode(path) {
+  const f = state.files.get(path);
+  if (!f) return;
+  $('#editor-tab').textContent = path;
+  $('#editor-code').innerHTML = highlight(f.content);
+  $$('.ft-item').forEach((x) => x.classList.toggle('active', x.dataset.path === path));
+}
+
+async function streamCode(path, content) {
+  $('#code-empty').style.display = 'none';
+  $('#code-layout').hidden = false;
+  const codeEl = $('#editor-code');
+  $('#editor-tab').textContent = path;
+  codeEl.innerHTML = '';
+  const chunk = Math.max(3, Math.ceil(content.length / 90));
+  for (let i = 0; i <= content.length; i += chunk) {
+    codeEl.innerHTML = highlight(content.slice(0, i)) + '<span class="tk-cursor">▍</span>';
+    codeEl.scrollTop = codeEl.scrollHeight;
+    await sleep(8);
+  }
+  renderCode(path);
+  $$('.ft-item').forEach((x) => x.classList.toggle('active', x.dataset.path === path));
 }
 
 /* ============================================================
-   Files + DB + Git + Deploy panels
+   Files panel — REAL workspace listing
    ============================================================ */
 function renderFiles() {
   const grid = $('#files-grid');
   grid.innerHTML = '';
-  const files = flattenFiles(state.project.tree);
-  $('#files-count').textContent = `· ${files.length}`;
-  const order = Object.keys(state.project.code).concat(files.filter((f) => !state.project.code[f.path]).map((f) => f.path));
-  // unique ordering
-  const seen = new Set();
-  for (const f of order) {
-    if (seen.has(f)) continue;
-    seen.add(f);
+  $('#files-count').textContent = String(state.files.size);
+  for (const [path, f] of state.files) {
     const card = document.createElement('div');
     card.className = 'file-card';
-    const icon = files.find((x) => x.path === f)?.icon || '📄';
-    card.innerHTML = `<span class="fc-ic">${icon}</span><div class="fc-name">${f}</div><div class="fc-size"></div>`;
+    card.innerHTML = `<span class="fc-ic">${iconFor(path)}</span><div class="fc-name">${esc(path)}</div><div class="fc-size">${f.verb} · ${(f.bytes / 1024).toFixed(1)} KB</div>`;
+    card.addEventListener('click', () => { switchPanel('code'); renderCode(path); });
     grid.appendChild(card);
-    gsap.fromTo(card, { opacity: 0, scale: 0.9 }, {
-      opacity: 1, scale: 1, duration: 0.4, delay: 0.05, ease: 'back.out(2)',
-    });
+    gsap.fromTo(card, { opacity: 0, scale: 0.92 }, { opacity: 1, scale: 1, duration: 0.35, ease: 'back.out(2)' });
   }
-}
-
-function renderDB() {
-  const wrap = $('#db-tables');
-  wrap.innerHTML = '';
-  state.project.dbTables.forEach((t, ti) => {
-    const table = document.createElement('div');
-    table.className = 'db-table';
-    table.innerHTML = `
-      <div class="db-table-head"><span>▤ ${t.name}</span><span>${t.rows.length} cols</span></div>
-      ${t.rows.map(([k, v]) => `<div class="db-row"><span style="color:#a78bfa">${k}</span><span>${v}</span></div>`).join('')}`;
-    wrap.appendChild(table);
-    gsap.fromTo(table, { opacity: 0, y: 10 }, {
-      opacity: 1, y: 0, duration: 0.4, delay: ti * 0.12, ease: 'power2.out',
-    });
-  });
-}
-
-function renderGit() {
-  const wrap = $('#git-log');
-  wrap.innerHTML = '';
-  state.project.git.forEach(([msg, hash], i) => {
-    const item = document.createElement('div');
-    item.className = 'git-item';
-    item.innerHTML = `<span class="gi-hash">${hash}</span><span class="gi-msg">${msg}</span><span class="gi-hash" style="margin-left:auto">${i === 0 ? 'HEAD' : ''}</span>`;
-    wrap.appendChild(item);
-    gsap.fromTo(item, { opacity: 0, x: -14 }, {
-      opacity: 1, x: 0, duration: 0.4, delay: i * 0.14, ease: 'power2.out',
-    });
-  });
-}
-
-async function renderDeploy() {
-  const list = $('#deploy-list');
-  list.innerHTML = '';
-  const steps = state.project.deploy;
-  for (let i = 0; i < steps.length; i++) {
-    const step = document.createElement('div');
-    step.className = 'deploy-step run';
-    step.innerHTML = `<span class="ds-ic">⟳</span>${steps[i]}`;
-    list.appendChild(step);
-    gsap.fromTo(step, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.35 });
-    await sleep(520);
-    step.className = 'deploy-step done';
-    step.querySelector('.ds-ic').textContent = '✓';
-  }
-  const url = `https://${state.project.name}.keycode.studio`;
-  const done = document.createElement('div');
-  done.className = 'deploy-step done';
-  done.style.opacity = '1';
-  done.innerHTML = `<span class="ds-ic">🚀</span><span>Live: <span style="color:var(--prim-2)">${url}</span></span>`;
-  list.appendChild(done);
-  gsap.fromTo(done, { opacity: 0, scale: 0.96 }, { opacity: 1, scale: 1, duration: 0.4 });
-  toast('Deployment complete', url, 'ok');
 }
 
 /* ============================================================
-   Preview
+   Preview — render the agent's REAL html output
    ============================================================ */
-function buildPreview() {
+function refreshPreview() {
+  const htmlFile = [...state.files.keys()].find((p) => p.endsWith('.html') || p.endsWith('.htm'));
+  if (!htmlFile) return;
   const frame = $('#preview-frame');
-  frame.hidden = false;
   $('#preview-empty').style.display = 'none';
-  const html = state.project.code['src/index.html'] || state.project.code['src/app.tsx'] || '';
-  const fallback = `<!DOCTYPE html><html><head><style>body{font-family:system-ui;background:#0a0a12;color:#eef2ff;display:grid;place-items:center;height:100vh;margin:0}h1{font-size:2rem;background:linear-gradient(90deg,#6d5cff,#22d3ee);-webkit-background-clip:text;background-clip:text;color:transparent}</style></head><body><h1>${state.project.previewTitle}</h1></body></html>`;
-  const src = html.includes('<body') || html.includes('<html') ? html : fallback;
-  frame.srcdoc = src;
-  // pick a code file to auto-open
-  const firstCodeKey = Object.keys(state.project.code)[0];
-  streamCode(firstCodeKey, state.project.code[firstCodeKey]);
+  frame.hidden = false;
+  frame.srcdoc = state.files.get(htmlFile).content;
 }
 
 /* ============================================================
-   Build orchestrator
+   Deliver panel — REAL artifacts
    ============================================================ */
-function sleep(ms) {
-  return new Promise((r) => setTimeout(r, ms));
+function addArtifact(name, size) {
+  $('#deliver-empty').style.display = 'none';
+  const list = $('#deliver-list');
+  list.hidden = false;
+  const row = document.createElement('div');
+  row.className = 'deliver-row';
+  row.innerHTML = `
+    <span class="dl-ic">⬢</span>
+    <div class="dl-info"><div class="dl-name">${esc(name)}</div><div class="dl-meta">${((size || 0) / 1024).toFixed(1)} KB · agent workspace ZIP</div></div>
+    <a class="dl-btn" href="/api/agent/artifacts/${encodeURIComponent(name)}" download>Download ZIP</a>`;
+  list.appendChild(row);
+  gsap.fromTo(row, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4 });
+  toast('Artifact ready', name, 'ok');
 }
 
-async function runBuild(prompt) {
-  addUserMessage(prompt);
-  createAgentCards();
+/* ============================================================
+   Routers panel — live swarm health
+   ============================================================ */
+async function loadRouters() {
+  try {
+    const j = await fetch('/api/agent/routers').then((r) => r.json());
+    const list = $('#routers-list');
+    $('#routers-empty').style.display = 'none';
+    list.hidden = false;
+    list.innerHTML = '';
+    (j.routers || []).forEach((r) => {
+      const row = document.createElement('div');
+      row.className = 'router-row';
+      const dot = !r.configured ? 'na' : (r.alive ? 'ok' : 'dead');
+      row.innerHTML = `
+        <span class="dot ${dot}"></span>
+        <span class="rr-name">${esc(r.label || r.id)}</span>
+        <span class="rr-kind">${esc(r.kind || '')}</span>
+        <span class="rr-ms">${r.configured ? ((r.lastLatencyMs ? r.lastLatencyMs + 'ms' : '—')) : 'not set'}</span>`;
+      list.appendChild(row);
+    });
+    $('#conv-sub').textContent = `${j.configured || 0}/${j.total || 0} routers live`;
+  } catch { /* offline */ }
+}
 
-  // Planner message
-  const typer = addTypingIndicator();
-  await sleep(900);
-  removeTypingIndicator();
+/* ============================================================
+   Runtime panel — real tool catalog + sandbox + memory
+   ============================================================ */
+async function loadRuntime() {
+  try {
+    const [tools, mcp, mem] = await Promise.all([
+      fetch('/api/agent/tools').then((r) => r.json()),
+      fetch('/api/agent/mcp').then((r) => r.json()).catch(() => null),
+      fetch('/api/agent/memory').then((r) => r.json()).catch(() => null),
+    ]);
+    const body = $('#runtime-body');
+    $('#runtime-empty').style.display = 'none';
+    body.hidden = false;
+    const byGroup = tools.byGroup || {};
+    const groups = Object.entries(byGroup).map(([g, n]) => `<span class="rt-chip">${esc(g)}·${n}</span>`).join('');
+    const conn = mcp?.mcp;
+    const sand = mcp?.sandbox;
+    body.innerHTML = `
+      <div class="rt-section"><div class="rt-head">Tool registry · ${tools.total || 0}</div><div class="rt-chips">${groups}</div></div>
+      <div class="rt-section"><div class="rt-head">Sandbox</div><div class="rt-kv">${sand ? `active sandboxes: ${sand.activeSandboxes}` : '—'}</div></div>
+      <div class="rt-section"><div class="rt-head">MCP connectors</div><div class="rt-kv">${conn ? `${conn.connected || 0} stdio · ${conn.builtin || 0} builtin` : '—'}</div></div>
+      <div class="rt-section"><div class="rt-head">Long-term memory</div><div class="rt-kv">${mem?.stats ? `${mem.stats.entries || 0} entries` : '—'}</div></div>
+      <div class="rt-section"><div class="rt-head">Recent tool calls</div>${
+        (tools.recentCalls || []).slice(-8).reverse().map((c) =>
+          `<div class="rt-call ${c.ok ? 'ok' : 'err'}">${esc(c.tool)} ${c.ok ? '✓' : '✗'} ${c.durationMs}ms</div>`).join('') || '<div class="rt-kv">none yet</div>'
+      }</div>`;
+  } catch { /* offline */ }
+}
 
-  const planText = [
-    '<span class="plan-head">▸ Initializing build</span>',
-    `<span class="plan-line">Project: <b>${state.project.previewTitle}</b></span>`,
-    `<span class="plan-line">Domain: <b>${state.project.domain.toUpperCase()}</b></span>`,
-    `<span class="plan-line">Team: <b>${state.project.activeAgents.length} agents</b> dispatched in parallel</span>`,
-    `<span class="plan-line">Streaming live: code · terminal · preview · deployment</span>`,
-  ].join('\n');
-  addAIMessage(planText);
-  await sleep(700);
-
-  setAgent('planner', { status: 'working', progress: 20, log: 'Architecting solution…' });
-  await sleep(800);
-  setAgent('planner', { status: 'done', progress: 100, log: 'Blueprint complete' });
-  updateDockProgress();
-
-  // launch terminal + code streaming + agents concurrently
-  const agentScript = state.project.agents;
-  const terminalScript = state.project.terminal;
-  const codeEntries = Object.entries(state.project.code);
-
+/* ============================================================
+   THE REAL AGENT LOOP — SSE from /api/agent/react
+   ============================================================ */
+async function runAgentTask(task) {
+  addUserMessage(task);
+  $('#tb-status-text').textContent = 'Agent working';
   switchPanel('terminal');
-  renderFileTree();
+  termWrite(`◆ task: ${task}`, 't-banner');
 
-  const agentRunner = runAgentSequence(agentScript);
-  const termRunner = runTerminalScript(terminalScript);
-
-  // Stream code in the background (switch to code tab once started)
-  await sleep(500);
-  switchPanel('code');
-  renderFileTree();
-  for (const [fname, code] of codeEntries) {
-    await streamCode(fname, code);
-    const ft = $(`.ft-item[data-path="${fname}"]`);
-    if (ft) { ft.classList.add('active'); }
-    await sleep(180);
+  if (!state.online) {
+    offlineDemo(task);
+    return;
   }
 
-  await Promise.all([agentRunner, termRunner]);
+  const trace = addTypingIndicator();
+  const typer = $('.msg-text', trace);
+  let currentAgent = 'planner';
+  setAgent('planner', { status: 'working', progress: 8, log: 'reading the task' }, 'Planner');
 
-  // Database + git + files
-  switchPanel('database');
-  renderDB();
-  await sleep(600);
-  switchPanel('git');
-  renderGit();
-  await sleep(600);
-  switchPanel('files');
-  renderFiles();
-  await sleep(400);
+  let finalAnswer = '';
+  let usedSteps = 0;
+  state.abortCtrl = new AbortController();
 
-  // Deploy
-  switchPanel('deploypanel');
-  await renderDeploy();
-  await sleep(400);
+  try {
+    const token = localStorage.getItem('token') || '';
+    const res = await fetch('/api/agent/react', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) },
+      signal: state.abortCtrl.signal,
+      body: JSON.stringify({ task, maxSteps: 16, tokenBudget: 8000 }),
+    });
+    if (!res.ok || !res.body) {
+      const j = await res.json().catch(() => ({}));
+      throw new Error(j.error || 'agent endpoint error ' + res.status);
+    }
 
-  // Final states
-  setAgent('devops', { status: 'done', progress: 100, log: 'Deployed ✓' });
-  updateDockProgress();
-
-  state.buildActive = false;
-  $('#tb-status-text').textContent = 'Deployed';
-  $('#conv-sub').textContent = 'Build complete';
-  addAIMessage('✅ <b>Build complete.</b><br>Preview, code, terminal, database and deployment are all live. Ask me to iterate, add features, or ship it for real.');
-  toast('Build complete', `${state.project.previewTitle} is ready`, 'ok');
-}
-
-async function runAgentSequence(script) {
-  for (const [agentId, log] of script) {
-    const a = state.agents.get(agentId);
-    if (!a) continue;
-    setAgent(agentId, { status: 'working', progress: 15, log: log });
-    // slow progress over a random duration
-    const steps = 6 + ((Math.random() * 4) | 0);
-    for (let s = 1; s <= steps; s++) {
-      await sleep(160 + Math.random() * 200);
-      if (a.status === 'working') {
-        setAgent(agentId, { progress: Math.round((s / steps) * 100) });
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    let buf = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      const parts = buf.split('\n\n');
+      buf = parts.pop();
+      for (const part of parts) {
+        if (!part.startsWith('data:')) continue;
+        let d;
+        try { d = JSON.parse(part.slice(5)); } catch { continue; }
+        handleAgentEvent(d);
+        if (d.type === 'step') {
+          usedSteps = d.step || usedSteps;
+          if (d.kind === 'malformed') {
+            termWrite(`⚠ step ${d.step} — unparseable model turn, nudging`, 't-warn');
+          } else if (d.thought) {
+            removeTypingIndicator();
+            typer && (typer.id = '');
+            currentAgent = agentForTool(null);
+            setAgent(currentAgent, { status: 'working', progress: undefined, log: String(d.thought).slice(0, 60) });
+            termWrite(`◈ thought ${d.step}: ${String(d.thought).slice(0, 140)}`, 't-info');
+          }
+        } else if (d.type === 'todos') {
+          setAgent('planner', { progress: Math.round(100 * (d.todos || []).filter((t) => t.completed).length / Math.max(1, (d.todos || []).length)), log: 'plan ' + ((d.todos || []).filter((t) => t.completed).length) + '/' + (d.todos || []).length });
+        } else if (d.type === 'tool') {
+          currentAgent = agentForTool(d.tool);
+          setAgent(currentAgent, { status: 'working', log: d.tool }, currentAgent);
+          termWrite(`▸ ${d.tool} ${JSON.stringify(d.args || {}).slice(0, 160)}`, '');
+        } else if (d.type === 'observation') {
+          const ok = d.ok ? '✓' : '✗';
+          termWrite(`  ${ok} ${String(d.result || '').split('\n')[0].slice(0, 180)}`, d.ok ? 't-ok' : 't-err');
+          // REAL file event → code panel + files + preview
+          if (d.file && d.file.path) {
+            const f = { content: d.file.content || '', bytes: (d.file.content || '').length, verb: d.file.action || 'wrote', at: Date.now() };
+            if (!state.files.has(d.file.path)) state.order.push(d.file.path);
+            state.files.set(d.file.path, f);
+            renderFileTree();
+            renderFiles();
+            streamCode(d.file.path, f.content);
+            refreshPreview();
+          }
+          setAgent(currentAgent, { progress: Math.min(96, 10 + (usedSteps * 8)), log: d.tool + (d.ok ? ' ok' : ' failed') });
+        } else if (d.type === 'artifact') {
+          addArtifact(d.artifact, d.size);
+          switchPanel('deploypanel');
+        } else if (d.type === 'done') {
+          finalAnswer = d.answer || '';
+          if (d.exhausted) termWrite('⚠ step budget reached — partial results kept', 't-warn');
+        } else if (d.type === 'error') {
+          throw new Error(d.message || 'agent failed');
+        }
       }
     }
-    setAgent(agentId, { status: 'done', progress: 100, log: '✓ ' + log.split('—')[0] });
+
+    removeTypingIndicator();
+    setAgent(currentAgent, { status: 'done', progress: 100, log: 'run complete' });
     updateDockProgress();
+    if (finalAnswer) {
+      addAIMessage(esc(finalAnswer).replace(/\n/g, '<br>'));
+    } else {
+      addAIMessage('The agent hit its step budget before a final answer — the terminal and code panels show the real partial progress.');
+    }
+    $('#tb-status-text').textContent = state.files.size ? 'Delivered' : 'Complete';
+    $('#conv-sub').textContent = `${usedSteps} steps · ${state.files.size} files`;
+    toast('Run complete', `${usedSteps} steps · ${state.files.size} files written`, 'ok');
+  } catch (e) {
+    removeTypingIndicator();
+    if (e.name === 'AbortError') {
+      termWrite('■ stopped by operator', 't-warn');
+      addAIMessage('Stopped.');
+      $('#tb-status-text').textContent = 'Stopped';
+    } else {
+      termWrite('✗ ' + e.message, 't-err');
+      addAIMessage('Agent error: ' + esc(e.message));
+      $('#tb-status-text').textContent = 'Error';
+    }
+  } finally {
+    state.abortCtrl = null;
+    state.buildActive = false;
+    $('#prompt-enter').style.pointerEvents = '';
+    window.__universe?.setAmbience(1);
   }
+}
+
+function handleAgentEvent() { /* reserved for shared handling */ }
+
+/* ============================================================
+   Offline demo — HONEST fallback, clearly labeled
+   ============================================================ */
+function offlineDemo(task) {
+  termWrite('— offline demo (backend unreachable) · nothing below is a real build —', 't-warn');
+  addAIMessage(`<b>Runtime offline.</b> I can't reach the agent backend, so instead of pretending to build, here's exactly how to start it:<br><br>
+    <span class="mono-hint">npm start</span> → then reload this page.<br><br>
+    Everything on this screen — agents, terminal, code — runs on the real ReAct runtime once it's up.`);
+  setAgent('planner', { status: 'done', progress: 100, log: 'offline' });
+  $('#tb-status-text').textContent = 'Offline';
+  state.buildActive = false;
+  $('#prompt-enter').style.pointerEvents = '';
+  window.__universe?.setAmbience(0.45);
 }
 
 /* ============================================================
@@ -582,20 +633,22 @@ function switchPanel(tab) {
   state.panelTab = tab;
   $$('.ptab').forEach((b) => b.classList.toggle('active', b.dataset.tab === tab));
   $$('.ptab-pane').forEach((p) => p.classList.toggle('active', p.dataset.pane === tab));
+  if (tab === 'routers') loadRouters();
+  if (tab === 'runtime') loadRuntime();
 }
 
 /* ============================================================
    Command palette
    ============================================================ */
 const COMMANDS = [
-  { ic: '⬡', label: 'New Web Project', act: 'new-web', hint: 'Start a web build' },
-  { ic: '⊞', label: 'New PCB Project', act: 'new-pcb', hint: 'Hardware + firmware' },
-  { ic: '⬢', label: 'New CAD Project', act: 'new-cad', hint: 'Mechanical design' },
-  { ic: '▶', label: 'New Game Project', act: 'new-game', hint: 'Interactive 3D' },
-  { ic: '⌁', label: 'Open Terminal', act: 'panel:terminal', hint: 'Terminal tab' },
-  { ic: '◐', label: 'Open 3D Viewer', act: 'panel:viewer3d', hint: 'Model viewer' },
-  { ic: '◧', label: 'Go to Dashboard', act: 'home', hint: 'Back to home' },
-  { ic: '⇪', label: 'View Deployments', act: 'panel:deploypanel', hint: 'Deployment tab' },
+  { ic: '⬡', label: 'New agent run', act: 'home', hint: 'back to prompt' },
+  { ic: '⌁', label: 'Open Terminal', act: 'panel:terminal', hint: 'ReAct trace' },
+  { ic: '◐', label: 'Open Preview', act: 'panel:preview', hint: 'live output' },
+  { ic: '⌨', label: 'Open Code', act: 'panel:code', hint: 'agent files' },
+  { ic: '⇪', label: 'Open Deliverables', act: 'panel:deploypanel', hint: 'artifact ZIPs' },
+  { ic: '⌸', label: 'Router swarm health', act: 'panel:routers', hint: '15 providers' },
+  { ic: '⟳', label: 'Runtime · tools', act: 'panel:runtime', hint: 'registry + stats' },
+  { ic: '⊙', label: 'Probe routers now', act: 'probe', hint: 'ping all 15' },
 ];
 
 function openCmdPalette() {
@@ -604,10 +657,7 @@ function openCmdPalette() {
   const input = $('#cmd-input');
   input.value = '';
   renderCmdList('');
-  requestAnimationFrame(() => {
-    cmd.classList.add('show');
-    input.focus();
-  });
+  requestAnimationFrame(() => { cmd.classList.add('show'); input.focus(); });
   state.cmdOpen = true;
 }
 
@@ -638,64 +688,24 @@ function renderCmdList(filter) {
   });
 }
 
-function runCommand(act) {
+async function runCommand(act) {
   closeCmdPalette();
-  if (act.startsWith('panel:')) {
-    switchPanel(act.split(':')[1]);
-    return;
-  }
+  if (act.startsWith('panel:')) { switchPanel(act.split(':')[1]); return; }
   if (act === 'home') {
-    resetToHome();
-    return;
-  }
-  if (act.startsWith('new-')) {
-    const labels = { 'new-web': 'Build a modern web app', 'new-pcb': 'Design a 4-layer drone PCB with flight controller', 'new-cad': 'Design a parametric product enclosure', 'new-game': 'Create a WebGL game with neon worlds' };
-    resetToHome(labels[act]);
-    return;
-  }
-}
-
-function resetToHome(prefill) {
-  state.buildActive = false;
-  $('#shell').hidden = true;
-  $('#home').style.display = 'flex';
-  gsap.fromTo('#home', { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.5 });
-  if (prefill) {
-    const input = $('#prompt-input');
-    input.value = prefill;
-    setTimeout(() => launchBuild(prefill), 500);
-  } else {
-    gsap.to('#prompt-box', { scale: 1, opacity: 1, duration: 0.4, delay: 0.2 });
+    $('#shell').hidden = true;
+    $('#home').style.display = 'flex';
+    gsap.fromTo('#home', { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.5 });
     setTimeout(() => $('#prompt-input').focus(), 400);
+    return;
   }
-}
-
-/* ============================================================
-   Sidebar navigation
-   ============================================================ */
-function handleNav(view) {
-  $$('.nav-item').forEach((n) => n.classList.remove('active'));
-  const btn = $(`.nav-item[data-view="${view}"]`);
-  if (btn) btn.classList.add('active');
-
-  // Map studio views to command actions
-  const map = {
-    dashboard: 'home',
-    chat: null,
-    terminal: 'panel:terminal',
-    deploy: 'panel:deploypanel',
-    web: 'new-web',
-    cad: 'new-cad',
-    pcb: 'new-pcb',
-    game: 'new-game',
-  };
-  const act = map[view];
-  if (act) runCommand(act);
-  if (view === 'chat') {
-    switchPanel('preview');
-  }
-  if (state.sidebarOpen && window.innerWidth <= 860) {
-    $('#sidebar').classList.remove('open');
+  if (act === 'probe') {
+    toast('Router probe', 'pinging every provider…', 'info');
+    try {
+      const j = await fetch('/api/agent/routers?probe=1').then((r) => r.json());
+      const okCount = (j.routers || []).filter((r) => r.probe === 'ok').length;
+      toast('Probe complete', `${okCount}/${j.configured} routers answered`, okCount > 0 ? 'ok' : 'warn');
+      loadRouters();
+    } catch { toast('Probe failed', 'backend unreachable', 'err'); }
   }
 }
 
@@ -705,7 +715,7 @@ function handleNav(view) {
 function toast(title, sub, type = '') {
   const box = document.createElement('div');
   box.className = `toast ${type}`.trim();
-  box.innerHTML = `<span class="t-ic">${type === 'ok' ? '✓' : type === 'warn' ? '⚠' : '◈'}</span><div><div style="font-weight:600">${title}</div><div style="font-size:12px;color:var(--text-1)">${sub}</div></div>`;
+  box.innerHTML = `<span class="t-ic">${type === 'ok' ? '✓' : type === 'warn' ? '⚠' : type === 'err' ? '✗' : '◈'}</span><div><div style="font-weight:600">${esc(title)}</div><div style="font-size:12px;color:var(--text-1)">${esc(sub)}</div></div>`;
   $('#toasts').appendChild(box);
   gsap.to(box, { opacity: 1, x: 0, duration: 0.4, ease: 'power2.out' });
   setTimeout(() => {
@@ -714,17 +724,27 @@ function toast(title, sub, type = '') {
 }
 
 /* ============================================================
-   Clock + stats
+   Clock + REAL system stats
    ============================================================ */
+function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
+
 function tickStatus() {
   const now = new Date();
   $('#st-clock').textContent = now.toLocaleTimeString();
-  const done = [...state.agents.values()].filter((a) => a.status === 'done').length;
-  const total = state.agents.size;
-  const pct = total ? Math.round((done / total) * 100) : 0;
-  $('#st-gpu').textContent = `GPU: ${Math.min(99, 8 + pct * 0.8 | 0)}%`;
-  $('#st-cpu').textContent = `CPU: ${Math.min(99, 12 + pct * 0.85 | 0)}%`;
-  $('#st-mem').textContent = `MEM: ${(1.2 + pct * 0.02).toFixed(1)} GB`;
+  const u = window.__universe;
+  if (u) {
+    $('#st-fps').textContent = `FPS ${Math.round(u.fps || 0)}`;
+  }
+  if (performance.memory) {
+    const mb = (performance.memory.usedJSHeapSize / 1048576).toFixed(0);
+    $('#st-mem').textContent = `MEM ${mb} MB`;
+  } else {
+    $('#st-mem').textContent = 'MEM —';
+  }
+  // GPU/CPU are browser-sandboxed; show honest static capability instead of fake load
+  $('#st-gpu').textContent = `GPU ${u?.gpu === 'ready' ? 'WebGPU' : u?.renderer ? 'WebGL2' : '—'}`;
+  $('#st-cpu').textContent = `cores ${navigator.hardwareConcurrency || '?'}`;
+  $('#st-tools').textContent = `tools ${state.stats.tools}`;
 }
 
 /* ============================================================
@@ -733,20 +753,16 @@ function tickStatus() {
 function init() {
   const universe = new Universe($('#universe'));
   window.__universe = universe;
-  const viewer = new Viewer3D('#v3d-canvas');
-  window.__viewer = viewer;
+  new Viewer3D('#v3d-canvas'); // may not exist in DOM — the viewer guards itself
 
   runBoot();
 
-  // Home interactions
   const input = $('#prompt-input');
-  const enterBtn = $('#prompt-enter');
   const submit = () => launchBuild(input.value);
-  enterBtn.addEventListener('click', submit);
+  $('#prompt-enter').addEventListener('click', submit);
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); }
   });
-  // auto-grow
   input.addEventListener('input', () => {
     input.style.height = 'auto';
     input.style.height = input.scrollHeight + 'px';
@@ -760,44 +776,53 @@ function init() {
     });
   });
 
-  // Conversation input
+  // Conversation input — runs the real agent
   const convInput = $('#conv-input');
-  const convSend = $('#conv-send');
   const convSubmit = () => {
     const txt = convInput.value.trim();
-    if (!txt) return;
-    addUserMessage(txt);
-    const t = addTypingIndicator();
-    setTimeout(() => {
-      removeTypingIndicator();
-      addAIMessage(`On it. I've queued that as an iteration on <b>${state.project?.previewTitle || 'the project'}</b> — routing to the appropriate agents.`);
-      toast('Task queued', txt.length > 40 ? txt.slice(0, 40) + '…' : txt);
-    }, 900);
+    if (!txt || state.buildActive) return;
     convInput.value = '';
-    convInput.style.height = 'auto';
+    state.buildActive = true;
+    runAgentTask(txt);
   };
-  convSend.addEventListener('click', convSubmit);
+  $('#conv-send').addEventListener('click', convSubmit);
   convInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); convSubmit(); }
   });
-
-  // Panel tabs
-  $$('.ptab').forEach((t) => {
-    t.addEventListener('click', () => switchPanel(t.dataset.tab));
+  convInput.addEventListener('input', () => {
+    convInput.style.height = 'auto';
+    convInput.style.height = Math.min(convInput.scrollHeight, 120) + 'px';
   });
 
-  // Sidebar
+  $$('.ptab').forEach((t) => t.addEventListener('click', () => switchPanel(t.dataset.tab)));
+
   $$('.nav-item[data-view]').forEach((n) => {
-    n.addEventListener('click', () => handleNav(n.dataset.view));
+    n.addEventListener('click', () => {
+      $$('.nav-item').forEach((x) => x.classList.remove('active'));
+      n.classList.add('active');
+      const view = n.dataset.view;
+      if (view === 'dashboard') { runCommand('home'); return; }
+      if (view === 'tools') { switchPanel('runtime'); return; }
+      if (view === 'chat') { switchPanel('preview'); return; }
+      const prefills = {
+        web: 'Build a responsive landing page for a coffee brand',
+        game: 'Create a small WebGL game in a single html file',
+        pcb: 'Describe a 4-layer drone flight controller PCB and write the firmware plan',
+        cad: 'Design a parametric camera enclosure and explain the steps',
+      };
+      $('#shell').hidden = true;
+      $('#home').style.display = 'flex';
+      $('#prompt-input').value = prefills[view] || '';
+      setTimeout(() => launchBuild($('#prompt-input').value), 350);
+    });
   });
+
   $('#tb-hamburger').addEventListener('click', () => {
     $('#sidebar').classList.toggle('open');
     state.sidebarOpen = $('#sidebar').classList.contains('open');
   });
 
-  // Command palette
   $('#tb-cmd').addEventListener('click', openCmdPalette);
-  $('#tb-search').addEventListener('click', openCmdPalette);
   window.addEventListener('keydown', (e) => {
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
       e.preventDefault();
@@ -823,15 +848,16 @@ function init() {
   }
   $('#cmd').addEventListener('click', (e) => { if (e.target === $('#cmd')) closeCmdPalette(); });
 
-  // Notifications
-  $('#tb-notif').addEventListener('click', () => toast('Notifications', '3 system updates since last check', 'warn'));
+  $('#tb-notif').addEventListener('click', () => {
+    toast('Notifications', state.online ? `${state.stats.routers.configured}/${state.stats.routers.total} AI routers configured` : 'Runtime offline — npm start', state.online ? 'ok' : 'warn');
+  });
 
-  // Stats ticker
   setInterval(tickStatus, 1000);
   tickStatus();
-
-  // Keep universe alive
-  window.addEventListener('beforeunload', () => universe.dispose());
+  window.addEventListener('beforeunload', () => {
+    state.abortCtrl?.abort();
+    universe.dispose();
+  });
 }
 
 document.addEventListener('DOMContentLoaded', init);

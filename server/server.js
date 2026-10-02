@@ -65,6 +65,7 @@ import { runSwarm } from "./agent/swarmOrchestrator.js";
 import { toolCatalog, toolStats, recentCalls, dispatchTool } from "./agent/toolDispatch.js";
 import { registerAdvancedTools } from "./agent/advancedTools.js";
 registerAdvancedTools();
+import { mountRoutes } from "./keycode_routes.js";
 import { connectorManager } from "./agent/mcpClient.js";
 import { memoryStats, recall, remember, fitPrompt } from "./agent/contextPipeline.js";
 import { sandboxStats } from "./agent/sandbox.js";
@@ -1166,6 +1167,10 @@ app.use((req, res, next) => {
     if (!html.includes('login-bg') && isAuthPage) {
       html = html.replace('</head>', '<script defer src="/login-bg.js"></script>\n</head>');
     }
+    // Auto-inject monetization loader (ads/affiliate/donations/premium) — skip auth & admin pages
+    if (!html.includes('ads.js') && !isAuthPage && req.path !== '/admin-panel.html') {
+      html = html.replace('</body>', '<script defer src="/ads.js"></script>\n</body>');
+    }
     res.type('html').send(html);
   } catch (err) {
     next();
@@ -1997,7 +2002,96 @@ const subscriptionSchema = new mongoose.Schema({
 });
 const Subscription = mongoose.models.Subscription || mongoose.model("Subscription", subscriptionSchema);
 
-// ===== DATABASE INDEXES =====
+// Settings default preferences helper (used by keycode_routes module)
+function defaultPreferences() {
+  return {
+    theme: "dark",
+    locale: "en-US",
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    units: "metric",
+    defaultProjectType: "web-app",
+    editor: { fontSize: 14, tabSize: 2, wordWrap: true },
+    notifications: { email: true, push: true, marketing: false },
+    onboardedAt: new Date().toISOString()
+  };
+}
+
+// ==================== MARKETPLACE MODULE ====================
+
+const marketplaceListingSchema = new mongoose.Schema({
+  slug: { type: String, required: true, unique: true, lowercase: true, trim: true },
+  title: { type: String, required: true, trim: true, maxlength: 120 },
+  description: { type: String, default: '' },
+  category: { type: String, default: 'general' },
+  price: { type: Number, required: true, min: 0 },
+  currency: { type: String, default: 'USD' },
+  image: { type: String, default: '' },
+  tags: [{ type: String }],
+  stock: { type: Number, default: -1 }, // -1 = unlimited
+  status: { type: String, enum: ['draft', 'active', 'archived'], default: 'active' },
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+}, { timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' } });
+const MarketplaceListing = mongoose.models.MarketplaceListing || mongoose.model('MarketplaceListing', marketplaceListingSchema);
+
+const marketplaceOrderSchema = new mongoose.Schema({
+  listing: { type: mongoose.Schema.Types.ObjectId, ref: 'MarketplaceListing', required: true },
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  quantity: { type: Number, default: 1, min: 1 },
+  total: { type: Number, required: true },
+  currency: { type: String, default: 'USD' },
+  status: { type: String, enum: ['pending', 'paid', 'fulfilled', 'cancelled'], default: 'pending' },
+  paymentId: String,
+  paidAt: Date,
+  notes: { type: String, default: '' },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+marketplaceOrderSchema.index({ user: 1, createdAt: -1 });
+marketplaceOrderSchema.index({ listing: 1, status: 1 });
+const MarketplaceOrder = mongoose.models.MarketplaceOrder || mongoose.model('MarketplaceOrder', marketplaceOrderSchema);
+
+// ==================== TEAM MODULE ====================
+
+const teamSchema = new mongoose.Schema({
+  name: { type: String, required: true, trim: true, maxlength: 100 },
+  slug: { type: String, required: true, unique: true, lowercase: true, trim: true },
+  description: { type: String, default: '' },
+  owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  defaultsToOwner: { type: Boolean, default: true },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+}, { timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' } });
+const Team = mongoose.models.Team || mongoose.model('Team', teamSchema);
+
+const teamMemberSchema = new mongoose.Schema({
+  team: { type: mongoose.Schema.Types.ObjectId, ref: 'Team', required: true },
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  role: { type: String, enum: ['owner', 'admin', 'member', 'viewer'], default: 'member' },
+  joinedAt: { type: Date, default: Date.now },
+  removedAt: Date
+});
+teamMemberSchema.index({ team: 1, user: 1 }, { unique: true });
+teamMemberSchema.index({ team: 1, role: 1 });
+const TeamMember = mongoose.models.TeamMember || mongoose.model('TeamMember', teamMemberSchema);
+
+const teamInviteSchema = new mongoose.Schema({
+  team: { type: mongoose.Schema.Types.ObjectId, ref: 'Team', required: true },
+  email: { type: String, required: true, lowercase: true, trim: true },
+  invitedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  role: { type: String, enum: ['admin', 'member', 'viewer'], default: 'member' },
+  token: { type: String, required: true, unique: true },
+  expiresAt: { type: Date, required: true },
+  acceptedAt: Date,
+  rejectedAt: Date,
+  createdAt: { type: Date, default: Date.now }
+});
+teamInviteSchema.index({ token: 1 });
+teamInviteSchema.index({ email: 1, team: 1 });
+const TeamInvite = mongoose.models.TeamInvite || mongoose.model('TeamInvite', teamInviteSchema);
+
+// ==================== DATABASE INDEXES ====================
 async function ensureIndexes() {
   try {
     await User.collection.createIndex({ email: 1 }, { unique: true });
@@ -2085,10 +2179,10 @@ async function saveState(key, value) {
 async function loadAllSystemState() {
   const keys = ['systemConfig','paymentConfig','cmsContent','notifications','supportTickets',
     'activityFeed','announcements','ipBlockList','aiModelState','backups',
-    'complianceState','platformState','billingState','workflows','securityState'];
+    'complianceState','platformState','billingState','workflows','securityState','monetizationConfig'];
   const vars = [systemConfig, paymentConfig, cmsContent, notifications, supportTickets,
     activityFeed, announcements, ipBlockList, aiModelState, backups,
-    complianceState, platformState, billingState, workflows, securityState];
+    complianceState, platformState, billingState, workflows, securityState, monetizationConfig];
   const results = await Promise.all(keys.map((k, i) => loadState(k, vars[i])));
   results.forEach((val, i) => {
     if (Array.isArray(vars[i])) { vars[i].length = 0; vars[i].push(...val); }
@@ -5919,6 +6013,59 @@ app.get("/api/admin/config", auth, adminOnly, async (req, res) => { res.json(sys
 app.put("/api/admin/config", auth, adminOnly, async (req, res) => {
   Object.keys(req.body).forEach(k => { if (k in systemConfig) systemConfig[k] = req.body[k]; });
   res.json({ success: true, config: systemConfig });
+});
+
+// -- MONETIZATION (ads / affiliate / donations / premium) --
+const monetizationConfig = {
+  enabled: true,
+  ads: { enabled: true, network: "none", networkClientId: "", headerEnabled: true, footerEnabled: true, inFeedEnabled: true },
+  affiliate: { enabled: true, items: [] }, // {id,title,url,image,blurb,category}
+  donations: { enabled: true, kofi: "", buymeacoffee: "", paypal: "", upiId: "", message: "Support KEYCODE Studio ❤" },
+  premium: { enabled: true, monthlyPriceINR: 199, yearlyPriceINR: 1499, adFree: true, perks: ["Ad-free experience", "Priority AI generation", "Exclusive tools"] },
+  revenueLog: [] // {at, source, amount, note}
+};
+app.get("/api/monetization", async (req, res) => {
+  const m = monetizationConfig;
+  res.json({
+    enabled: m.enabled,
+    ads: { enabled: m.ads.enabled && m.enabled, network: m.ads.network, networkClientId: m.ads.networkClientId, header: m.ads.headerEnabled, footer: m.ads.footerEnabled, inFeed: m.ads.inFeedEnabled },
+    affiliate: { enabled: m.affiliate.enabled && m.enabled, items: (m.affiliate.items || []).filter(i => i && i.title && i.url) },
+    donations: m.donations.enabled && m.enabled ? m.donations : null,
+    premium: m.premium.enabled && m.enabled ? m.premium : null
+  });
+});
+app.get("/api/admin/monetization", auth, adminOnly, async (req, res) => { res.json(monetizationConfig); });
+app.put("/api/admin/monetization", auth, adminOnly, async (req, res) => {
+  const b = req.body || {};
+  if (typeof b.enabled === "boolean") monetizationConfig.enabled = b.enabled;
+  for (const sec of ["ads", "affiliate", "donations", "premium"]) {
+    if (b[sec] && typeof b[sec] === "object") Object.assign(monetizationConfig[sec], b[sec]);
+  }
+  res.json({ success: true, config: monetizationConfig });
+});
+app.post("/api/admin/monetization/affiliate", auth, adminOnly, async (req, res) => {
+  const { title, url, image, blurb, category } = req.body || {};
+  if (!title || !url) return res.status(400).json({ error: "title and url required" });
+  const item = { _id: "aff_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), title, url, image: image || "", blurb: blurb || "", category: category || "general", addedAt: new Date() };
+  monetizationConfig.affiliate.items.push(item);
+  res.json({ success: true, item });
+});
+app.delete("/api/admin/monetization/affiliate/:id", auth, adminOnly, async (req, res) => {
+  const i = monetizationConfig.affiliate.items.findIndex(x => x._id === req.params.id);
+  if (i > -1) monetizationConfig.affiliate.items.splice(i, 1);
+  res.json({ success: true });
+});
+app.post("/api/admin/monetization/revenue", auth, adminOnly, async (req, res) => {
+  const { source, amount, note } = req.body || {};
+  if (!source || typeof amount !== "number") return res.status(400).json({ error: "source and numeric amount required" });
+  const entry = { _id: "rev_" + Date.now().toString(36), at: new Date(), source, amount, note: note || "" };
+  monetizationConfig.revenueLog.unshift(entry);
+  if (monetizationConfig.revenueLog.length > 500) monetizationConfig.revenueLog.length = 500;
+  res.json({ success: true, entry, totals: { count: monetizationConfig.revenueLog.length, sum: +monetizationConfig.revenueLog.reduce((s, e) => s + e.amount, 0).toFixed(2) } });
+});
+app.get("/api/admin/monetization/revenue", auth, adminOnly, async (req, res) => {
+  const log = monetizationConfig.revenueLog;
+  res.json({ entries: log.slice(0, 100), totals: { count: log.length, sum: +log.reduce((s, e) => s + e.amount, 0).toFixed(2) } });
 });
 
 // -- BACKUP --
@@ -11338,7 +11485,7 @@ app.get("/api/ai/models", async (req, res) => {
   res.json({ success: true, models, localAvailable: localModels.length > 0, cloudAvailable: azureUp });
 });
 
-// ==================== AGENT ROUTER (9 providers) ====================
+// ==================== AGENT ROUTER (15 providers — free-tier-first) ====================
 // Dify · Langflow · Open Interpreter · Groq · Mistral · DeepSeek ·
 // OpenRouter · Azure Foundry · Ollama — one swarm, automatic failover.
 
@@ -13195,7 +13342,8 @@ const server = app.listen(PORT, "0.0.0.0", async () => {
         saveState('platformState', platformState),
         saveState('billingState', billingState),
         saveState('workflows', workflows),
-        saveState('securityState', securityState)
+        saveState('securityState', securityState),
+        saveState('monetizationConfig', monetizationConfig)
       ]);
     } catch(e) { console.error('[State] Auto-save failed:', e.message); }
   }, 30000);
@@ -15208,6 +15356,27 @@ app.post("/api/git/pull", auth, async (req, res) => {
     if (!result.ok) return res.status(400).json({ error: result.error });
     res.json({ success: true, count: result.count, commit: result.commit, remoteHead: result.remoteHead });
   } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ==================== KEYCODE FEATURES: MARKETPLACE / TEAM / ANALYTICS / SETTINGS ====================
+
+mountRoutes(app, {
+  auth,
+  crypto,
+  sendEmail,
+  createAuditLog,
+  FRONTEND_URL,
+  MarketplaceListing,
+  MarketplaceOrder,
+  Team,
+  TeamMember,
+  TeamInvite,
+  User,
+  Order,
+  AIProject,
+  AppState,
+  Notification,
+  defaultPreferences
 });
 
 // Fallback for SPA routes

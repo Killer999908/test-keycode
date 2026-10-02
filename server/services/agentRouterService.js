@@ -1,20 +1,27 @@
 // ============================================================
-// KEYCODE AgentRouterService — 9-Provider Universal Agent Router
+// KEYCODE AgentRouterService — 14-Provider Universal Agent Router
 // ============================================================
 // One interface to every brain the Forge can reach. Each router
 // adapts its provider's native API into a common shape:
 //   runAgent(prompt, { system, maxTokens, timeoutMs }) → { text, router }
 //
-// Routers (in swarm priority order):
-//   1. dify             — self-hosted Dify workflow/chatflow app
-//   2. langflow         — self-hosted Langflow flow run
-//   3. open-interpreter — local Open Interpreter CLI (agentic code execution)
-//   4. groq             — Groq Cloud (fastest hosted inference)
-//   5. mistral          — Mistral / Codestral
-//   6. deepseek         — DeepSeek chat
-//   7. openrouter       — OpenRouter auto-routing (200+ models)
-//   8. azure-foundry    — Azure AI Foundry (successor to retired GitHub Models)
-//   9. ollama           — local Ollama (private, free)
+// Routers (in swarm priority order). Free-tier providers are listed
+// first so a developer with zero budget still gets a full swarm:
+//   1. dify                 — self-hosted Dify workflow/chatflow app
+//   2. langflow             — self-hosted Langflow flow run
+//   3. open-interpreter     — local Open Interpreter CLI (agentic code execution)
+//   4. gemini               — Google AI Studio (generous FREE tier, 1M ctx)
+//   5. groq                 — Groq Cloud (fastest hosted inference, FREE tier)
+//   6. cerebras             — Cerebras (wafer-scale speed, FREE tier)
+//   7. sambanova            — SambaNova Cloud (free fast-inference tier)
+//   8. nvidia-nim           — NVIDIA NIM (free developer credits)
+//   9. mistral              — Mistral / Codestral (free experiment tier)
+//  10. deepseek             — DeepSeek chat
+//  11. cloudflare-workers-ai — Workers AI (10k neurons/day FREE)
+//  12. huggingface          — HF Inference Providers (free monthly credits)
+//  13. openrouter           — OpenRouter auto-routing (200+ models, :free models)
+//  14. azure-foundry        — Azure AI Foundry (successor to retired GitHub Models)
+//  15. ollama               — local Ollama (private, free, always configured)
 //
 // The router never throws into the caller: every adapter catches its own
 // errors and returns { ok:false, error }. Dead routers are skipped by the
@@ -170,8 +177,27 @@ async function runOpenInterpreter(prompt, { timeoutMs }) {
 }
 
 // ─────────────────────────────────────────────
-// Routers 4-9: hosted + local model providers
+// Routers 4-15: hosted + local model providers.
+// Free-tier-first ordering: a developer with no budget gets a real swarm.
 // ─────────────────────────────────────────────
+
+/** Google Gemini — native generateContent (generous free tier via AI Studio). */
+async function runGemini(prompt, o) {
+  const key = env('GEMINI_API_KEY') || env('GOOGLE_API_KEY');
+  if (!key) throw new Error('GEMINI_API_KEY not set');
+  const model = o.models?.gemini || env('GEMINI_MODEL', 'gemini-3.8-flash');
+  const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(key);
+  const j = await postJson(url, {
+    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    ...(o.system ? { systemInstruction: { parts: [{ text: o.system }] } } : {}),
+    generationConfig: { maxOutputTokens: Math.max(o.maxTokens || 0, 1024), temperature: 0.4 },
+  }, {}, 90000);
+  const parts = j?.candidates?.[0]?.content?.parts || [];
+  const text = parts.map((p) => p.text || '').join('').trim();
+  if (!text) throw new Error('gemini returned no candidates (often: safety block or quota)');
+  return text;
+}
+
 async function runGroq(prompt, o) {
   const key = env('GROQ_API_KEY');
   if (!key) throw new Error('GROQ_API_KEY not set');
@@ -182,6 +208,24 @@ async function runMistral(prompt, o) {
   if (!key) throw new Error('MISTRAL_API_KEY not set');
   return openAiCompatible({ baseURL: 'https://api.mistral.ai/v1', apiKey: key, model: o.models?.mistral || env('MISTRAL_MODEL', 'codestral-latest'), prompt, system: o.system, maxTokens: o.maxTokens });
 }
+/** Cerebras — wafer-scale inference, free tier, OpenAI-compatible. */
+async function runCerebras(prompt, o) {
+  const key = env('CEREBRAS_API_KEY');
+ if (!key) throw new Error('CEREBRAS_API_KEY not set');
+  return openAiCompatible({ baseURL: 'https://api.cerebras.ai/v1', apiKey: key, model: o.models?.cerebras || env('CEREBRAS_MODEL', 'llama-3.3-70b'), prompt, system: o.system, maxTokens: o.maxTokens });
+}
+/** SambaNova Cloud — fast open-model inference, free developer tier. */
+async function runSambaNova(prompt, o) {
+  const key = env('SAMBANOVA_API_KEY');
+  if (!key) throw new Error('SAMBANOVA_API_KEY not set');
+  return openAiCompatible({ baseURL: 'https://api.sambanova.ai/v1', apiKey: key, model: o.models?.sambanova || env('SAMBANOVA_MODEL', 'Meta-Llama-3.3-70B-Instruct'), prompt, system: o.system, maxTokens: o.maxTokens });
+}
+/** NVIDIA NIM — build.nvidia.com free developer credits, OpenAI-compatible. */
+async function runNvidiaNim(prompt, o) {
+  const key = env('NVIDIA_NIM_API_KEY') || env('NVIDIA_API_KEY');
+  if (!key) throw new Error('NVIDIA_NIM_API_KEY not set');
+  return openAiCompatible({ baseURL: 'https://integrate.api.nvidia.com/v1', apiKey: key, model: o.models?.nim || env('NVIDIA_NIM_MODEL', 'meta/llama-3.3-70b-instruct'), prompt, system: o.system, maxTokens: o.maxTokens });
+}
 async function runDeepSeek(prompt, o) {
   const key = env('DEEPSEEK_API_KEY');
   if (!key) throw new Error('DEEPSEEK_API_KEY not set');
@@ -190,7 +234,26 @@ async function runDeepSeek(prompt, o) {
 async function runOpenRouter(prompt, o) {
   const key = env('OPENROUTER_API_KEY');
   if (!key) throw new Error('OPENROUTER_API_KEY not set');
-  return openAiCompatible({ baseURL: 'https://openrouter.ai/api/v1', apiKey: key, model: o.models?.openrouter || 'openrouter/auto', prompt, system: o.system, maxTokens: o.maxTokens, extraHeaders: { 'HTTP-Referer': 'https://keycode.studio', 'X-Title': 'KEYCODE Forge' } });
+  return openAiCompatible({ baseURL: 'https://openrouter.ai/api/v1', apiKey: key, model: o.models?.openrouter || env('OPENROUTER_MODEL', 'nvidia/nemotron-3-ultra-550b-a55b:free'), prompt, system: o.system, maxTokens: o.maxTokens, extraHeaders: { 'HTTP-Referer': 'https://keycode.studio', 'X-Title': 'KEYCODE Forge' } });
+}
+/** Cloudflare Workers AI — ~10k neurons/day free, OpenAI-compatible endpoint. */
+async function runCloudflareWorkersAI(prompt, o) {
+  const accountId = env('CLOUDFLARE_ACCOUNT_ID');
+  const token = env('CLOUDFLARE_API_TOKEN');
+  if (!accountId || !token) throw new Error('CLOUDFLARE_ACCOUNT_ID / CLOUDFLARE_API_TOKEN not set');
+  const model = o.models?.cloudflare || env('CLOUDFLARE_AI_MODEL', '@cf/meta/llama-3.3-70b-instruct-fp8-fast');
+  return openAiCompatible({
+    baseURL: 'https://api.cloudflare.com/client/v4/accounts/' + encodeURIComponent(accountId) + '/ai/run',
+    apiKey: token,
+    model,
+    prompt, system: o.system, maxTokens: o.maxTokens,
+  });
+}
+/** HuggingFace Inference Providers — free monthly credits, OpenAI-compatible router. */
+async function runHuggingFace(prompt, o) {
+  const token = env('HF_TOKEN') || env('HUGGINGFACE_API_KEY');
+  if (!token) throw new Error('HF_TOKEN not set');
+  return openAiCompatible({ baseURL: 'https://router.huggingface.co/v1', apiKey: token, model: o.models?.huggingface || env('HF_MODEL', 'deepseek-ai/DeepSeek-V3-0324'), prompt, system: o.system, maxTokens: o.maxTokens });
 }
 async function runAzureFoundry(prompt, o) {
   const key = env('AZURE_FOUNDRY_API_KEY') || env('GITHUB_TOKEN');
@@ -226,15 +289,21 @@ async function runOllama(prompt, o) {
 // Router registry
 // ─────────────────────────────────────────────
 export const ROUTERS = {
-  'dify':             { label: 'Dify Workflow',        kind: 'workflow', run: runDify,             configured: () => !!env('DIFY_HOST') && !!env('DIFY_API_KEY') },
-  'langflow':         { label: 'Langflow Flow',        kind: 'workflow', run: runLangflow,         configured: () => !!env('LANGFLOW_HOST') && !!env('LANGFLOW_FLOW_ID') },
-  'open-interpreter': { label: 'Open Interpreter',     kind: 'agent',    run: runOpenInterpreter,  configured: () => !!env('INTERPRETER_BIN') || !!env('INTERPRETER_MODEL') },
-  'groq':             { label: 'Groq Cloud',           kind: 'model',    run: runGroq,             configured: () => !!env('GROQ_API_KEY') },
-  'mistral':          { label: 'Mistral Codestral',    kind: 'model',    run: runMistral,          configured: () => !!env('MISTRAL_API_KEY') },
-  'deepseek':         { label: 'DeepSeek',             kind: 'model',    run: runDeepSeek,         configured: () => !!env('DEEPSEEK_API_KEY') },
-  'openrouter':       { label: 'OpenRouter',           kind: 'model',    run: runOpenRouter,       configured: () => !!env('OPENROUTER_API_KEY') },
-  'azure-foundry':    { label: 'Azure AI Foundry',     kind: 'model',    run: runAzureFoundry,     configured: () => !!(env('AZURE_FOUNDRY_API_KEY') || env('GITHUB_TOKEN')) },
-  'ollama':           { label: 'Ollama (local)',       kind: 'model',    run: runOllama,           configured: () => true },
+  'dify':                   { label: 'Dify Workflow',            kind: 'workflow', run: runDify,                 configured: () => !!env('DIFY_HOST') && !!env('DIFY_API_KEY') },
+  'langflow':               { label: 'Langflow Flow',            kind: 'workflow', run: runLangflow,             configured: () => !!env('LANGFLOW_HOST') && !!env('LANGFLOW_FLOW_ID') },
+  'open-interpreter':       { label: 'Open Interpreter',         kind: 'agent',    run: runOpenInterpreter,      configured: () => !!env('INTERPRETER_BIN') || !!env('INTERPRETER_MODEL') },
+  'gemini':                 { label: 'Google AI Studio',         kind: 'model',    run: runGemini,               configured: () => !!(env('GEMINI_API_KEY') || env('GOOGLE_API_KEY')) },
+  'groq':                   { label: 'Groq Cloud',               kind: 'model',    run: runGroq,                 configured: () => !!env('GROQ_API_KEY') },
+  'cerebras':               { label: 'Cerebras',                 kind: 'model',    run: runCerebras,             configured: () => !!env('CEREBRAS_API_KEY') },
+  'sambanova':              { label: 'SambaNova Cloud',          kind: 'model',    run: runSambaNova,            configured: () => !!env('SAMBANOVA_API_KEY') },
+  'nvidia-nim':             { label: 'NVIDIA NIM',               kind: 'model',    run: runNvidiaNim,            configured: () => !!(env('NVIDIA_NIM_API_KEY') || env('NVIDIA_API_KEY')) },
+  'mistral':                { label: 'Mistral Codestral',        kind: 'model',    run: runMistral,              configured: () => !!env('MISTRAL_API_KEY') },
+  'deepseek':               { label: 'DeepSeek',                 kind: 'model',    run: runDeepSeek,             configured: () => !!env('DEEPSEEK_API_KEY') },
+  'cloudflare-workers-ai':  { label: 'Cloudflare Workers AI',    kind: 'model',    run: runCloudflareWorkersAI,  configured: () => !!env('CLOUDFLARE_ACCOUNT_ID') && !!env('CLOUDFLARE_API_TOKEN') },
+  'huggingface':            { label: 'HuggingFace Router',       kind: 'model',    run: runHuggingFace,          configured: () => !!(env('HF_TOKEN') || env('HUGGINGFACE_API_KEY')) },
+  'openrouter':             { label: 'OpenRouter',               kind: 'model',    run: runOpenRouter,           configured: () => !!env('OPENROUTER_API_KEY') },
+  'azure-foundry':          { label: 'Azure AI Foundry',         kind: 'model',    run: runAzureFoundry,         configured: () => !!(env('AZURE_FOUNDRY_API_KEY') || env('GITHUB_TOKEN')) },
+  'ollama':                 { label: 'Ollama (local)',           kind: 'model',    run: runOllama,               configured: () => true },
 };
 
 export const ROUTER_IDS = Object.keys(ROUTERS);

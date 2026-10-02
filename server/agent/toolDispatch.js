@@ -83,8 +83,12 @@ registerTool(
     if (rel.includes('..')) return { ok: false, result: 'path traversal blocked' };
     const target = path.join(runCtx.workspace.dir, rel);
     fs.mkdirSync(path.dirname(target), { recursive: true });
-    fs.writeFileSync(target, String(args.content ?? ''), 'utf8');
-    return { ok: true, result: `wrote ${rel} (${String(args.content ?? '').length} bytes)` };
+    // Meta mirrors file_edit so the ReAct engine can stream real file bytes
+    // to UIs (OS code panel, previews) for every write — not just edits.
+    const before = fs.existsSync(target) ? fs.readFileSync(target, 'utf8') : null;
+    const after = String(args.content ?? '');
+    fs.writeFileSync(target, after, 'utf8');
+    return { ok: true, result: `wrote ${rel} (${after.length} bytes)`, meta: { rel, exists: before != null, writeMode: true, before, after } };
   },
   { group: 'sandbox', timeoutMs: 10000 }
 );

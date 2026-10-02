@@ -10,12 +10,29 @@ export class Universe {
     this.target = { x: 0, y: 0 };
     this.time = 0;
     this.groups = [];
+    this.ambience = 1;          // live control: 0.3 (dim, during builds) → 1 (full)
+    this.fps = 60;
+    this._raf = null;
+    this._lastFrame = performance.now();
 
     this._init();
     this._bind();
     this._start();
     this._resize();
-    window.addEventListener('resize', () => this._resize());
+    this._onResize = () => this._resize();
+    window.addEventListener('resize', this._onResize);
+    this._probeWebGPU();
+  }
+
+  /** WebGPU capability probe — real, future-proof renderer detection. */
+  async _probeWebGPU() {
+    try {
+      if (!navigator.gpu) { this.gpu = 'unavailable'; return; }
+      const adapter = await navigator.gpu.requestAdapter();
+      this.gpu = adapter ? 'ready' : 'no-adapter';
+    } catch { this.gpu = 'error'; }
+    const el = document.getElementById('st-gpu-backend');
+    if (el) el.textContent = this.gpu === 'ready' ? 'WebGPU ✓' : 'WebGL2';
   }
 
   _init() {
@@ -273,10 +290,11 @@ export class Universe {
   }
 
   _bind() {
-    window.addEventListener('pointermove', (e) => {
+    this._onMove = (e) => {
       this.target.x = (e.clientX / window.innerWidth - 0.5) * 2;
       this.target.y = (e.clientY / window.innerHeight - 0.5) * 2;
-    });
+    };
+    window.addEventListener('pointermove', this._onMove);
   }
 
   _resize() {
@@ -289,15 +307,20 @@ export class Universe {
 
   _start() {
     const loop = () => {
+      const now = performance.now();
+      const dt = now - this._lastFrame;
+      this._lastFrame = now;
+      if (dt > 0 && dt < 1000) this.fps = this.fps * 0.95 + (1000 / dt) * 0.05;
       this._tick();
       if (this.renderer) this.renderer.render(this.scene, this.camera);
-      requestAnimationFrame(loop);
+      this._raf = requestAnimationFrame(loop);
     };
-    loop();
+    this._raf = requestAnimationFrame(loop);
   }
 
   _tick() {
     this.time += 0.01;
+    this._applyAmbience();
 
     // Smooth camera parallax
     this.mouse.x += (this.target.x - this.mouse.x) * 0.03;
@@ -363,15 +386,43 @@ export class Universe {
     this.grid.position.z = (this.time * 0.4) % 1;
   }
 
-  /* ---- Ambient intensity control (dim during build) ---- */
+  /* ---- Ambient intensity control — REAL, drives scene + materials ----
+     intensity: 0.3 (dim, focus on build) → 1 (full, home screen).
+     Ramps core, particles, neural lines, holograms and fog each frame. */
   setAmbience(intensity) {
-    const target = Math.max(0.3, intensity);
-    const current = 1;
-    const k = 1 - Math.min(1, current * 0.2);
-    void target; void k;
+    this.ambience = Math.max(0.3, Math.min(1, intensity));
+  }
+
+  _applyAmbience() {
+    const k = this.ambience;
+    if (this._amb === undefined) this._amb = k;
+    // ease toward the target so transitions feel alive, not snapped
+    if (Math.abs(k - this._amb) > 0.002) this._amb += (k - this._amb) * 0.04;
+    else this._amb = k;
+    const a = this._amb;
+    if (this.core) {
+      this.core.material.opacity = 0.55 * a;
+      if (this.coreInner) this.coreInner.material.opacity = 0.25 * a;
+    }
+    if (this.particles) this.particles.material.opacity = 0.85 * a;
+    if (this.netLines) this.netLines.material.opacity = (0.1 + Math.sin(this.time * 1.4) * 0.05) * a;
+    for (const h of this.holos || []) h.material.opacity = 0.35 * a;
+    if (this.scene?.fog) this.scene.fog.density = 0.045 + (1 - a) * 0.02;
   }
 
   dispose() {
-    cancelAnimationFrame(this._raf);
+    if (this._raf) cancelAnimationFrame(this._raf);
+    this._raf = null;
+    window.removeEventListener('resize', this._onResize);
+    window.removeEventListener('pointermove', this._onMove);
+    // Free every GPU resource we allocated
+    this.scene?.traverse((obj) => {
+      if (obj.geometry) obj.geometry.dispose();
+      const mats = Array.isArray(obj.material) ? obj.material : obj.material ? [obj.material] : [];
+      for (const m of mats) m.dispose();
+    });
+    this.renderer?.dispose();
+    this.renderer = null;
+    this.scene = null;
   }
 }

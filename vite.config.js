@@ -65,6 +65,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: '/index.html',
+        os: '/os.html',
         pricing: '/pricing.html',
         works: '/gallery.html',
         blog: '/blog.html',

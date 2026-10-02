@@ -10,7 +10,7 @@
 //
 // Every run gets: an ephemeral sandbox workspace, a decoupled
 // ring-buffer I/O pipe, the 5-layer context pipeline, and swarm
-// routing through the 9-provider agent router.
+// routing through the 15-provider agent router (free tiers first).
 
 import crypto from 'crypto';
 import { swarmRun } from '../services/agentRouterService.js';
@@ -161,7 +161,16 @@ export async function* runReAct({
       }
       runCtx.observations.push({ tool: turn.action.tool, args: turn.action.args, result: obs.result, ok: obs.ok });
       runCtx.transcript.push({ role: 'user', content: `OBSERVATION [${turn.action.tool}]: ${String(obs.result).slice(0, 1500)}` });
-      yield emit({ type: 'observation', step, tool: turn.action.tool, ok: obs.ok, durationMs: obs.durationMs, result: String(obs.result).slice(0, 1200) });
+      // File-bearing events let UIs live-render the actual bytes the agent wrote
+      // (path + verb + content). Set by file_edit / sandbox_write on success.
+      const fileEvt = obs.ok && obs.meta && obs.meta.rel != null
+        ? {
+            path: obs.meta.rel,
+            action: !obs.meta.exists ? 'created' : (obs.meta.writeMode ? 'rewrote' : 'edited'),
+            content: String(obs.meta.after ?? ''),
+          }
+        : null;
+      yield emit({ type: 'observation', step, tool: turn.action.tool, ok: obs.ok, durationMs: obs.durationMs, result: String(obs.result).slice(0, 1200), file: fileEvt });
 
       // step-budget guard inside loop (hard ceiling)
       if (step === maxSteps) {

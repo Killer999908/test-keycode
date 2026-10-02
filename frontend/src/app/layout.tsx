@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Syne } from "next/font/google";
 import "./globals.css";
-import LoadingGate from "@/components/LoadingGate";
-import LenisProvider from "@/components/LenisProvider";
-import Scene from "@/components/Scene";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -25,12 +22,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${inter.variable} ${syne.variable}`}>
-      <body>
-        <Scene />
-        <LoadingGate>
-          <LenisProvider>{children}</LenisProvider>
-        </LoadingGate>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

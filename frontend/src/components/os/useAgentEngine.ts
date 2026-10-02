@@ -40,6 +40,8 @@ export interface AgentEngine {
   activeFile: number;
   setActiveTab: (tab: AgentEngine['activeTab']) => void;
   setActiveFile: (idx: number) => void;
+  activeNav: string;
+  setActiveNav: (id: string) => void;
   startBuild: (promptText: string) => void;
   reset: () => void;
   generatedFiles: CodeFile[];
@@ -257,6 +259,29 @@ function isPcbRequest(prompt: string): boolean {
   return /pcb|circuit board|electronics|schematic|gerber|board design|arduino|mcu|firmware|esp32|esp8266|555 timer|led flasher|drone|robotics|embedded/.test(d);
 }
 
+/** File extension → syntax label for the code panel. */
+function extLang(name: string): string {
+  const ext = (name.split('.').pop() || '').toLowerCase();
+  const map: Record<string, string> = {
+    ts: 'ts', tsx: 'tsx', js: 'js', jsx: 'jsx', mjs: 'js', cjs: 'js',
+    py: 'python', html: 'html', css: 'css', json: 'json', md: 'markdown',
+    yaml: 'yaml', yml: 'yaml', sh: 'bash', txt: 'text',
+  };
+  return map[ext] || 'text';
+}
+
+/** Map a ReAct tool call to the OS agent card that should light up. */
+function agentForTool(tool: string): string {
+  if (/^todo_write/.test(tool)) return 'planner';
+  if (/^(repo_|codebase_|github\.|fetch\.|brave\.)/.test(tool)) return 'researcher';
+  if (/^code_run/.test(tool)) return 'backend';
+  if (/^(postgres\.|redis\.)/.test(tool)) return 'database';
+  if (/^(workspace_zip|jira\.|confluence\.|slack\.)/.test(tool)) return 'devops';
+  return 'frontend'; // file_edit, sandbox_write/read, filesystem.*, …
+}
+
+const tline = (text: string, type: TerminalLine['type'] = 'info'): TerminalLine => ({ text, type });
+
 export function useAgentEngine() {
   const [mode, setMode] = useState<WorkMode>('idle');
   const [prompt, setPrompt] = useState('');
@@ -266,6 +291,7 @@ export function useAgentEngine() {
   const [terminal, setTerminal] = useState<TerminalLine[]>([]);
   const [activeTab, setActiveTab] = useState<'preview' | 'code' | 'terminal' | '3d' | 'files' | 'git'>('terminal');
   const [activeFile, setActiveFile] = useState(0);
+  const [activeNav, setActiveNav] = useState('dashboard');
   const [bootPhase, setBootPhase] = useState<'offline' | 'booting' | 'online'>('offline');
   const [pcb, setPcb] = useState({
     components: [] as any[],
@@ -278,6 +304,9 @@ export function useAgentEngine() {
     error: null as string | null,
   });
   const running = useRef(false);
+  const liveAbort = useRef<AbortController | null>(null);
+  const filesRef = useRef<CodeFile[]>(GENERATED_FILES);
+  const [generatedFiles, setGeneratedFiles] = useState<CodeFile[]>(GENERATED_FILES);
 
   useEffect(() => {
     const t1 = setTimeout(() => setBootPhase('booting'), 400);
@@ -335,6 +364,151 @@ export function useAgentEngine() {
       }, delay);
     });
   }, [addTerminal]);
+
+  const setAgentStatus = useCallback((id: string, patch: Partial<Agent>) => {
+    setAgents((prev) => prev.map((a) => (a.id === id ? { ...a, ...patch } : a)));
+  }, []);
+
+  const setAllFiles = useCallback((files: CodeFile[]) => {
+    filesRef.current = files;
+    setGeneratedFiles(files);
+  }, []);
+
+  /** Upsert a real file streamed from the agent into the code panel. */
+  const upsertFile = useCallback((f: { path: string; content: string }) => {
+    const code = String(f.content ?? '');
+    const entry: CodeFile = { name: f.path, language: extLang(f.path), code, lines: code.split('\n').length };
+    const prev = filesRef.current;
+    const idx = prev.findIndex((x) => x.name === f.path);
+    const next = idx >= 0 ? prev.map((x, i) => (i === idx ? entry : x)) : [...prev, entry];
+    filesRef.current = next;
+    setGeneratedFiles(next);
+    setActiveFile(idx >= 0 ? idx : next.length - 1);
+  }, []);
+
+  // ── live build: real ReAct run over POST /api/agent/react (SSE) ──
+  // Drives the agent grid, terminal, and code panel from actual
+  // Thought/Action/Observation events. Falls back to the simulation.
+  const runLiveBuild = useCallback((taskText: string, onFallback: () => void) => {
+    const token = localStorage.getItem('token') || '';
+    const controller = new AbortController();
+    liveAbort.current = controller;
+
+    const finishAgents = () => {
+      setAgents((prev) =>
+        prev.map((a) =>
+          a.status === 'working' || a.status === 'thinking'
+            ? { ...a, status: 'done', progress: 100, log: 'Contribution merged', eta: 'done' }
+            : a
+        )
+      );
+    };
+
+    const wrapUp = () => {
+      running.current = false;
+      liveAbort.current = null;
+    };
+
+    const failover = (why: string) => {
+      addTerminal([tline(`agent runtime unavailable (${why}) — switching to simulation`, 'warn')]);
+      setAllFiles(GENERATED_FILES);
+      wrapUp();
+      onFallback();
+    };
+
+    const go = async () => {
+      let stepsSeen = 0;
+      try {
+        setAllFiles([]); // the code panel shows only what the agent really writes
+        const res = await fetch('/api/agent/react', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+          body: JSON.stringify({ task: taskText, maxSteps: 12, tokenBudget: 8000 }),
+          signal: controller.signal,
+        });
+        if (res.status === 401) { failover('not signed in'); return; }
+        if (!res.ok || !res.body) { failover(`HTTP ${res.status}`); return; }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            let evt: any;
+            try { evt = JSON.parse(line.slice(6)); } catch { continue; }
+
+            if (evt.type === 'start') {
+              addTerminal([
+                tline(`> forge run ${evt.runId} --engine=react`, 'cmd'),
+                tline(`✓ ${evt.tools} tools registered · max ${evt.maxSteps} steps · live sandbox attached`, 'ok'),
+              ]);
+              setAgentStatus('planner', { status: 'thinking', progress: 4, log: 'Decomposing task…', eta: 'working' });
+            } else if (evt.type === 'step' && evt.kind === 'action') {
+              stepsSeen = evt.step || stepsSeen + 1;
+              if (evt.thought) addTerminal([tline(`planning: ${String(evt.thought).slice(0, 140)}`)]);
+              setAgentStatus('planner', { status: 'thinking', progress: Math.min(30, stepsSeen * 6), log: String(evt.thought || 'Planning step').slice(0, 90) });
+            } else if (evt.type === 'tool') {
+              const argsStr = JSON.stringify(evt.args || {});
+              addTerminal([tline(`> ${evt.tool} ${argsStr.length > 90 ? argsStr.slice(0, 90) + '…' : argsStr}`, 'cmd')]);
+              setAgentStatus(agentForTool(evt.tool), {
+                status: 'working',
+                progress: Math.min(92, 30 + stepsSeen * 6),
+                log: `run ${evt.tool}`,
+                eta: `step ${stepsSeen}`,
+              });
+            } else if (evt.type === 'observation') {
+              const firstLine = String(evt.result || '').split('\n')[0].slice(0, 140);
+              addTerminal([tline(`${evt.ok === false ? '✗' : '✓'} ${evt.tool}: ${firstLine}`, evt.ok === false ? 'err' : 'ok')]);
+              if (evt.file && evt.file.path) {
+                upsertFile(evt.file);
+                setActiveTab('code');
+                addTerminal([tline(`✓ ${evt.file.path} ${evt.file.action} · streamed to code panel`, 'ok')]);
+              }
+              if (evt.tool === 'workspace_zip') setActiveTab('files');
+            } else if (evt.type === 'artifact') {
+              addTerminal([tline(`✓ artifact ready → /api/agent/artifacts/${evt.artifact} (${Math.round((evt.size || 0) / 1024)}KB)`, 'ok')]);
+              setAgentStatus('devops', { status: 'done', progress: 100, log: 'Artifact packaged', eta: 'done' });
+            } else if (evt.type === 'todos' && Array.isArray(evt.todos)) {
+              const done = evt.todos.filter((t: any) => t.completed).length;
+              const nextTask = evt.todos.find((t: any) => !t.completed)?.task || 'all done';
+              addTerminal([tline(`todo: ${done}/${evt.todos.length} complete — ${nextTask}`)]);
+            } else if (evt.type === 'done') {
+              finishAgents();
+              addTerminal([
+                tline(evt.answer ? `✓ build complete — ${evt.stepsUsed ?? stepsSeen} steps` : '⚠ step budget exhausted without a final answer', evt.answer ? 'ok' : 'warn'),
+                ...String(evt.answer || '').split('\n').slice(0, 6).filter(Boolean).map((l: string) => tline(l.slice(0, 160))),
+              ]);
+              wrapUp();
+              return;
+            } else if (evt.type === 'error') {
+              addTerminal([tline(`✗ agent error: ${evt.message}`, 'err')]);
+              setAgents((prev) =>
+                prev.map((a) => (a.status === 'working' || a.status === 'thinking' ? { ...a, status: 'reviewing', log: 'Error — see terminal', eta: '—' } : a))
+              );
+              wrapUp();
+              return;
+            }
+          }
+        }
+        // stream closed without an explicit done — treat as finished
+        finishAgents();
+        addTerminal([tline('✓ agent stream closed', 'ok')]);
+        wrapUp();
+      } catch (e) {
+        if ((e as Error).name === 'AbortError') { wrapUp(); return; }
+        failover((e as Error).message || 'network');
+      }
+    };
+    go();
+  }, [addTerminal, setAgentStatus, upsertFile, setAllFiles]);
 
   const startBuild = useCallback((promptText: string) => {
     if (running.current) return;
@@ -422,30 +596,38 @@ export function useAgentEngine() {
       return;
     }
 
-    // Non-PCB: original simulated flow
-    let step = 0;
-    const planning = setInterval(() => {
-      if (step < PLANNING_STEPS.length) {
-        addTerminal([{ text: `planning: ${PLANNING_STEPS[step]}`, type: 'info' }]);
-        setAgents((prev) =>
-          prev.map((a, i) =>
-            i === 0 ? { ...a, status: 'thinking', log: PLANNING_STEPS[step], progress: step * 12, eta: `${3 - step}m` } : a
-          )
-        );
-        step++;
-      } else {
-        clearInterval(planning);
-        setAgents((prev) =>
-          prev.map((a) => (a.id === 'planner' ? { ...a, status: 'done', progress: 100, log: 'Plan approved', eta: 'done' } : a))
-        );
-        addTerminal([{ text: '✓ Roadmap approved by planner', type: 'ok' }]);
-        runAgents();
-      }
-    }, 800);
-  }, [addTerminal, runAgents]);
+    // Non-PCB: run the REAL ReAct agent (POST /api/agent/react). If the
+    // runtime is unreachable or the visitor isn't signed in, fall back to
+    // the cinematic simulation so the OS demo experience never breaks.
+    const runSimulated = () => {
+      let step = 0;
+      const planning = setInterval(() => {
+        if (step < PLANNING_STEPS.length) {
+          addTerminal([{ text: `planning: ${PLANNING_STEPS[step]}`, type: 'info' }]);
+          setAgents((prev) =>
+            prev.map((a, i) =>
+              i === 0 ? { ...a, status: 'thinking', log: PLANNING_STEPS[step], progress: step * 12, eta: `${3 - step}m` } : a
+            )
+          );
+          step++;
+        } else {
+          clearInterval(planning);
+          setAgents((prev) =>
+            prev.map((a) => (a.id === 'planner' ? { ...a, status: 'done', progress: 100, log: 'Plan approved', eta: 'done' } : a))
+          );
+          addTerminal([{ text: '✓ Roadmap approved by planner', type: 'ok' }]);
+          runAgents();
+        }
+      }, 800);
+    };
+    runLiveBuild(promptText, runSimulated);
+  }, [addTerminal, runAgents, runLiveBuild]);
 
   const reset = useCallback(() => {
     running.current = false;
+    liveAbort.current?.abort();
+    liveAbort.current = null;
+    setAllFiles(GENERATED_FILES);
     setMode('home');
     setPrompt('');
     setAgents((prev) => prev.map((a) => ({ ...a, status: 'idle', progress: 0, log: 'Standing by', eta: '—' })));
@@ -454,7 +636,7 @@ export function useAgentEngine() {
       components: [], netlist: [], pcbSvg: null, gerberDownload: null,
       manufacturingReady: false, fabricationValidation: null, jobId: null, error: null,
     });
-  }, []);
+  }, [setAllFiles]);
 
   return {
     mode,
@@ -466,9 +648,11 @@ export function useAgentEngine() {
     activeFile,
     setActiveTab,
     setActiveFile,
+    activeNav,
+    setActiveNav,
     startBuild,
     reset,
-    generatedFiles: GENERATED_FILES,
+    generatedFiles,
     pcb,
   };
 }

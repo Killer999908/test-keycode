@@ -4,8 +4,9 @@ import { useRef, useEffect } from 'react';
 import { useAgentEngine } from './useAgentEngine';
 import Universe from './Universe';
 import OsShell from './OsShell';
-import HomePrompt from './HomePrompt';
 import Workbench from './Workbench';
+import { PANES, PLACEHOLDER_NAV } from './panes';
+import PlaceholderPane from './panes/PlaceholderPane';
 import { AnimatePresence } from 'framer-motion';
 
 export default function OsRoot() {
@@ -22,6 +23,21 @@ export default function OsRoot() {
     return () => window.removeEventListener('mousemove', onMove);
   }, []);
 
+  const Pane = PANES[engine.activeNav];
+
+  let stage: React.ReactNode;
+  if (engine.mode === 'workbench') {
+    // A build is streaming — the workbench owns the stage no matter which nav item is active.
+    stage = <Workbench key="workbench" engine={engine} />;
+  } else if (Pane) {
+    stage = <Pane key={engine.activeNav} engine={engine} />;
+  } else {
+    const ph = PLACEHOLDER_NAV[engine.activeNav];
+    stage = <PlaceholderPane key={engine.activeNav} label={ph?.label ?? engine.activeNav} icon={ph?.icon ?? '◌'} />;
+  }
+
+  const padded = engine.mode !== 'workbench' && engine.activeNav !== 'dashboard';
+
   return (
     <>
       {/* Cursor ambient glow */}
@@ -34,13 +50,11 @@ export default function OsRoot() {
       <OsShell engine={engine} />
 
       {/* Main stage */}
-      <main className="relative z-10 min-h-screen">
+      <main className="relative z-10 min-h-screen pt-11 pl-[216px]">
         <AnimatePresence mode="wait">
-          {engine.mode !== 'workbench' ? (
-            <HomePrompt key="home" onBuild={engine.startBuild} bootPhase={engine.bootPhase} />
-          ) : (
-            <Workbench key="workbench" engine={engine} />
-          )}
+          <div key="stage" className={padded ? 'h-full p-3' : 'h-full'}>
+            {stage}
+          </div>
         </AnimatePresence>
       </main>
     </>

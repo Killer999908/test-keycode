@@ -69,22 +69,78 @@
   };
 
   // ========================================================================
-  // LOADING OVERLAY
+  // LOADING OVERLAY — Alche-style preloader (black stage, % counter,
+  // word-by-word tagline, hairline progress, curtain-lift exit)
   // ========================================================================
+  var LOADER_MIN_MS = 1400; // brief but visible
+  var LOADER_MAX_MS = 5000; // never trap the visitor
+  var loaderStart = 0;
+
   function showLoading() {
     if (document.getElementById('kc-loading')) return;
+    loaderStart = Date.now();
     var overlay = document.createElement('div');
     overlay.id = 'kc-loading';
     overlay.className = 'kc-loading-overlay';
-    overlay.innerHTML = '<div class="kc-loading-ring"></div>';
+    var words = 'Where excellence meets intelligence'.split(' ');
+    var tagline = words.map(function (w, i) {
+      return '<span class="kc-loader-word" style="animation-delay:' + (0.3 + i * 0.12) + 's">' + w + '</span>';
+    }).join(' ');
+    overlay.innerHTML =
+      '<div class="kc-loader-top">' +
+        '<span class="kc-loader-brand">KEYCODE</span>' +
+        '<span class="kc-loader-status">LOADING</span>' +
+      '</div>' +
+      '<div class="kc-loader-center">' +
+        '<p class="kc-loader-tagline">' + tagline + '</p>' +
+        '<div class="kc-loader-bar"><div class="kc-loader-bar-fill"></div></div>' +
+      '</div>' +
+      '<div class="kc-loader-bottom">' +
+        '<span class="kc-loader-count">0<span class="kc-loader-pct">%</span></span>' +
+        '<span class="kc-loader-footer">DIGITAL CREATION STUDIO</span>' +
+      '</div>';
     document.body.appendChild(overlay);
+
+    // Counter: crawl toward 88% while loading, glide to 100 when done.
+    var ready = document.readyState === 'complete';
+    if (!ready) window.addEventListener('load', function () { ready = true; }, { once: true });
+    var pctEl = overlay.querySelector('.kc-loader-count');
+    var fillEl = overlay.querySelector('.kc-loader-bar-fill');
+    var last = -1;
+    function tick() {
+      if (!document.getElementById('kc-loading')) return; // overlay removed
+      var el = Date.now() - loaderStart;
+      var p = ready
+        ? 88 + 12 * Math.min((el - LOADER_MIN_MS) / 500, 1)
+        : (1 - Math.pow(1 - Math.min(el / 1600, 1), 3)) * 88;
+      p = Math.max(0, Math.min(100, p));
+      var shown = Math.round(p);
+      if (shown !== last) {
+        last = shown;
+        if (pctEl) pctEl.innerHTML = shown + '<span class="kc-loader-pct">%</span>';
+        if (fillEl) fillEl.style.width = shown + '%';
+      }
+      if (p < 100) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
   }
 
   function hideLoading() {
     var overlay = document.getElementById('kc-loading');
     if (!overlay) return;
-    overlay.classList.add('hidden');
-    setTimeout(function() { overlay.remove(); }, 500);
+    // honor the minimum display window so the counter always reads like a story
+    var wait = Math.max(0, LOADER_MIN_MS - (Date.now() - loaderStart));
+    setTimeout(function () {
+      var pct = overlay.querySelector('.kc-loader-count');
+      var status = overlay.querySelector('.kc-loader-status');
+      if (pct) pct.innerHTML = '100<span class="kc-loader-pct">%</span>';
+      if (status) status.textContent = 'ENTERING';
+      overlay.classList.add('leaving'); // curtain lifts
+      setTimeout(function () {
+        overlay.classList.add('hidden');
+        setTimeout(function () { overlay.remove(); }, 500);
+      }, 900);
+    }, wait);
   }
 
   // ========================================================================
@@ -102,6 +158,7 @@
       '<a href="/pricing.html">Pricing</a>',
       '<a href="/shop.html">Shop</a>',
       '<a href="/ai-builder.html">AI</a>',
+      '<a href="/os.html">OS</a>',
       '<div class="kc-nav-mega-trigger">',
       '<a href="/blog.html">Resources</a>',
       '<div class="kc-nav-mega"><div class="kc-mega-grid">',
@@ -124,6 +181,7 @@
       '<a href="/pricing.html">Pricing</a>',
       '<a href="/shop.html">Shop</a>',
       '<a href="/ai-builder.html">AI</a>',
+      '<a href="/os.html">Agent OS</a>',
       '<a href="/blog.html">Blog</a>',
       '<a href="/docs.html">Docs</a>',
       '<a href="/gallery.html">Gallery</a>',
@@ -202,7 +260,7 @@
       '<a href="https://linkedin.com/company/keycode-studio" target="_blank" rel="noopener" aria-label="LinkedIn"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a>',
       '<a href="https://instagram.com/keycodetechio" target="_blank" rel="noopener" aria-label="Instagram"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg></a>',
       '</div></div>',
-      '<div><h4>Platform</h4><a href="/control-panel.html">Control Panel</a><a href="/dashboard.html">Dashboard</a><a href="/pricing.html">Pricing</a><a href="/shop.html">Shop</a></div>',
+      '<div><h4>Platform</h4><a href="/os.html">Agent OS</a><a href="/ai-builder.html">AI Builder</a><a href="/control-panel.html">Control Panel</a><a href="/dashboard.html">Dashboard</a><a href="/pricing.html">Pricing</a><a href="/shop.html">Shop</a></div>',
       '<div><h4>Resources</h4><a href="/docs.html">Documentation</a><a href="/blog.html">Blog</a><a href="/support.html">Support</a><a href="/status.html">Status</a></div>',
       '<div><h4>Company</h4><a href="/login.html">Sign In</a><a href="/register.html">Register</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a></div>',
       '</div>',
@@ -465,6 +523,7 @@
     var pages = [
       { name: 'Home', url: '/', icon: '⌂' }, { name: 'Pricing', url: '/pricing.html', icon: '$' },
       { name: 'Shop', url: '/shop.html', icon: '🛒' }, { name: 'AI Builder', url: '/ai-builder.html', icon: '✦' },
+      { name: 'Agent OS', url: '/os.html', icon: '⬡' },
       { name: 'Blog', url: '/blog.html', icon: '📝' }, { name: 'Gallery', url: '/gallery.html', icon: '🖼' },
       { name: 'Documentation', url: '/docs.html', icon: '📄' }, { name: 'Support', url: '/support.html', icon: '?' },
       { name: 'Dashboard', url: '/dashboard.html', icon: '⬡' }, { name: 'Control Panel', url: '/control-panel.html', icon: '⚙' },
@@ -1738,6 +1797,8 @@
 
     showLoading();
     stripOldCSS();
+    // ...init work happens here; hideLoading() is deferred below so the
+    // overlay actually paints before dismissal (fixes same-tick skip).
     injectSkipLink();
     initReducedMotion();
     genBreadcrumbs();
@@ -1745,72 +1806,86 @@
     trackPageView();
     initSessionKeeper();
 
-    if (!isAuthPage && !isErrorPage && !isAppPage) {
-      injectNav();
-      injectFooter();
-      injectBackToTop();
-      addPageTransition();
-      injectCookieBanner();
-      injectConnectionStatus();
-      initSmoothScroll();
-      initCountUp();
-      initFormValidation();
-      initLightbox();
-      initKeyboardShortcuts();
-      initThemeSwitcher();
-      initReadingProgress();
-      genTOC();
-      showReadingTime();
-      initCodeCopy();
-      initCharCounter();
-      initPasswordStrength();
-      initFilePreview();
-      initDragDrop();
-      initAutoSave();
-      initSearchInput();
-      initTagInput();
-      initOTPInput();
-      initAccordion();
-      initTabs();
-      initTooltips();
-      initScrollReveal();
-      initTypewriter();
-      initTextTruncation();
-      initStarRating();
-      initProgressCircle();
-      initSkeletons();
-      initImageZoom();
-      initVideoLightbox();
-      initCarousel();
-      initFilters();
-      initSortableTables();
-      initTableSearch();
-      initTableExport();
-      initShareButtons();
-      initCountdown();
-      initTestimonials();
-      initPricingToggle();
-      initFontSize();
-      initHighContrast();
-      initPageVisibility();
-      initNetworkInfo();
-      initLazyImages();
-      initPrint();
-      initDownloadTracking();
-      showRelatedContent();
-      setTimeout(interceptLinks, 100);
+    // Give the overlay a paint frame before hiding, so it is never skipped:
+    // init() runs synchronously, and show→hide in one tick would remove the
+    // loader before the browser renders it.
+    setTimeout(function () {
+      initLoaderHeavyWork(function () {
+        hideLoading();
+        document.body.classList.add('kc-theme-injected');
+        KC.emit('ready', { path: window.location.pathname });
+      });
+    }, 60);
+
+    function initLoaderHeavyWork(done) {
+      // previously everything below ran before hideLoading(); keep the same
+      // order but let the loader breathe for a frame first.
+      requestAnimationFrame(function () {
+        if (!isAuthPage && !isErrorPage && !isAppPage) {
+          injectNav();
+          injectFooter();
+          injectBackToTop();
+          addPageTransition();
+          injectCookieBanner();
+          injectConnectionStatus();
+          initSmoothScroll();
+          initCountUp();
+          initFormValidation();
+          initLightbox();
+          initKeyboardShortcuts();
+          initThemeSwitcher();
+          initReadingProgress();
+          genTOC();
+          showReadingTime();
+          initCodeCopy();
+          initCharCounter();
+          initPasswordStrength();
+          initFilePreview();
+          initDragDrop();
+          initAutoSave();
+          initSearchInput();
+          initTagInput();
+          initOTPInput();
+          initAccordion();
+          initTabs();
+          initTooltips();
+          initScrollReveal();
+          initTypewriter();
+          initTextTruncation();
+          initStarRating();
+          initProgressCircle();
+          initSkeletons();
+          initImageZoom();
+          initVideoLightbox();
+          initCarousel();
+          initFilters();
+          initSortableTables();
+          initTableSearch();
+          initTableExport();
+          initShareButtons();
+          initCountdown();
+          initTestimonials();
+          initPricingToggle();
+          initFontSize();
+          initHighContrast();
+          initPageVisibility();
+          initNetworkInfo();
+          initLazyImages();
+          initPrint();
+          initDownloadTracking();
+          showRelatedContent();
+          setTimeout(interceptLinks, 100);
+        }
+
+        // non-auth features
+        initParticles();
+        initParallax();
+        initMaxMotion();
+
+        applyThemeOverrides();
+        done();
+      });
     }
-
-    // non-auth features
-    initParticles();
-    initParallax();
-    initMaxMotion();
-
-    applyThemeOverrides();
-
-    hideLoading();
-    document.body.classList.add('kc-theme-injected');
-    KC.emit('ready', { path: window.location.pathname });
   }
 
   if (document.readyState === 'loading') {

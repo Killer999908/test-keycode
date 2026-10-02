@@ -42,18 +42,36 @@ body {
   min-height: 100vh;
 }
 
-/* ===== LOADING OVERLAY ===== */
+/* ===== LOADING OVERLAY — Alche-style preloader ===== */
 .kc-loading-overlay {
   position: fixed;
   inset: 0;
   z-index: 100500;
-  background: var(--kc-bg);
+  background: #000;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: opacity 0.4s ease;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 32px;
+  transition: opacity 0.5s ease;
 }
 .kc-loading-overlay.hidden { opacity: 0; pointer-events: none; }
+/* curtain-lift exit */
+.kc-loading-overlay.leaving { transform: translateY(-100%); transition: transform 0.9s cubic-bezier(0.76, 0, 0.24, 1); }
+.kc-loader-top, .kc-loader-bottom { display: flex; justify-content: space-between; align-items: center; }
+.kc-loader-bottom { align-items: flex-end; }
+.kc-loader-brand { font-family: var(--kc-font-display); font-size: 12px; letter-spacing: 0.45em; color: #fff; }
+.kc-loader-status { font-size: 10px; letter-spacing: 0.3em; color: #7e7e7e; }
+.kc-loader-center { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.kc-loader-tagline { max-width: 620px; font-size: 15px; line-height: 1.6; color: #bababa; }
+.kc-loader-word { display: inline-block; margin-right: 0.45em; opacity: 0; transform: translateY(110%); animation: kc-loader-word-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.kc-loader-word:last-child { margin-right: 0; }
+@keyframes kc-loader-word-in { to { opacity: 1; transform: translateY(0); } }
+.kc-loader-bar { margin-top: 26px; height: 1px; width: 160px; background: rgba(255,255,255,0.15); overflow: hidden; }
+.kc-loader-bar-fill { height: 100%; width: 0%; background: rgba(255,255,255,0.7); transition: width 0.15s ease-out; }
+.kc-loader-count { font-family: var(--kc-font-display); font-size: clamp(64px, 11vw, 180px); line-height: 0.8; color: #fff; font-variant-numeric: tabular-nums; user-select: none; }
+.kc-loader-pct { font-size: 0.35em; color: #7e7e7e; margin-left: 4px; }
+.kc-loader-footer { font-size: 9px; letter-spacing: 0.35em; color: #7e7e7e; padding-bottom: 10px; }
+@media (max-width: 640px) { .kc-loading-overlay { padding: 20px; } .kc-loader-footer { display: none; } }
 /* ===== PAGE TRANSITIONS ===== */
 
 /* ===== PAGE TRANSITIONS ===== */

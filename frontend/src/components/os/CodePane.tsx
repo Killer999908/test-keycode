@@ -47,7 +47,8 @@ export default function CodePane({
   const [typed, setTyped] = useState(0);
   const [revealed, setRevealed] = useState<string[]>([]);
   const file = files[activeFile];
-  const code = file.code;
+  const code = file?.code ?? '';
+  const lang = file?.language ?? 'text';
 
   useEffect(() => {
     setTyped(0);
@@ -69,7 +70,7 @@ export default function CodePane({
   }, [code]);
 
   const partial = code.slice(0, typed);
-  const tokens = revealed.length > 0 ? tokenize(code, file.language) : tokenize(partial, file.language);
+  const tokens = revealed.length > 0 ? tokenize(code, lang) : tokenize(partial, lang);
 
   return (
     <div className="h-full flex bg-[#07080d]">
@@ -105,16 +106,22 @@ export default function CodePane({
           ))}
         </div>
         <div className="flex-1 overflow-auto os-scrollbar">
-          <pre className="p-4 font-mono text-[12.5px] leading-[1.65] text-[#c8d0e0]">
-            <code>
-              {tokens.map((tok, i) => (
-                <span key={i} className={tok.cls}>
-                  {tok.text}
-                </span>
-              ))}
-              {typed < code.length && <span className="os-caret" />}
-            </code>
-          </pre>
+          {files.length === 0 ? (
+            <div className="h-full flex items-center justify-center text-[12px] font-mono text-[var(--os-text-faint)]">
+              <span className="os-live-dot mr-2" /> waiting for the agent to write its first file…
+            </div>
+          ) : (
+            <pre className="p-4 font-mono text-[12.5px] leading-[1.65] text-[#c8d0e0]">
+              <code>
+                {tokens.map((tok, i) => (
+                  <span key={i} className={tok.cls}>
+                    {tok.text}
+                  </span>
+                ))}
+                {typed < code.length && <span className="os-caret" />}
+              </code>
+            </pre>
+          )}
         </div>
       </div>
       <style>{`
