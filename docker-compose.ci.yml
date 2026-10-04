@@ -1,0 +1,28 @@
+version: '3.8'
+services:
+  mongodb:
+    image: mongo:7.0.0
+    ports:
+      - "27017:27017"
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.runCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=test
+      - PORT=5000
+      - MONGODB_URI=mongodb://mongodb:27017/keycode-smoke
+      - JWT_SECRET=ci-smoke-secret-0123456789abcdef0123456789abcdef
+      - FRONTEND_URL=http://localhost:5000
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    command: node server.js
