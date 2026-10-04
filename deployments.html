@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="manifest" href="/manifest.json">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+<meta name="description" content="Manage your project deployments, domains, and hosting on KEYCODE Studio.">
+<title>Deployments - KEYCODE Studio</title>
+<meta property="og:title" content="Deployments - KEYCODE Studio">
+<meta property="og:description" content="Manage your project deployments, domains, and hosting on KEYCODE Studio.">
+<meta property="og:image" content="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjAwIiBoZWlnaHQ9IjYzMCIgdmlld0JveD0iMCAwIDEyMDAgNjMwIj4KICA8cmVjdCB3aWR0aD0iMTIwMCIgaGVpZ2h0PSI2MzAiIGZpbGw9IiMwYTBhMWEiLz4KICA8cmVjdCB4PSIwIiB5PSIwIiB3aWR0aD0iMTIwMCIgaGVpZ2h0PSI2MzAiIGZpbGw9InVybCgjZykiIG9wYWNpdHk9IjAuMTUiLz4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iZyIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiM2MzY2ZjEiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSI1MCUiIHN0b3AtY29sb3I9IiMyMmQzZWUiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjNjM2NmYxIi8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8dGV4dCB4PSI2MDAiIHk9IjI3MCIgZm9udC1mYW1pbHk9IkludGVyLCBzeXN0ZW0tdWksIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iOTYiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiNmZmZmZmYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGxldHRlci1zcGFjaW5nPSItMiI+S0VZQ09ERTwvdGV4dD4KICA8dGV4dCB4PSI2MDAiIHk9IjM0MCIgZm9udC1mYW1pbHk9IkludGVyLCBzeXN0ZW0tdWksIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjgiIGZpbGw9IiMyMmQzZWUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGxldHRlci1zcGFjaW5nPSI0IiBmb250LXdlaWdodD0iMzAwIj5BSS1QT1dFUkVEIFNUVURJTzwvdGV4dD4KICA8cmVjdCB4PSI1NDAiIHk9IjM3MCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSIzIiByeD0iMS41IiBmaWxsPSJ1cmwoI2cpIi8+CiAgPHRleHQgeD0iNjAwIiB5PSI0MTAiIGZvbnQtZmFtaWx5PSJJbnRlciwgc3lzdGVtLXVpLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE4IiBmaWxsPSIjOTRhM2I4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5CdWlsZCB0aGUgZnV0dXJlLCBvbmUgcHJvamVjdCBhdCBhIHRpbWUuPC90ZXh0Pgo8L3N2Zz4K">
+<meta property="og:url" content="https://keycode-studio-production.up.railway.app/deployments">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Deployments - KEYCODE Studio">
+<meta name="twitter:description" content="Manage your project deployments, domains, and hosting on KEYCODE Studio.">
+<meta name="twitter:image" content="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjAwIiBoZWlnaHQ9IjYzMCIgdmlld0JveD0iMCAwIDEyMDAgNjMwIj4KICA8cmVjdCB3aWR0aD0iMTIwMCIgaGVpZ2h0PSI2MzAiIGZpbGw9IiMwYTBhMWEiLz4KICA8cmVjdCB4PSIwIiB5PSIwIiB3aWR0aD0iMTIwMCIgaGVpZ2h0PSI2MzAiIGZpbGw9InVybCgjZykiIG9wYWNpdHk9IjAuMTUiLz4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iZyIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiM2MzY2ZjEiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSI1MCUiIHN0b3AtY29sb3I9IiMyMmQzZWUiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjNjM2NmYxIi8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8dGV4dCB4PSI2MDAiIHk9IjI3MCIgZm9udC1mYW1pbHk9IkludGVyLCBzeXN0ZW0tdWksIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iOTYiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiNmZmZmZmYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGxldHRlci1zcGFjaW5nPSItMiI+S0VZQ09ERTwvdGV4dD4KICA8dGV4dCB4PSI2MDAiIHk9IjM0MCIgZm9udC1mYW1pbHk9IkludGVyLCBzeXN0ZW0tdWksIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjgiIGZpbGw9IiMyMmQzZWUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGxldHRlci1zcGFjaW5nPSI0IiBmb250LXdlaWdodD0iMzAwIj5BSS1QT1dFUkVEIFNUVURJTzwvdGV4dD4KICA8cmVjdCB4PSI1NDAiIHk9IjM3MCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSIzIiByeD0iMS41IiBmaWxsPSJ1cmwoI2cpIi8+CiAgPHRleHQgeD0iNjAwIiB5PSI0MTAiIGZvbnQtZmFtaWx5PSJJbnRlciwgc3lzdGVtLXVpLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE4IiBmaWxsPSIjOTRhM2I4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5CdWlsZCB0aGUgZnV0dXJlLCBvbmUgcHJvamVjdCBhdCBhIHRpbWUuPC90ZXh0Pgo8L3N2Zz4K">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdnjs.cloudflare.com">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+<link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"></noscript>
+<style>
+:root{--bg:#0a0a1a;--card:#12122a;--primary:#ffffff;--accent:#22d3ee;--success:#10b981;--error:#ef4444;--warning:#f59e0b;--text:#e2e8f0;--ash:#94a3b8;--border:rgba(255,255,255,0.06);--radius:12px;--radius-lg:16px;--font:'Inter',-apple-system,BlinkMacSystemFont,sans-serif}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px;scroll-behavior:smooth;-webkit-font-smoothing:antialiased}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6;overflow-x:hidden}
+a{color:var(--primary);text-decoration:none}
+a:hover{color:var(--accent)}
+img{max-width:100%;height:auto;display:block}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:4px}
+
+.container{max-width:1148px;margin:0 auto;padding:0 24px}
+
+.navbar{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;max-width:1148px;margin:0 auto;border-bottom:1px solid var(--border)}
+.nav-logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:22px;color:var(--text);letter-spacing:-0.5px;text-decoration:none}
+.nav-logo img{height:32px;width:auto}
+.nav-links{display:flex;align-items:center;gap:4px;list-style:none}
+.nav-links a{padding:8px 16px;border-radius:8px;font-size:14px;font-weight:500;color:var(--ash);transition:all .2s;text-decoration:none;white-space:nowrap}
+.nav-links a:hover{color:var(--text);background:rgba(255,255,255,0.04)}
+.nav-links a.active{color:var(--primary);background:rgba(99,102,241,0.1)}
+.nav-actions{display:flex;align-items:center;gap:12px}
+.nav-toggle{display:none;background:none;border:none;color:var(--text);font-size:24px;padding:4px;cursor:pointer}
+@media(max-width:768px){
+  .nav-links{display:none;position:absolute;top:68px;left:0;right:0;background:var(--bg);border-bottom:1px solid var(--border);flex-direction:column;padding:12px;z-index:100}
+  .nav-links.open{display:flex}
+  .nav-links a{width:100%}
+  .nav-toggle{display:block}
+}
+
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border:none;border-radius:8px;font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;text-decoration:none}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:#5558e6;transform:translateY(-1px)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-ghost{background:rgba(255,255,255,0.04);color:var(--ash);border:1px solid var(--border)}
+.btn-ghost:hover{background:rgba(255,255,255,0.08);color:var(--text)}
+.btn-danger{background:rgba(239,68,68,0.15);color:var(--error);border:1px solid rgba(239,68,68,0.2)}
+.btn-danger:hover{background:rgba(239,68,68,0.25)}
+.btn-sm{padding:6px 12px;font-size:12px}
+
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,0.2);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:inline-block}
+.spinner-sm{width:14px;height:14px;border-width:2px}
+
+.skeleton{background:linear-gradient(90deg,var(--card) 25%,rgba(255,255,255,0.04) 50%,var(--card) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:8px}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+.hero{padding:48px 0 32px;text-align:center}
+.hero h1{font-size:36px;font-weight:800;letter-spacing:-0.5px;background:linear-gradient(135deg,var(--text) 0%,var(--primary) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{font-size:16px;color:var(--ash);margin-top:8px;max-width:560px;margin-left:auto;margin-right:auto}
+
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px}
+@media(max-width:768px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:480px){.stats-grid{grid-template-columns:1fr}}
+
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:22px;position:relative;overflow:hidden;transition:all .2s}
+.stat-card:hover{border-color:rgba(255,255,255,0.1);transform:translateY(-2px)}
+.stat-card .stat-icon{font-size:22px;margin-bottom:10px;width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center}
+.stat-card .stat-value{font-size:28px;font-weight:800;color:var(--text);line-height:1.2}
+.stat-card .stat-label{font-size:13px;color:var(--ash);margin-top:2px}
+
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+.section-header h2{font-size:20px;font-weight:700;letter-spacing:-0.2px}
+.section-header .right{display:flex;align-items:center;gap:8px}
+
+.toolbar{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.search-wrap{position:relative;flex:1;min-width:200px;max-width:320px}
+.search-wrap i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ash);font-size:14px}
+.search-wrap input{width:100%;padding:10px 12px 10px 36px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-family:var(--font);font-size:13px;outline:none;transition:all .2s}
+.search-wrap input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(99,102,241,0.15)}
+.search-wrap input::placeholder{color:var(--ash)}
+.filter-select{padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-family:var(--font);font-size:13px;outline:none;cursor:pointer;min-width:140px}
+
+.table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--card)}
+table{width:100%;border-collapse:collapse;min-width:700px}
+thead{background:rgba(255,255,255,0.02)}
+th{padding:14px 16px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;color:var(--ash);letter-spacing:0.5px;border-bottom:1px solid var(--border)}
+td{padding:14px 16px;font-size:13px;border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,0.02)}
+
+.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600}
+.badge-live{background:rgba(16,185,129,0.12);color:var(--success)}
+.badge-deploying{background:rgba(245,158,11,0.12);color:var(--warning)}
+.badge-failed{background:rgba(239,68,68,0.12);color:var(--error)}
+
+.ssl-yes{color:var(--success)}
+.ssl-no{color:var(--error)}
+
+.actions-cell{display:flex;align-items:center;gap:6px}
+.actions-cell a,.actions-cell button{width:32px;height:32px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;border:none;background:rgba(255,255,255,0.04);color:var(--ash);cursor:pointer;transition:all .2s;font-size:13px;text-decoration:none}
+.actions-cell a:hover,.actions-cell button:hover{background:rgba(255,255,255,0.1);color:var(--text)}
+.actions-cell .btn-danger-action:hover{background:rgba(239,68,68,0.15);color:var(--error)}
+
+.empty-state{padding:60px 20px;text-align:center}
+.empty-state i{font-size:48px;color:rgba(255,255,255,0.08);margin-bottom:16px}
+.empty-state h3{font-size:18px;font-weight:600;margin-bottom:6px}
+.empty-state p{font-size:14px;color:var(--ash);margin-bottom:16px}
+
+.deploy-form{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px;margin-bottom:32px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:768px){.form-grid{grid-template-columns:1fr}}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group label{font-size:13px;font-weight:600;color:var(--text)}
+.form-group input,.form-group select{padding:12px 14px;border-radius:8px;border:1px solid var(--border);background:rgba(255,255,255,0.03);color:var(--text);font-family:var(--font);font-size:14px;outline:none;transition:all .2s}
+.form-group input:focus,.form-group select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(99,102,241,0.15)}
+.form-group input::placeholder{color:var(--ash)}
+.domain-suggestions{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.domain-suggestions button{padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:rgba(255,255,255,0.03);color:var(--ash);font-size:12px;cursor:pointer;transition:all .2s;font-family:var(--font)}
+.domain-suggestions button:hover{border-color:var(--primary);color:var(--primary)}
+.domain-suggestions button.active{border-color:var(--primary);background:rgba(99,102,241,0.1);color:var(--primary)}
+
+.progress-bar-wrap{margin-top:20px;display:none}
+.progress-bar-wrap.active{display:block}
+.progress-steps{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;position:relative}
+.progress-steps::before{content:'';position:absolute;top:50%;left:10px;right:10px;height:2px;background:var(--border);transform:translateY(-50%);z-index:0}
+.progress-step{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.progress-step .step-dot{width:28px;height:28px;border-radius:50%;background:var(--card);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--ash);transition:all .3s}
+.progress-step.active .step-dot{background:var(--primary);border-color:var(--primary);color:#fff}
+.progress-step.done .step-dot{background:var(--success);border-color:var(--success);color:#fff}
+.progress-step .step-label{font-size:11px;color:var(--ash);font-weight:500}
+.progress-step.active .step-label{color:var(--primary)}
+.progress-step.done .step-label{color:var(--success)}
+.progress-bar{height:4px;background:var(--border);border-radius:4px;overflow:hidden}
+.progress-bar .fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));border-radius:4px;transition:width .6s ease;width:0%}
+
+.domains-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-bottom:32px}
+.domain-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;display:flex;align-items:center;justify-content:space-between;transition:all .2s}
+.domain-card:hover{border-color:rgba(255,255,255,0.1)}
+.domain-card .domain-info{display:flex;align-items:center;gap:12px}
+.domain-card .domain-name{font-size:15px;font-weight:600}
+.domain-card .domain-meta{font-size:12px;color:var(--ash);margin-top:2px}
+.domain-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.domain-dot.active{background:var(--success);box-shadow:0 0 6px rgba(16,185,129,0.4)}
+.domain-dot.pending{background:var(--warning);box-shadow:0 0 6px rgba(245,158,11,0.4)}
+.domain-dot.dns{background:var(--primary);box-shadow:0 0 6px rgba(99,102,241,0.4)}
+
+.timeline{position:relative;padding-left:28px;margin-bottom:32px}
+.timeline::before{content:'';position:absolute;left:10px;top:8px;bottom:8px;width:1px;background:var(--border)}
+.timeline-item{position:relative;padding:16px 20px;margin-bottom:8px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);display:flex;align-items:flex-start;gap:14px}
+.timeline-item .tl-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.timeline-item .tl-content{flex:1}
+.timeline-item .tl-title{font-size:14px;font-weight:500;color:var(--text)}
+.timeline-item .tl-time{font-size:12px;color:var(--ash);margin-top:2px}
+.timeline-item .tl-icon.build{background:rgba(99,102,241,0.1);color:var(--primary)}
+.timeline-item .tl-icon.deploy{background:rgba(16,185,129,0.1);color:var(--success)}
+.timeline-item .tl-icon.ssl{background:rgba(245,158,11,0.1);color:var(--warning)}
+.timeline-item .tl-icon.dns{background:rgba(34,211,238,0.1);color:var(--accent)}
+
+.toast-container{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:10px}
+.toast{padding:14px 20px;border-radius:10px;background:var(--card);border:1px solid var(--border);box-shadow:0 8px 32px rgba(0,0,0,0.4);display:flex;align-items:center;gap:10px;font-size:13px;font-weight:500;min-width:300px;animation:slideIn .3s ease;backdrop-filter:blur(8px)}
+.toast.success{border-left:3px solid var(--success)}
+.toast.error{border-left:3px solid var(--error)}
+.toast.info{border-left:3px solid var(--primary)}
+.toast i{font-size:16px}
+.toast.success i{color:var(--success)}
+.toast.error i{color:var(--error)}
+.toast.info i{color:var(--primary)}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+.footer{border-top:1px solid var(--border);padding:24px 0;margin-top:48px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.footer-links{display:flex;gap:20px;flex-wrap:wrap}
+.footer-links a{font-size:13px;color:var(--ash);text-decoration:none}
+.footer-links a:hover{color:var(--text)}
+.footer-copy{font-size:13px;color:var(--ash)}
+
+@media(max-width:768px){
+  .hero h1{font-size:28px}
+  .footer{flex-direction:column;text-align:center}
+  .toast{min-width:auto;width:calc(100vw - 40px)}
+}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px;max-width:420px;width:100%;box-shadow:0 16px 48px rgba(0,0,0,0.5)}
+.modal h3{font-size:18px;font-weight:600;margin-bottom:8px}
+.modal p{font-size:14px;color:var(--ash);margin-bottom:20px;line-height:1.5}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end}
+</style>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "Deployments - KEYCODE Studio",
+  "description": "Manage your project deployments, domains, and hosting on KEYCODE Studio.",
+  "publisher": {
+    "@type": "Organization",
+    "name": "KEYCODE Studio"
+  }
+}
+</script>
+    </head>
+<body>
+  <div id="kc-loader">
+    <div id="kc-loader-scene"></div>
+      <div id="kc-bg-text" aria-hidden="true">KEYCODE</div>
+<div class="kc-loader-info" style="position:absolute;bottom:48px;left:50%;transform:translateX(-50%);">
+      <div id="kc-loader-bar-track"><div id="kc-loader-bar"></div></div>
+      <div id="kc-loader-pct" style="font-family:'Inter',sans-serif;font-size:11px;color:#555;letter-spacing:.12em;text-align:center;">0%</div>
+    </div>
+  </div>
+
+<div class="toast-container" id="toastContainer"></div>
+  <div id="site-nav"></div>
+
+  <main class="container">
+  <section class="hero">
+    <h1>Deployments</h1>
+    <p>Manage your project deployments, domains, and hosting</p>
+  </section>
+
+  <section class="stats-grid" id="statsGrid">
+    <div class="stat-card"><div class="stat-icon" style="background:rgba(99,102,241,0.1);color:var(--primary)"><i class="fas fa-rocket"></i></div><div class="stat-value" id="statTotal">—</div><div class="stat-label">Total Deployments</div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:rgba(16,185,129,0.1);color:var(--success)"><i class="fas fa-check-circle"></i></div><div class="stat-value" id="statLive">—</div><div class="stat-label">Live</div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:rgba(239,68,68,0.1);color:var(--error)"><i class="fas fa-times-circle"></i></div><div class="stat-value" id="statFailed">—</div><div class="stat-label">Failed</div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:rgba(34,211,238,0.1);color:var(--accent)"><i class="fas fa-globe"></i></div><div class="stat-value" id="statDomains">—</div><div class="stat-label">Domains Connected</div></div>
+  </section>
+
+  <section style="margin-bottom:32px">
+    <div class="section-header">
+      <h2><i class="fas fa-list" style="margin-right:8px;color:var(--primary)"></i> Current Deployments</h2>
+    </div>
+    <div class="toolbar">
+      <div class="search-wrap">
+        <i class="fas fa-search"></i>
+        <input type="text" id="searchInput" placeholder="Search deployments..." oninput="filterDeployments()">
+      </div>
+      <select class="filter-select" id="statusFilter" onchange="filterDeployments()">
+        <option value="all">All Status</option>
+        <option value="live">Live</option>
+        <option value="deploying">Deploying</option>
+        <option value="failed">Failed</option>
+      </select>
+      <button class="btn btn-ghost btn-sm" onclick="refreshDeployments()"><i class="fas fa-rotate"></i> Refresh</button>
+    </div>
+    <div class="table-wrap" id="deploymentsTableWrap">
+      <div class="empty-state" id="loadingSkeleton">
+        <div class="skeleton" style="height:20px;width:40%;margin:0 auto 12px"></div>
+        <div class="skeleton" style="height:14px;width:60%;margin:0 auto"></div>
+      </div>
+      <table id="deploymentsTable" style="display:none">
+        <thead>
+          <tr>
+            <th>Project Name</th>
+            <th>Domain</th>
+            <th>Status</th>
+            <th>Hosting</th>
+            <th>Deployed</th>
+            <th>SSL</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="deploymentsBody"></tbody>
+      </table>
+      <div class="empty-state" id="emptyState" style="display:none">
+        <i class="fas fa-rocket"></i>
+        <h3>No deployments yet</h3>
+        <p>Deploy your first project using the form below!</p>
+      </div>
+    </div>
+  </section>
+
+  <section style="margin-bottom:32px">
+    <div class="section-header">
+      <h2><i class="fas fa-plus-circle" style="margin-right:8px;color:var(--primary)"></i> Deploy New</h2>
+    </div>
+    <div class="deploy-form">
+      <form id="deployForm" onsubmit="handleDeploy(event)">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="projectName">Project Name / ID</label>
+            <input type="text" id="projectName" placeholder="my-awesome-project" required>
+          </div>
+          <div class="form-group">
+            <label for="domainName">Domain</label>
+            <input type="text" id="domainName" placeholder="my-project" value="">
+            <div class="domain-suggestions" id="domainSuggestions"></div>
+          </div>
+          <div class="form-group">
+            <label for="hostingPlan">Hosting Plan</label>
+            <select id="hostingPlan"></select>
+          </div>
+          <div class="form-group" style="display:flex;flex-direction:column;justify-content:flex-end">
+            <button type="submit" class="btn btn-primary" id="deployBtn"><i class="fas fa-rocket"></i> Deploy</button>
+          </div>
+        </div>
+      </form>
+      <div class="progress-bar-wrap" id="progressWrap">
+        <div class="progress-steps">
+          <div class="progress-step active" data-step="0"><div class="step-dot">1</div><span class="step-label">Building</span></div>
+          <div class="progress-step" data-step="1"><div class="step-dot">2</div><span class="step-label">Deploying</span></div>
+          <div class="progress-step" data-step="2"><div class="step-dot">3</div><span class="step-label">Live</span></div>
+        </div>
+        <div class="progress-bar"><div class="fill" id="progressFill"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section style="margin-bottom:32px">
+    <div class="section-header">
+      <h2><i class="fas fa-globe" style="margin-right:8px;color:var(--accent)"></i> Domains</h2>
+      <button class="btn btn-ghost btn-sm" onclick="showAddDomain()"><i class="fas fa-plus"></i> Add Domain</button>
+    </div>
+    <div class="domains-grid" id="domainsGrid"></div>
+  </section>
+
+  <section style="margin-bottom:32px">
+    <div class="section-header">
+      <h2><i class="fas fa-clock-rotate-left" style="margin-right:8px;color:var(--warning)"></i> Recent Activity</h2>
+    </div>
+    <div class="timeline" id="activityTimeline"></div>
+  </section>
+</main>
+
+<footer class="container">
+  <div class="footer">
+    <div style="display:flex;align-items:center;gap:10px">
+      <img src="/favicon.svg" alt="" width="20" height="20">
+      <span style="font-weight:700;font-size:15px">KEYCODE</span>
+    </div>
+    <div class="footer-links">
+      <a href="/"><i class="fas fa-house"></i> Home</a>
+      <a href="/ai-builder.html"><i class="fas fa-wand-magic-sparkles"></i> AI Studio</a>
+      <a href="/gallery.html"><i class="fas fa-images"></i> Gallery</a>
+      <a href="/docs.html"><i class="fas fa-book"></i> Docs</a>
+      <a href="/status.html"><i class="fas fa-heart-pulse"></i> Status</a>
+      <a href="/terms.html"><i class="fas fa-file-lines"></i> Terms</a>
+      <a href="/privacy.html"><i class="fas fa-shield"></i> Privacy</a>
+    </div>
+    <div class="footer-copy">&copy; 2026 KEYCODE Studio</div>
+  </div>
+</footer>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h3 id="modalTitle">Confirm</h3>
+    <p id="modalMessage">Are you sure?</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-danger" id="modalConfirmBtn" onclick="closeModal()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== STATE =====
+let deployments = [];
+let hostingPlans = [];
+let domains = [];
+let tlds = [];
+
+// ===== TOAST =====
+function toast(message, type) {
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  const icons = { success: 'fa-check-circle', error: 'fa-times-circle', info: 'fa-info-circle' };
+  t.innerHTML = '<i class="fas ' + (icons[type] || icons.info) + '"></i> ' + message;
+  c.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; setTimeout(() => t.remove(), 300); }, 4000);
+}
+
+// ===== API with fallback =====
+async function apiFetch(url, options) {
+  try {
+    const res = await fetch(url, options);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.json();
+  } catch (e) {
+    console.warn('[Deployments] API error for ' + url + ': ' + e.message + '. Using fallback data.');
+    return null;
+  }
+}
+
+// ===== MOCK DATA =====
+function getMockDeployments() {
+  return [
+    { id: 'd1', projectName: 'keycode-home', domain: 'keycode.studio', status: 'live', hosting: 'Pro', createdAt: '2026-07-10T14:22:00Z', ssl: true },
+    { id: 'd2', projectName: 'ai-builder', domain: 'builder.keycode.studio', status: 'live', hosting: 'Business', createdAt: '2026-07-08T09:15:00Z', ssl: true },
+    { id: 'd3', projectName: 'api-gateway', domain: 'api.keycode.studio', status: 'live', hosting: 'Pro', createdAt: '2026-07-05T18:30:00Z', ssl: true },
+    { id: 'd4', projectName: 'admin-panel', domain: 'admin.keycode.studio', status: 'deploying', hosting: 'Starter', createdAt: '2026-07-14T11:00:00Z', ssl: false },
+    { id: 'd5', projectName: 'legacy-site', domain: 'legacy.keycode.studio', status: 'failed', hosting: 'Starter', createdAt: '2026-07-01T06:45:00Z', ssl: false },
+  ];
+}
+
+function getMockHosting() {
+  return [
+    { id: 'starter', name: 'Starter', price: '$9/mo', features: ['1 project', '1 GB storage', '100k requests'] },
+    { id: 'pro', name: 'Pro', price: '$29/mo', features: ['10 projects', '10 GB storage', '1M requests'] },
+    { id: 'business', name: 'Business', price: '$99/mo', features: ['Unlimited projects', '100 GB storage', '10M requests', 'Priority support'] },
+  ];
+}
+
+function getMockDomains() {
+  return [
+    { domain: 'keycode.studio', status: 'active', dns: 'Cloudflare' },
+    { domain: 'builder.keycode.studio', status: 'active', dns: 'Cloudflare' },
+    { domain: 'api.keycode.studio', status: 'active', dns: 'Cloudflare' },
+    { domain: 'dev.keycode.studio', status: 'pending', dns: 'Pending' },
+  ];
+}
+
+function getMockTLDs() {
+  return [
+    { tld: '.com', price: '$10/yr' },
+    { tld: '.io', price: '$35/yr' },
+    { tld: '.app', price: '$15/yr' },
+    { tld: '.dev', price: '$12/yr' },
+    { tld: '.studio', price: '$25/yr' },
+    { tld: '.ai', price: '$40/yr' },
+  ];
+}
+
+function getMockActivity() {
+  const now = Date.now();
+  return [
+    { icon: 'build', text: 'admin-panel built successfully', time: now - 3600000 },
+    { icon: 'deploy', text: 'admin-panel deployed to production', time: now - 1800000 },
+    { icon: 'ssl', text: 'SSL certificate renewed for keycode.studio', time: now - 86400000 },
+    { icon: 'dns', text: 'DNS updated for dev.keycode.studio', time: now - 172800000 },
+    { icon: 'build', text: 'ai-builder rebuilt and redeployed', time: now - 259200000 },
+  ];
+}
+
+// ===== LOAD DATA =====
+async function loadDeployments() {
+  let data = await apiFetch('/api/deploy/d1');
+  if (!data) return getMockDeployments();
+  const depId = data.id || 'd1';
+  const full = [];
+  for (let i = 0; i < 5; i++) {
+    const d = await apiFetch('/api/deploy/' + depId);
+    if (d) full.push({ id: d.id, projectName: d.id, domain: d.domain, status: d.status, hosting: d.hosting, createdAt: d.createdAt, ssl: d.ssl });
+    else break;
+  }
+  return full.length ? full : getMockDeployments();
+}
+
+async function loadHosting() {
+  let data = await apiFetch('/api/hosting');
+  return data && Array.isArray(data) ? data : getMockHosting();
+}
+
+async function loadDomains() {
+  let data = await apiFetch('/api/domains');
+  return data && Array.isArray(data) ? data : getMockDomains();
+}
+
+async function loadDeployStatus() {
+  let data = await apiFetch('/api/deployment/status');
+  return data || {};
+}
+
+async function loadTLDs() {
+  let data = await apiFetch('/api/domains');
+  if (data && Array.isArray(data) && data[0] && data[0].tld) return data;
+  return getMockTLDs();
+}
+
+// ===== RENDER =====
+function renderDeployments() {
+  const tbody = document.getElementById('deploymentsBody');
+  const table = document.getElementById('deploymentsTable');
+  const empty = document.getElementById('emptyState');
+  const skel = document.getElementById('loadingSkeleton');
+
+  tbody.innerHTML = '';
+  if (!deployments.length) {
+    table.style.display = 'none';
+    empty.style.display = 'block';
+    skel.style.display = 'none';
+    updateStats();
+    return;
+  }
+
+  table.style.display = '';
+  empty.style.display = 'none';
+  skel.style.display = 'none';
+
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const filter = document.getElementById('statusFilter').value;
+
+  const filtered = deployments.filter(d => {
+    const matchSearch = !search || d.projectName.toLowerCase().includes(search) || (d.domain && d.domain.toLowerCase().includes(search));
+    const matchFilter = filter === 'all' || d.status === filter;
+    return matchSearch && matchFilter;
+  });
+
+  if (!filtered.length) {
+    table.style.display = 'none';
+    empty.style.display = 'block';
+    empty.querySelector('p').textContent = 'No deployments match your search.';
+    return;
+  }
+
+  filtered.forEach(d => {
+    const tr = document.createElement('tr');
+    const statusLabel = d.status.charAt(0).toUpperCase() + d.status.slice(1);
+    const statusBadge = 'badge-' + d.status;
+    const spinnerHtml = d.status === 'deploying' ? ' <i class="fas fa-spinner fa-spin" style="font-size:10px"></i>' : '';
+    const timeAgo = timeSince(d.createdAt);
+    tr.innerHTML = `
+      <td><strong>${escapeHtml(d.projectName)}</strong></td>
+      <td>${escapeHtml(d.domain || '—')}</td>
+      <td><span class="badge ${statusBadge}">${statusLabel}${spinnerHtml}</span></td>
+      <td>${escapeHtml(d.hosting || '—')}</td>
+      <td>${timeAgo}</td>
+      <td>${d.ssl ? '<span class="ssl-yes"><i class="fas fa-check-circle"></i></span>' : '<span class="ssl-no"><i class="fas fa-times-circle"></i></span>'}</td>
+      <td>
+        <div class="actions-cell">
+          ${d.status === 'live' && d.domain ? '<a href="https://' + encodeURI(d.domain) + '" target="_blank" rel="noopener" title="Visit Site"><i class="fas fa-external-link-alt"></i></a>' : '<a href="#" style="opacity:0.3;cursor:default"><i class="fas fa-external-link-alt"></i></a>'}
+          <button onclick="redeploy('${escapeHtml(d.id)}')" title="Redeploy"><i class="fas fa-rotate"></i></button>
+          <button class="btn-danger-action" onclick="confirmDelete('${escapeHtml(d.id)}')" title="Delete"><i class="fas fa-trash-can"></i></button>
+        </div>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderStats() {
+  const total = deployments.length;
+  const live = deployments.filter(d => d.status === 'live').length;
+  const failed = deployments.filter(d => d.status === 'failed').length;
+  const domainCount = domains.filter(d => d.status === 'active').length;
+
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statLive').textContent = live;
+  document.getElementById('statFailed').textContent = failed;
+  document.getElementById('statDomains').textContent = domainCount;
+}
+
+function updateStats() {
+  renderStats();
+}
+
+function renderHostingPlans() {
+  const select = document.getElementById('hostingPlan');
+  select.innerHTML = '';
+  hostingPlans.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = p.name + ' (' + (p.price || 'Free') + ')';
+    select.appendChild(opt);
+  });
+}
+
+function renderDomainSuggestions() {
+  const container = document.getElementById('domainSuggestions');
+  container.innerHTML = '';
+  tlds.forEach(t => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = t.tld + ' (' + (t.price || '—') + ')';
+    btn.onclick = function() {
+      document.querySelectorAll('#domainSuggestions button').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+    };
+    container.appendChild(btn);
+  });
+}
+
+function renderDomains() {
+  const grid = document.getElementById('domainsGrid');
+  grid.innerHTML = '';
+  if (!domains.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--ash)"><i class="fas fa-globe" style="font-size:32px;display:block;margin-bottom:12px;opacity:0.3"></i>No domains connected yet.</div>';
+    return;
+  }
+  domains.forEach(d => {
+    const card = document.createElement('div');
+    card.className = 'domain-card';
+    const statusClass = d.status === 'active' ? 'active' : d.status === 'pending' ? 'pending' : 'dns';
+    const statusLabel = d.status === 'active' ? 'Active' : d.status === 'pending' ? 'Pending' : 'DNS Setup';
+    card.innerHTML = `
+      <div class="domain-info">
+        <span class="domain-dot ${statusClass}"></span>
+        <div>
+          <div class="domain-name">${escapeHtml(d.domain)}</div>
+          <div class="domain-meta">${statusLabel}${d.dns ? ' · ' + escapeHtml(d.dns) : ''}</div>
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="toast('Domain details coming soon','info')"><i class="fas fa-gear"></i></button>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function renderActivity() {
+  const timeline = document.getElementById('activityTimeline');
+  timeline.innerHTML = '';
+  const activity = getMockActivity();
+  activity.forEach(a => {
+    const item = document.createElement('div');
+    item.className = 'timeline-item';
+    item.innerHTML = `
+      <div class="tl-icon ${a.icon}"><i class="fas ${iconMap(a.icon)}"></i></div>
+      <div class="tl-content">
+        <div class="tl-title">${escapeHtml(a.text)}</div>
+        <div class="tl-time">${formatTime(a.time)}</div>
+      </div>
+    `;
+    timeline.appendChild(item);
+  });
+}
+
+function iconMap(type) {
+  return { build: 'fa-code', deploy: 'fa-rocket', ssl: 'fa-lock', dns: 'fa-globe' }[type] || 'fa-circle';
+}
+
+function formatTime(ts) {
+  const d = new Date(ts);
+  const now = new Date();
+  const diff = now - d;
+  const mins = Math.floor(diff / 60000);
+  const hrs = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return mins + 'm ago';
+  if (hrs < 24) return hrs + 'h ago';
+  if (days < 7) return days + 'd ago';
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function timeSince(dateStr) {
+  if (!dateStr) return '—';
+  return formatTime(new Date(dateStr).getTime());
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ===== FILTER =====
+function filterDeployments() {
+  renderDeployments();
+}
+
+// ===== REFRESH =====
+async function refreshDeployments() {
+  toast('Refreshing deployments...', 'info');
+  showSkeleton();
+  await initData();
+  toast('Deployments updated', 'success');
+}
+
+function showSkeleton() {
+  const skel = document.getElementById('loadingSkeleton');
+  const table = document.getElementById('deploymentsTable');
+  const empty = document.getElementById('emptyState');
+  skel.style.display = 'block';
+  skel.innerHTML = '<div class="skeleton" style="height:20px;width:40%;margin:0 auto 12px"></div><div class="skeleton" style="height:14px;width:60%;margin:0 auto"></div>';
+  table.style.display = 'none';
+  empty.style.display = 'none';
+}
+
+// ===== DEPLOY =====
+async function handleDeploy(e) {
+  e.preventDefault();
+  const name = document.getElementById('projectName').value.trim();
+  const domain = document.getElementById('domainName').value.trim();
+  const plan = document.getElementById('hostingPlan').value;
+  const btn = document.getElementById('deployBtn');
+
+  if (!name) { toast('Please enter a project name', 'error'); return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner spinner-sm"></span> Deploying...';
+
+  const progressWrap = document.getElementById('progressWrap');
+  const fill = document.getElementById('progressFill');
+  const steps = document.querySelectorAll('.progress-step');
+  progressWrap.classList.add('active');
+
+  function setStep(step) {
+    steps.forEach((s, i) => {
+      s.classList.toggle('active', i === step);
+      s.classList.toggle('done', i < step);
+    });
+    fill.style.width = ((step + 1) / 3 * 100) + '%';
+  }
+
+  setStep(0);
+
+  const domainFull = domain ? domain + (document.querySelector('#domainSuggestions .active')?.textContent?.split(' ')[0] || '') : (name + '.keycode.studio');
+
+  await new Promise(r => setTimeout(r, 1200));
+  setStep(1);
+
+  const result = await apiFetch('/api/deploy', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ project: name, domain: domainFull, plan: plan })
+  });
+
+  await new Promise(r => setTimeout(r, 1000));
+  setStep(2);
+
+  if (result && result.id) {
+    toast('Deployed ' + name + ' successfully!', 'success');
+    deployments.unshift({
+      id: result.id,
+      projectName: name,
+      domain: result.domain || domainFull,
+      status: 'live',
+      hosting: hostingPlans.find(p => p.id === plan)?.name || plan,
+      createdAt: new Date().toISOString(),
+      ssl: true
+    });
+    renderDeployments();
+    updateStats();
+  } else {
+    deployments.unshift({
+      id: 'dep-' + Date.now(),
+      projectName: name,
+      domain: domainFull,
+      status: 'live',
+      hosting: hostingPlans.find(p => p.id === plan)?.name || plan,
+      createdAt: new Date().toISOString(),
+      ssl: true
+    });
+    renderDeployments();
+    updateStats();
+    toast('Deployed ' + name + ' (mock mode)', 'success');
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fas fa-rocket"></i> Deploy';
+
+  setTimeout(() => {
+    progressWrap.classList.remove('active');
+    fill.style.width = '0%';
+    steps.forEach(s => { s.classList.remove('active', 'done'); });
+    steps[0].classList.add('active');
+  }, 2000);
+
+  document.getElementById('deployForm').reset();
+}
+
+// ===== REDEPLOY =====
+function redeploy(id) {
+  const dep = deployments.find(d => d.id === id);
+  if (!dep) return;
+  toast('Redeploying ' + dep.projectName + '...', 'info');
+  dep.status = 'deploying';
+  renderDeployments();
+  setTimeout(() => {
+    dep.status = 'live';
+    dep.createdAt = new Date().toISOString();
+    renderDeployments();
+    updateStats();
+    toast(dep.projectName + ' redeployed successfully', 'success');
+  }, 2500);
+}
+
+// ===== DELETE =====
+let deleteTarget = null;
+
+function confirmDelete(id) {
+  deleteTarget = id;
+  document.getElementById('modalTitle').textContent = 'Delete Deployment';
+  const dep = deployments.find(d => d.id === id);
+  document.getElementById('modalMessage').textContent = 'Are you sure you want to delete "' + (dep ? dep.projectName : id) + '"? This action cannot be undone.';
+  document.getElementById('modalConfirmBtn').onclick = function() { executeDelete(); };
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  deleteTarget = null;
+}
+
+function executeDelete() {
+  if (!deleteTarget) return;
+  const dep = deployments.find(d => d.id === deleteTarget);
+  deployments = deployments.filter(d => d.id !== deleteTarget);
+  renderDeployments();
+  updateStats();
+  toast('Deleted ' + (dep ? dep.projectName : 'deployment'), 'success');
+  closeModal();
+}
+
+function showAddDomain() {
+  document.getElementById('modalTitle').textContent = 'Add Domain';
+  document.getElementById('modalMessage').innerHTML = 'Enter your domain name:<br><input type="text" id="addDomainInput" placeholder="example.com" style="margin-top:8px;padding:10px;border-radius:6px;border:1px solid var(--border);background:rgba(255,255,255,0.03);color:var(--text);width:100%;font-family:var(--font);outline:none">';
+  document.getElementById('modalConfirmBtn').textContent = 'Add';
+  document.getElementById('modalConfirmBtn').className = 'btn btn-primary';
+  document.getElementById('modalConfirmBtn').onclick = function() { executeAddDomain(); };
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function executeAddDomain() {
+  const input = document.getElementById('addDomainInput');
+  const domain = input ? input.value.trim() : '';
+  if (!domain) { toast('Please enter a domain name', 'error'); return; }
+  domains.push({ domain: domain, status: 'pending', dns: 'Pending' });
+  renderDomains();
+  updateStats();
+  toast('Domain ' + domain + ' added (DNS setup pending)', 'success');
+  closeModal();
+}
+
+// ===== INIT =====
+async function initData() {
+  showSkeleton();
+  try {
+    const [depData, hostData, domData, tldData] = await Promise.all([
+      loadDeployments().catch(() => getMockDeployments()),
+      loadHosting().catch(() => getMockHosting()),
+      loadDomains().catch(() => getMockDomains()),
+      loadTLDs().catch(() => getMockTLDs()),
+    ]);
+    deployments = depData;
+    hostingPlans = hostData;
+    domains = domData;
+    tlds = tldData;
+  } catch (e) {
+    deployments = getMockDeployments();
+    hostingPlans = getMockHosting();
+    domains = getMockDomains();
+    tlds = getMockTLDs();
+  }
+  renderDeployments();
+  renderStats();
+  renderHostingPlans();
+  renderDomainSuggestions();
+  renderDomains();
+  renderActivity();
+}
+
+// ===== NAV TOGGLE =====
+document.getElementById('navToggle')?.addEventListener('click', function() {
+  document.getElementById('navLinks').classList.toggle('open');
+});
+
+// ===== KEYBOARD =====
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeModal();
+});
+
+// ===== START =====
+initData();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(function() {});
+}
+</script>
+  <div id="site-footer"></div>
+    <script src="/js/loading-screen.js"></script>
+<script src="/js/site.js"></script>
+<script src="/js/install.js" defer></script>
+
+  <script src="/js/scroll-3d-animations.js"></script>  <script src="/js/k-scroll.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KEYCODE OS — Agent Workspace</title>
+  <meta name="description" content="A cinematic agent workspace wired to the real KEYCODE runtime — live ReAct streaming, tool trace, code, and deliverables.">
+  <link rel="icon" href="/assets/favicon-Bkp94Cvw.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+  <script src="/three.min.js"></script>
+  <script src="/js/gsap.min.js"></script>
+  <script type="module" crossorigin src="/assets/os-B_zuyxyZ.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="stylesheet" crossorigin href="/assets/os-BCvLUqu5.css">
+</head>
+<body>
+  <!-- Living 3D universe (WebGL, WebGPU-probed) -->
+  <canvas id="universe"></canvas>
+  <div id="universe-vignette"></div>
+  <div id="noise"></div>
+
+  <!-- Boot -->
+  <div id="boot">
+    <div class="boot-center">
+      <svg class="boot-mark" viewBox="0 0 64 64" fill="none">
+        <path class="boot-mark-path" d="M32 4 L58 50 L6 50 Z M32 24 L42 42 L22 42 Z" stroke="url(#bg1)" stroke-width="2.5"/>
+        <defs><linearGradient id="bg1" x1="0" y1="0" x2="64" y2="64"><stop stop-color="#6d5cff"/><stop offset="1" stop-color="#22d3ee"/></linearGradient></defs>
+        <circle class="boot-mark-core" cx="32" cy="36" r="4" fill="#22d3ee"/>
+      </svg>
+      <div class="boot-name">KEYCODE <span>OS</span></div>
+      <div class="boot-log" id="boot-log"></div>
+      <div class="boot-bar"><div class="boot-bar-fill" id="boot-bar"></div></div>
+      <div class="boot-status" id="boot-status">initializing</div>
+    </div>
+  </div>
+
+  <!-- Home -->
+  <div id="home">
+    <div class="home-inner">
+      <div class="home-badge"><span class="live-dot"></span><span id="home-badge-text">runtime connecting</span></div>
+      <h1 class="home-title">
+        <span class="line-greeting">What should we build?</span>
+        <span class="line-ask">Describe it — the <em>real agents</em> ship it.</span>
+      </h1>
+      <div class="prompt-wrap">
+        <div class="prompt-box" id="prompt-box">
+          <textarea id="prompt-input" rows="1" placeholder="Build a PCB drone controller with firmware… or a web app, game, anything." spellcheck="false"></textarea>
+          <div class="prompt-glow"></div>
+          <div class="prompt-actions">
+            <div class="prompt-meta">
+              <span class="dot-sep">◆</span><span id="meta-tools">tools · loading</span>
+              <span class="dot-sep">◆</span><kbd>⌘K</kbd> palette
+              <span class="dot-sep">◆</span><span id="st-gpu-backend">detecting…</span>
+            </div>
+            <button class="prompt-enter" id="prompt-enter" title="Launch (Enter)">➤</button>
+          </div>
+        </div>
+      </div>
+      <div class="examples" id="examples">
+        <button class="chip" data-prompt="Build a responsive landing page for a coffee brand with a menu section">☕ Landing page</button>
+        <button class="chip" data-prompt="Design a 4-layer drone PCB with flight controller firmware">⊞ Drone PCB</button>
+        <button class="chip" data-prompt="Create a WebGL game with neon worlds and enemy AI">▶ Neon game</button>
+        <button class="chip" data-prompt="Build a task API with auth in the sandbox and run its tests">⚙ Sandbox API + tests</button>
+        <button class="chip" data-prompt="Research the best free AI providers right now and summarize">⌕ Live research</button>
+      </div>
+      <div class="home-footer">
+        <span class="foot-item"><span class="foot-dot"></span><span id="foot-routers">routers —</span></span>
+        <span class="foot-item"><span class="foot-glyph">◆</span> agent workspace</span>
+        <span class="foot-item"><span class="foot-glyph">◇</span> <a href="/" style="color:inherit;text-decoration:none">keycode.studio</a></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Workspace shell -->
+  <div id="shell" hidden>
+    <aside id="sidebar">
+      <div class="sb-logo">
+        <span class="avatar-ring"><span class="avatar">◈</span></span>
+        <span class="sb-logo-text">KEYCODE <em>OS</em></span>
+      </div>
+      <nav class="sb-nav">
+        <button class="nav-item active" data-view="dashboard"><span class="nav-ic">◧</span><span class="nav-lb">Dashboard</span></button>
+        <button class="nav-item" data-view="chat"><span class="nav-ic">✦</span><span class="nav-lb">Build</span></button>
+        <div class="nav-sep"></div>
+        <button class="nav-item" data-view="web"><span class="nav-ic">⬡</span><span class="nav-lb">Web project</span></button>
+        <button class="nav-item" data-view="game"><span class="nav-ic">▶</span><span class="nav-lb">Game</span></button>
+        <button class="nav-item" data-view="pcb"><span class="nav-ic">⊞</span><span class="nav-lb">PCB</span></button>
+        <button class="nav-item" data-view="cad"><span class="nav-ic">⬢</span><span class="nav-lb">CAD</span></button>
+        <div class="nav-sep"></div>
+        <button class="nav-item" data-view="tools"><span class="nav-ic">⌁</span><span class="nav-lb">Runtime · tools</span></button>
+        <div class="nav-sep"></div>
+        <a class="nav-item" href="/ai-builder.html"><span class="nav-ic">⬡</span><span class="nav-lb">AI Builder ↗</span></a>
+        <a class="nav-item" href="/"><span class="nav-ic">◇</span><span class="nav-lb">Back to site</span></a>
+      </nav>
+      <div class="sb-foot">
+        <div style="display:flex;gap:10px;align-items:center;padding:6px 8px">
+          <span class="avatar-ring"><span class="avatar">K</span></span>
+          <span><span class="u-name">Operator</span><span class="u-plan" id="sb-plan">local runtime</span></span>
+        </div>
+      </div>
+    </aside>
+
+    <div id="os-main">
+      <header id="topbar">
+        <div class="tb-left">
+          <button class="tb-hamburger" id="tb-hamburger">☰</button>
+          <div class="tb-crumb"><span>keycode</span><span class="crumb-sep">/</span><span id="crumb-proj">os</span></div>
+        </div>
+        <div class="tb-center">
+          <div class="tb-status"><span class="live-dot"></span><span id="tb-status-text">Idle</span></div>
+        </div>
+        <div class="tb-right">
+          <button class="tb-icon" id="tb-cmd" title="Command palette (⌘K)">⌘</button>
+          <button class="tb-icon" id="tb-notif" title="System notifications">🔔</button>
+          <div class="tb-avatar">K</div>
+        </div>
+      </header>
+
+      <div id="workspace">
+        <!-- Conversation -->
+        <section id="conversation">
+          <div class="conv-head">
+            <span class="conv-title">Agent chat</span>
+            <span class="conv-sub" id="conv-sub">ReAct runtime · live</span>
+          </div>
+          <div class="conv-scroll" id="conv-messages"></div>
+          <div class="conv-input">
+            <textarea id="conv-input" rows="1" placeholder="Ask the agent to build, fix, research…"></textarea>
+            <button id="conv-send" title="Send">➤</button>
+          </div>
+        </section>
+
+        <!-- Generation -->
+        <section id="generation">
+          <div id="agents-dock">
+            <div class="dock-head">
+              <span>Agent fleet</span>
+              <span class="dock-progress" id="dock-progress">—</span>
+            </div>
+            <div class="dock-grid" id="agents-grid"></div>
+          </div>
+          <div id="panel">
+            <div class="panel-tabs">
+              <button class="ptab active" data-tab="preview">Preview</button>
+              <button class="ptab" data-tab="code">Code</button>
+              <button class="ptab" data-tab="terminal">Terminal</button>
+              <button class="ptab" data-tab="files">Files</button>
+              <button class="ptab" data-tab="routers">Routers</button>
+              <button class="ptab" data-tab="runtime">Runtime</button>
+              <button class="ptab" data-tab="deploypanel">Deliver</button>
+            </div>
+            <div class="panel-body">
+              <!-- Preview: real agent output rendered live -->
+              <div class="ptab-pane active" data-pane="preview">
+                <div class="pane-placeholder" id="preview-empty">
+                  <div class="ph-orbit"><span></span><span></span><span></span></div>
+                  <div class="ph-title">Live preview</div>
+                  <div class="ph-sub">When the agent writes an .html file it renders here — real output, real bytes.</div>
+                </div>
+                <iframe id="preview-frame" hidden sandbox="allow-scripts allow-forms allow-modals allow-popups"></iframe>
+              </div>
+              <!-- Code: real streamed bytes from file events -->
+              <div class="ptab-pane" data-pane="code">
+                <div class="pane-placeholder" id="code-empty">
+                  <div class="ph-orbit"><span></span><span></span><span></span></div>
+                  <div class="ph-title">Code</div>
+                  <div class="ph-sub">Every file the agent creates or edits streams here, byte for byte.</div>
+                </div>
+                <div class="code-layout" id="code-layout" hidden>
+                  <div class="file-tree" id="ft-root"></div>
+                  <div class="editor">
+                    <div class="editor-tabs"><div class="editor-tab" id="editor-tab">—</div></div>
+                    <pre class="editor-code"><code id="editor-code"></code></pre>
+                  </div>
+                </div>
+              </div>
+              <!-- Terminal: real observations from the ReAct loop -->
+              <div class="ptab-pane" data-pane="terminal">
+                <div class="term-head"><span class="term-dots"><i></i><i></i><i></i></span><span>agent · ReAct runtime</span></div>
+                <div class="term-body" id="term-body"></div>
+              </div>
+              <!-- Files: real workspace listing -->
+              <div class="ptab-pane" data-pane="files">
+                <div class="files-head">Workspace files · <span id="files-count">0</span></div>
+                <div class="files-grid" id="files-grid"></div>
+              </div>
+              <!-- Routers: live 15-provider swarm health (free tiers first) -->
+              <div class="ptab-pane" data-pane="routers">
+                <div class="pane-placeholder" id="routers-empty"><div class="ph-title">Router swarm</div></div>
+                <div id="routers-list" hidden></div>
+              </div>
+              <!-- Runtime: tool catalog + sandbox + memory stats -->
+              <div class="ptab-pane" data-pane="runtime">
+                <div class="pane-placeholder" id="runtime-empty"><div class="ph-title">Runtime</div></div>
+                <div id="runtime-body" hidden></div>
+              </div>
+              <!-- Deliver: real artifacts when the agent zips a build -->
+              <div class="ptab-pane" data-pane="deploypanel">
+                <div class="pane-placeholder" id="deliver-empty">
+                  <div class="ph-orbit"><span></span><span></span><span></span></div>
+                  <div class="ph-title">Deliverables</div>
+                  <div class="ph-sub">When the agent finishes a build it packages a ZIP — download it here. No fake deploy URLs, ever.</div>
+                </div>
+                <div id="deliver-list" hidden></div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <footer id="statusbar">
+        <span class="st-cell" id="st-clock">—</span>
+        <span class="st-cell" id="st-fps">FPS —</span>
+        <span class="st-cell" id="st-agents">Agents: 0/0</span>
+        <span class="st-cell" id="st-gpu">GPU: —</span>
+        <span class="st-cell" id="st-cpu">CPU: —</span>
+        <span class="st-cell" id="st-mem">MEM: —</span>
+        <span class="st-cell right" id="st-tools">tools —</span>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Command palette -->
+  <div class="cmd-overlay" id="cmd" hidden>
+    <div class="cmd-box">
+      <div class="cmd-search">⌘<input id="cmd-input" placeholder="Type a command…" spellcheck="false"></div>
+      <div class="cmd-list" id="cmd-list"></div>
+      <div class="cmd-foot"><span>↑↓ navigate</span><span>↵ run</span><span>esc close</span></div>
+    </div>
+  </div>
+
+  <div id="toasts"></div>
+
+</body>
+</html>

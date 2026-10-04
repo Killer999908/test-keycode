@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KEYCODE Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #06060e;
+  --bg2: #0c0c18;
+  --bg3: #14142a;
+  --border: rgba(99,102,241,0.12);
+  --text: #e8e8f0;
+  --text2: rgba(255,255,255,0.5);
+  --accent: #ffffff;
+  --accent2: #a3a3a3;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --radius: 12px;
+  --font: 'Inter', sans-serif;
+  --display: 'Syne', 'Inter', sans-serif;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  font-family: var(--font); background: var(--bg); color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+/* ===== LOGIN ===== */
+#login-view {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 100vh; padding: 24px;
+  background: radial-gradient(ellipse at 50% 0%, rgba(99,102,241,0.08) 0%, transparent 60%),
+              var(--bg);
+}
+#login-view.hidden { display: none; }
+.login-card {
+  width: 100%; max-width: 400px;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 16px; padding: 40px 32px;
+}
+.login-card h1 {
+  font-family: var(--display); font-size: 24px; font-weight: 700;
+  text-align: center; margin-bottom: 4px;
+}
+.login-card p {
+  text-align: center; color: var(--text2); font-size: 14px; margin-bottom: 28px;
+}
+.login-card .brand {
+  text-align: center; font-family: var(--display); font-size: 13px;
+  letter-spacing: 0.3em; text-transform: uppercase;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  margin-bottom: 24px;
+}
+.login-error {
+  background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2);
+  color: var(--danger); padding: 10px 14px; border-radius: 8px;
+  font-size: 13px; margin-bottom: 16px; display: none;
+}
+.login-error.show { display: block; }
+.input-group { margin-bottom: 16px; }
+.input-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 6px; }
+.input-group input {
+  width: 100%; padding: 12px 14px; background: var(--bg3);
+  border: 1px solid var(--border); border-radius: 8px; color: var(--text);
+  font-size: 14px; font-family: var(--font); outline: none;
+  transition: border-color 0.2s;
+}
+.input-group input:focus { border-color: var(--accent); }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: 600;
+  cursor: pointer; border: none; font-family: var(--font);
+  transition: all 0.2s; text-decoration: none;
+}
+.btn-primary { background: var(--accent); color: #fff; width: 100%; }
+.btn-primary:hover { background: #5558e6; }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text2); }
+.btn-ghost:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+.btn-sm { padding: 8px 14px; font-size: 13px; }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-danger:hover { background: #dc2626; }
+.btn-success { background: var(--success); color: #fff; }
+.btn-success:hover { background: #059669; }
+/* ===== ADMIN LAYOUT ===== */
+#admin-view { display: none; }
+#admin-view.active { display: flex; height: 100vh; }
+.sidebar {
+  width: 240px; background: var(--bg2); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; flex-shrink: 0; overflow-y: auto;
+}
+.sidebar-header {
+  padding: 20px 16px; border-bottom: 1px solid var(--border);
+  font-family: var(--display); font-size: 14px; font-weight: 700;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  display: flex; align-items: center; gap: 10px;
+}
+.sidebar-header .dot {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--success);
+  flex-shrink: 0;
+}
+.sidebar-nav { flex: 1; padding: 8px; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 8px; font-size: 13px; font-weight: 500;
+  color: var(--text2); cursor: pointer; transition: all 0.15s;
+  margin-bottom: 2px; border: none; background: none; width: 100%; text-align: left;
+  font-family: var(--font);
+}
+.nav-item:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+.nav-item.active { background: rgba(99,102,241,0.12); color: var(--accent); }
+.nav-item i { width: 18px; text-align: center; font-size: 14px; }
+.nav-divider { height: 1px; background: var(--border); margin: 8px 0; }
+.nav-bottom { padding: 8px; border-top: 1px solid var(--border); }
+.main-content { flex: 1; overflow-y: auto; padding: 28px; background: var(--bg); }
+.page-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
+}
+.page-header h1 { font-family: var(--display); font-size: 22px; font-weight: 700; }
+.page-header .subtitle { font-size: 13px; color: var(--text2); margin-top: 4px; }
+/* ===== STATS GRID ===== */
+.stats-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px; margin-bottom: 24px;
+}
+.stat-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px;
+}
+.stat-card .icon {
+  width: 36px; height: 36px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; margin-bottom: 12px;
+}
+.stat-card .value { font-size: 24px; font-weight: 700; }
+.stat-card .label { font-size: 12px; color: var(--text2); margin-top: 2px; }
+.stat-card .change { font-size: 12px; margin-top: 4px; }
+.stat-card .change.up { color: var(--success); }
+.stat-card .change.down { color: var(--danger); }
+/* ===== SECTIONS ===== */
+.page-section { display: none; }
+.page-section.active { display: block; }
+.card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px; margin-bottom: 16px;
+}
+.card-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 16px;
+}
+.card-title { font-size: 15px; font-weight: 600; }
+/* ===== TABLE ===== */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); font-size: 13px; }
+th { color: var(--text2); font-size: 11px; text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em; }
+td { color: var(--text); }
+tr:hover td { background: rgba(255,255,255,0.02); }
+/* ===== BADGES ===== */
+.badge {
+  display: inline-flex; padding: 4px 10px; border-radius: 6px;
+  font-size: 11px; font-weight: 600; letter-spacing: 0.02em;
+}
+.badge-info { background: rgba(99,102,241,0.12); color: var(--accent); }
+.badge-success { background: rgba(16,185,129,0.12); color: var(--success); }
+.badge-warning { background: rgba(245,158,11,0.12); color: var(--warning); }
+.badge-danger { background: rgba(239,68,68,0.12); color: var(--danger); }
+.badge-default { background: rgba(255,255,255,0.06); color: var(--text2); }
+/* ===== FORMS ===== */
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 6px; }
+.form-control {
+  width: 100%; padding: 10px 12px; background: var(--bg3);
+  border: 1px solid var(--border); border-radius: 8px; color: var(--text);
+  font-size: 13px; font-family: var(--font); outline: none;
+  transition: border-color 0.2s;
+}
+.form-control:focus { border-color: var(--accent); }
+select.form-control { cursor: pointer; }
+textarea.form-control { resize: vertical; min-height: 80px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.form-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+/* ===== SEARCH ===== */
+.search-bar {
+  display: flex; gap: 10px; margin-bottom: 16px; align-items: center;
+}
+.search-bar input {
+  flex: 1; padding: 10px 14px; background: var(--bg3);
+  border: 1px solid var(--border); border-radius: 8px; color: var(--text);
+  font-size: 13px; outline: none; font-family: var(--font);
+}
+.search-bar input:focus { border-color: var(--accent); }
+/* ===== MODAL ===== */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px); z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px; opacity: 0; pointer-events: none;
+  transition: opacity 0.2s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: auto; }
+.modal {
+  width: 100%; max-width: 520px; max-height: 80vh; overflow-y: auto;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 16px; padding: 24px;
+}
+.modal h2 { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+.modal-close {
+  float: right; background: none; border: none; color: var(--text2);
+  font-size: 20px; cursor: pointer;
+}
+.modal-close:hover { color: var(--text); }
+/* ===== TOAST ===== */
+.toast-container {
+  position: fixed; top: 20px; right: 20px; z-index: 2000;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.toast {
+  padding: 12px 18px; border-radius: 8px; font-size: 13px; font-weight: 500;
+  background: var(--bg2); border: 1px solid var(--border); color: var(--text);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  animation: slideIn 0.25s ease;
+  display: flex; align-items: center; gap: 10px;
+}
+.toast.success { border-color: rgba(16,185,129,0.3); }
+.toast.error { border-color: rgba(239,68,68,0.3); }
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+/* ===== EMPTY STATE ===== */
+.empty-state { text-align: center; padding: 40px 20px; color: var(--text2); }
+.empty-state i { font-size: 32px; margin-bottom: 12px; opacity: 0.3; }
+.empty-state p { font-size: 14px; }
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .sidebar { width: 56px; }
+  .sidebar-header span, .nav-item span, .nav-bottom .nav-item span { display: none; }
+  .sidebar-header { justify-content: center; }
+  .nav-item { justify-content: center; padding: 10px; }
+  .main-content { padding: 16px; }
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+  .form-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div id="login-view">
+  <div class="login-card">
+    <div class="brand">KEYCODE</div>
+    <h1>Admin Panel</h1>
+    <p>Sign in with your admin account</p>
+    <div class="login-error" id="login-error"></div>
+    <form id="login-form">
+      <div class="input-group">
+        <label>Email</label>
+        <input type="email" id="login-email" placeholder="admin@keycode.studio" required autocomplete="email">
+      </div>
+      <div class="input-group">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="••••••••" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn btn-primary" id="login-btn">Sign In</button>
+    </form>
+  </div>
+</div>
+
+<div id="admin-view">
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="dot"></div>
+      <span>KEYCODE Admin</span>
+    </div>
+    <div class="sidebar-nav">
+      <button class="nav-item active" data-section="dashboard"><i class="fas fa-chart-simple"></i><span>Dashboard</span></button>
+      <button class="nav-item" data-section="orders"><i class="fas fa-shopping-cart"></i><span>Orders</span></button>
+      <button class="nav-item" data-section="users"><i class="fas fa-users"></i><span>Users</span></button>
+      <button class="nav-item" data-section="payments"><i class="fas fa-credit-card"></i><span>Payments</span></button>
+      <button class="nav-item" data-section="subscriptions"><i class="fas fa-repeat"></i><span>Subscriptions</span></button>
+      <div class="nav-divider"></div>
+      <button class="nav-item" data-section="tickets"><i class="fas fa-life-ring"></i><span>Support</span></button>
+      <button class="nav-item" data-section="reviews"><i class="fas fa-star"></i><span>Reviews</span></button>
+      <button class="nav-item" data-section="notifications"><i class="fas fa-bell"></i><span>Notifications</span></button>
+      <div class="nav-divider"></div>
+      <button class="nav-item" data-section="config"><i class="fas fa-cog"></i><span>Config</span></button>
+      <button class="nav-item" data-section="backups"><i class="fas fa-database"></i><span>Backups</span></button>
+      <button class="nav-item" data-section="audit"><i class="fas fa-clipboard-list"></i><span>Audit Log</span></button>
+      <div class="nav-divider"></div>
+      <button class="nav-item" data-section="coupons"><i class="fas fa-ticket"></i><span>Coupons</span></button>
+      <button class="nav-item" data-section="ai-models"><i class="fas fa-brain"></i><span>AI Models</span></button>
+      <button class="nav-item" data-section="tools"><i class="fas fa-toolbox"></i><span>Active Tools</span></button>
+      <button class="nav-item" data-section="projects"><i class="fas fa-folder"></i><span>Projects</span></button>
+      <button class="nav-item" data-section="sessions"><i class="fas fa-signal"></i><span>Live Sessions</span></button>
+    </div>
+    <div class="nav-bottom">
+      <button class="nav-item" id="logout-btn"><i class="fas fa-sign-out-alt"></i><span>Sign Out</span></button>
+    </div>
+  </div>
+  <div class="main-content" id="main-content">
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" id="modal-content"></div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+// ===== SUPABASE INIT =====
+const SUPABASE_URL = 'https://febsgkgfyulhnxucobzk.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZlYnNna2dmeXVsaG54dWNvYnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2MjA3ODQsImV4cCI6MjEwMDE5Njc4NH0.kB_R_f49zgYbUUJmWmAp_u67xX0_kByleMJnYPsiAlU';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: { persistSession: true, autoRefreshToken: true },
+  realtime: { params: { eventsPerSecond: 10 } }
+});
+
+// ===== STATE =====
+let currentUser = null;
+let currentSection = 'dashboard';
+let subscriptions = [];
+let ordersCache = [];
+let usersCache = [];
+let paymentsCache = [];
+
+// ===== UTILITY =====
+function $(id) { return document.getElementById(id); }
+function qs(sel, ctx) { return (ctx || document).querySelector(sel); }
+function qsa(sel, ctx) { return (ctx || document).querySelectorAll(sel); }
+function escapeHtml(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function formatDate(d) { if (!d) return '-'; return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
+function formatDateTime(d) { if (!d) return '-'; return new Date(d).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); }
+function formatCurrency(n) { return '$' + Number(n || 0).toFixed(2); }
+function badge(status) {
+  var m = { pending: 'badge-warning', active: 'badge-success', in_progress: 'badge-info', completed: 'badge-success', cancelled: 'badge-danger', paid: 'badge-success', unpaid: 'badge-warning', refunded: 'badge-info', failed: 'badge-danger', open: 'badge-warning', resolved: 'badge-success', closed: 'badge-default', true: 'badge-success', false: 'badge-default', admin: 'badge-info', super_admin: 'badge-danger', user: 'badge-default' };
+  return '<span class="badge ' + (m[status] || 'badge-default') + '">' + escapeHtml(status) + '</span>';
+}
+
+// ===== TOAST =====
+function toast(msg, type) {
+  var c = $('toast-container');
+  var t = document.createElement('div');
+  t.className = 'toast' + (type ? ' ' + type : '');
+  t.innerHTML = msg;
+  c.appendChild(t);
+  setTimeout(function() { t.style.opacity = '0'; t.style.transition = 'opacity 0.3s'; setTimeout(function() { t.remove(); }, 300); }, 3000);
+}
+
+// ===== MODAL =====
+function openModal(html) {
+  $('modal-content').innerHTML = html;
+  $('modal-overlay').classList.add('open');
+}
+function closeModal() { $('modal-overlay').classList.remove('open'); }
+$('modal-overlay').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+
+// ===== NAVIGATION =====
+qsa('.nav-item[data-section]').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    qsa('.nav-item[data-section]').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    switchSection(btn.getAttribute('data-section'));
+  });
+});
+
+function switchSection(name) {
+  currentSection = name;
+  qsa('.page-section').forEach(function(s) { s.classList.remove('active'); });
+  var section = document.getElementById('section-' + name);
+  if (!section) {
+    if (typeof renderers[name] === 'function') renderers[name]();
+    else renderDashboard();
+  }
+}
+
+// ===== AUTH =====
+$('login-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  var email = $('login-email').value;
+  var password = $('login-password').value;
+  var btn = $('login-btn');
+  btn.disabled = true; btn.textContent = 'Signing in...';
+  $('login-error').classList.remove('show');
+  try {
+    var { data, error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    await initAdmin(data.user);
+  } catch (err) {
+    $('login-error').textContent = err.message || 'Invalid email or password';
+    $('login-error').classList.add('show');
+  }
+  btn.disabled = false; btn.textContent = 'Sign In';
+});
+
+async function initAdmin(user) {
+  var { data: profile } = await sb.from('users').select('*').eq('id', user.id).single();
+  if (!profile || (profile.role !== 'admin' && profile.role !== 'super_admin')) {
+    await sb.auth.signOut();
+    $('login-error').textContent = 'Access denied. Admin privileges required.';
+    $('login-error').classList.add('show');
+    return;
+  }
+  currentUser = profile;
+  $('login-view').classList.add('hidden');
+  $('admin-view').classList.add('active');
+  initRealtime();
+  renderDashboard();
+}
+
+async function checkSession() {
+  var { data: { session } } = await sb.auth.getSession();
+  if (session) await initAdmin(session.user);
+}
+checkSession();
+
+$('logout-btn').addEventListener('click', async function() {
+  await sb.auth.signOut();
+  currentUser = null;
+  $('admin-view').classList.remove('active');
+  $('login-view').classList.remove('hidden');
+});
+
+// ===== REALTIME =====
+function initRealtime() {
+  sb.channel('admin-changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, function() { if (currentSection === 'dashboard') renderDashboard(); else if (currentSection === 'orders') renderOrders(); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, function() { if (currentSection === 'users') renderUsers(); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'payments' }, function() { if (currentSection === 'payments' || currentSection === 'dashboard') loadDashboardStats(); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'coupons' }, function() { if (currentSection === 'coupons') renderCoupons(); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'ai_models' }, function() { if (currentSection === 'ai-models') renderAIModels(); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'tools' }, function() { if (currentSection === 'tools') renderTools(); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'user_projects' }, function() { if (currentSection === 'projects' || currentSection === 'users') { renderProjects(); } })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'active_sessions' }, function() { if (currentSection === 'sessions') renderSessions(); })
+    .subscribe();
+}
+
+function filterTable(bodyId, query) {
+  var rows = qsa('#' + bodyId + ' tr');
+  var q = query.toLowerCase();
+  rows.forEach(function(r) {
+    r.style.display = (q === '' || r.textContent.toLowerCase().indexOf(q) !== -1) ? '' : 'none';
+  });
+}
+
+// ===== RENDERERS =====
+var renderers = {};
+
+// ===== DASHBOARD =====
+async function loadDashboardStats() {
+  try {
+    var now = new Date();
+    var thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    var [{ data: orders }, { data: users }, { data: payments }, { data: recentOrders }, { data: tickets }, { data: models }, { data: activeSessions }, { data: projects }, { data: coupons }] = await Promise.all([
+      sb.from('orders').select('*'),
+      sb.from('users').select('*'),
+      sb.from('payments').select('*').gte('created_at', thirtyDaysAgo),
+      sb.from('orders').select('*').order('created_at', { ascending: false }).limit(5),
+      sb.from('support_tickets').select('*').eq('status', 'open'),
+      sb.from('ai_models').select('*'),
+      sb.from('active_sessions').select('*').eq('is_active', true),
+      sb.from('user_projects').select('*').eq('status', 'active'),
+      sb.from('coupons').select('*').eq('is_active', true)
+    ]);
+    ordersCache = orders || [];
+    usersCache = users || [];
+    var monthlyRevenue = (payments || []).filter(function(p) { return p.status === 'completed'; }).reduce(function(s, p) { return s + Number(p.amount || 0); }, 0);
+    var pendingOrders = (orders || []).filter(function(o) { return o.status === 'pending'; }).length;
+    var openTickets = (tickets || []).length;
+    var totalUsers = (users || []).length;
+    var onlineModels = (models || []).filter(function(m) { return m.status === 'online'; }).length;
+    var liveSessions = (activeSessions || []).length;
+    var activeProjects = (projects || []).length;
+    var activeCoupons = (coupons || []).length;
+    $('stat-revenue').innerHTML = formatCurrency(monthlyRevenue);
+    $('stat-orders').innerHTML = pendingOrders;
+    $('stat-users').innerHTML = totalUsers;
+    $('stat-tickets').innerHTML = openTickets;
+    $('stat-models').innerHTML = onlineModels + '/' + (models ? models.length : 0);
+    $('stat-sessions').innerHTML = liveSessions;
+    $('stat-projects').innerHTML = activeProjects;
+    $('stat-coupons').innerHTML = activeCoupons;
+    var tbody = $('recent-orders-body');
+    if (!recentOrders || recentOrders.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><p>No orders yet</p></div></td></tr>';
+    } else {
+      tbody.innerHTML = recentOrders.map(function(o) {
+        return '<tr><td>' + escapeHtml(o.id.slice(0, 8)) + '...</td><td>' + escapeHtml(o.service || '-') + '</td><td>' + formatCurrency(o.amount) + '</td><td>' + badge(o.status) + '</td><td>' + formatDate(o.created_at) + '</td></tr>';
+      }).join('');
+    }
+  } catch(e) { console.error('Dashboard load error:', e); }
+}
+
+function renderDashboard() {
+  var main = $('main-content');
+  main.innerHTML = '<div class="page-header"><div><h1>Dashboard</h1><div class="subtitle">Overview of your platform</div></div></div>' +
+    '<div class="stats-grid">' +
+      '<div class="stat-card"><div class="icon" style="background:rgba(99,102,241,0.12);color:var(--accent)"><i class="fas fa-dollar-sign"></i></div><div class="value" id="stat-revenue">$0</div><div class="label">Revenue (30d)</div></div>' +
+      '<div class="stat-card"><div class="icon" style="background:rgba(245,158,11,0.12);color:var(--warning)"><i class="fas fa-clock"></i></div><div class="value" id="stat-orders">0</div><div class="label">Pending Orders</div></div>' +
+      '<div class="stat-card"><div class="icon" style="background:rgba(16,185,129,0.12);color:var(--success)"><i class="fas fa-users"></i></div><div class="value" id="stat-users">0</div><div class="label">Total Users</div></div>' +
+      '<div class="stat-card"><div class="icon" style="background:rgba(239,68,68,0.12);color:var(--danger)"><i class="fas fa-life-ring"></i></div><div class="value" id="stat-tickets">0</div><div class="label">Open Tickets</div></div>' +
+      '<div class="stat-card"><div class="icon" style="background:rgba(139,92,246,0.12);color:var(--accent2)"><i class="fas fa-robot"></i></div><div class="value" id="stat-models">0/0</div><div class="label">AI Models Online</div></div>' +
+      '<div class="stat-card"><div class="icon" style="background:rgba(6,182,212,0.12);color:#06b6d4"><i class="fas fa-plug"></i></div><div class="value" id="stat-sessions">0</div><div class="label">Live Sessions</div></div>' +
+      '<div class="stat-card"><div class="icon" style="background:rgba(251,146,60,0.12);color:#fb923c"><i class="fas fa-folder"></i></div><div class="value" id="stat-projects">0</div><div class="label">Active Projects</div></div>' +
+      '<div class="stat-card"><div class="icon" style="background:rgba(52,211,153,0.12);color:#34d399"><i class="fas fa-tag"></i></div><div class="value" id="stat-coupons">0</div><div class="label">Active Coupons</div></div>' +
+    '</div>' +
+    '<div class="card"><div class="card-header"><div class="card-title">Recent Orders</div></div><div class="table-wrap"><table><thead><tr><th>ID</th><th>Service</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead><tbody id="recent-orders-body"><tr><td colspan="5"><div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Loading...</p></div></td></tr></tbody></table></div></div>';
+  loadDashboardStats();
+}
+
+renderers.dashboard = renderDashboard;
+
+// ===== ORDERS =====
+async function renderOrders() {
+  var main = $('main-content');
+  main.innerHTML = '<div class="page-header"><div><h1>Orders</h1><div class="subtitle">Manage all orders</div></div><button class="btn btn-primary btn-sm" onclick="showAddOrder()"><i class="fas fa-plus"></i> New Order</button></div>' +
+    '<div class="search-bar"><input type="text" id="orders-search" placeholder="Search orders..." oninput="filterOrders()"><select id="orders-filter" class="form-control" style="width:auto;padding:10px 14px" onchange="filterOrders()"><option value="all">All</option><option value="pending">Pending</option><option value="in_progress">In Progress</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select></div>' +
+    '<div class="card"><div class="table-wrap"><table><thead><tr><th>ID</th><th>Customer</th><th>Service</th><th>Amount</th><th>Status</th><th>Payment</th><th>Date</th><th></th></tr></thead><tbody id="orders-body"><tr><td colspan="8"><div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Loading...</p></div></td></tr></tbody></table></div></div>';
+  await loadOrders();
+}
+
+function filterOrders() {
+  var q = $('orders-search').value.toLowerCase();
+  var s = $('orders-filter').value;
+  var rows = qsa('#orders-body tr');
+  rows.forEach(function(r) {
+    if (!r.dataset) return;
+    var match = true;
+    if (s !== 'all' && r.getAttribute('data-status') !== s) match = false;
+    if (q && r.textContent.toLowerCase().indexOf(q) === -1) match = false;
+    r.style.display = match ? '' : 'none';
+  });
+}
+
+async function loadOrders() {
+  try {
+    var { data: orders, error } = await sb.from('orders').select('*, users:user_id(email, full_name)').order('created_at', { ascending: false });
+    if (error) throw error;
+    ordersCache = orders || [];
+    var tbody = $('orders-body');
+    if (!orders || orders.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><i class="fas fa-shopping-cart"></i><p>No orders yet</p></div></td></tr>';
+    } else {
+      tbody.innerHTML = orders.map(function(o) {
+        var name = o.users ? (o.users.full_name || o.users.email) : 'Unknown';
+        return '<tr data-status="' + o.status + '" data-id="' + o.id + '"><td>' + escapeHtml(o.id.slice(0, 8)) + '</td><td>' + escapeHtml(name) + '</td><td>' + escapeHtml(o.service || '-') + '</td><td>' + formatCurrency(o.amount) + '</td><td>' + badge(o.status) + '</td><td>' + badge(o.payment_status) + '</td><td>' + formatDate(o.created_at) + '</td><td><button class="btn btn-ghost btn-sm" onclick="editOrder(\'' + o.id + '\')"><i class="fas fa-edit"></i></button></td></tr>';
+      }).join('');
+    }
+  } catch(e) { console.error('Orders load error:', e); }
+}
+
+window.showAddOrder = function() {
+  openModal('<button class="modal-close" onclick="closeModal()">&times;</button><h2>New Order</h2>' +
+    '<form id="order-form"><div class="form-group"><label>Customer Email</label><input class="form-control" id="order-email" required></div>' +
+    '<div class="form-group"><label>Service</label><input class="form-control" id="order-service" required></div>' +
+    '<div class="form-row"><div class="form-group"><label>Amount</label><input class="form-control" id="order-amount" type="number" step="0.01" required></div>' +
+    '<div class="form-group"><label>Status</label><select class="form-control" id="order-status"><option value="pending">Pending</option><option value="in_progress">In Progress</option><option value="completed">Completed</option></select></div></div>' +
+    '<div class="form-group"><label>Description</label><textarea class="form-control" id="order-desc"></textarea></div>' +
+    '<div class="form-actions"><button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button><button type="submit" class="btn btn-primary">Create Order</button></div></form>');
+  $('order-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    try {
+      var email = $('order-email').value;
+      var { data: users } = await sb.from('users').select('id').eq('email', email).limit(1);
+      var userId = users && users.length > 0 ? users[0].id : null;
+      var { error } = await sb.from('orders').insert({
+        user_id: userId, service: $('order-service').value,
+        amount: parseFloat($('order-amount').value) || 0,
+        status: $('order-status').value,
+        description: $('order-desc').value
+      });
+      if (error) throw error;
+      toast('Order created', 'success');
+      closeModal();
+      renderOrders();
+    } catch(e) { toast('Error: ' + e.message, 'error'); }
+  });
+};
+
+window.editOrder = async function(id) {
+  var { data: order } = await sb.from('orders').select('*').eq('id', id).single();
+  if (!order) return;
+  openModal('<button class="modal-close" onclick="closeModal()">&times;</button><h2>Edit Order</h2>' +
+    '<form id="order-form"><div class="form-group"><label>Service</label><input class="form-control" id="order-service" value="' + escapeHtml(order.service || '') + '"></div>' +
+    '<div class="form-row"><div class="form-group"><label>Amount</label><input class="form-control" id="order-amount" type="number" step="0.01" value="' + (order.amount || 0) + '"></div>' +
+    '<div class="form-group"><label>Status</label><select class="form-control" id="order-status"><option value="pending"' + (order.status === 'pending' ? ' selected' : '') + '>Pending</option><option value="in_progress"' + (order.status === 'in_progress' ? ' selected' : '') + '>In Progress</option><option value="completed"' + (order.status === 'completed' ? ' selected' : '') + '>Completed</option><option value="cancelled"' + (order.status === 'cancelled' ? ' selected' : '') + '>Cancelled</option></select></div></div>' +
+    '<div class="form-group"><label>Notes</label><textarea class="form-control" id="order-notes">' + escapeHtml(order.notes || '') + '</textarea></div>' +
+    '<div class="form-actions"><button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button><button type="submit" class="btn btn-primary">Save</button></div></form>');
+  $('order-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    try {
+      var { error } = await sb.from('orders').update({
+        service: $('order-service').value,
+        amount: parseFloat($('order-amount').value) || 0,
+        status: $('order-status').value,
+        notes: $('order-notes').value
+      }).eq('id', id);
+      if (error) throw error;
+      toast('Order updated', 'success');
+      closeModal();
+      renderOrders();
+    } catch(e) { toast('Error: ' + e.message, 'error'); }
+  });
+};
+
+renderers.orders = renderOrders;
+
+// ===== USERS =====
+async function renderUsers() {
+  var main = $('main-content');
+  main.innerHTML = '<div class="page-header"><div><h1>Users</h1><div class="subtitle">Manage platform users</div></div></div>' +
+    '<div class="search-bar"><input type="text" id="users-search" placeholder="Search users..." oninput="filterUsers()"></div>' +
+    '<div class="card"><div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Joined</th><th>Last Sign In</th><th></th></tr></thead><tbody id="users-body"><tr><td colspan="6"><div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Loading...</p></div></td></tr></tbody></table></div></div>';
+  await loadUsers();
+}
+
+function filterUsers() {
+  var q = $('users-search').value.toLowerCase();
+  var rows = qsa('#users-body tr');
+  rows.forEach(function(r) {
+    r.style.display = (q === '' || r.textContent.toLowerCase().indexOf(q) !== -1) ? '' : 'none';
+  });
+}
+
+async function loadUsers() {
+  try {
+    var { data: users, error } = await sb.from('users').select('*').order('created_at', { ascending: false });
+    if (error) throw error;
+    usersCache = users || [];
+    var tbody = $('users-body');
+    if (!users || users.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><i class="fas fa-users"></i><p>No users</p></div></td></tr>';
+    } else {
+      tbody.innerHTML = users.map(function(u) {
+        return '<tr><td>' + escapeHtml(u.full_name || '-') + '</td><td>' + escapeHtml(u.email || '-') + '</td><td>' + badge(u.role) + '</td><td>' + formatDate(u.created_at) + '</td><td>' + formatDateTime(u.last_sign_in) + '</td><td><button class="btn btn-ghost btn-sm" onclick="editUser(\'' + u.id + '\')"><i class="fas fa-edit"></i></button></td></tr>';
+      }).join('');
+    }
+  } catch(e) { console.error('Users load error:', e); }
+}
+
+window.editUser = async function(id) {
+  var u = usersCache.find(function(x) { return x.id === id; });
+  if (!u) return;
+  openModal('<button class="modal-close" onclick="closeModal()">&times;</button><h2>Edit User</h2>' +
+    '<form id="user-form"><div class="form-group"><label>Full Name</label><input class="form-control" id="user-name" value="' + escapeHtml(u.full_name || '') + '"></div>' +
+    '<div class="form-group"><label>Role</label><select class="form-control" id="user-role"><option value="user"' + (u.role === 'user' ? ' selected' : '') + '>User</option><option value="admin"' + (u.role === 'admin' ? ' selected' : '') + '>Admin</option><option value="super_admin"' + (u.role === 'super_admin' ? ' selected' : '') + '>Super Admin</option></select></div>' +
+    '<div class="form-actions"><button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button><button type="submit" class="btn btn-primary">Save</button></div></form>');
+  $('user-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    try {
+      var { error } = await sb.from('users').update({
+        full_name: $('user-name').value,
+        role: $('user-role').value
+      }).eq('id', id);
+      if (error) throw error;
+      toast('User updated', 'success');
+      closeModal();
+      renderUsers();
+    } catch(e) { toast('Error: ' + e.message, 'error'); }
+  });
+};
+
+renderers.users = renderUsers;
+
+// ===== PAYMENTS =====
+async function renderPayments() {
+  var main = $('main-content');
+  main.innerHTML = '<div class="page-header"><div><h1>Payments</h1><div class="subtitle">Transaction history</div></div></div>' +
+    '<div class="card"><div class="table-wrap"><table><thead><tr><th>ID</th><th>Amount</th><th>Provider</th><th>Status</th><th>Date</th></tr></thead><tbody id="payments-body"><tr><td colspan="5"><div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Loading...</p></div></td></tr></tbody></table></div></div>';
+  try {
+    var { data: payments, error } = await sb.from('payments').select('*').order('created_at', { ascending: false });
+    if (error) throw error;
+    paymentsCache = payments || [];
+    var tbody = $('payments-body');
+    if (!payments || payments.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><i class="fas fa-credit-card"></i><p>No payments</p></div></td></tr>';
+    } else {
+      tbody.innerHTML = payments.map(function(p) {
+        return '<tr><td>' + escapeHtml(p.id.slice(0, 8)) + '</td><td>' + formatCurrency(p.amount) + '</td><td>' + escapeHtml(p.provider || '-') + '</td><td>' + badge(p.status) + '</td><td>' + formatDate(p.created_at) + '</td></tr>';
+      }).join('');
+    }
+  } catch(e) { console.error('Payments load error:', e); }
+}
+
+renderers.payments = renderPayments;
+
+// ===== SUBSCRIPTIONS =====
+async function renderSubscriptions() {
+  var main = $('main-content');
+  main.innerHTML = '<div class="page-header"><div><h1>Subscriptions</h1><div class="subtitle">Manage recurring plans</div></div></div>' +
+    '<div class="card"><div class="table-wrap"><table><thead><tr><th>Plan</th><th>User</th><th>Amount</th><th>Status</th><th>Started</th><th>Expires</th></tr></thead><tbody id="subs-body"><tr><td colspan="6"><div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Loading...</p></div></td></tr></tbody></table></div></div>';
+  try {
+    var { data: subs, error } = await sb.from('subscriptions').select('*, users:user_id(email, full_name)').order('created_at', { ascending: false });
+    if (error) throw error;
+    var tbody = $('subs-body');
+    if (!subs || subs.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><i class="fas fa-repeat"></i><p>No subscriptions</p></div></td></tr>';
+    } else {
+      tbody.innerHTML = subs.map(function(s) {
+        var name = s.users ? (s.users.full_name || s.users.email) : 'Unknown';
+        return '<tr><td>' + escapeHtml(s.plan) + '</td><td>' + escapeHtml(name) + '</td><td>' + formatCurrency(s.amount) + '</td><td>' + badge(s.status) + '</td><td>' + formatDate(s.started_at) + '</td><td>' + formatDate(s.expires_at) + '</td></tr>';
+      }).join('');
+    }
+  } catch(e) { console.error('Subscriptions load error:', e); }
+}
+
+renderers.subscriptions = renderSubscriptions;
+
+// ===== SUPPORT TICKETS =====
+async function renderTickets() {
+  var main = $('main-content');
+  main.innerHTML = '<div class="page-header"><div><h1>Support Tickets</h1><div class="subtitle">Customer support requests</div></div></div>' +
+    '<div class="search-bar"><select id="ticket-filter" class="form-control" style="width:auto;padding:10px 14px" onchange="renderTickets()"><option value="all">All</option><option value="open">Open</option><option value="in_progress">In Progress</option><option value="resolved">Resolved</option><option value="closed">Closed</option></select></div>' +
+    '<div class="card"><div class="table-wrap"><table><thead><tr><th>Subject</th><th>Status</th><th>Priority</th><th>Date</th><th></th></tr></thead><tbody id="tickets-body"><tr><td colspan="5"><div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Loading...</p></div></td></tr></tbody></table></div></div>';
+  try {
+    var filter = $('ticket-filter').value;
+    var q = sb.from('support_tickets').select('*, users:user_id(email, full_name)').order('created_at', { ascending: false });
+    if (filter !== 'all') q = q.eq('status', filter);
+    var { data: tickets, error } = await q;
+    if (error) throw error;
+    var tbody = $('tickets-body');
+    if (!tickets || tickets.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><i class="fas fa-life-ring"></i><p>No tickets</p></div></td></tr>';
+    } else {
+      tbody.innerHTML = tickets.map(function(t) {
+        var name = t.users ? (t.users.full_name || t.users.email) : 'Unknown';
+        return '<tr><td>' + escapeHtml(t.subject) + '<br><small style="color:var(--text2)">by ' + escapeHtml(name) + '</small></td><td>' + badge(t.status) + '</td><td>' + badge(t.priority === 'urgent' ? 'danger' : t.priority === 'high' ? 'warning' : '') + '</td><td>' + formatDate(t.created_at) + '</td><td><button class="btn btn-ghost btn-sm" onclick="editTicket(\'' + t.id + '\')"><i class="fas fa-edit"></i></button></td></tr>';
+      }).join('');
+    }
+  } catch(e) { console.error('Tickets load error:', e); }
+}
+
+window.editTicket = async function(id) {
+  var { data: ticket } = await sb.from('support_tickets').select('*').eq('id', id).single();
+  if (!ticket) return;
+  openModal('<button class="modal-close" onclick="closeModal()">&times;</button><h2>Ticket: ' + escapeHtml(ticket.subject) + '</h2>' +
+    '<form id="ticket-form"><div class="form-group"><label>Status</label><select class="form-control" id="ticket-status"><option value="open"' + (ticket.status === 'open' ? ' selected' : '') + '>Open</option><option value="in_progress"' + (ticket.status === 'in_progress' ? ' selected' : '') + '>In Progress</option><option value="resolved"' + (ticket.status === 'resolved' ? ' selected' : '') + '>Resolved</option><option value="closed"' + (ticket.status === 'closed' ? ' selected' : '') + '>Closed</option></select></div>' +
+    '<div class="form-group"><label>Message</label><textarea class="form-control" id="ticket-msg" rows="4" style="background:var(--bg2);border-color:transparent" readonly>' + escapeHtml(ticket.message) + '</textarea></div>' +
+    '<div class="form-actions"><button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button><button type="submit" class="btn btn-primary">Update Status</button></div></form>');
+  $('ticket-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    try {
+      var { error } = await sb.from('support_tickets').update({ status: $('ticket-status').value }).eq('id', id);
+      if (error) throw error;
+      toast('Ticket updated', 'success');
+      closeModal();
+      renderTickets();
+    } catch(e) { toast('Error: ' + e.message, 'error'); }
+  });
+};
+
+renderers.tickets = renderTickets;
+
+// ===== REVIEWS =====
+async function renderReviews() {
+  var main = $('main-content');
+  main.innerHTML = '<div class="page-header"><div><h1>Reviews</h1><div class="subtitle">Customer feedback</div></div></div>' +
+    '<div class="card"><div class="table-wrap"><table><thead><tr><th>Rating</th><th>Comment</th><th>Approved</th><th>Date</th><th></th></tr></thead><tbody id="reviews-body"><tr><td colspan="5"><div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Loading...</p></div></td></tr></tbody></table></div></div>';
+  try {
+    var { data: reviews, error } = await sb.from('reviews').select('*, users:user_id(email)').order('created_at', { ascending: false });
+    if (error) throw error;
+    var tbody = $('reviews-body');
+    if (!reviews || reviews.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><i class="fas fa-star"></i><p>No reviews</p></div></td></tr>';
+    } else {
+      tbody.innerHTML = reviews.map(function(r) {
+        var stars = ''; for (var i = 0; i < 5; i++) stars += i < r.rating ? '<i class="fas fa-star" style="color:var(--warning);font-size:12px"></i>' : '<i class="far fa-star" style="color:var(--text2);font-size:12px"></i>';
+        return '<tr><td>' + stars + '</td><td>' + escapeHtml(r.comment || '-') + '<br><small style="color:var(--text2)">by ' + escapeHtml(r.users ? r.users.email : 'Anonymous') + '</small></td><td>' + badge(String(r.approved)) + '</td><td>' + formatDate(r.created_at) + '</td><td><button class="btn btn-ghost btn-sm" onclick="toggleReview(\'' + r.id + '\', ' + (!r.approved) + ')">' + (r.approved ? 'Unapprove' : 'Approve') + '</button></td></tr>';
+      }).join('');
+    }
+  } catch(e) { console.error('Reviews load error:', e); }
+}
+
+window.toggleReview = async function(id, approve) {
+  try {
+    var { error } = await sb.from('reviews').update({ approved: approve }).eq('id', id);
+    if (error) throw error;
+    toast('Review ' + (approve ? 'approved' : 'unapproved'), 'success');
+    renderReviews();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+};
+
+renderers.reviews = renderReviews;
+
+// ===== NOTIFICATIONS =====
+async function renderNotifications() {
+  var main = $('main-content');
+  main.innerHTML = '<div class="page-header"><div><h1>Notifications</h1><div class="subtitle">Send notifications to users</div></div><button class="btn btn-primary btn-sm" onclick="showSendNotification()"><i class="fas fa-plus"></i> New Notification</button></div>' +
+    '<div class="card"><div class="table-wrap"><table><thead><tr><th>Title</th><th>Type</th><th>Date</th></tr></thead><tbody id="notifications-body"><tr><td colspan="3"><div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Loading...</p></div></td></tr></tbody></table></div></div>';
+  try {
+    var { data: notifs, error } = await sb.from('notifications').select('*').order('created_at', { ascending: false }).limit(50);
+    if (error) throw error;
+    var tbody = $('notifications-body');
+    if (!notifs || notifs.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="3"><div class="empty-state"><i class="fas fa-bell"></i><p>No notifications</p></div></td></tr>';
+    } else {
+      tbody.innerHTML = notifs.map(function(n) {
+        return '<tr><td>' + escapeHtml(n.title) + (n.body ? '<br><small style="color:var(--text2)">' + escapeHtml(n.body) + '</small>' : '') + '</td><td>' + badge(n.type) + '</td><td>' + formatDate(n.created_at) + '</td></tr>';
+      }).join('');
+    }
+  } catch(e) { console.error('Notifications load error:', e); }
+}
+
+window.showSendNotification = function() {
+  openModal('<button class="modal-close" onclick="closeModal()">&times;</button><h2>Send Notification</h2>' +
+    '<form id="notif-form"><div class="form-group"><label>User Email (leave blank for all)</label><input class="form-control" id="notif-user" placeholder="user@example.com"></div>' +
+    '<div class="form-group"><label>Title</label><input class="form-control" id="notif-title" required></div>' +
+    '<div class="form-group"><label>Body</label><textarea class="form-control" id="notif-body" rows="3"></textarea></div>' +
+    '<div class="form-group"><label>Type</label><select class="form-control" id="notif-type"><option value="info">Info</option><option value="success">Success</option><option value="warning">Warning</option><option value="error">Error</option></select></div>' +
+    '<div class="form-actions"><button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button><button type="submit" class="btn btn-primary">Send</button></div></form>');
+  $('notif-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    try {
+      var userId = null;
+      var userEmail = $('notif-user').value.trim();
+      if (userEmail) {
+        var { data: users } = await sb.from('users').select('id').eq('email', userEmail).limit(1);
+        if (users && users.length > 0) userId = users[0].id;
+      }
+      var { error } = await sb.from('notifications').insert({
+        user_id: userId, title: $('notif-title').value,
+        body: $('notif-body').value, type: $('notif-type').value,
+        read: false
+      });
+      if (error) throw error;
+      toast('Notification sent', 'success');
+      closeModal();
+      renderNotifications();
+    } catch(e) { toast('Error: ' + e.message, 'error'); }
+  });
+};
+
+renderers.notifications = renderNotifications;
+
+// ===== CONFIG =====
+async function renderConfig() {
+  var main = $('main-content');
+  main.innerHTML = '<div class="page-header"><div><h1>Configuration</h1><div class="subtitle">System settings</div></div></div>' +
+    '<div class="card" id="config-card"><p style="color:var(--text2);text-align:center;padding:20px"><i class="fas fa-spinner fa-spin"></i> Loading config...</p></div>';
+  try {
+    var { data: configs, error } = await sb.from('system_config').select('*');
+    if (error) throw error;
+    var html = '';
+    if (!configs || configs.length === 0) {
+      html = '<div class="empty-state"><i class="fas fa-cog"></i><p>No configuration entries</p></div>';
+    } else {
+      html = '<div class="table-wrap"><table><thead><tr><th>Key</th><th>Value</th><th>Updated</th></tr></thead><tbody>' +
+        configs.map(function(c) { return '<tr><td><code>' + escapeHtml(c.key) + '</code></td><td><code style="font-size:12px;color:var(--accent)">' + escapeHtml(JSON.stringify(c.value)) + '</code></td><td>' + formatDate(c.updated_at) + '</td></tr>'; }).join('') +
+        '</tbody></table></div>';
+    }
+    html += '<div style="margin-top:16px"><button class="btn btn-primary btn-sm" onclick="showAddConfig()"><i class="fas fa-plus"></i> Add Config</button></div>';
+    $('config-card').innerHTML = html;
+  } catch(e) { console.error('Config load error:', e); }
+}
+
+window.showAddConfig = function() {
+  openModal('<button class="modal-close" onclick="closeModal()">&times;</button><h2>Add Config Entry</h2>' +
+    '<form id="config-form"><div class="form-group"><label>Key</label><input class="form-control" id="config-key" required></div>' +
+    '<div class="form-group"><label>Value (JSON)</label><textarea class="form-control" id="config-value" rows="4" required>{"key": "value"}</textarea></div>' +
+    '<div class="form-actions"><button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button><button type="submit" class="btn btn-primary">Save</button></div></form>');
+  $('config-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    try {
+      var val = JSON.parse($('config-value').value);
+      var { error } = await sb.from('system_config').upsert({ key: $('config-key').value, value: val, updated_at: new Date().toISOString() });
+      if (error) throw error;
+      toast('Config saved', 'success');
+      closeModal();
+      renderConfig();
+    } catch(e) { toast('Error: ' + e.message, 'error'); }
+  });
+};
+
+renderers.config = renderConfig;
+
+// ===== BACKUPS =====
+async function renderBackups() {
+  var main = $('main-content');
+  main.innerHTML = '<div class="page-header"><div><h1>Backups</h1><div class="subtitle">Database and system backups</div></div><button class="btn btn-primary btn-sm" onclick="createBackup()"><i class="fas fa-plus"></i> Create Backup</button></div>' +
+    '<div class="card"><div class="table-wrap"><table><thead><tr><th>Name</th><th>Size</th><th>Status</th><th>Date</th></tr></thead><tbody id="backups-body"><tr><td colspan="4"><div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Loading...</p></div></td></tr></tbody></table></div></div>';
+  try {
+    var { data: backups, error } = await sb.from('backups').select('*').order('created_at', { ascending: false });
+    if (error) throw error;
+    var tbody = $('backups-body');
+    if (!backups || backups.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><i class="fas fa-database"></i><p>No backups</p></div></td></tr>';
+    } else {
+      tbody.innerHTML = backups.map(function(b) {
+        var size = b.size_bytes > 1048576 ? (b.size_bytes / 1048576).toFixed(1) + ' MB' : b.size_bytes > 1024 ? (b.size_bytes / 1024).toFixed(1) + ' KB' : b.size_bytes + ' B';
+        return '<tr><td>' + escapeHtml(b.name) + '</td><td>' + size + '</td><td>' + badge(b.status) + '</td><td>' + formatDate(b.created_at) + '</td></tr>';
+      }).join('');
+    }
+  } catch(e) { console.error('Backups load error:', e); }
+}
+
+window.createBackup = async function() {
+  toast('Creating backup...', 'info');
+  try {
+    var name = 'backup-' + new Date().toISOString().slice(0, 10);
+    var { error } = await sb.from('backups').insert({ name: name, status: 'completed', size_bytes: 0 });
+    if (error) throw error;
+    toast('Backup created: ' + name, 'success');
+    renderBackups();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+};
+
+renderers.backups = renderBackups;
+
+// ===== AUDIT LOG =====
+async function renderAudit() {
+  var main = $('main-content');
+  main.innerHTML = '<div class="page-header"><div><h1>Audit Log</h1><div class="subtitle">System activity log</div></div></div>' +
+    '<div class="card"><div class="table-wrap"><table><thead><tr><th>Action</th><th>Resource</th><th>User</th><th>Date</th></tr></thead><tbody id="audit-body"><tr><td colspan="4"><div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Loading...</p></div></td></tr></tbody></table></div></div>';
+  try {
+    var { data: logs, error } = await sb.from('audit_logs').select('*, users:user_id(email)').order('created_at', { ascending: false }).limit(100);
+    if (error) throw error;
+    var tbody = $('audit-body');
+    if (!logs || logs.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><i class="fas fa-clipboard-list"></i><p>No audit logs</p></div></td></tr>';
+    } else {
+      tbody.innerHTML = logs.map(function(l) {
+        return '<tr><td><code style="color:var(--accent);font-size:12px">' + escapeHtml(l.action) + '</code></td><td>' + escapeHtml(l.resource) + (l.resource_id ? ' <small style="color:var(--text2)">#' + escapeHtml(l.resource_id.slice(0, 8)) + '</small>' : '') + '</td><td>' + escapeHtml(l.users ? l.users.email : 'System') + '</td><td>' + formatDateTime(l.created_at) + '</td></tr>';
+      }).join('');
+    }
+  } catch(e) { console.error('Audit load error:', e); }
+}
+
+renderers.audit = renderAudit;
+
+// ===== COUPONS =====
+async function renderCoupons() {
+  var main = $('main-content');
+  main.innerHTML = '<div class="page-header"><div><h1>Coupon Codes</h1><div class="subtitle">Generate and manage discount codes</div></div><button class="btn btn-primary btn-sm" onclick="showAddCoupon()"><i class="fas fa-plus"></i> Generate Coupon</button></div>' +
+    '<div class="card"><div class="table-wrap"><table><thead><tr><th>Code</th><th>Discount</th><th>Uses</th><th>Expires</th><th>Status</th><th></th></tr></thead><tbody id="coupons-body"><tr><td colspan="6"><div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Loading...</p></div></td></tr></tbody></table></div></div>';
+  try {
+    var { data: coupons, error } = await sb.from('coupons').select('*').order('created_at', { ascending: false });
+    if (error) throw error;
+    var tbody = $('coupons-body');
+    if (!coupons || coupons.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><i class="fas fa-ticket"></i><p>No coupons yet</p></div></td></tr>';
+    } else {
+      tbody.innerHTML = coupons.map(function(c) {
+        var discount = c.discount_percent > 0 ? c.discount_percent + '%' : formatCurrency(c.discount_amount);
+        var remaining = c.max_uses > 0 ? (c.max_uses - c.used_count) + '/' + c.max_uses : 'Unlimited';
+        var expired = c.expires_at && new Date(c.expires_at) < new Date();
+        return '<tr><td><code style="color:var(--accent);font-size:13px;background:rgba(99,102,241,0.1);padding:4px 8px;border-radius:4px">' + escapeHtml(c.code) + '</code></td><td>' + discount + '</td><td>' + remaining + '</td><td>' + (c.expires_at ? formatDate(c.expires_at) : 'Never') + '</td><td>' + (expired ? '<span class="badge badge-danger">Expired</span>' : c.is_active ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-default">Disabled</span>') + '</td><td><button class="btn btn-ghost btn-sm" onclick="toggleCoupon(\'' + c.id + '\', ' + (!c.is_active) + ')">' + (c.is_active ? 'Disable' : 'Enable') + '</button></td></tr>';
+      }).join('');
+    }
+  } catch(e) { console.error('Coupons load error:', e); }
+}
+
+window.showAddCoupon = function() {
+  var code = 'KEYCODE-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+  openModal('<button class="modal-close" onclick="closeModal()">&times;</button><h2>Generate Coupon</h2>' +
+    '<form id="coupon-form"><div class="form-group"><label>Code</label><input class="form-control" id="coupon-code" value="' + code + '"></div>' +
+    '<div class="form-row"><div class="form-group"><label>Discount %</label><input class="form-control" id="coupon-pct" type="number" step="5" value="10"></div>' +
+    '<div class="form-group"><label>Max Uses (0 = unlimited)</label><input class="form-control" id="coupon-uses" type="number" value="0"></div></div>' +
+    '<div class="form-row"><div class="form-group"><label>Min Order ($)</label><input class="form-control" id="coupon-min" type="number" step="10" value="0"></div>' +
+    '<div class="form-group"><label>Expires</label><input class="form-control" id="coupon-expires" type="date"></div></div>' +
+    '<div class="form-group"><label>Description</label><input class="form-control" id="coupon-desc" placeholder="e.g. Summer sale 2026"></div>' +
+    '<div class="form-actions"><button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button><button type="submit" class="btn btn-primary">Create Coupon</button></div></form>');
+  $('coupon-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    try {
+      var expires = $('coupon-expires').value;
+      var { error } = await sb.from('coupons').insert({
+        code: $('coupon-code').value.toUpperCase(),
+        discount_percent: parseFloat($('coupon-pct').value) || 0,
+        max_uses: parseInt($('coupon-uses').value) || 0,
+        min_order_amount: parseFloat($('coupon-min').value) || 0,
+        description: $('coupon-desc').value,
+        expires_at: expires ? new Date(expires).toISOString() : null,
+        is_active: true
+      });
+      if (error) throw error;
+      toast('Coupon created: ' + $('coupon-code').value.toUpperCase(), 'success');
+      closeModal();
+      renderCoupons();
+    } catch(e) { toast('Error: ' + e.message, 'error'); }
+  });
+};
+
+window.toggleCoupon = async function(id, active) {
+  try {
+    var { error } = await sb.from('coupons').update({ is_active: active }).eq('id', id);
+    if (error) throw error;
+    toast('Coupon ' + (active ? 'enabled' : 'disabled'), 'success');
+    renderCoupons();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+};
+
+renderers.coupons = renderCoupons;
+
+// ===== AI MODELS =====
+async function renderAIModels() {
+  var main = $('main-content');
+  main.innerHTML = '<div class="page-header"><div><h1>AI Models</h1><div class="subtitle">Monitor and control AI model providers, tokens, and failover</div></div><button class="btn btn-primary btn-sm" onclick="showAddAIModel()"><i class="fas fa-plus"></i> Add Model</button></div>' +
+    '<div class="stats-grid" id="ai-stats"></div>' +
+    '<div class="card"><div class="card-header"><div class="card-title">Model Registry</div></div><div class="table-wrap"><table><thead><tr><th>Model</th><th>Provider</th><th>Status</th><th>Tokens Used</th><th>Token Limit</th><th>Failover</th><th>Last Called</th><th></th></tr></thead><tbody id="ai-models-body"><tr><td colspan="8"><div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Loading...</p></div></td></tr></tbody></table></div></div>';
+  try {
+    var { data: models, error } = await sb.from('ai_models').select('*').order('failover_priority', { ascending: true });
+    if (error) throw error;
+    var totalTokens = (models || []).reduce(function(s, m) { return s + Number(m.token_count || 0); }, 0);
+    var onlineCount = (models || []).filter(function(m) { return m.status === 'online'; }).length;
+    var totalLimit = (models || []).reduce(function(s, m) { return s + Number(m.token_limit || 0); }, 0);
+    $('ai-stats').innerHTML =
+      '<div class="stat-card"><div class="icon" style="background:rgba(99,102,241,0.12);color:var(--accent)"><i class="fas fa-robot"></i></div><div class="value">' + (models ? models.length : 0) + '</div><div class="label">Total Models</div></div>' +
+      '<div class="stat-card"><div class="icon" style="background:rgba(16,185,129,0.12);color:var(--success)"><i class="fas fa-check-circle"></i></div><div class="value">' + onlineCount + '</div><div class="label">Online</div></div>' +
+      '<div class="stat-card"><div class="icon" style="background:rgba(245,158,11,0.12);color:var(--warning)"><i class="fas fa-coins"></i></div><div class="value">' + totalTokens.toLocaleString() + '</div><div class="label">Tokens Used</div></div>' +
+      '<div class="stat-card"><div class="icon" style="background:rgba(239,68,68,0.12);color:var(--danger)"><i class="fas fa-gauge-high"></i></div><div class="value">' + (totalLimit > 0 ? Math.round(totalTokens / totalLimit * 100) + '%' : '-') + '</div><div class="label">Token Usage</div></div>';
+    var tbody = $('ai-models-body');
+    if (!models || models.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><i class="fas fa-brain"></i><p>No AI models configured</p></div></td></tr>';
+    } else {
+      tbody.innerHTML = models.map(function(m) {
+        var pct = m.token_limit > 0 ? Math.min(100, Math.round(Number(m.token_count) / Number(m.token_limit) * 100)) : 0;
+        var barColor = pct > 80 ? 'var(--danger)' : pct > 50 ? 'var(--warning)' : 'var(--success)';
+        return '<tr><td><strong>' + escapeHtml(m.name) + '</strong><br><small style="color:var(--text2)">' + escapeHtml(m.model_name || '-') + '</small></td><td>' + escapeHtml(m.provider) + '</td><td>' + badge(m.status) + '</td>' +
+          '<td><div style="display:flex;align-items:center;gap:8px"><div style="flex:1;height:4px;background:var(--bg3);border-radius:2px;max-width:100px"><div style="width:' + pct + '%;height:100%;background:' + barColor + ';border-radius:2px;transition:width 0.3s"></div></div><span style="font-size:12px;color:var(--text2)">' + Number(m.token_count || 0).toLocaleString() + '</span></div></td>' +
+          '<td style="font-size:12px;color:var(--text2)">' + Number(m.token_limit || 0).toLocaleString() + '</td>' +
+          '<td>' + (m.failover_priority > 0 ? '<span class="badge badge-info">P' + m.failover_priority + '</span>' : '<span class="badge badge-default">Primary</span>') + '</td>' +
+          '<td style="font-size:12px;color:var(--text2)">' + (m.last_called_at ? formatDateTime(m.last_called_at) : 'Never') + '</td>' +
+          '<td><button class="btn btn-ghost btn-sm" onclick="editAIModel(\'' + m.id + '\')"><i class="fas fa-edit"></i></button></td></tr>';
+      }).join('');
+    }
+  } catch(e) { console.error('AI models load error:', e); }
+}
+
+window.showAddAIModel = function() {
+  openModal('<button class="modal-close" onclick="closeModal()">&times;</button><h2>Add AI Model</h2>' +
+    '<form id="ai-form"><div class="form-row"><div class="form-group"><label>Name</label><input class="form-control" id="ai-name" placeholder="e.g. DeepSeek Chat" required></div>' +
+    '<div class="form-group"><label>Provider</label><input class="form-control" id="ai-provider" placeholder="e.g. DeepSeek" required></div></div>' +
+    '<div class="form-row"><div class="form-group"><label>Model Name</label><input class="form-control" id="ai-model" placeholder="deepseek-chat"></div>' +
+    '<div class="form-group"><label>API URL</label><input class="form-control" id="ai-url" placeholder="https://api.deepseek.com"></div></div>' +
+    '<div class="form-row"><div class="form-group"><label>Token Limit</label><input class="form-control" id="ai-limit" type="number" value="1000000"></div>' +
+    '<div class="form-group"><label>Failover Priority (0=primary)</label><input class="form-control" id="ai-failover" type="number" value="0"></div></div>' +
+    '<div class="form-actions"><button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button><button type="submit" class="btn btn-primary">Add Model</button></div></form>');
+  $('ai-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    try {
+      var { error } = await sb.from('ai_models').insert({
+        name: $('ai-name').value, provider: $('ai-provider').value,
+        model_name: $('ai-model').value, api_url: $('ai-url').value,
+        token_limit: parseInt($('ai-limit').value) || 1000000,
+        failover_priority: parseInt($('ai-failover').value) || 0,
+        is_active: true, status: 'online'
+      });
+      if (error) throw error;
+      toast('AI model added', 'success');
+      closeModal();
+      renderAIModels();
+    } catch(e) { toast('Error: ' + e.message, 'error'); }
+  });
+};
+
+window.editAIModel = async function(id) {
+  var { data: model } = await sb.from('ai_models').select('*').eq('id', id).single();
+  if (!model) return;
+  openModal('<button class="modal-close" onclick="closeModal()">&times;</button><h2>Edit AI Model</h2>' +
+    '<form id="ai-form"><div class="form-row"><div class="form-group"><label>Status</label><select class="form-control" id="ai-status"><option value="online"' + (model.status === 'online' ? ' selected' : '') + '>Online</option><option value="offline"' + (model.status === 'offline' ? ' selected' : '') + '>Offline</option><option value="degraded"' + (model.status === 'degraded' ? ' selected' : '') + '>Degraded</option><option value="rate_limited"' + (model.status === 'rate_limited' ? ' selected' : '') + '>Rate Limited</option></select></div>' +
+    '<div class="form-group"><label>Active</label><select class="form-control" id="ai-active"><option value="true"' + (model.is_active ? ' selected' : '') + '>Active</option><option value="false"' + (!model.is_active ? ' selected' : '') + '>Disabled</option></select></div></div>' +
+    '<div class="form-row"><div class="form-group"><label>Token Limit</label><input class="form-control" id="ai-limit" type="number" value="' + (model.token_limit || 1000000) + '"></div>' +
+    '<div class="form-group"><label>Failover Priority</label><input class="form-control" id="ai-failover" type="number" value="' + (model.failover_priority || 0) + '"></div></div>' +
+    '<div class="form-actions"><button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button><button type="submit" class="btn btn-primary">Save</button></div></form>');
+  $('ai-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    try {
+      var { error } = await sb.from('ai_models').update({
+        status: $('ai-status').value,
+        is_active: $('ai-active').value === 'true',
+        token_limit: parseInt($('ai-limit').value) || 1000000,
+        failover_priority: parseInt($('ai-failover').value) || 0
+      }).eq('id', id);
+      if (error) throw error;
+      toast('AI model updated', 'success');
+      closeModal();
+      renderAIModels();
+    } catch(e) { toast('Error: ' + e.message, 'error'); }
+  });
+};
+
+renderers['ai-models'] = renderAIModels;
+
+// ===== ACTIVE TOOLS =====
+async function renderTools() {
+  var main = $('main-content');
+  main.innerHTML = '<div class="page-header"><div><h1>Active Tools</h1><div class="subtitle">Manage all platform tools and services</div></div><button class="btn btn-primary btn-sm" onclick="showAddTool()"><i class="fas fa-plus"></i> Add Tool</button></div>' +
+    '<div class="card"><div class="table-wrap"><table><thead><tr><th>Tool</th><th>Category</th><th>Status</th><th>Last Used</th><th></th></tr></thead><tbody id="tools-body"><tr><td colspan="5"><div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Loading...</p></div></td></tr></tbody></table></div></div>';
+  try {
+    var { data: tools, error } = await sb.from('tools').select('*').order('category', { ascending: true });
+    if (error) throw error;
+    var tbody = $('tools-body');
+    if (!tools || tools.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><i class="fas fa-toolbox"></i><p>No tools configured</p></div></td></tr>';
+    } else {
+      tbody.innerHTML = tools.map(function(t) {
+        return '<tr><td><strong>' + escapeHtml(t.name) + '</strong><br><small style="color:var(--text2)">' + escapeHtml(t.description || '') + '</small></td><td><span class="badge badge-info">' + escapeHtml(t.category) + '</span></td><td>' + (t.is_active ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-default">Disabled</span>') + '</td><td style="font-size:12px;color:var(--text2)">' + (t.last_used_at ? formatDateTime(t.last_used_at) : 'Never') + '</td><td><button class="btn btn-ghost btn-sm" onclick="editTool(\'' + t.id + '\')"><i class="fas fa-edit"></i></button></td></tr>';
+      }).join('');
+    }
+  } catch(e) { console.error('Tools load error:', e); }
+}
+
+window.showAddTool = function() {
+  openModal('<button class="modal-close" onclick="closeModal()">&times;</button><h2>Add Tool</h2>' +
+    '<form id="tool-form"><div class="form-row"><div class="form-group"><label>Name</label><input class="form-control" id="tool-name" required></div>' +
+    '<div class="form-group"><label>Category</label><select class="form-control" id="tool-cat"><option value="ai">AI</option><option value="design">Design</option><option value="engineering">Engineering</option><option value="export">Export</option><option value="monitoring">Monitoring</option><option value="automation">Automation</option><option value="other">Other</option></select></div></div>' +
+    '<div class="form-group"><label>Description</label><textarea class="form-control" id="tool-desc" rows="2"></textarea></div>' +
+    '<div class="form-actions"><button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button><button type="submit" class="btn btn-primary">Add Tool</button></div></form>');
+  $('tool-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    try {
+      var { error } = await sb.from('tools').insert({
+        name: $('tool-name').value, category: $('tool-cat').value,
+        description: $('tool-desc').value, is_active: true
+      });
+      if (error) throw error;
+      toast('Tool added', 'success');
+      closeModal();
+      renderTools();
+    } catch(e) { toast('Error: ' + e.message, 'error'); }
+  });
+};
+
+window.editTool = async function(id) {
+  var { data: tool } = await sb.from('tools').select('*').eq('id', id).single();
+  if (!tool) return;
+  openModal('<button class="modal-close" onclick="closeModal()">&times;</button><h2>' + escapeHtml(tool.name) + '</h2>' +
+    '<form id="tool-form"><div class="form-group"><label>Status</label><select class="form-control" id="tool-active"><option value="true"' + (tool.is_active ? ' selected' : '') + '>Active</option><option value="false"' + (!tool.is_active ? ' selected' : '') + '>Disabled</option></select></div>' +
+    '<div class="form-actions"><button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button><button type="submit" class="btn btn-primary">Save</button></div></form>');
+  $('tool-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    try {
+      var { error } = await sb.from('tools').update({ is_active: $('tool-active').value === 'true' }).eq('id', id);
+      if (error) throw error;
+      toast('Tool updated', 'success');
+      closeModal();
+      renderTools();
+    } catch(e) { toast('Error: ' + e.message, 'error'); }
+  });
+};
+
+renderers.tools = renderTools;
+
+// ===== PROJECTS =====
+async function renderProjects() {
+  var main = $('main-content');
+  main.innerHTML = '<div class="page-header"><div><h1>User Projects</h1><div class="subtitle">All projects across the platform</div></div><div class="search-bar"><input type="text" id="projects-search" placeholder="Search projects..." oninput="filterTable(\'projects-body\', this.value)"><select id="projects-filter" class="form-control" style="width:auto;padding:10px 14px" onchange="renderProjects()"><option value="all">All</option><option value="active">Active</option><option value="paused">Paused</option><option value="completed">Completed</option><option value="archived">Archived</option></select></div></div>' +
+    '<div class="card"><div class="table-wrap"><table><thead><tr><th>Project</th><th>User</th><th>Type</th><th>Status</th><th>Created</th><th></th></tr></thead><tbody id="projects-body"><tr><td colspan="6"><div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Loading...</p></div></td></tr></tbody></table></div></div>';
+  try {
+    var filter = $('projects-filter').value;
+    var q = sb.from('user_projects').select('*, users:user_id(email, full_name)').order('created_at', { ascending: false });
+    if (filter !== 'all') q = q.eq('status', filter);
+    var { data: projects, error } = await q;
+    if (error) throw error;
+    var tbody = $('projects-body');
+    if (!projects || projects.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><i class="fas fa-folder"></i><p>No projects</p></div></td></tr>';
+    } else {
+      tbody.innerHTML = projects.map(function(p) {
+        var name = p.users ? (p.users.full_name || p.users.email) : 'Unknown';
+        return '<tr><td><strong>' + escapeHtml(p.name) + '</strong></td><td>' + escapeHtml(name) + '</td><td><span class="badge badge-info">' + escapeHtml(p.type) + '</span></td><td>' + badge(p.status) + '</td><td>' + formatDate(p.created_at) + '</td><td><button class="btn btn-ghost btn-sm" onclick="editProject(\'' + p.id + '\')"><i class="fas fa-edit"></i></button></td></tr>';
+      }).join('');
+    }
+  } catch(e) { console.error('Projects load error:', e); }
+}
+
+window.editProject = async function(id) {
+  var { data: project } = await sb.from('user_projects').select('*').eq('id', id).single();
+  if (!project) return;
+  openModal('<button class="modal-close" onclick="closeModal()">&times;</button><h2>Edit Project</h2>' +
+    '<form id="project-form"><div class="form-group"><label>Status</label><select class="form-control" id="project-status"><option value="active"' + (project.status === 'active' ? ' selected' : '') + '>Active</option><option value="paused"' + (project.status === 'paused' ? ' selected' : '') + '>Paused</option><option value="completed"' + (project.status === 'completed' ? ' selected' : '') + '>Completed</option><option value="archived"' + (project.status === 'archived' ? ' selected' : '') + '>Archived</option></select></div>' +
+    '<div class="form-actions"><button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button><button type="submit" class="btn btn-primary">Update</button></div></form>');
+  $('project-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    try {
+      var { error } = await sb.from('user_projects').update({ status: $('project-status').value }).eq('id', id);
+      if (error) throw error;
+      toast('Project updated', 'success');
+      closeModal();
+      renderProjects();
+    } catch(e) { toast('Error: ' + e.message, 'error'); }
+  });
+};
+
+renderers.projects = renderProjects;
+
+// ===== LIVE SESSIONS =====
+async function renderSessions() {
+  var main = $('main-content');
+  main.innerHTML = '<div class="page-header"><div><h1>Live Sessions</h1><div class="subtitle">Real-time active user sessions</div></div></div>' +
+    '<div class="stats-grid" id="session-stats"></div>' +
+    '<div class="card"><div class="card-header"><div class="card-title">Active Sessions</div></div><div class="table-wrap"><table><thead><tr><th>User</th><th>Device</th><th>IP</th><th>Location</th><th>Last Activity</th><th></th></tr></thead><tbody id="sessions-body"><tr><td colspan="6"><div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Loading...</p></div></td></tr></tbody></table></div></div>';
+  try {
+    var { data: sessions, error } = await sb.from('active_sessions').select('*, users:user_id(email, full_name)').order('last_activity_at', { ascending: false }).limit(100);
+    if (error) throw error;
+    var activeSessions = (sessions || []).filter(function(s) { return s.is_active; });
+    $('session-stats').innerHTML =
+      '<div class="stat-card"><div class="icon" style="background:rgba(16,185,129,0.12);color:var(--success)"><i class="fas fa-signal"></i></div><div class="value">' + activeSessions.length + '</div><div class="label">Active Now</div></div>' +
+      '<div class="stat-card"><div class="icon" style="background:rgba(99,102,241,0.12);color:var(--accent)"><i class="fas fa-clock"></i></div><div class="value">' + (sessions ? sessions.length : 0) + '</div><div class="label">Total Today</div></div>' +
+      '<div class="stat-card"><div class="icon" style="background:rgba(245,158,11,0.12);color:var(--warning)"><i class="fas fa-user"></i></div><div class="value">' + new Set((sessions || []).map(function(s) { return s.user_id; })).size + '</div><div class="label">Unique Users</div></div>';
+    var tbody = $('sessions-body');
+    if (!sessions || sessions.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><i class="fas fa-signal"></i><p>No sessions recorded</p></div></td></tr>';
+    } else {
+      tbody.innerHTML = sessions.map(function(s) {
+        var name = s.users ? (s.users.full_name || s.users.email) : 'Unknown';
+        return '<tr><td>' + escapeHtml(name) + '</td><td>' + escapeHtml(s.device || s.user_agent || '-') + '</td><td><code style="font-size:11px;color:var(--text2)">' + escapeHtml(s.ip_address || '-') + '</code></td><td>' + escapeHtml(s.location || '-') + '</td><td>' + (s.is_active ? '<span style="color:var(--success)">●</span> ' : '') + formatDateTime(s.last_activity_at) + '</td><td><button class="btn btn-ghost btn-sm" onclick="terminateSession(\'' + s.id + '\')" style="color:var(--danger)"><i class="fas fa-times"></i></button></td></tr>';
+      }).join('');
+    }
+  } catch(e) { console.error('Sessions load error:', e); }
+}
+
+window.terminateSession = async function(id) {
+  if (!confirm('Terminate this session?')) return;
+  try {
+    var { error } = await sb.from('active_sessions').update({ is_active: false }).eq('id', id);
+    if (error) throw error;
+    toast('Session terminated', 'success');
+    renderSessions();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+};
+
+renderers.sessions = renderSessions;
+
+// ===== ROUTE: Re-render on section switch =====
+var originalSwitch = switchSection;
+switchSection = function(name) {
+  originalSwitch(name);
+  if (typeof renderers[name] === 'function') renderers[name]();
+};
+</script>
+</body>
+</html>

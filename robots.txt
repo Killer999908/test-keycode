@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://keycode-studio-production.up.railway.app/sitemap.xml

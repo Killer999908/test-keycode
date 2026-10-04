@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>News — KEYCODE Studio</title>
+  <meta name="description" content="Latest news and updates from KEYCODE Studio.">
+  <link rel="canonical" href="https://keycode-studio-production.up.railway.app/news">
+  <meta property="og:title" content="News — KEYCODE Studio">
+  <meta property="og:description" content="Latest news and updates from KEYCODE Studio.">
+  <meta name="theme-color" content="#000000">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+      <style>
+    body { background: #000; color: #fff; font-family: 'Inter', sans-serif; margin: 0; }
+    .news-page { max-width: 900px; margin: 0 auto; padding: 120px 32px 80px; }
+    .news-page h1 { font-family: 'Syne', sans-serif; font-size: clamp(48px, 8vw, 96px); font-weight: 800; letter-spacing: .08em; margin: 0 0 12px; line-height: 1; }
+    .news-page .subtitle { color: #7E7E7E; font-size: 18px; margin-bottom: 60px; letter-spacing: .02em; }
+    .news-list { display: flex; flex-direction: column; gap: 2px; }
+    .news-item {
+      display: flex; gap: 24px; align-items: flex-start;
+      padding: 32px 24px; border: 1px solid rgba(255,255,255,.05);
+      transition: background .3s ease, border-color .3s ease;
+      text-decoration: none; color: #fff;
+    }
+    .news-item:hover { background: rgba(255,255,255,.02); border-color: rgba(255,255,255,.12); }
+    .news-item-date {
+      font-family: 'Space Grotesk', monospace;
+      font-size: 14px; color: #7E7E7E; white-space: nowrap;
+      min-width: 100px; font-feature-settings: "tnum";
+    }
+    .news-item-content { flex: 1; }
+    .news-item-title {
+      font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700;
+      margin: 0 0 8px; line-height: 1.3;
+    }
+    .news-item-desc { font-size: 14px; color: #7E7E7E; line-height: 1.6; margin: 0; }
+    .news-item-tag {
+      display: inline-block; font-size: 10px; letter-spacing: .08em;
+      text-transform: uppercase; padding: 3px 10px;
+      border: 1px solid rgba(255,255,255,.1); color: #7E7E7E;
+      margin-top: 8px;
+    }
+    .news-loading { text-align: center; color: #7E7E7E; padding: 80px 0; font-size: 14px; letter-spacing: .1em; }
+    @media (max-width: 768px) {
+      .news-item { flex-direction: column; gap: 8px; padding: 24px 16px; }
+      .news-page { padding: 100px 20px 60px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="kc-loader">
+    <div id="kc-loader-scene"></div>
+      <div id="kc-bg-text" aria-hidden="true">KEYCODE</div>
+<div class="kc-loader-info" style="position:absolute;bottom:48px;left:50%;transform:translateX(-50%);">
+      <div id="kc-loader-bar-track"><div id="kc-loader-bar"></div></div>
+      <div id="kc-loader-pct" style="font-family:'Inter',sans-serif;font-size:11px;color:#555;letter-spacing:.12em;text-align:center;">0%</div>
+    </div>
+  </div>
+
+  <div id="site-nav"></div>
+  <div class="news-page">
+    <h1>News</h1>
+    <p class="subtitle">Latest updates from KEYCODE Studio <a href="/rss.xml" class="rss-link" target="_blank" style="display:inline-block;vertical-align:middle;margin-left:12px;font-size:13px;color:#7E7E7E;text-decoration:none;letter-spacing:.08em"><i class="fas fa-rss" style="color:#ff6600"></i> RSS</a></p>
+    <div class="news-list" id="newsList">
+      <div class="news-loading">Loading news...</div>
+    </div>
+  </div>
+  <div id="site-footer"></div>
+    <script src="/js/loading-screen.js"></script>
+<script src="/js/site.js"></script>
+<script src="/js/install.js" defer></script>
+  <script>
+    (function() {
+      var news = [
+        { date: '2026-07-19', title: 'KEYCODE Studio v3.0 — Award-Winning Redesign', desc: 'Complete visual overhaul with 3D scroll-triggered animations, interactive particle backgrounds, and a unified design system across all pages.', tag: 'Release' },
+        { date: '2026-07-15', title: 'AI Builder Now Supports Multi-Agent Workflows', desc: 'Our AI website builder now orchestrates multiple AI agents in parallel for faster,更高 quality generation.', tag: 'Feature' },
+        { date: '2026-07-10', title: 'New PCB Designer with Real-time Simulation', desc: 'Design and simulate circuits in real-time with our updated PCB tool. Auto-routing and KiCad export included.', tag: 'Product' },
+        { date: '2026-07-05', title: 'CAD & 3D Modeling Adds OpenSCAD Support', desc: 'Generate parametric 3D models using OpenSCAD syntax directly in the browser. Export to STL, STEP, and 3MF.', tag: 'Feature' },
+        { date: '2026-06-28', title: 'Game Development Platform Launches', desc: 'Create AI-powered HTML5 games with Phaser.js. Generate platformers, shooters, and puzzles from text prompts.', tag: 'Launch' },
+        { date: '2026-06-20', title: 'KEYCODE Studio Reaches 500 Projects Delivered', desc: 'Milestone achievement: over 500 projects delivered to clients worldwide. Thank you for your trust.', tag: 'Milestone' },
+        { date: '2026-06-15', title: 'New Pricing Plans & Free Tier Expansion', desc: 'Updated pricing with more generous free tier. All users now get 10 AI generations per day at no cost.', tag: 'Update' },
+        { date: '2026-06-10', title: 'Security Upgrade: WebAuthn & MFA', desc: 'Added passkey support, hardware security key authentication, and adaptive multi-factor authentication.', tag: 'Security' },
+        { date: '2026-06-05', title: 'Mobile App Beta — Early Access', desc: 'Try the KEYCODE Studio mobile app for iOS and Android. Manage projects, chat with AI, and track orders on the go.', tag: 'Beta' },
+        { date: '2026-05-28', title: 'Stripe & Razorpay Payment Integration', desc: 'Global payments via Stripe and India-specific payments via Razorpay are now live with automated invoicing.', tag: 'Integration' },
+        { date: '2026-05-20', title: 'AI Health Dashboard Goes Live', desc: 'Monitor AI provider status, latency, and availability in real-time. Built-in fallback routing for reliability.', tag: 'Launch' },
+        { date: '2026-05-15', title: 'Open Source Contribution Program Announced', desc: 'We are open-sourcing parts of the platform. Community contributions welcome via GitHub.', tag: 'Community' },
+      ];
+
+      var list = document.getElementById('newsList');
+      if (list) {
+        list.innerHTML = news.map(function(item) {
+          return '<a href="/news" class="news-item">' +
+            '<time class="news-item-date">' + item.date + '</time>' +
+            '<div class="news-item-content">' +
+            '<h3 class="news-item-title">' + item.title + '</h3>' +
+            '<p class="news-item-desc">' + item.desc + '</p>' +
+            '<span class="news-item-tag">' + item.tag + '</span>' +
+            '</div></a>';
+        }).join('');
+      }
+    })();
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script>
+    if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
+      gsap.registerPlugin(ScrollTrigger);
+      gsap.from('.news-item', {
+        scrollTrigger: { trigger: '.news-list', start: 'top 90%', toggleActions: 'play none none reverse' },
+        opacity: 0, y: 20, stagger: 0.05, duration: 0.4, ease: 'power2.out'
+      });
+      ScrollTrigger.refresh();
+    }
+  </script>
+
+  <script src="/js/scroll-3d-animations.js"></script>  <script src="/js/k-scroll.js" defer></script>
+
+</body>
+</html>

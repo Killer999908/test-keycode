@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>3D Scanner - KEYCODE Studio</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--void:#030305;--obsidian:#0a0a0f;--graphite:#12121a;--slate:#1a1a24;--surface:#181825;--primary:#ffffff;--primary-glow:#818cf8;--secondary:#ec4899;--accent:#22d3ee;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--white:#fff;--ash:#94a3b8;--glass-border:rgba(255,255,255,0.06)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:var(--void);color:var(--white);overflow-x:hidden;-webkit-font-smoothing:antialiased;min-height:100vh}
+body::-webkit-scrollbar{width:4px}body::-webkit-scrollbar-track{background:var(--void)}body::-webkit-scrollbar-thumb{background:var(--slate);border-radius:4px}
+
+/* Header */
+.header{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:rgba(10,10,15,0.9);backdrop-filter:blur(16px);border-bottom:1px solid var(--glass-border);position:sticky;top:0;z-index:100}
+.header .logo{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;display:flex;align-items:center;gap:8px}
+.header .logo i{-webkit-text-fill-color:var(--primary);font-size:16px}
+.header .nav-links{display:flex;gap:10px}
+.header .nav-links a{padding:8px 16px;border-radius:8px;color:var(--ash);text-decoration:none;font-size:13px;font-weight:500;transition:.3s}
+.header .nav-links a:hover{color:var(--white);background:rgba(255,255,255,0.06)}
+.header .nav-links a.dashboard-link{background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff}
+
+/* Container */
+.container{max-width:1000px;margin:0 auto;padding:32px 20px}
+.page-title{font-family:'Syne',sans-serif;font-size:28px;font-weight:700;margin-bottom:4px}
+.page-subtitle{color:var(--ash);font-size:14px;margin-bottom:32px}
+
+/* Scan Layout */
+.scan-layout{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+@media(max-width:768px){.scan-layout{grid-template-columns:1fr}}
+.camera-panel,.result-panel{background:var(--obsidian);border:1px solid var(--glass-border);border-radius:16px;overflow:hidden}
+.panel-header{padding:14px 18px;border-bottom:1px solid var(--glass-border);font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;color:var(--ash)}
+.panel-header i{color:var(--primary);font-size:14px}
+
+/* Camera */
+.camera-view{position:relative;background:#000;aspect-ratio:4/3;overflow:hidden}
+.camera-view video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+.camera-view .camera-overlay{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.camera-view .camera-overlay .frame{border:2px dashed rgba(99,102,241,0.4);border-radius:16px;width:70%;height:70%}
+.camera-view .camera-overlay .frame.active{border-color:var(--success)}
+.camera-placeholder{aspect-ratio:4/3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:var(--graphite);color:var(--ash)}
+.camera-placeholder i{font-size:48px;color:var(--primary);opacity:.5}
+.camera-placeholder p{font-size:13px}
+
+.camera-controls{padding:14px 18px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;border-top:1px solid var(--glass-border)}
+.btn{padding:10px 20px;border-radius:10px;border:none;font-size:13px;font-weight:600;cursor:pointer;transition:.3s;display:inline-flex;align-items:center;gap:7px;font-family:inherit}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(99,102,241,0.3)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-secondary{background:var(--slate);color:var(--ash);border:1px solid var(--glass-border)}
+.btn-secondary:hover{background:rgba(255,255,255,0.06);color:var(--white)}
+.btn-success{background:linear-gradient(135deg,var(--success),#059669);color:#fff}
+.btn-success:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(16,185,129,0.3)}
+.btn-danger{background:linear-gradient(135deg,var(--danger),#dc2626);color:#fff}
+.btn-icon{padding:10px 12px;border-radius:10px;border:1px solid var(--glass-border);background:var(--slate);color:var(--ash);cursor:pointer;transition:.3s;font-size:14px}
+.btn-icon:hover{background:rgba(255,255,255,0.06);color:var(--white)}
+
+/* Image Strip */
+.image-strip{padding:10px 14px;display:flex;gap:8px;overflow-x:auto;min-height:60px;border-top:1px solid var(--glass-border)}
+.image-strip::-webkit-scrollbar{height:3px}
+.image-strip::-webkit-scrollbar-thumb{background:var(--slate);border-radius:4px}
+.image-strip .thumb{flex-shrink:0;width:52px;height:52px;border-radius:8px;overflow:hidden;border:2px solid var(--glass-border);position:relative;cursor:pointer;transition:.2s}
+.image-strip .thumb:hover{border-color:var(--primary)}
+.image-strip .thumb img{width:100%;height:100%;object-fit:cover}
+.image-strip .thumb .remove{position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:var(--danger);color:#fff;font-size:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;opacity:0;transition:.2s}
+.image-strip .thumb:hover .remove{opacity:1}
+.image-strip .empty-strip{width:100%;display:flex;align-items:center;justify-content:center;color:var(--ash);font-size:12px;gap:6px}
+
+/* Instructions */
+.instructions{padding:14px 18px;border-top:1px solid var(--glass-border)}
+.instructions h4{font-size:12px;color:var(--ash);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.instructions ol{padding-left:18px;font-size:12px;color:var(--ash);line-height:1.8}
+.instructions ol li::marker{color:var(--primary)}
+
+/* Progress */
+.progress-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(3,3,5,0.9);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:10}
+.progress-overlay.hidden{display:none}
+.progress-spinner{width:48px;height:48px;border:3px solid var(--slate);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.progress-overlay .msg{font-size:14px;color:var(--ash);text-align:center;max-width:300px}
+.progress-bar{width:200px;height:4px;background:var(--slate);border-radius:4px;overflow:hidden}
+.progress-bar .fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary));border-radius:4px;transition:width .5s;width:0%}
+
+/* Result */
+.result-preview{aspect-ratio:4/3;background:var(--graphite);display:flex;align-items:center;justify-content:center}
+.result-preview img{max-width:100%;max-height:100%}
+.result-preview .preview-placeholder{text-align:center;color:var(--ash);font-size:13px}
+.result-preview .preview-placeholder i{font-size:36px;color:var(--primary);opacity:.4;margin-bottom:8px;display:block}
+.result-actions{padding:14px 18px;display:flex;gap:10px;flex-wrap:wrap;border-top:1px solid var(--glass-border)}
+.result-info{padding:14px 18px;border-top:1px solid var(--glass-border)}
+.result-info .stat{display:flex;justify-content:space-between;padding:6px 0;font-size:13px;border-bottom:1px solid rgba(255,255,255,0.03)}
+.result-info .stat:last-child{border-bottom:none}
+.result-info .stat .label{color:var(--ash)}
+.result-info .stat .value{color:var(--white);font-weight:600}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:12px 24px;border-radius:12px;font-size:13px;font-weight:500;z-index:999;display:none;max-width:90%}
+.toast.show{display:block;animation:toastIn .3s}
+.toast.success{background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);color:var(--success)}
+.toast.error{background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:var(--danger)}
+.toast.info{background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);color:var(--primary-glow)}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+</style>
+</head>
+<body><div style="position:fixed;top:0;left:0;right:0;z-index:9999;background:#0a0a0a;border-bottom:1px solid rgba(255,255,255,0.08);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;font-family:monospace;font-size:12px;color:#a3a3a3"><span>⚡ SINGLE BUILDER — This page merged into <b style="color:#fff">One AI Builder</b> (does all)</span><a href="/ai-builder.html" style="padding:6px 12px;background:#fff;color:#000;border-radius:8px;text-decoration:none;font-weight:600">Open Single Builder →</a></div><script>setTimeout(()=>location.href="/ai-builder.html",3000);</script>
+<header class="header">
+  <div class="logo"><i class="fas fa-cube"></i> 3D Scanner</div>
+  <div class="nav-links">
+    <a href="/"><i class="fas fa-home"></i> Home</a>
+    <a href="/ai-builder.html"><i class="fas fa-robot"></i> AI Builder</a>
+    <a href="/dashboard.html" class="dashboard-link"><i class="fas fa-th-large"></i> Dashboard</a>
+  </div>
+</header>
+
+<div class="container">
+  <h1 class="page-title"><i class="fas fa-camera" style="color:var(--primary);margin-right:10px"></i>3D Scanner</h1>
+  <p class="page-subtitle">Turn real-world objects into 3D models using your phone's camera. Take 8-20 photos from different angles.</p>
+  <div class="kc-cap-strip" style="display:flex;gap:14px;flex-wrap:wrap;padding:10px 0 18px;font-family:var(--kc-mono,'JetBrains Mono',monospace);font-size:11px;color:var(--kc-text3,rgba(255,255,255,.5))">
+    <span style="color:#10b981">● Real photogrammetry engine</span>
+    <span>· OpenCV point clouds</span><span>· Watertight STL export</span><span>· In-browser 3D viewer</span><span>· Factory-ready downstream (CAD / PCB)</span>
+  </div>
+
+  <div class="scan-layout">
+    <!-- Camera Panel -->
+    <div class="camera-panel">
+      <div class="panel-header"><i class="fas fa-camera"></i> Camera</div>
+      <div class="camera-view" id="cameraView">
+        <video id="video" autoplay playsinline></video>
+        <div class="camera-overlay"><div class="frame" id="scanGuide"></div></div>
+        <div class="camera-placeholder" id="cameraPlaceholder">
+          <i class="fas fa-video"></i>
+          <p>Click "Start Camera" to begin</p>
+        </div>
+        <div class="progress-overlay hidden" id="progressOverlay">
+          <div class="progress-spinner"></div>
+          <div class="msg" id="progressMsg">Processing images...</div>
+          <div class="progress-bar"><div class="fill" id="progressFill"></div></div>
+        </div>
+      </div>
+      <div class="camera-controls">
+        <button class="btn btn-primary" id="startBtn" onclick="startCamera()"><i class="fas fa-video"></i> Start Camera</button>
+        <button class="btn btn-success" id="captureBtn" onclick="captureImage()" disabled><i class="fas fa-camera"></i> Capture</button>
+        <button class="btn btn-secondary" id="clearBtn" onclick="clearImages()" disabled><i class="fas fa-trash"></i> Clear</button>
+      </div>
+      <div class="image-strip" id="imageStrip">
+        <div class="empty-strip"><i class="fas fa-images"></i> No images captured yet</div>
+      </div>
+      <div class="instructions">
+        <h4><i class="fas fa-lightbulb" style="margin-right:4px"></i> Tips for best results</h4>
+        <ol>
+          <li>Good lighting — avoid shadows and glare</li>
+          <li>Move slowly around the object, taking photos every 15-30°</li>
+          <li>Keep the object centered in the frame</li>
+          <li>Capture 8-20 photos from all angles</li>
+          <li>Avoid reflective or transparent surfaces</li>
+          <li>Plain background helps with reconstruction</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Result Panel -->
+    <div class="result-panel">
+      <div class="panel-header"><i class="fas fa-cube"></i> 3D Model</div>
+      <div class="result-preview" id="resultPreview">
+        <div class="preview-placeholder" id="resultPlaceholder">
+          <i class="fas fa-cube"></i>
+          <p>Your 3D model will appear here</p>
+        </div>
+        <iframe id="modelViewer" style="display:none;width:100%;height:100%;border:none"></iframe>
+      </div>
+      <div class="result-actions">
+        <button class="btn btn-primary" id="generateBtn" onclick="generateModel()" disabled>
+          <i class="fas fa-magic"></i> Generate 3D Model
+        </button>
+        <button class="btn btn-secondary" id="downloadBtn" onclick="downloadModel()" style="display:none">
+          <i class="fas fa-download"></i> Download STL
+        </button>
+        <button class="btn btn-secondary" id="view3dBtn" onclick="viewIn3D()" style="display:none">
+          <i class="fas fa-cube"></i> View in 3D
+        </button>
+      </div>
+      <div class="result-info" id="resultInfo" style="display:none">
+        <div class="stat"><span class="label"><i class="fas fa-image"></i> Images Used</span><span class="value" id="statImages">0</span></div>
+        <div class="stat"><span class="label"><i class="fas fa-vector-square"></i> Points</span><span class="value" id="statPoints">0</span></div>
+        <div class="stat"><span class="label"><i class="fas fa-file-export"></i> Format</span><span class="value">STL</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var stream = null;
+var capturedImages = [];
+var currentModelId = null;
+
+async function startCamera() {
+  var btn = document.getElementById('startBtn');
+  var placeholder = document.getElementById('cameraPlaceholder');
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 960 } }
+    });
+    document.getElementById('video').srcObject = stream;
+    placeholder.style.display = 'none';
+    document.getElementById('captureBtn').disabled = false;
+    document.getElementById('scanGuide').classList.add('active');
+    btn.innerHTML = '<i class="fas fa-stop"></i> Stop Camera';
+    btn.onclick = stopCamera;
+    btn.className = 'btn btn-danger';
+    showToast('Camera ready! Take photos from different angles.', 'info');
+  } catch (e) {
+    showToast('Camera access denied. Please allow camera permissions.', 'error');
+    console.error(e);
+  }
+}
+
+function stopCamera() {
+  if (stream) {
+    stream.getTracks().forEach(function(t) { t.stop(); });
+    stream = null;
+  }
+  document.getElementById('video').srcObject = null;
+  document.getElementById('cameraPlaceholder').style.display = 'flex';
+  document.getElementById('captureBtn').disabled = true;
+  document.getElementById('scanGuide').classList.remove('active');
+  var btn = document.getElementById('startBtn');
+  btn.innerHTML = '<i class="fas fa-video"></i> Start Camera';
+  btn.onclick = startCamera;
+  btn.className = 'btn btn-primary';
+}
+
+function captureImage() {
+  var video = document.getElementById('video');
+  var canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth || 1280;
+  canvas.height = video.videoHeight || 960;
+  canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+  var dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+  capturedImages.push(dataUrl);
+  updateImageStrip();
+  document.getElementById('clearBtn').disabled = false;
+  document.getElementById('generateBtn').disabled = capturedImages.length < 2;
+  showToast('Captured image ' + capturedImages.length, 'info');
+}
+
+function updateImageStrip() {
+  var strip = document.getElementById('imageStrip');
+  if (capturedImages.length === 0) {
+    strip.innerHTML = '<div class="empty-strip"><i class="fas fa-images"></i> No images captured yet</div>';
+    document.getElementById('generateBtn').disabled = true;
+    return;
+  }
+  var html = '';
+  capturedImages.forEach(function(url, i) {
+    html += '<div class="thumb"><img src="' + url + '" alt="' + (i+1) + '"><button class="remove" onclick="removeImage(' + i + ')"><i class="fas fa-times"></i></button></div>';
+  });
+  strip.innerHTML = html;
+  strip.scrollLeft = strip.scrollWidth;
+}
+
+function removeImage(idx) {
+  capturedImages.splice(idx, 1);
+  updateImageStrip();
+  if (capturedImages.length === 0) document.getElementById('clearBtn').disabled = true;
+  document.getElementById('generateBtn').disabled = capturedImages.length < 2;
+}
+
+function clearImages() {
+  capturedImages = [];
+  updateImageStrip();
+  document.getElementById('clearBtn').disabled = true;
+  document.getElementById('generateBtn').disabled = true;
+}
+
+function showProgress(msg, pct) {
+  document.getElementById('progressOverlay').classList.remove('hidden');
+  document.getElementById('progressMsg').textContent = msg;
+  document.getElementById('progressFill').style.width = (pct || 0) + '%';
+}
+
+function hideProgress() {
+  document.getElementById('progressOverlay').classList.add('hidden');
+}
+
+async function generateModel() {
+  if (capturedImages.length < 2) {
+    showToast('Capture at least 2 images first', 'error');
+    return;
+  }
+  var btn = document.getElementById('generateBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+
+  showProgress('Uploading ' + capturedImages.length + ' images...', 10);
+
+  try {
+    var res = await fetch('/api/ai/photogrammetry', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        images: capturedImages,
+        cameraParams: {}
+      })
+    });
+    var data = await res.json();
+
+    if (!data.success) {
+      showToast('Error: ' + (data.error || 'Generation failed'), 'error');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-magic"></i> Generate 3D Model';
+      hideProgress();
+      return;
+    }
+
+    showProgress('Reconstructing 3D mesh...', 70);
+    await new Promise(function(r) { setTimeout(r, 500); });
+
+    currentModelId = data.fileId || data.modelId;
+    document.getElementById('statImages').textContent = capturedImages.length;
+    document.getElementById('statPoints').textContent = data.pointCount ? data.pointCount.toLocaleString() : '—';
+    document.getElementById('resultInfo').style.display = 'block';
+    document.getElementById('downloadBtn').style.display = 'inline-flex';
+    document.getElementById('view3dBtn').style.display = 'inline-flex';
+
+    var iframe = document.getElementById('modelViewer');
+    if (data.stlUrl) {
+      iframe.src = data.stlUrl;
+      iframe.style.display = 'block';
+      document.getElementById('resultPlaceholder').style.display = 'none';
+    } else if (data.viewerUrl) {
+      iframe.src = data.viewerUrl;
+      iframe.style.display = 'block';
+      document.getElementById('resultPlaceholder').style.display = 'none';
+    }
+
+    hideProgress();
+    showToast('3D model generated successfully!', 'success');
+    btn.innerHTML = '<i class="fas fa-check"></i> Generated';
+  } catch (e) {
+    hideProgress();
+    showToast('Error: ' + e.message, 'error');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-magic"></i> Generate 3D Model';
+  }
+}
+
+async function downloadModel() {
+  if (!currentModelId) return;
+  window.location.href = '/api/ai/scan-download/' + currentModelId;
+}
+
+function viewIn3D() {
+  if (!currentModelId) return;
+  window.open('/viewer.html?model=/api/ai/scan-view/' + currentModelId, '_blank');
+}
+
+function showToast(msg, type) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + (type || 'info');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(function() { t.classList.remove('show'); }, 4000);
+}
+
+window.addEventListener('beforeunload', function() {
+  if (stream) stream.getTracks().forEach(function(t) { t.stop(); });
+});
+</script>
+</body>
+</html>

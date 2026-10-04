@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Free Tools - KEYCODE Studio</title>
+  <meta name="description" content="40+ free, open-source creative tools for 3D modeling, video processing, image editing, CAD design, and more. Powered by Blender, FFmpeg, OpenSCAD, ImageMagick, CadQuery, and Sharp.">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    :root {
+      --void: #030305; --obsidian: #0a0a0f; --graphite: #12121a; --slate: #1a1a24;
+      --primary: #ffffff; --primary-glow: #818cf8; --secondary: #ec4899; --accent: #22d3ee;
+      --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
+      --white: #ffffff; --pearl: #e2e8f0; --ash: #d1d5db; --silver: #e5e7eb;
+      --gradient-1: linear-gradient(135deg, #ffffff 0%, #a3a3a3 50%, #ec4899 100%);
+      --glass-border: rgba(255,255,255,0.06);
+      --font-display: 'Syne', sans-serif; --font-body: 'Inter', sans-serif;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family: var(--font-body); background: var(--void); color: var(--white); min-height: 100vh; }
+    /* Header */
+    .header { display: flex; align-items: center; justify-content: space-between; padding: 12px 24px; background: var(--slate); border-bottom: 1px solid var(--glass-border); position: sticky; top: 0; z-index: 100; }
+    .header .logo { font-family: var(--font-display); font-size: 18px; font-weight: 800; background: var(--gradient-1); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; display: flex; align-items: center; gap: 8px; text-decoration: none; }
+    .header .logo i { font-size: 16px; -webkit-text-fill-color: var(--primary); }
+    .header .nav-links { display: flex; gap: 12px; align-items: center; }
+    .header .nav-links a { padding: 8px 16px; border-radius: 8px; color: var(--ash); text-decoration: none; font-size: 13px; font-weight: 500; transition: .3s; }
+    .header .nav-links a:hover { color: var(--white); background: rgba(255,255,255,0.06); }
+    .header .nav-links a.primary-link { background: var(--gradient-1); color: #fff; }
+    /* Container */
+    .container { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
+    .page-title { font-family: var(--font-display); font-size: 32px; font-weight: 800; margin-bottom: 8px; }
+    .page-subtitle { color: var(--ash); font-size: 15px; margin-bottom: 32px; line-height: 1.6; }
+    /* Status bar */
+    .status-bar { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 32px; }
+    .status-pill { display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: var(--slate); border-radius: 100px; border: 1px solid var(--glass-border); font-size: 13px; }
+    .status-pill .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .status-pill .dot.available { background: var(--success); box-shadow: 0 0 8px rgba(16,185,129,0.4); }
+    .status-pill .dot.unavailable { background: var(--danger); box-shadow: 0 0 8px rgba(239,68,68,0.4); }
+    /* Tool grid */
+    .tool-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-bottom: 48px; }
+    .tool-card { background: var(--obsidian); border: 1px solid var(--glass-border); border-radius: 16px; padding: 20px; transition: .3s; position: relative; overflow: hidden; }
+    .tool-card:hover { border-color: rgba(99,102,241,0.3); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+    .tool-card .icon-wrap { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 14px; }
+    .tool-card .icon-wrap.blender { background: rgba(200,120,50,0.15); color: #e8872e; }
+    .tool-card .icon-wrap.openscad { background: rgba(0,150,200,0.15); color: #00a8d4; }
+    .tool-card .icon-wrap.ffmpeg { background: rgba(0,180,100,0.15); color: #00b464; }
+    .tool-card .icon-wrap.imagemagick { background: rgba(200,50,50,0.15); color: #e03232; }
+    .tool-card .icon-wrap.sharp { background: rgba(99,102,241,0.15); color: var(--primary); }
+    .tool-card .icon-wrap.cadquery { background: rgba(236,72,153,0.15); color: var(--secondary); }
+    .tool-card .icon-wrap.opencv { background: rgba(0,120,255,0.15); color: #0078ff; }
+    .tool-card .icon-wrap.python { background: rgba(255,200,50,0.15); color: #f7c948; }
+    .tool-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+    .tool-card p { font-size: 13px; color: var(--ash); line-height: 1.5; margin-bottom: 12px; }
+    .tool-card .badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 100px; font-size: 11px; font-weight: 600; }
+    .tool-card .badge.available { background: rgba(16,185,129,0.12); color: var(--success); }
+    .tool-card .badge.unavailable { background: rgba(239,68,68,0.12); color: var(--danger); }
+    .tool-card .badge i { font-size: 10px; }
+    .tool-card .tool-links { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+    .tool-card .tool-links a { padding: 6px 12px; border-radius: 8px; border: 1px solid var(--glass-border); color: var(--ash); text-decoration: none; font-size: 12px; transition: .3s; }
+    .tool-card .tool-links a:hover { border-color: var(--primary); color: var(--white); }
+    /* Operation cards */
+    .section-title { font-family: var(--font-display); font-size: 22px; font-weight: 700; margin: 40px 0 16px; display: flex; align-items: center; gap: 12px; }
+    .section-title i { color: var(--primary); font-size: 20px; }
+    .ops-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .op-card { background: var(--graphite); border: 1px solid var(--glass-border); border-radius: 12px; padding: 16px; transition: .3s; cursor: pointer; }
+    .op-card:hover { border-color: rgba(99,102,241,0.3); background: var(--slate); }
+    .op-card h4 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+    .op-card p { font-size: 12px; color: var(--ash); line-height: 1.5; }
+    .op-card .op-icon { color: var(--primary); margin-right: 8px; }
+    /* Download section */
+    .output-section { margin-top: 32px; padding: 20px; background: var(--slate); border-radius: 16px; border: 1px solid var(--glass-border); display: none; }
+    .output-section.active { display: block; }
+    .output-section .output-link { color: var(--accent); word-break: break-all; }
+    .output-section .btn { padding: 8px 16px; border-radius: 8px; border: none; font-weight: 600; font-size: 13px; cursor: pointer; transition: .3s; font-family: var(--font-body); }
+    .output-section .btn-primary { background: var(--gradient-1); color: #fff; }
+    .output-section .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(99,102,241,0.3); }
+    .output-section .btn-danger { background: rgba(239,68,68,0.15); color: var(--danger); }
+    .loading { display: flex; align-items: center; gap: 12px; padding: 16px; color: var(--ash); font-size: 14px; }
+    .loading .spinner { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--glass-border); border-top-color: var(--primary); animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error-msg { padding: 12px 16px; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); border-radius: 10px; color: var(--danger); font-size: 13px; margin-top: 12px; }
+    /* Auth required */
+    .auth-required { text-align: center; padding: 80px 20px; }
+    .auth-required i { font-size: 48px; color: var(--primary); margin-bottom: 16px; }
+    .auth-required h2 { font-family: var(--font-display); font-size: 24px; margin-bottom: 8px; }
+    .auth-required p { color: var(--ash); margin-bottom: 20px; }
+    .auth-required .btn { padding: 12px 28px; border-radius: 10px; border: none; font-weight: 600; font-size: 15px; cursor: pointer; transition: .3s; font-family: var(--font-body); background: var(--gradient-1); color: #fff; text-decoration: none; display: inline-block; }
+    .auth-required .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(99,102,241,0.3); }
+    /* Responsive */
+    @media (max-width: 768px) {
+      .container { padding: 20px 16px; }
+      .tool-grid { grid-template-columns: 1fr; }
+      .ops-grid { grid-template-columns: 1fr; }
+      .header .nav-links a span { display: none; }
+    }
+  </style>
+</head>
+<body><div style="position:fixed;top:0;left:0;right:0;z-index:9999;background:#0a0a0a;border-bottom:1px solid rgba(255,255,255,0.08);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;font-family:monospace;font-size:12px;color:#a3a3a3"><span>⚡ SINGLE BUILDER — This page merged into <b style="color:#fff">One AI Builder</b> (does all)</span><a href="/ai-builder.html" style="padding:6px 12px;background:#fff;color:#000;border-radius:8px;text-decoration:none;font-weight:600">Open Single Builder →</a></div><script>setTimeout(()=>location.href="/ai-builder.html",3000);</script>
+  <header class="header">
+    <a href="/" class="logo"><i class="fas fa-cube"></i> KEYCODE</a>
+    <div class="nav-links">
+      <a href="/"><i class="fas fa-home"></i> <span>Home</span></a>
+      <a href="/ai-builder.html"><i class="fas fa-wand-magic-sparkles"></i> <span>AI Builder</span></a>
+      <a href="/dashboard.html"><i class="fas fa-th-large"></i> <span>Dashboard</span></a>
+      <a href="/tools.html" class="primary-link"><i class="fas fa-tools"></i> <span>Tools</span></a>
+    </div>
+  </header>
+
+  <div class="container" id="app">
+    <div id="auth-screen" class="auth-required" style="display:none">
+      <i class="fas fa-lock"></i>
+      <h2>Sign in Required</h2>
+      <p>You need to sign in to access the free tools.</p>
+      <a href="/login.html?redirect=/tools.html" class="btn"><i class="fas fa-sign-in-alt"></i> Sign In</a>
+    </div>
+
+    <div id="main-content">
+      <h1 class="page-title"><i class="fas fa-tools" style="color:var(--primary)"></i> Free Creative Tools</h1>
+      <p class="page-subtitle">40+ free, open-source tools integrated directly into KEYCODE Studio. Upload, process, and download — no external software needed.</p>
+
+      <div class="status-bar" id="status-bar">
+        <div class="loading"><div class="spinner"></div> Checking tool availability...</div>
+      </div>
+
+      <div id="tools-grid" class="tool-grid"></div>
+
+      <div class="section-title"><i class="fas fa-cubes"></i> 3D & CAD</div>
+      <div class="ops-grid">
+        <div class="op-card" data-action="openscad-render"><h4><i class="fas fa-code op-icon"></i> OpenSCAD Render</h4><p>Generate STL from OpenSCAD code</p></div>
+        <div class="op-card" data-action="openscad-preview"><h4><i class="fas fa-image op-icon"></i> OpenSCAD Preview</h4><p>Render OpenSCAD code to PNG preview</p></div>
+        <div class="op-card" data-action="cadquery"><h4><i class="fas fa-cog op-icon"></i> CadQuery Generator</h4><p>Parametric CAD (enclosure, bracket, gear)</p></div>
+        <div class="op-card" data-action="blender-render"><h4><i class="fas fa-play op-icon"></i> Blender Render</h4><p>Render .blend scenes (Cycles/EEVEE)</p></div>
+        <div class="op-card" data-action="blender-to-stl"><h4><i class="fas fa-cube op-icon"></i> Blender → STL</h4><p>Convert 3D files to STL via Blender</p></div>
+        <div class="op-card" data-action="blender-to-obj"><h4><i class="fas fa-file-export op-icon"></i> Blender → OBJ</h4><p>Convert STL to OBJ format</p></div>
+      </div>
+
+      <div class="section-title"><i class="fas fa-video"></i> Video & Audio</div>
+      <div class="ops-grid">
+        <div class="op-card" data-action="ffmpeg-convert"><h4><i class="fas fa-exchange-alt op-icon"></i> Convert Media</h4><p>Change format, codec, resolution, bitrate</p></div>
+        <div class="op-card" data-action="ffmpeg-audio"><h4><i class="fas fa-music op-icon"></i> Extract Audio</h4><p>Extract audio track from video</p></div>
+        <div class="op-card" data-action="ffmpeg-thumbnail"><h4><i class="fas fa-camera op-icon"></i> Video Thumbnail</h4><p>Generate thumbnail at any timestamp</p></div>
+        <div class="op-card" data-action="ffmpeg-trim"><h4><i class="fas fa-cut op-icon"></i> Trim Video</h4><p>Cut video by start time and duration</p></div>
+      </div>
+
+      <div class="section-title"><i class="fas fa-image"></i> Image Processing</div>
+      <div class="ops-grid">
+        <div class="op-card" data-action="img-convert"><h4><i class="fas fa-sync op-icon"></i> ImageMagick Convert</h4><p>Resize, rotate, blur, grayscale, border</p></div>
+        <div class="op-card" data-action="img-process"><h4><i class="fas fa-sliders-h op-icon"></i> Sharp Process</h4><p>Resize, sharpen, tint, format conversion</p></div>
+        <div class="op-card" data-action="img-optimize"><h4><i class="fas fa-compress op-icon"></i> Optimize Image</h4><p>Compress JPEG with mozjpeg</p></div>
+        <div class="op-card" data-action="img-collage"><h4><i class="fas fa-layer-group op-icon"></i> Image Collage</h4><p>Combine multiple images side by side</p></div>
+      </div>
+
+      <div id="output-section" class="output-section">
+        <h3 style="margin-bottom:12px"><i class="fas fa-check-circle" style="color:var(--success)"></i> Output Ready</h3>
+        <p style="color:var(--ash);margin-bottom:12px">Your file is ready for download:</p>
+        <a id="download-link" class="output-link" href="#" target="_blank"></a>
+        <div style="margin-top:16px;display:flex;gap:10px">
+          <button class="btn btn-primary" id="download-btn"><i class="fas fa-download"></i> Download</button>
+          <button class="btn btn-danger" id="clear-btn"><i class="fas fa-times"></i> Clear</button>
+        </div>
+        <div id="op-loading" class="loading" style="display:none"><div class="spinner"></div> Processing...</div>
+        <div id="op-error" class="error-msg" style="display:none"></div>
+      </div>
+
+      <div id="op-form-area" style="margin-top:20px"></div>
+    </div>
+  </div>
+
+  <script>
+    const TOKEN = localStorage.getItem('keycode_token') || localStorage.getItem('token');
+    const authScreen = document.getElementById('auth-screen');
+    const mainContent = document.getElementById('main-content');
+
+    if (!TOKEN) {
+      authScreen.style.display = 'block';
+      mainContent.style.display = 'none';
+    }
+
+    const toolsGrid = document.getElementById('tools-grid');
+    const statusBar = document.getElementById('status-bar');
+    const outputSection = document.getElementById('output-section');
+    const downloadLink = document.getElementById('download-link');
+    const downloadBtn = document.getElementById('download-btn');
+    const clearBtn = document.getElementById('clear-btn');
+    const opLoading = document.getElementById('op-loading');
+    const opError = document.getElementById('op-error');
+    const opFormArea = document.getElementById('op-form-area');
+
+    let currentDownloadUrl = '';
+
+    const toolIcons = {
+      blender: 'fas fa-cubes', openscad: 'fas fa-code', cadquery: 'fas fa-cog',
+      ffmpeg: 'fas fa-video', imagemagick: 'fas fa-magic', opencv: 'fas fa-eye',
+      sharp: 'fas fa-expand', python3: 'fab fa-python'
+    };
+    const iconClasses = {
+      blender: 'blender', openscad: 'openscad', cadquery: 'cadquery',
+      ffmpeg: 'ffmpeg', imagemagick: 'imagemagick', opencv: 'opencv',
+      sharp: 'sharp', python3: 'python'
+    };
+
+    clearBtn.onclick = () => { outputSection.classList.remove('active'); opFormArea.innerHTML = ''; };
+
+    downloadBtn.onclick = () => { if (currentDownloadUrl) window.open(currentDownloadUrl, '_blank'); };
+
+    async function loadTools() {
+      try {
+        const res = await fetch('/api/tools');
+        if (!res.ok) throw new Error('Failed to load tools');
+        const data = await res.json();
+        renderTools(data.tools);
+      } catch (e) {
+        statusBar.innerHTML = `<div class="error-msg">Failed to load tools: ${e.message}</div>`;
+      }
+    }
+
+    function renderTools(tools) {
+      const entries = Object.entries(tools);
+      const available = entries.filter(([,v]) => v.available).length;
+      const total = entries.length;
+      statusBar.innerHTML = `
+        <div class="status-pill"><span class="dot available"></span> ${available}/${total} tools available</div>
+        ${entries.filter(([,v]) => v.available).map(([k]) => `<div class="status-pill"><span class="dot available"></span> ${tools[k].name}</div>`).join('')}
+        ${entries.filter(([,v]) => !v.available).map(([k]) => `<div class="status-pill"><span class="dot unavailable"></span> ${tools[k].name}</div>`).join('')}
+      `;
+
+      toolsGrid.innerHTML = entries.map(([key, tool]) => `
+        <div class="tool-card">
+          <div class="icon-wrap ${iconClasses[key] || ''}"><i class="${toolIcons[key] || 'fas fa-wrench'}"></i></div>
+          <h3>${tool.name}</h3>
+          <p>${tool.desc}</p>
+          <div class="badge ${tool.available ? 'available' : 'unavailable'}">
+            <i class="fas ${tool.available ? 'fa-check-circle' : 'fa-times-circle'}"></i>
+            ${tool.available ? 'Available' : 'Not Installed'}
+          </div>
+          ${!tool.available ? `<div class="tool-links"><a href="${tool.url}" target="_blank"><i class="fas fa-external-link-alt"></i> Get ${tool.name}</a></div>` : ''}
+        </div>
+      `).join('');
+    }
+
+    function showOutput(url) {
+      currentDownloadUrl = url;
+      downloadLink.textContent = url;
+      downloadLink.href = url;
+      outputSection.classList.add('active');
+      opLoading.style.display = 'none';
+      opError.style.display = 'none';
+    }
+
+    function showLoading() { opLoading.style.display = 'flex'; outputSection.classList.remove('active'); opError.style.display = 'none'; }
+
+    function showError(msg) { opLoading.style.display = 'none'; opError.textContent = msg; opError.style.display = 'block'; }
+
+    function showForm(html) {
+      opFormArea.innerHTML = html;
+      opFormArea.querySelectorAll('form').forEach(f => {
+        f.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const action = f.dataset.action;
+          const formData = new FormData(f);
+          showLoading();
+          try {
+            const isJson = f.dataset.json === 'true';
+            let url = f.action;
+            let opts = { method: 'POST', headers: { 'Authorization': `Bearer ${TOKEN}` } };
+            if (isJson) {
+              const body = {};
+              formData.forEach((v, k) => { body[k] = v; });
+              opts.headers['Content-Type'] = 'application/json';
+              opts.body = JSON.stringify(body);
+            } else {
+              opts.body = formData;
+            }
+            const res = await fetch(url, opts);
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Request failed');
+            showOutput(data.downloadUrl);
+          } catch (err) { showError(err.message); }
+        });
+      });
+    }
+
+    function showOpenSCADRenderForm() {
+      showForm(`
+        <div class="output-section active" style="display:block;margin-top:0">
+          <h4 style="margin-bottom:12px"><i class="fas fa-code" style="color:var(--primary)"></i> OpenSCAD Render</h4>
+          <form data-action="openscad-render" action="/api/tools/openscad/render" data-json="true">
+            <div style="margin-bottom:12px">
+              <label style="display:block;font-size:13px;color:var(--ash);margin-bottom:6px">OpenSCAD Code</label>
+              <textarea name="code" rows="10" required style="width:100%;padding:12px;background:var(--obsidian);border:1px solid var(--glass-border);border-radius:10px;color:var(--white);font-family:monospace;font-size:13px;resize:vertical">// Example: Customizable gear
+radius = 30;
+height = 10;
+teeth = 12;
+
+difference() {
+  cylinder(r=radius, h=height, $fn=60);
+  for (i = [0:teeth-1]) {
+    rotate([0, 0, i * 360 / teeth])
+      translate([radius - 5, -2.5, -1])
+        cube([10, 5, height + 2]);
+  }
+}</textarea>
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-cube"></i> Generate STL</button>
+          </form>
+        </div>
+      `);
+    }
+
+    function showOpenSCADPreviewForm() {
+      showForm(`
+        <div class="output-section active" style="display:block;margin-top:0">
+          <h4 style="margin-bottom:12px"><i class="fas fa-image" style="color:var(--primary)"></i> OpenSCAD Preview</h4>
+          <form data-action="openscad-preview" action="/api/tools/openscad/preview" data-json="true">
+            <div style="margin-bottom:12px">
+              <label style="display:block;font-size:13px;color:var(--ash);margin-bottom:6px">OpenSCAD Code</label>
+              <textarea name="code" rows="10" required style="width:100%;padding:12px;background:var(--obsidian);border:1px solid var(--glass-border);border-radius:10px;color:var(--white);font-family:monospace;font-size:13px;resize:vertical">cube([20, 20, 20]);
+sphere(r=12);</textarea>
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-image"></i> Generate Preview PNG</button>
+          </form>
+        </div>
+      `);
+    }
+
+    function showCadQueryForm() {
+      showForm(`
+        <div class="output-section active" style="display:block;margin-top:0">
+          <h4 style="margin-bottom:12px"><i class="fas fa-cog" style="color:var(--primary)"></i> CadQuery Generator</h4>
+          <form data-action="cadquery" action="/api/tools/cadquery/generate" data-json="true">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+              <div>
+                <label style="display:block;font-size:13px;color:var(--ash);margin-bottom:4px">Type</label>
+                <select name="type" required style="width:100%;padding:10px;background:var(--obsidian);border:1px solid var(--glass-border);border-radius:8px;color:var(--white);font-size:13px">
+                  <option value="enclosure">Enclosure</option>
+                  <option value="bracket">Bracket</option>
+                  <option value="cylinder">Cylinder</option>
+                  <option value="gear">Gear</option>
+                </select>
+              </div>
+              <div>
+                <label style="display:block;font-size:13px;color:var(--ash);margin-bottom:4px">Width / Radius (mm)</label>
+                <input type="number" name="width" value="100" style="width:100%;padding:10px;background:var(--obsidian);border:1px solid var(--glass-border);border-radius:8px;color:var(--white);font-size:13px">
+              </div>
+              <div>
+                <label style="display:block;font-size:13px;color:var(--ash);margin-bottom:4px">Height (mm)</label>
+                <input type="number" name="height" value="60" style="width:100%;padding:10px;background:var(--obsidian);border:1px solid var(--glass-border);border-radius:8px;color:var(--white);font-size:13px">
+              </div>
+              <div>
+                <label style="display:block;font-size:13px;color:var(--ash);margin-bottom:4px">Depth / Teeth</label>
+                <input type="number" name="depth" value="40" style="width:100%;padding:10px;background:var(--obsidian);border:1px solid var(--glass-border);border-radius:8px;color:var(--white);font-size:13px">
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-cube"></i> Generate STL</button>
+          </form>
+        </div>
+      `);
+    }
+
+    function showBlenderRenderForm() {
+      showForm(`
+        <div class="output-section active" style="display:block;margin-top:0">
+          <h4 style="margin-bottom:12px"><i class="fas fa-play" style="color:var(--primary)"></i> Blender Render</h4>
+          <form data-action="blender-render" action="/api/tools/blender/render">
+            <div style="margin-bottom:12px">
+              <label style="display:block;font-size:13px;color:var(--ash);margin-bottom:4px">.blend File</label>
+              <input type="file" name="file" accept=".blend" required style="color:var(--ash);font-size:13px">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+              <div>
+                <label style="display:block;font-size:13px;color:var(--ash);margin-bottom:4px">Format</label>
+                <select name="format" style="width:100%;padding:10px;background:var(--obsidian);border:1px solid var(--glass-border);border-radius:8px;color:var(--white);font-size:13px">
+                  <option value="png">PNG</option>
+                  <option value="jpg">JPEG</option>
+                  <option value="bmp">BMP</option>
+                </select>
+              </div>
+              <div>
+                <label style="display:block;font-size:13px;color:var(--ash);margin-bottom:4px">Engine</label>
+                <select name="engine" style="width:100%;padding:10px;background:var(--obsidian);border:1px solid var(--glass-border);border-radius:8px;color:var(--white);font-size:13px">
+                  <option value="CYCLES">Cycles</option>
+                  <option value="EEVEE">EEVEE</option>
+                  <option value="WORKBENCH">Workbench</option>
+                </select>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-play"></i> Render</button>
+          </form>
+        </div>
+      `);
+    }
+
+    function showBlenderToStlForm() {
+      showForm(`
+        <div class="output-section active" style="display:block;margin-top:0">
+          <h4 style="margin-bottom:12px"><i class="fas fa-cube" style="color:var(--primary)"></i> Convert 3D File to STL</h4>
+          <form data-action="blender-to-stl" action="/api/tools/blender/export-stl">
+            <div style="margin-bottom:12px">
+              <label style="display:block;font-size:13px;color:var(--ash);margin-bottom:4px">3D File (OBJ, FBX, glTF, PLY, etc.)</label>
+              <input type="file" name="file" required style="color:var(--ash);font-size:13px">
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-file-export"></i> Convert to STL</button>
+          </form>
+        </div>
+      `);
+    }
+
+    function showBlenderToObjForm() {
+      showForm(`
+        <div class="output-section active" style="display:block;margin-top:0">
+          <h4 style="margin-bottom:12px"><i class="fas fa-file-export" style="color:var(--primary)"></i> Convert STL to OBJ</h4>
+          <form data-action="blender-to-obj" action="/api/tools/blender/to-obj">
+            <div style="margin-bottom:12px">
+              <label style="display:block;font-size:13px;color:var(--ash);margin-bottom:4px">STL File</label>
+              <input type="file" name="file" accept=".stl" required style="color:var(--ash);font-size:13px">
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-file-export"></i> Convert to OBJ</button>
+          </form>
+        </div>
+      `);
+    }
+
+    function showFfmpegConvertForm() {
+      showForm(`
+        <div class="output-section active" style="display:block;margin-top:0">
+          <h4 style="margin-bottom:12px"><i class="fas fa-exchange-alt" style="color:var(--primary)"></i> Convert Media</h4>
+          <form data-action="ffmpeg-convert" action="/api/tools/ffmpeg/convert">
+            <div style="margin-bottom:12px">
+              <label style="display:block;font-size:13px;color:var(--ash);margin-bottom:4px">Media File</label>
+              <input type="file" name="file" required style="color:var(--ash);font-size:13px">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+              <div>
+                <label style="display:block;font-size:13px;color:var(--ash);margin-bottom:4px">Output Format</label>
+                <input type="text" name="format" value=".mp4" placeholder=".mp4, .avi, .mov, .webm" style="width:100%;padding:10px;background:var(--obsidian);border:1px solid var(--glass-border);border-radius:8px;color:var(--white);font-size:13px">
+              </div>
+              <div>
+                <label style="display:block;font-size:13px;color:var(--ash);margin-bottom:4px">CRF (0-51)</label>
+                <input type="number" name="crf" value="23" min="0" max="51" style="width:100%;padding:10px;background:var(--obsidian);border:1px solid var(--glass-border);border-radius:8px;color:var(--white);font-size:13px">
+              </div>
+              <div>
+                <label style="display:block;font-size:13px;color:var(--ash);margin-bottom:4px">Resolution (e.g. 1280:720)</label>
+                <input type="text" name="resolution" placeholder="1920:1080" style="width:100%;padding:10px;background:var(--obsidian);border:1px solid var(--glass-border);border-radius:8px;color:var(--white);font-size:13px">
+              </div>
+              <div>
+                <label style="display:block;font-size:13px;color:var(--ash);margin-bottom:4px">FPS</label>
+                <input type="number" name="fps" value="30" style="width:100%;padding:10px;background:var(--obsidian);border:1px solid var(--glass-border);border-radius:8px;color:var(--white);font-size:13px">
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-exchange-alt"></i> Convert</button>
+          </form>
+        </div>
+      `);
+    }
+
+    function showFfmpegAudioForm() {
+      showForm(`
+        <div class="output-section active" style="display:block;margin-top:0">
+          <h4 style="margin-bottom:12px"><i class="fas fa-music" style="color:var(--primary)"></i> Extract Audio</h4>
+          <form data-action="ffmpeg-audio" action="/api/tools/ffmpeg/extract-audio">
+            <div style="margin-bottom:12px">
+              <label style="display:block;font-size:13px;color:var(--ash);margin-bottom:4px">Video File</label>
+              <input type="file" name="file" required style="color:var(--ash);font-size:13px">
+            </div>
+            <div style="margin-bottom:12px">
+              <label style="display:block;font-size:13px;color:var(--ash);margin-bottom:4px">Audio Format</label>
+              <select name="format" style="width:100%;padding:10px;background:var(--obsidian);border:1px solid var(--glass-border);border-radius:8px;color:var(--white);font-size:13px">
+                <option value="mp3">MP3</option>
+                <option value="wav">WAV</option>
+                <option value="ogg">OGG</option>
+                <option value="aac">AAC</option>
+              </select>
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-music"></i> Extract Audio</button>
+          </form>
+        </div>
+      `);
+    }
+
+    function showFfmpegThumbnailForm() {
+      showForm(`
+        <div class="output-section active" style="display:block;margin-top:0">
+          <h4 style="margin-bottom:12px"><i class="fas fa-camera" style="color:var(--primary)"></i> Video Thumbnail</h4>
+          <form data-action="ffmpeg-thumbnail" action="/api/tools/ffmpeg/thumbnail">
+            <div style="margin-bottom:12px">
+              <label style="display:block;font-size:13px;color:var(--ash);margin-bottom:4px">Video File</label>
+              <input type="file" name="file" required style="color:var(--ash);font-size:13px">
+            </div>
+            <div style="margin-bottom:12px">
+              <label style="display:block;font-size:13px;color:var(--ash);margin-bottom:4px">Timestamp (HH:MM:SS)</label>
+              <input type="text" name="time" value="00:00:01" style="width:100%;padding:10px;background:var(--obsidian);border:1px solid var(--glass-border);border-radius:8px;color:var(--white);font-size:13px">
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-camera"></i> Generate Thumbnail</button>
+          </form>
+        </div>
+      `);
+    }
+
+    function showFfmpegTrimForm() {
+      showForm(`
+        <div class="output-section active" style="display:block;margin-top:0">
+          <h4 style="margin-bottom:12px"><i class="fas fa-cut" style="color:var(--primary)"></i> Trim Video</h4>
+          <form data-action="ffmpeg-trim" action="/api/tools/ffmpeg/trim">
+            <div style="margin-bottom:12px">
+              <label style="display:block;font-size:13px;color:var(--ash);margin-bottom:4px">Video File</label>
+              <input type="file" name="file" required style="color:var(--ash);font-size:13px">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+              <div>
+                <label style="display:block;font-size:13px;color:var(--ash);margin-bottom:4px">Start Time (HH:MM:SS)</label>
+                <input type="text" name="start" value="00:00:00" required style="width:100%;padding:10px;background:var(--obsidian);border:1px solid var(--glass-border);border-radius:8px;color:var(--white);font-size:13px">
+              </div>
+              <div>
+                <label style="display:block;font-size:13px;color:var(--ash);margin-bottom:4px">Duration (HH:MM:SS)</label>
+                <input type="text" name="duration" value="00:00:10" required style="width:100%;padding:10px;background:var(--obsidian);border:1px solid var(--glass-border);border-radius:8px;color:var(--white);font-size:13px">
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-cut"></i> Trim</button>
+          </form>
+        </div>
+      `);
+    }
+
+    function showImgConvertForm() {
+      showForm(`
+        <div class="output-section active" style="display:block;margin-top:0">
+          <h4 style="margin-bottom:12px"><i class="fas fa-sync" style="color:var(--primary)"></i> ImageMagick Convert</h4>
+          <form data-action="img-convert" action="/api/tools/image/convert">
+            <div style="margin-bottom:12px">
+              <label style="display:block;font-size:13px;color:var(--ash);margin-bottom:4px">Image File</label>
+              <input type="file" name="file" accept="image/*" required style="color:var(--ash);font-size:13px">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+              <div><label style="display:block;font-size:13px;color:var(--ash);margin-bottom:4px">Output Format</label><input type="text" name="format" value=".png" placeholder=".png, .jpg, .gif" style="width:100%;padding:10px;background:var(--obsidian);border:1px solid var(--glass-border);border-radius:8px;color:var(--white);font-size:13px"></div>
+              <div><label style="display:block;font-size:13px;color:var(--ash);margin-bottom:4px">Quality (1-100)</label><input type="number" name="quality" value="90" min="1" max="100" style="width:100%;padding:10px;background:var(--obsidian);border:1px solid var(--glass-border);border-radius:8px;color:var(--white);font-size:13px"></div>
+              <div><label style="display:block;font-size:13px;color:var(--ash);margin-bottom:4px">Resize (e.g. 800x600)</label><input type="text" name="resize" placeholder="800x600" style="width:100%;padding:10px;background:var(--obsidian);border:1px solid var(--glass-border);border-radius:8px;color:var(--white);font-size:13px"></div>
+              <div><label style="display:block;font-size:13px;color:var(--ash);margin-bottom:4px">Rotate (deg)</label><input type="number" name="rotate" placeholder="90" style="width:100%;padding:10px;background:var(--obsidian);border:1px solid var(--glass-border);border-radius:8px;color:var(--white);font-size:13px"></div>
+            </div>
+            <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px">
+              <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ash)"><input type="checkbox" name="grayscale" value="true"> Grayscale</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ash)"><input type="checkbox" name="flip" value="true"> Flip</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ash)"><input type="checkbox" name="flop" value="true"> Flop</label>
+              <div><label style="display:block;font-size:13px;color:var(--ash);margin-bottom:4px">Blur</label><input type="text" name="blur" placeholder="0x8" style="width:80px;padding:6px;background:var(--obsidian);border:1px solid var(--glass-border);border-radius:6px;color:var(--white);font-size:13px"></div>
+              <div><label style="display:block;font-size:13px;color:var(--ash);margin-bottom:4px">Border</label><input type="text" name="border" placeholder="5x5" style="width:80px;padding:6px;background:var(--obsidian);border:1px solid var(--glass-border);border-radius:6px;color:var(--white);font-size:13px"></div>
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-sync"></i> Convert</button>
+          </form>
+        </div>
+      `);
+    }
+
+    function showImgProcessForm() {
+      showForm(`
+        <div class="output-section active" style="display:block;margin-top:0">
+          <h4 style="margin-bottom:12px"><i class="fas fa-sliders-h" style="color:var(--primary)"></i> Sharp Process</h4>
+          <form data-action="img-process" action="/api/tools/image/process">
+            <div style="margin-bottom:12px">
+              <label style="display:block;font-size:13px;color:var(--ash);margin-bottom:4px">Image File</label>
+              <input type="file" name="file" accept="image/*" required style="color:var(--ash);font-size:13px">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+              <div><label style="display:block;font-size:13px;color:var(--ash);margin-bottom:4px">Width (px)</label><input type="number" name="width" placeholder="800" style="width:100%;padding:10px;background:var(--obsidian);border:1px solid var(--glass-border);border-radius:8px;color:var(--white);font-size:13px"></div>
+              <div><label style="display:block;font-size:13px;color:var(--ash);margin-bottom:4px">Height (px)</label><input type="number" name="height" placeholder="600" style="width:100%;padding:10px;background:var(--obsidian);border:1px solid var(--glass-border);border-radius:8px;color:var(--white);font-size:13px"></div>
+              <div><label style="display:block;font-size:13px;color:var(--ash);margin-bottom:4px">Quality</label><input type="number" name="quality" value="85" min="1" max="100" style="width:100%;padding:10px;background:var(--obsidian);border:1px solid var(--glass-border);border-radius:8px;color:var(--white);font-size:13px"></div>
+              <div><label style="display:block;font-size:13px;color:var(--ash);margin-bottom:4px">Blur</label><input type="number" name="blur" step="0.1" placeholder="3" style="width:100%;padding:10px;background:var(--obsidian);border:1px solid var(--glass-border);border-radius:8px;color:var(--white);font-size:13px"></div>
+              <div><label style="display:block;font-size:13px;color:var(--ash);margin-bottom:4px">Sharpen</label><input type="number" name="sharpen" step="0.1" placeholder="2" style="width:100%;padding:10px;background:var(--obsidian);border:1px solid var(--glass-border);border-radius:8px;color:var(--white);font-size:13px"></div>
+              <div><label style="display:block;font-size:13px;color:var(--ash);margin-bottom:4px">Rotate (deg)</label><input type="number" name="rotate" placeholder="90" style="width:100%;padding:10px;background:var(--obsidian);border:1px solid var(--glass-border);border-radius:8px;color:var(--white);font-size:13px"></div>
+            </div>
+            <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px">
+              <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ash)"><input type="checkbox" name="grayscale" value="true"> Grayscale</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ash)"><input type="checkbox" name="flip" value="true"> Flip</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ash)"><input type="checkbox" name="flop" value="true"> Flop</label>
+              <div><label style="display:block;font-size:13px;color:var(--ash);margin-bottom:4px">Tint (hex)</label><input type="text" name="tint" placeholder="#ff0000" style="width:100px;padding:6px;background:var(--obsidian);border:1px solid var(--glass-border);border-radius:6px;color:var(--white);font-size:13px"></div>
+              <div><label style="display:block;font-size:13px;color:var(--ash);margin-bottom:4px">Format</label><select name="format" style="padding:6px;background:var(--obsidian);border:1px solid var(--glass-border);border-radius:6px;color:var(--white);font-size:13px"><option value="">Same</option><option value="jpeg">JPEG</option><option value="png">PNG</option><option value="webp">WebP</option><option value="avif">AVIF</option></select></div>
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-sliders-h"></i> Process</button>
+          </form>
+        </div>
+      `);
+    }
+
+    function showImgOptimizeForm() {
+      showForm(`
+        <div class="output-section active" style="display:block;margin-top:0">
+          <h4 style="margin-bottom:12px"><i class="fas fa-compress" style="color:var(--primary)"></i> Optimize Image</h4>
+          <form data-action="img-optimize" action="/api/tools/image/optimize">
+            <div style="margin-bottom:12px">
+              <label style="display:block;font-size:13px;color:var(--ash);margin-bottom:4px">Image File</label>
+              <input type="file" name="file" accept="image/*" required style="color:var(--ash);font-size:13px">
+            </div>
+            <div style="margin-bottom:12px">
+              <label style="display:block;font-size:13px;color:var(--ash);margin-bottom:4px">Quality (1-100)</label>
+              <input type="number" name="quality" value="80" min="1" max="100" style="width:200px;padding:10px;background:var(--obsidian);border:1px solid var(--glass-border);border-radius:8px;color:var(--white);font-size:13px">
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-compress"></i> Optimize</button>
+          </form>
+        </div>
+      `);
+    }
+
+    function showImgCollageForm() {
+      showForm(`
+        <div class="output-section active" style="display:block;margin-top:0">
+          <h4 style="margin-bottom:12px"><i class="fas fa-layer-group" style="color:var(--primary)"></i> Image Collage</h4>
+          <form data-action="img-collage" action="/api/tools/image/collage">
+            <div style="margin-bottom:12px">
+              <label style="display:block;font-size:13px;color:var(--ash);margin-bottom:4px">Images (select 2+)</label>
+              <input type="file" name="files" multiple accept="image/*" required style="color:var(--ash);font-size:13px">
+            </div>
+            <div style="margin-bottom:12px">
+              <label style="display:block;font-size:13px;color:var(--ash);margin-bottom:4px">Direction</label>
+              <select name="direction" style="width:200px;padding:10px;background:var(--obsidian);border:1px solid var(--glass-border);border-radius:8px;color:var(--white);font-size:13px">
+                <option value="horizontal">Horizontal</option>
+                <option value="vertical">Vertical</option>
+              </select>
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-layer-group"></i> Create Collage</button>
+          </form>
+        </div>
+      `);
+    }
+
+    const actionMap = {
+      'openscad-render': showOpenSCADRenderForm,
+      'openscad-preview': showOpenSCADPreviewForm,
+      'cadquery': showCadQueryForm,
+      'blender-render': showBlenderRenderForm,
+      'blender-to-stl': showBlenderToStlForm,
+      'blender-to-obj': showBlenderToObjForm,
+      'ffmpeg-convert': showFfmpegConvertForm,
+      'ffmpeg-audio': showFfmpegAudioForm,
+      'ffmpeg-thumbnail': showFfmpegThumbnailForm,
+      'ffmpeg-trim': showFfmpegTrimForm,
+      'img-convert': showImgConvertForm,
+      'img-process': showImgProcessForm,
+      'img-optimize': showImgOptimizeForm,
+      'img-collage': showImgCollageForm,
+    };
+
+    document.querySelectorAll('.op-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const action = card.dataset.action;
+        if (actionMap[action]) actionMap[action]();
+      });
+    });
+
+    if (TOKEN) loadTools();
+  </script>
+</body>
+</html>

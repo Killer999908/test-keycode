@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Verify your email address - KEYCODE Studio">
+  <title>Verify Email - KEYCODE Studio</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-dRp91c1F.svg">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --void: #030305;
+      --graphite: #12121a;
+      --primary: #ffffff;
+      --white: #ffffff;
+      --ash: #d1d5db;
+      --success: #10b981;
+      --danger: #ef4444;
+      --font-display: 'Syne', sans-serif;
+      --font-body: 'Inter', sans-serif;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: var(--font-body);
+      background: var(--void);
+      color: var(--white);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .card {
+      text-align: center;
+      padding: 60px 40px;
+      background: rgba(17, 17, 23, 0.95);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      border-radius: 24px;
+      max-width: 480px;
+      width: 100%;
+    }
+    .icon { font-size: 64px; margin-bottom: 24px; }
+    h1 { font-family: var(--font-display); font-size: 28px; font-weight: 700; margin-bottom: 12px; }
+    p { color: var(--ash); margin-bottom: 24px; line-height: 1.6; }
+    .btn {
+      display: inline-block;
+      padding: 14px 32px;
+      background: linear-gradient(135deg, #ffffff, #a3a3a3, #ec4899);
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 40px rgba(99, 102, 241, 0.4); }
+    .spinner {
+      width: 48px; height: 48px;
+      border: 3px solid var(--graphite);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 24px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+  </head>
+<body>
+  <div id="kc-loader">
+    <div id="kc-loader-scene"></div>
+      <div id="kc-bg-text" aria-hidden="true">KEYCODE</div>
+<div class="kc-loader-info" style="position:absolute;bottom:48px;left:50%;transform:translateX(-50%);">
+      <div id="kc-loader-bar-track"><div id="kc-loader-bar"></div></div>
+      <div id="kc-loader-pct" style="font-family:'Inter',sans-serif;font-size:11px;color:#555;letter-spacing:.12em;text-align:center;">0%</div>
+    </div>
+  </div>
+
+  <div class="card" id="status">
+    <div class="spinner" id="spinner"></div>
+    <h1 id="title">Verifying...</h1>
+    <p id="desc">Please wait while we verify your email address.</p>
+  </div>
+
+  <script>
+    (async () => {
+      const token = new URLSearchParams(window.location.search).get('token');
+      const title = document.getElementById('title');
+      const desc = document.getElementById('desc');
+      const spinner = document.getElementById('spinner');
+
+      if (!token) {
+        spinner.style.display = 'none';
+        title.textContent = 'Invalid Link';
+        desc.textContent = 'This verification link is invalid or expired.';
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/auth/verify-email/${token}`);
+        const data = await res.json();
+        spinner.style.display = 'none';
+        if (data.success) {
+          document.querySelector('.card').innerHTML = `
+            <div class="icon" style="color: var(--success);">✅</div>
+            <h1>Email Verified!</h1>
+            <p>Your email has been successfully verified. You can now access all features.</p>
+            <a href="login.html" class="btn">Go to Login</a>
+          `;
+        } else {
+          document.querySelector('.card').innerHTML = `
+            <div class="icon" style="color: var(--danger);">❌</div>
+            <h1>Verification Failed</h1>
+            <p>${data.message || 'This link is invalid or expired.'}</p>
+            <a href="login.html" class="btn">Back to Login</a>
+          `;
+        }
+      } catch (err) {
+        spinner.style.display = 'none';
+        title.textContent = 'Error';
+        desc.textContent = 'Something went wrong. Please try again.';
+      }
+    })();
+  </script>
+
+  <script src="/js/scroll-3d-animations.js"></script>  <script src="/js/k-scroll.js" defer></script>
+
+  <div id="site-footer"></div>
+    <script src="/js/loading-screen.js"></script>
+<script src="/js/site.js"></script>
+<script src="/js/install.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+</body>
+</html>

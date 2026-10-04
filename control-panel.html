@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - KEYCODE Studio</title>
+  <meta name="description" content="Manage your AI projects, orders, and account settings.">
+  <meta property="og:title" content="KEYCODE Dashboard">
+  <meta property="og:description" content="Manage your AI-generated websites and projects.">
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-dRp91c1F.svg">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-Avb2QiuDEEvB4bZJYdft2mNjVShBftLdPG8FJ0V7irTLQ8Uo0qcPxh4Plq7G5tGm0rU+1SPhVotteLpBERwTkw==" crossorigin="anonymous">
+  <style>
+    :root {
+      --void: #030305;
+      --obsidian: #0a0a0f;
+      --graphite: #12121a;
+      --slate: #1a1a24;
+      --primary: #ffffff;
+      --primary-glow: #818cf8;
+      --secondary: #ec4899;
+      --accent: #22d3ee;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --white: #ffffff;
+      --pearl: #e2e8f0;
+      --ash: #d1d5db;
+      --gradient-1: linear-gradient(135deg, #ffffff 0%, #a3a3a3 50%, #ec4899 100%);
+      --font-display: 'Syne', sans-serif;
+      --font-body: 'Inter', sans-serif;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: var(--font-body);
+      background: var(--void);
+      color: var(--white);
+      min-height: 100vh;
+    }
+    .sidebar {
+      position: fixed;
+      left: 0; top: 0;
+      width: 260px;
+      height: 100vh;
+      background: var(--obsidian);
+      border-right: 1px solid rgba(99, 102, 241, 0.1);
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
+    }
+    .sidebar-logo {
+      text-align: center;
+      padding: 16px 0 32px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      margin-bottom: 24px;
+    }
+    .sidebar-logo span {
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-weight: 800;
+      background: var(--gradient-1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .nav-menu { flex: 1; }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      color: var(--ash);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.3s;
+      cursor: pointer;
+      margin-bottom: 4px;
+    }
+    .nav-item:hover, .nav-item.active {
+      background: rgba(99, 102, 241, 0.1);
+      color: var(--white);
+    }
+    .nav-item i { width: 20px; text-align: center; }
+    .nav-divider {
+      height: 1px;
+      background: rgba(255,255,255,0.05);
+      margin: 16px 0;
+    }
+    .user-section {
+      padding-top: 16px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: rgba(99, 102, 241, 0.1);
+      border-radius: 12px;
+      margin-bottom: 12px;
+    }
+    .user-avatar {
+      width: 40px; height: 40px;
+      background: var(--gradient-1);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 16px;
+    }
+    .user-details { flex: 1; }
+    .user-name { font-weight: 600; font-size: 14px; }
+    .user-role { font-size: 12px; color: var(--ash); }
+    .logout-btn {
+      width: 100%;
+      padding: 12px;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      border-radius: 12px;
+      color: var(--danger);
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .logout-btn:hover {
+      background: rgba(239, 68, 68, 0.2);
+    }
+    .main-content {
+      margin-left: 260px;
+      padding: 32px;
+      min-height: 100vh;
+    }
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 32px;
+    }
+    .page-title {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 700;
+    }
+    .admin-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(99, 102, 241, 0.2);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      color: var(--primary-glow);
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+    .stat-card {
+      background: var(--graphite);
+      border: 1px solid rgba(99, 102, 241, 0.1);
+      border-radius: 16px;
+      padding: 24px;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(99, 102, 241, 0.15);
+    }
+    .stat-icon {
+      width: 48px; height: 48px;
+      background: rgba(99, 102, 241, 0.1);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: var(--primary);
+      margin-bottom: 16px;
+    }
+    .stat-value { font-size: 32px; font-weight: 700; margin-bottom: 4px; }
+    .stat-label { color: var(--ash); font-size: 14px; }
+    .section-card {
+      background: var(--graphite);
+      border: 1px solid rgba(99, 102, 241, 0.1);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .section-title {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 600;
+    }
+    .tab-nav {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      overflow-x: auto;
+    }
+    .tab-btn {
+      padding: 10px 20px;
+      background: transparent;
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      border-radius: 10px;
+      color: var(--ash);
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s;
+      white-space: nowrap;
+    }
+    .tab-btn:hover, .tab-btn.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+    .btn-primary {
+      padding: 10px 20px;
+      background: var(--gradient-1);
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+    .btn-primary:hover { transform: translateY(-2px); }
+    .table-wrapper { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 14px 16px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    th {
+      color: var(--ash);
+      font-size: 12px;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+    td { font-size: 14px; }
+    tr:hover { background: rgba(99, 102, 241, 0.05); }
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .status-pending { background: rgba(245,158,11,0.2); color: var(--warning); }
+    .status-progress { background: rgba(99,102,241,0.2); color: var(--primary-glow); }
+    .status-review { background: rgba(236,72,153,0.2); color: var(--secondary); }
+    .status-completed { background: rgba(16,185,129,0.2); color: var(--success); }
+    .action-btn {
+      padding: 6px 12px;
+      background: rgba(99,102,241,0.1);
+      border: none;
+      border-radius: 8px;
+      color: var(--primary-glow);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .action-btn:hover { background: var(--primary); color: white; }
+    .page-section { display: none; }
+    .page-section.active { display: block; }
+    .login-prompt {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 80vh;
+      text-align: center;
+    }
+    .login-prompt i { font-size: 64px; color: var(--primary); margin-bottom: 24px; }
+    .login-prompt h2 { font-family: var(--font-display); font-size: 24px; margin-bottom: 12px; }
+    .login-prompt p { color: var(--ash); margin-bottom: 24px; }
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); }
+      .main-content { margin-left: 0; }
+    }
+    .skeleton-load { background:linear-gradient(90deg,var(--slate) 25%,var(--graphite) 50%,var(--slate) 75%);background-size:200% 100%;animation:skeleton 1.5s ease-in-out infinite;border-radius:8px;color:transparent!important;user-select:none;pointer-events:none;min-height:20px }
+    @keyframes skeleton { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+  </style>
+    </head>
+<body>
+  <div id="kc-loader">
+    <div id="kc-loader-scene"></div>
+      <div id="kc-bg-text" aria-hidden="true">KEYCODE</div>
+<div class="kc-loader-info" style="position:absolute;bottom:48px;left:50%;transform:translateX(-50%);">
+      <div id="kc-loader-bar-track"><div id="kc-loader-bar"></div></div>
+      <div id="kc-loader-pct" style="font-family:'Inter',sans-serif;font-size:11px;color:#555;letter-spacing:.12em;text-align:center;">0%</div>
+    </div>
+  </div>
+
+  <div id="loginPrompt" class="login-prompt" style="display:none;">
+    <i class="fas fa-lock"></i>
+    <h2>Authentication Required</h2>
+    <p>Please login to access the control panel</p>
+    <a href="login.html" class="btn-primary">Go to Login</a>
+  </div>
+
+  <div id="dashboardContent" style="display:none;">
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <span>KEYCODE</span>
+      </div>
+      <nav class="nav-menu">
+        <div class="nav-item active" data-page="overview">
+          <i class="fas fa-th-large"></i>
+          <span>Overview</span>
+        </div>
+        <div class="nav-item" data-page="orders">
+          <i class="fas fa-shopping-bag"></i>
+          <span>My Orders</span>
+        </div>
+        <div class="nav-item" data-page="services">
+          <i class="fas fa-briefcase"></i>
+          <span>Services</span>
+        </div>
+        <div class="nav-divider"></div>
+        <div class="nav-item" data-page="ai-projects">
+          <i class="fas fa-robot"></i>
+          <span>AI Projects</span>
+        </div>
+        <div class="nav-item" data-page="games">
+          <i class="fas fa-gamepad"></i>
+          <span>Games</span>
+        </div>
+        <div class="nav-item" data-page="profile">
+          <i class="fas fa-user"></i>
+          <span>Profile</span>
+        </div>
+        <div id="adminNav" style="display:none;">
+          <div class="nav-divider"></div>
+          <div class="nav-item" data-page="all-orders">
+            <i class="fas fa-list"></i>
+            <span>All Orders</span>
+          </div>
+          <div class="nav-item" data-page="users">
+            <i class="fas fa-users"></i>
+            <span>Users</span>
+          </div>
+          <div class="nav-item" data-page="inquiries">
+            <i class="fas fa-envelope"></i>
+            <span>Inquiries</span>
+          </div>
+        </div>
+      </nav>
+      <div class="user-section">
+        <div class="user-info">
+          <div class="user-avatar" id="userAvatar">U</div>
+          <div class="user-details">
+            <div class="user-name" id="userName">User</div>
+            <div class="user-role" id="userRole">Client</div>
+          </div>
+        </div>
+        <button class="logout-btn" onclick="logout()">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div id="overview" class="page-section active">
+        <!-- Welcome + AI Builder Hero -->
+        <div style="background: linear-gradient(135deg, rgba(99,102,241,0.15) 0%, rgba(236,72,153,0.1) 100%); border: 1px solid rgba(99,102,241,0.2); border-radius: 20px; padding: 32px; margin-bottom: 32px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px;">
+          <div>
+            <h1 style="font-family: var(--font-display); font-size: 28px; font-weight: 700; margin-bottom: 8px;">Welcome back, <span id="welcomeName">User</span> 👋</h1>
+            <p style="color: var(--ash); font-size: 15px; max-width: 500px;">Build your next project with KEYCODE AI. Describe what you want and get a full-stack project in seconds.</p>
+          </div>
+          <a href="ai-builder.html" class="btn-primary" style="display: inline-flex; align-items: center; gap: 10px; padding: 14px 28px; font-size: 16px; text-decoration: none;">
+            <i class="fas fa-magic"></i> Launch AI Builder
+          </a>
+        </div>
+
+        <!-- Active Project Timer (if any) -->
+        <div id="activeTimerSection" style="display:none; margin-bottom: 24px;">
+          <div style="background: linear-gradient(135deg, rgba(245,158,11,0.15) 0%, rgba(236,72,153,0.1) 100%); border: 1px solid rgba(245,158,11,0.3); border-radius: 16px; padding: 24px;">
+            <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+              <i class="fas fa-clock" style="font-size: 32px; color: var(--warning);"></i>
+              <div style="flex: 1;">
+                <h3 style="font-size: 18px; font-weight: 600; margin-bottom: 4px;">Project Unlocking Soon</h3>
+                <p style="color: var(--ash); font-size: 14px;" id="activeTimerText">Your project code will be available in:</p>
+              </div>
+              <div id="activeTimerDisplay" style="font-family: var(--font-display); font-size: 36px; font-weight: 800; color: var(--accent);">--:--:--</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="page-header">
+          <span id="adminBadge" class="admin-badge" style="display:none;">
+            <i class="fas fa-crown"></i> Admin
+          </span>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-robot"></i></div>
+            <div class="stat-value" id="totalAiProjects">0</div>
+            <div class="stat-label">AI Projects</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-shopping-bag"></i></div>
+            <div class="stat-value" id="totalOrders">0</div>
+            <div class="stat-label">Total Orders</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-spinner"></i></div>
+            <div class="stat-value" id="activeOrders">0</div>
+            <div class="stat-label">In Progress</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+            <div class="stat-value" id="completedOrders">0</div>
+            <div class="stat-label">Completed</div>
+          </div>
+        </div>
+
+        <!-- Recent AI Projects -->
+        <div class="section-card">
+          <div class="section-header">
+            <h2 class="section-title"><i class="fas fa-robot" style="margin-right: 8px;"></i> Recent AI Projects</h2>
+            <a href="#" class="btn-primary" onclick="showPage('ai-projects')">View All</a>
+          </div>
+          <div id="overviewAiProjects">
+            <p style="color: var(--ash); text-align: center; padding: 20px;">Loading AI projects...</p>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <div class="section-header">
+            <h2 class="section-title">Recent Orders</h2>
+            <a href="#" class="btn-primary" onclick="showPage('orders')">View All</a>
+          </div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>Service</th>
+                  <th>Status</th>
+                  <th>Amount</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody id="recentOrdersTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="orders" class="page-section">
+        <div class="page-header">
+          <h1 class="page-title">My Orders</h1>
+        </div>
+        <div class="section-card">
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>Service</th>
+                  <th>Description</th>
+                  <th>Status</th>
+                  <th>Amount</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody id="myOrdersTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="services" class="page-section">
+        <div class="page-header">
+          <h1 class="page-title">Services</h1>
+        </div>
+        <div class="section-card">
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Service</th>
+                  <th>Description</th>
+                  <th>Price</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="servicesTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="ai-projects" class="page-section">
+        <div class="page-header">
+          <h1 class="page-title">AI Generated Projects</h1>
+        </div>
+        <div class="section-card">
+          <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+            <input id="aiSearchInput" type="text" placeholder="Search projects..." oninput="filterAiProjects()" style="flex:1;min-width:200px;padding:10px 14px;background:var(--slate);border:1px solid var(--glass-border);border-radius:8px;color:white;font-size:13px">
+            <select id="aiStatusFilter" onchange="filterAiProjects()" style="padding:10px 14px;background:var(--slate);border:1px solid var(--glass-border);border-radius:8px;color:white;font-size:13px">
+              <option value="">All Status</option>
+              <option value="locked">Locked</option>
+              <option value="paid">Paid</option>
+              <option value="released">Released</option>
+            </select>
+          </div>
+          <div id="aiProjectsContainer">
+            <p style="color: var(--ash); text-align: center;">Loading AI projects...</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="games" class="page-section">
+        <div class="page-header">
+          <h1 class="page-title"><i class="fas fa-gamepad" style="margin-right:8px"></i> Game Engine</h1>
+          <a href="game.html" class="btn-primary" style="text-decoration:none"><i class="fas fa-play"></i> Open Game Engine</a>
+        </div>
+        <div style="background:linear-gradient(135deg,rgba(99,102,241,0.12),rgba(34,211,238,0.08));border:1px solid rgba(99,102,241,0.2);border-radius:16px;padding:24px;margin-bottom:24px;display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+          <div style="flex:1;min-width:200px">
+            <h3 style="font-size:18px;font-weight:600;margin-bottom:6px">Free Phaser.js Game Engine</h3>
+            <p style="color:var(--ash);font-size:14px;line-height:1.6">Generate playable HTML5 games with AI — platformers, shooters, puzzles, runners &amp; more. All games run in the browser with the free Phaser.js engine.</p>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <a href="ai-builder.html" class="btn-primary" style="text-decoration:none"><i class="fas fa-magic"></i> Create with AI</a>
+            <a href="game.html" class="btn-primary" style="text-decoration:none;background:transparent;border:1px solid var(--primary);color:var(--primary)"><i class="fas fa-folder-open"></i> Open Engine</a>
+          </div>
+        </div>
+        <div class="section-card">
+          <div class="section-header">
+            <h2 class="section-title"><i class="fas fa-robot" style="margin-right:8px"></i> My Games</h2>
+            <a href="ai-builder.html" class="btn-primary" style="text-decoration:none">New Game</a>
+          </div>
+          <div id="gameProjectsContainer">
+            <p style="color: var(--ash); text-align: center; padding: 20px;">Loading game projects...</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="profile" class="page-section">
+        <div class="page-header">
+          <h1 class="page-title">Profile Settings</h1>
+        </div>
+        <div class="section-card">
+          <form id="profileForm">
+            <div class="form-group" style="margin-bottom:16px;">
+              <label>Full Name</label>
+              <input type="text" id="profileName" style="width:100%;padding:12px;background:var(--slate);border:1px solid rgba(99,102,241,0.2);border-radius:10px;color:white;font-size:14px;">
+            </div>
+            <div class="form-group" style="margin-bottom:16px;">
+              <label>Email</label>
+              <input type="email" id="profileEmail" style="width:100%;padding:12px;background:var(--slate);border:1px solid rgba(99,102,241,0.2);border-radius:10px;color:white;font-size:14px;" readonly>
+            </div>
+            <button type="submit" class="btn-primary">Save Changes</button>
+          </form>
+        </div>
+      </div>
+
+      <div id="all-orders" class="page-section">
+        <div class="page-header">
+          <h1 class="page-title">All Orders (Admin)</h1>
+        </div>
+        <div class="section-card">
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>User</th>
+                  <th>Service</th>
+                  <th>Status</th>
+                  <th>Amount</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="adminOrdersTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="users" class="page-section">
+        <div class="page-header">
+          <h1 class="page-title">Users (Admin)</h1>
+        </div>
+        <div class="section-card">
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Joined</th>
+                </tr>
+              </thead>
+              <tbody id="usersTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="inquiries" class="page-section">
+        <div class="page-header">
+          <h1 class="page-title">Inquiries (Admin)</h1>
+        </div>
+        <div class="section-card">
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Type</th>
+                  <th>Message</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody id="inquiriesTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const API_BASE = '/api';
+    let currentUser = null;
+
+    (function handleOAuthToken(){
+      const p = new URLSearchParams(window.location.search);
+      const t = p.get('token');
+      if (t) {
+        localStorage.setItem('token', t);
+        fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + t } }).then(r=>r.json()).then(j=>{
+          const u = j.user || j;
+          if (u && (u.email || u._id)) localStorage.setItem('user', JSON.stringify(u));
+          history.replaceState({}, '', window.location.pathname);
+        }).catch(()=> history.replaceState({}, '', window.location.pathname));
+      }
+      const err = p.get('error');
+      if (err) {
+        setTimeout(()=> alert('OAuth: ' + err), 300);
+        history.replaceState({}, '', window.location.pathname);
+      }
+    })();
+
+    function checkAuth() {
+      const token = localStorage.getItem('token');
+      const user = localStorage.getItem('user');
+      if (!token || !user) {
+        document.getElementById('loginPrompt').style.display = 'flex';
+        document.getElementById('dashboardContent').style.display = 'none';
+        return false;
+      }
+      currentUser = JSON.parse(user);
+      return true;
+    }
+
+    async function fetchAPI(endpoint, options = {}) {
+      const token = localStorage.getItem('token');
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      
+      const response = await fetch(`${API_BASE}${endpoint}`, {
+        ...options,
+        headers: { ...headers, ...options.headers }
+      }).catch(function(err) { console.error('[Fetch Error]', err); return null; });
+      
+      if (response.status === 401) {
+        logout();
+        return null;
+      }
+      return response.json();
+    }
+
+    function logout() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = 'login.html';
+    }
+
+    function showPage(pageId) {
+      document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active'));
+      document.getElementById(pageId).classList.add('active');
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.querySelector(`[data-page="${pageId}"]`)?.classList.add('active');
+    }
+
+    async function loadDashboard() {
+      if (!checkAuth()) return;
+      
+      // Show skeleton loading state
+      document.querySelectorAll('.skeleton-load').forEach(function(el) {
+        el.style.cssText = 'background:linear-gradient(90deg,var(--slate) 25%,var(--graphite) 50%,var(--slate) 75%);background-size:200% 100%;animation:skeleton 1.5s ease-in-out infinite;border-radius:8px;min-height:24px';
+      });
+      
+      document.getElementById('loginPrompt').style.display = 'none';
+      document.getElementById('dashboardContent').style.display = 'block';
+      
+      document.getElementById('userName').textContent = currentUser.name;
+      document.getElementById('userAvatar').textContent = currentUser.name.charAt(0).toUpperCase();
+      document.getElementById('userRole').textContent = currentUser.role === 'admin' ? 'Administrator' : 'Client';
+      document.getElementById('profileName').value = currentUser.name;
+      document.getElementById('profileEmail').value = currentUser.email;
+      document.getElementById('welcomeName').textContent = currentUser.name;
+      
+      if (currentUser.role === 'admin') {
+        document.getElementById('adminBadge').style.display = 'inline-flex';
+        document.getElementById('adminNav').style.display = 'block';
+      }
+
+      await loadStats();
+      await loadRecentOrders();
+      await loadOverviewAiProjects();
+      await loadGameProjects();
+    }
+
+    async function loadStats() {
+      const data = await fetchAPI('/orders');
+      if (!data) return;
+      
+      const orders = Array.isArray(data) ? data : [];
+      document.getElementById('totalOrders').textContent = orders.length;
+      document.getElementById('activeOrders').textContent = orders.filter(o => o.status === 'in_progress').length;
+      document.getElementById('completedOrders').textContent = orders.filter(o => o.status === 'completed').length;
+
+      // Load AI projects count from dashboard
+      const dashData = await fetchAPI('/user/dashboard');
+      if (dashData && dashData.success) {
+        document.getElementById('totalAiProjects').textContent = dashData.stats.totalAiProjects || 0;
+        checkActiveTimers(dashData.aiProjects || []);
+      }
+    }
+
+    async function loadOverviewAiProjects() {
+      const data = await fetchAPI('/user/dashboard');
+      if (!data || !data.success) {
+        document.getElementById('overviewAiProjects').innerHTML = '<p style="color: var(--ash); text-align: center;">Could not load projects</p>';
+        return;
+      }
+
+      const projects = (data.aiProjects || []).slice(0, 5);
+      if (projects.length === 0) {
+        document.getElementById('overviewAiProjects').innerHTML = '<p style="color: var(--ash); text-align: center;">No AI projects yet. <a href="ai-builder.html" style="color: var(--primary);">Build your first project!</a></p>';
+        return;
+      }
+
+      let html = '<div class="table-wrapper"><table><thead><tr>';
+      html += '<th>Title</th><th>Status</th><th>Files</th><th>Created</th><th>Actions</th>';
+      html += '</tr></thead><tbody>';
+
+      projects.forEach(function(p) {
+        var statusColor = p.status === 'released' ? 'completed' : p.status === 'paid' ? 'progress' : 'pending';
+        var statusLabel = p.status.charAt(0).toUpperCase() + p.status.slice(1);
+        var fileCount = p.fileTree ? p.fileTree.length : 0;
+        var created = p.createdAt ? new Date(p.createdAt).toLocaleDateString() : 'N/A';
+
+        html += '<tr>';
+        html += '<td><strong>' + (p.title || 'Untitled') + '</strong></td>';
+        html += '<td><span class="status-badge status-' + statusColor + '">' + statusLabel + '</span></td>';
+        html += '<td>' + fileCount + ' files</td>';
+        html += '<td>' + created + '</td>';
+        html += '<td>';
+        html += '<a href="/api/ai/project-demo/' + p.projectId + '" target="_blank" class="action-btn" style="margin-right:4px;"><i class="fas fa-eye"></i> Demo</a>';
+        if (p.status === 'released') {
+          html += '<a href="/api/ai/project-download/' + p.projectId + '" class="action-btn" style="background:rgba(16,185,129,0.2);color:var(--success);"><i class="fas fa-download"></i> Download</a>';
+        } else if (p.status === 'paid') {
+          html += '<span class="action-btn" style="background:rgba(245,158,11,0.2);color:var(--warning);"><i class="fas fa-clock"></i> Releasing...</span>';
+        } else {
+          html += '<a href="ai-builder.html?project=' + p.projectId + '" class="action-btn" style="background:rgba(236,72,153,0.2);color:var(--secondary);"><i class="fas fa-unlock"></i> Unlock</a>';
+        }
+        html += '</td>';
+        html += '</tr>';
+      });
+
+      html += '</tbody></table></div>';
+      document.getElementById('overviewAiProjects').innerHTML = html;
+    }
+
+    function checkActiveTimers(projects) {
+      var activePaid = projects.filter(function(p) { return p.status === 'paid'; });
+      var timerSection = document.getElementById('activeTimerSection');
+      var timerDisplay = document.getElementById('activeTimerDisplay');
+      var timerText = document.getElementById('activeTimerText');
+
+      if (activePaid.length === 0) {
+        timerSection.style.display = 'none';
+        return;
+      }
+
+      timerSection.style.display = 'block';
+      var project = activePaid[0];
+
+      function updateTimer() {
+        if (!project.releaseAt) { timerDisplay.textContent = '--:--:--'; return; }
+        var remaining = new Date(project.releaseAt).getTime() - Date.now();
+        if (remaining <= 0) {
+          timerDisplay.textContent = '00:00:00';
+          timerText.textContent = 'Your project is now available! Check the AI Projects page.';
+          return;
+        }
+        var hours = Math.floor(remaining / 3600000);
+        var mins = Math.floor((remaining % 3600000) / 60000);
+        var secs = Math.floor((remaining % 60000) / 1000);
+        timerDisplay.textContent = 
+          String(hours).padStart(2, '0') + ':' +
+          String(mins).padStart(2, '0') + ':' +
+          String(secs).padStart(2, '0');
+        timerText.textContent = 'Project "' + (project.title || 'Untitled') + '" code will be available in:';
+      }
+
+      updateTimer();
+      setInterval(updateTimer, 1000);
+    }
+
+    async function loadRecentOrders() {
+      const data = await fetchAPI('/orders');
+      if (!data) return;
+      
+      const orders = Array.isArray(data) ? data : [];
+      const tbody = document.getElementById('recentOrdersTable');
+      tbody.innerHTML = orders.slice(0, 5).map(order => `
+        <tr>
+          <td>#${order._id?.slice(-8).toUpperCase() || 'N/A'}</td>
+          <td>${order.serviceType || 'Custom'}</td>
+          <td><span class="status-badge status-${order.status || 'pending'}">${(order.status || 'pending').replace('_', ' ')}</span></td>
+          <td>$${order.pricing?.total || order.subtotal || 0}</td>
+          <td>${new Date(order.createdAt).toLocaleDateString()}</td>
+        </tr>
+      `).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--ash)">No orders yet</td></tr>';
+    }
+
+    async function loadServices() {
+      const data = await fetchAPI('/services');
+      if (!data) return;
+      
+      const services = Array.isArray(data) ? data : (data.services || []);
+      document.getElementById('servicesTable').innerHTML = services.map(s => `
+        <tr>
+          <td><strong>${s.name}</strong></td>
+          <td>${s.description || 'N/A'}</td>
+          <td>$${s.pricing?.total || s.price || 0}</td>
+          <td><button class="action-btn" onclick="alert('Order feature coming soon!')">Order</button></td>
+        </tr>
+      `).join('');
+    }
+
+    async function loadAllOrders() {
+      const data = await fetchAPI('/admin/orders');
+      if (!data) return;
+      
+      const orders = Array.isArray(data) ? data : (data.orders || []);
+      document.getElementById('adminOrdersTable').innerHTML = orders.map(order => `
+        <tr>
+          <td>#${order._id?.slice(-8).toUpperCase()}</td>
+          <td>${order.user?.name || 'Unknown'}</td>
+          <td>${order.serviceType || 'Custom'}</td>
+          <td><span class="status-badge status-${order.status}">${order.status?.replace('_', ' ')}</span></td>
+          <td>$${order.pricing?.total || 0}</td>
+          <td><button class="action-btn">Update</button></td>
+        </tr>
+      `).join('');
+    }
+
+    async function loadUsers() {
+      const data = await fetchAPI('/admin/users');
+      if (!data) return;
+      
+      const users = Array.isArray(data) ? data : (data.users || []);
+      document.getElementById('usersTable').innerHTML = users.map(user => `
+        <tr>
+          <td>${user.name}</td>
+          <td>${user.email}</td>
+          <td>${user.role === 'admin' ? 'Admin' : 'Client'}</td>
+          <td>${new Date(user.createdAt).toLocaleDateString()}</td>
+        </tr>
+      `).join('');
+    }
+
+    async function loadInquiries() {
+      const data = await fetchAPI('/inquiries');
+      if (!data) return;
+      
+      const inquiries = Array.isArray(data) ? data : (data.inquiries || []);
+      document.getElementById('inquiriesTable').innerHTML = inquiries.map(i => `
+        <tr>
+          <td>${i.name}</td>
+          <td>${i.email}</td>
+          <td>${i.projectType || 'General'}</td>
+          <td>${(i.message || '').slice(0, 50)}...</td>
+          <td>${new Date(i.createdAt).toLocaleDateString()}</td>
+        </tr>
+      `).join('');
+    }
+
+    var aiProjectsCache = [];
+
+    async function loadAiProjects() {
+      const data = await fetchAPI('/user/dashboard');
+      if (!data || !data.success) {
+        document.getElementById('aiProjectsContainer').innerHTML = '<p style="color: var(--ash); text-align: center;">Failed to load AI projects.</p>';
+        return;
+      }
+
+      aiProjectsCache = data.aiProjects || [];
+      renderAiProjects();
+    }
+
+    function filterAiProjects() {
+      var q = (document.getElementById('aiSearchInput')?.value || '').toLowerCase();
+      var s = document.getElementById('aiStatusFilter')?.value || '';
+      var filtered = aiProjectsCache.filter(function(p) {
+        if (q && !(p.title || '').toLowerCase().includes(q) && !(p.projectId || '').toLowerCase().includes(q)) return false;
+        if (s && p.status !== s) return false;
+        return true;
+      });
+      renderAiProjects(filtered);
+    }
+
+    function renderAiProjects(projects) {
+      projects = projects || aiProjectsCache;
+      if (projects.length === 0) {
+        document.getElementById('aiProjectsContainer').innerHTML = '<p style="color: var(--ash); text-align: center;">No AI projects yet. <a href="ai-builder.html" style="color: var(--primary);">Build your first project!</a></p>';
+        return;
+      }
+
+      let html = '<div class="table-wrapper"><table><thead><tr>';
+      html += '<th>Title</th><th>Type</th><th>Status</th><th>Files</th><th>Created</th><th>Actions</th>';
+      html += '</tr></thead><tbody>';
+
+      projects.forEach(function(p) {
+        var statusColor = p.status === 'released' ? 'completed' : p.status === 'paid' ? 'progress' : 'pending';
+        var statusLabel = p.status.charAt(0).toUpperCase() + p.status.slice(1);
+        var fileCount = p.fileTree ? p.fileTree.length : 0;
+        var created = p.createdAt ? new Date(p.createdAt).toLocaleDateString() : 'N/A';
+
+        html += '<tr>';
+        html += '<td><strong>' + (p.title || 'Untitled') + '</strong></td>';
+        html += '<td>' + (p.projectType || 'web-app') + '</td>';
+        html += '<td><span class="status-badge status-' + statusColor + '">' + statusLabel + '</span></td>';
+        html += '<td>' + fileCount + ' files</td>';
+        html += '<td>' + created + '</td>';
+        html += '<td>';
+        html += '<a href="/api/ai/project-demo/' + p.projectId + '" target="_blank" class="action-btn" style="margin-right:4px;"><i class="fas fa-eye"></i> Demo</a>';
+        if (p.status === 'released') {
+          html += '<a href="/api/ai/project-download/' + p.projectId + '" class="action-btn" style="background:rgba(16,185,129,0.2);color:var(--success);"><i class="fas fa-download"></i> Download</a>';
+        } else {
+          html += '<a href="ai-builder.html?project=' + p.projectId + '" class="action-btn" style="background:rgba(236,72,153,0.2);color:var(--secondary);"><i class="fas fa-unlock"></i> Unlock</a>';
+        }
+        html += '</td>';
+        html += '</tr>';
+      });
+
+      html += '</tbody></table></div>';
+      document.getElementById('aiProjectsContainer').innerHTML = html;
+    }
+
+    async function loadGameProjects() {
+      try {
+        const resp = await fetch('/api/ai/list-projects');
+        const data = await resp.json();
+        const projects = (data.projects || []).filter(function(p) { return p.type === 'game' || p.fileId?.startsWith('game_'); });
+        const container = document.getElementById('gameProjectsContainer');
+
+        if (!projects.length) {
+          container.innerHTML = '<p style="color: var(--ash); text-align: center; padding: 30px;">No games created yet. <a href="ai-builder.html" style="color: var(--primary);">Create your first game with AI!</a></p>';
+          return;
+        }
+
+        let html = '<div class="table-wrapper"><table><thead><tr>';
+        html += '<th>Title</th><th>Type</th><th>Status</th><th>Created</th><th>Actions</th>';
+        html += '</tr></thead><tbody>';
+
+        projects.forEach(function(p) {
+          var created = p.createdAt ? new Date(p.createdAt).toLocaleDateString() : 'N/A';
+          var title = p.summary || p.title || p.fileId || 'Untitled Game';
+          var type = p.type || 'game';
+
+          html += '<tr>';
+          html += '<td><strong>' + title + '</strong></td>';
+          html += '<td><span class="status-badge" style="background:rgba(99,102,241,0.2);color:var(--primary-glow)">' + type + '</span></td>';
+          html += '<td><span class="status-badge status-completed">Ready</span></td>';
+          html += '<td>' + created + '</td>';
+          html += '<td>';
+          html += '<a href="/game.html?game=' + (p.fileId || '') + '" target="_blank" class="action-btn" style="margin-right:4px;"><i class="fas fa-play"></i> Play</a>';
+          html += '<a href="/preview/' + (p.fileId || '') + '/" target="_blank" class="action-btn"><i class="fas fa-eye"></i> Source</a>';
+          html += '</td>';
+          html += '</tr>';
+        });
+
+        html += '</tbody></table></div>';
+        container.innerHTML = html;
+      } catch (e) {
+        document.getElementById('gameProjectsContainer').innerHTML = '<p style="color: var(--ash); text-align: center;">Could not load games</p>';
+      }
+    }
+
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const page = item.dataset.page;
+        showPage(page);
+        if (page === 'services') loadServices();
+        if (page === 'all-orders') loadAllOrders();
+        if (page === 'users') loadUsers();
+        if (page === 'inquiries') loadInquiries();
+        if (page === 'ai-projects') loadAiProjects();
+        if (page === 'games') loadGameProjects();
+      });
+    });
+
+    document.getElementById('profileForm')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      alert('Profile update coming soon!');
+    });
+
+    loadDashboard();
+  </script>
+  <script>
+  // ===== GLOBAL TOAST SYSTEM =====
+  (function(){
+    var c = document.createElement('div');
+    c.id = 'kcToastContainer';
+    c.style.cssText = 'position:fixed;top:16px;right:16px;z-index:99999;display:flex;flex-direction:column;gap:8px;max-width:380px';
+    document.body.appendChild(c);
+    var style = document.createElement('style');
+    style.textContent = '@keyframes kcToastIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}@keyframes kcToastOut{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(40px)}}';
+    document.head.appendChild(style);
+    window.showToast = function(m, type) {
+      type = type || 'info';
+      var colors = {info:'#ffffff',success:'#10b981',error:'#ef4444',warning:'#f59e0b'};
+      var icons = {info:'fa-info-circle',success:'fa-check-circle',error:'fa-exclamation-circle',warning:'fa-exclamation-triangle'};
+      var t = document.createElement('div');
+      t.style.cssText = 'padding:12px 16px;border-radius:10px;background:'+(colors[type]||'#ffffff')+';color:#fff;font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px;box-shadow:0 8px 32px rgba(0,0,0,0.4);animation:kcToastIn .3s ease;cursor:pointer';
+      t.innerHTML = '<i class="fas '+(icons[type]||'fa-info-circle')+'"></i> '+m;
+      t.onclick = function(){ t.style.animation='kcToastOut .2s ease';setTimeout(function(){t.remove()},200); };
+      c.appendChild(t);
+      setTimeout(function(){if(t.parentNode){t.style.animation='kcToastOut .2s ease';setTimeout(function(){t.remove()},200)}},4000);
+    };
+    var origAlert = window.alert;
+    window.alert = function(m) { showToast(m, 'warning'); };
+  })();
+  </script>
+<script>navigator.serviceWorker.register('/sw.js').catch(function(e){console.error('SW registration failed:',e)});</script>
+  <div id="site-footer"></div>
+    <script src="/js/loading-screen.js"></script>
+<script src="/js/site.js"></script>
+<script src="/js/install.js" defer></script>
+
+  <script src="/js/scroll-3d-animations.js"></script>  <script src="/js/k-scroll.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+</body>
+</html>

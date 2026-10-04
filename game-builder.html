@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game Builder - KEYCODE Studio</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--void:#030305;--obsidian:#0a0a0f;--graphite:#12121a;--slate:#1a1a24;--surface:#181825;--primary:#ffffff;--primary-glow:#818cf8;--secondary:#ec4899;--accent:#22d3ee;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--white:#fff;--ash:#94a3b8;--glass-border:rgba(255,255,255,0.06)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:var(--void);color:var(--white);overflow-x:hidden;-webkit-font-smoothing:antialiased;min-height:100vh}
+body::-webkit-scrollbar{width:4px}body::-webkit-scrollbar-track{background:var(--void)}body::-webkit-scrollbar-thumb{background:var(--slate);border-radius:4px}
+
+/* Header */
+.header{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:rgba(10,10,15,0.9);backdrop-filter:blur(16px);border-bottom:1px solid var(--glass-border);position:sticky;top:0;z-index:100}
+.header .logo{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;display:flex;align-items:center;gap:8px}
+.header .logo i{-webkit-text-fill-color:var(--primary);font-size:16px}
+.header .nav-links{display:flex;gap:10px}
+.header .nav-links a{padding:8px 16px;border-radius:8px;color:var(--ash);text-decoration:none;font-size:13px;font-weight:500;transition:.3s}
+.header .nav-links a:hover{color:var(--white);background:rgba(255,255,255,0.06)}
+.header .nav-links a.dashboard-link{background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff}
+
+.container{max-width:1200px;margin:0 auto;padding:32px 20px}
+.page-title{font-family:'Syne',sans-serif;font-size:28px;font-weight:700;margin-bottom:4px}
+.page-subtitle{color:var(--ash);font-size:14px;margin-bottom:32px}
+
+/* Builder Layout */
+.builder-layout{display:grid;grid-template-columns:320px 1fr;gap:24px;min-height:600px}
+@media(max-width:900px){.builder-layout{grid-template-columns:1fr}}
+
+/* Sidebar */
+.sidebar-panel{background:var(--obsidian);border:1px solid var(--glass-border);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+.sidebar-panel .panel-header{padding:16px 18px;border-bottom:1px solid var(--glass-border);font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}
+.sidebar-panel .panel-header i{color:var(--primary)}
+.sidebar-content{padding:14px;flex:1;overflow-y:auto}
+
+/* Templates */
+.template-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.template-card{padding:14px;border-radius:12px;border:2px solid var(--glass-border);background:var(--graphite);cursor:pointer;transition:.3s;text-align:center}
+.template-card:hover{border-color:rgba(99,102,241,0.3);transform:translateY(-1px)}
+.template-card.active{border-color:var(--primary);background:rgba(99,102,241,0.08)}
+.template-card .icon{font-size:28px;margin-bottom:6px}
+.template-card .name{font-size:12px;font-weight:600;color:var(--white)}
+.template-card .desc{font-size:10px;color:var(--ash);margin-top:2px}
+
+/* Customization */
+.customize-section{margin-top:16px;border-top:1px solid var(--glass-border);padding-top:16px}
+.customize-section h4{font-size:12px;color:var(--ash);margin-bottom:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.form-group{margin-bottom:12px}
+.form-group label{display:block;font-size:11px;color:var(--ash);margin-bottom:4px;font-weight:500}
+.form-group input,.form-group select{width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--glass-border);background:var(--graphite);color:var(--white);font-size:13px;font-family:inherit;outline:none;transition:.2s}
+.form-group input:focus,.form-group select:focus{border-color:var(--primary)}
+.form-group input[type="color"]{height:36px;padding:3px;cursor:pointer}
+.form-group select option{background:var(--obsidian);color:var(--white)}
+.color-row{display:flex;gap:8px}
+.color-row .form-group{flex:1}
+
+/* Main Panel */
+.main-panel{display:flex;flex-direction:column;gap:16px}
+.preview-card{background:var(--obsidian);border:1px solid var(--glass-border);border-radius:16px;overflow:hidden;flex:1}
+.preview-card .panel-header{padding:14px 18px;border-bottom:1px solid var(--glass-border);font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:space-between}
+.preview-card .panel-header .left{display:flex;align-items:center;gap:8px}
+.preview-card .panel-header .left i{color:var(--primary)}
+.preview-card .panel-header .actions{display:flex;gap:6px}
+.preview-frame{background:var(--graphite);aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.preview-frame iframe{width:100%;height:100%;border:none;background:#000}
+.preview-frame .placeholder{text-align:center;color:var(--ash)}
+.preview-frame .placeholder i{font-size:48px;color:var(--primary);opacity:.4;display:block;margin-bottom:8px}
+
+.action-bar{display:flex;gap:10px;padding:4px 0;flex-wrap:wrap}
+
+.btn{padding:10px 20px;border-radius:10px;border:none;font-size:13px;font-weight:600;cursor:pointer;transition:.3s;display:inline-flex;align-items:center;gap:7px;font-family:inherit}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(99,102,241,0.3)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-secondary{background:var(--slate);color:var(--ash);border:1px solid var(--glass-border)}
+.btn-secondary:hover{background:rgba(255,255,255,0.06);color:var(--white)}
+.btn-success{background:linear-gradient(135deg,var(--success),#059669);color:#fff}
+.btn-success:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(16,185,129,0.3)}
+.btn-sm{padding:7px 14px;font-size:12px}
+
+/* My Games */
+.my-games{margin-top:24px}
+.my-games h3{font-size:16px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.my-games h3 i{color:var(--primary)}
+.games-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.game-card{background:var(--obsidian);border:1px solid var(--glass-border);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:6px;transition:.3s}
+.game-card:hover{border-color:rgba(99,102,241,0.2)}
+.game-card .g-title{font-size:14px;font-weight:600;color:var(--white)}
+.game-card .g-meta{font-size:11px;color:var(--ash);display:flex;gap:8px}
+.game-card .g-actions{display:flex;gap:4px;margin-top:4px}
+.game-card .g-actions a,.game-card .g-actions button{padding:4px 10px;border-radius:6px;font-size:10px;border:1px solid var(--glass-border);background:var(--graphite);color:var(--ash);cursor:pointer;transition:.15s;text-decoration:none;display:inline-flex;align-items:center;gap:4px;font-family:inherit}
+.game-card .g-actions a:hover,.game-card .g-actions button:hover{background:rgba(255,255,255,0.06);color:var(--white)}
+.empty-games{text-align:center;padding:40px;color:var(--ash);font-size:13px}
+.empty-games i{font-size:36px;color:var(--primary);opacity:.4;display:block;margin-bottom:8px}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:12px 24px;border-radius:12px;font-size:13px;font-weight:500;z-index:999;display:none;max-width:90%}
+.toast.show{display:block;animation:toastIn .3s}
+.toast.success{background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);color:var(--success)}
+.toast.error{background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:var(--danger)}
+.toast.info{background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);color:var(--primary-glow)}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+</style>
+</head>
+<body><div style="position:fixed;top:0;left:0;right:0;z-index:9999;background:#0a0a0a;border-bottom:1px solid rgba(255,255,255,0.08);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;font-family:monospace;font-size:12px;color:#a3a3a3"><span>⚡ SINGLE BUILDER — This page merged into <b style="color:#fff">One AI Builder</b> (does all)</span><a href="/ai-builder.html" style="padding:6px 12px;background:#fff;color:#000;border-radius:8px;text-decoration:none;font-weight:600">Open Single Builder →</a></div><script>setTimeout(()=>location.href="/ai-builder.html",3000);</script>
+<header class="header">
+  <div class="logo"><i class="fas fa-gamepad"></i> Game Builder</div>
+  <div class="nav-links">
+    <a href="/"><i class="fas fa-home"></i> Home</a>
+    <a href="/ai-builder.html"><i class="fas fa-robot"></i> AI Builder</a>
+    <a href="/ai-builder.html?mode=cad"><i class="fas fa-camera"></i> 3D Scan</a>
+    <a href="/ai-builder.html?mode=realtime"><i class="fas fa-bolt"></i> Real-time Builder</a>
+    <a href="/dashboard.html" class="dashboard-link"><i class="fas fa-th-large"></i> Dashboard</a>
+  </div>
+</header>
+
+<div class="container">
+  <h1 class="page-title"><i class="fas fa-gamepad" style="color:var(--primary);margin-right:10px"></i> Game Builder</h1>
+  <p class="page-subtitle">Create HTML5 games in seconds. Pick a template, customize, and play — or describe your dream game to AI.</p>
+  <div class="kc-cap-strip" style="display:flex;gap:14px;flex-wrap:wrap;padding:10px 0 18px;font-family:var(--kc-mono,'JetBrains Mono',monospace);font-size:11px;color:var(--kc-text3,rgba(255,255,255,.5))">
+    <span style="color:#10b981">● AI-generated playable games</span>
+    <span>· Live-hosted instantly</span><span>· Phaser 3 engine</span><span>· Shareable URLs</span><span>· One builder does it all →</span>
+  </div>
+
+  <div class="builder-layout">
+    <!-- Sidebar -->
+    <div class="sidebar-panel">
+      <div class="panel-header"><i class="fas fa-palette"></i> Templates</div>
+      <div class="sidebar-content">
+        <div class="template-grid" id="templateGrid"></div>
+        <div class="customize-section" id="customizeSection">
+          <h4><i class="fas fa-sliders-h"></i> Customize</h4>
+          <div class="form-group">
+            <label>Game Title</label>
+            <input type="text" id="gameTitle" value="My Awesome Game" oninput="updatePreview()">
+          </div>
+          <div class="color-row">
+            <div class="form-group">
+              <label>Background</label>
+              <input type="color" id="bgColor" value="#0a0a1a" onchange="updatePreview()">
+            </div>
+            <div class="form-group">
+              <label>Primary</label>
+              <input type="color" id="primaryColor" value="#ffffff" onchange="updatePreview()">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Difficulty</label>
+            <select id="difficulty" onchange="updatePreview()">
+              <option value="easy">Easy</option>
+              <option value="normal" selected>Normal</option>
+              <option value="hard">Hard</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Player Name</label>
+            <input type="text" id="playerName" value="Player" oninput="updatePreview()">
+          </div>
+          <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-primary btn-sm" onclick="generateWithAI()" style="flex:1"><i class="fas fa-robot"></i> Generate with AI</button>
+            <button class="btn btn-secondary btn-sm" onclick="saveGame()"><i class="fas fa-save"></i> Save Game</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main -->
+    <div class="main-panel">
+      <div class="preview-card">
+        <div class="panel-header">
+          <div class="left"><i class="fas fa-eye"></i> Live Preview</div>
+          <div class="actions">
+            <button class="btn btn-sm btn-secondary" onclick="playGame()"><i class="fas fa-play"></i> Play</button>
+            <button class="btn btn-sm btn-secondary" onclick="fullscreenPreview()"><i class="fas fa-expand"></i> Fullscreen</button>
+          </div>
+        </div>
+        <div class="preview-frame" id="previewFrame">
+          <div class="placeholder" id="previewPlaceholder">
+            <i class="fas fa-gamepad"></i>
+            <p>Select a template to preview</p>
+          </div>
+          <iframe id="previewIframe" style="display:none" sandbox="allow-scripts allow-same-origin"></iframe>
+        </div>
+      </div>
+      <div class="action-bar">
+        <button class="btn btn-success" onclick="playGame()"><i class="fas fa-play"></i> Play Fullscreen</button>
+        <button class="btn btn-primary" onclick="generateWithAI()"><i class="fas fa-robot"></i> Generate New with AI</button>
+        <button class="btn btn-secondary" onclick="exportGame()"><i class="fas fa-download"></i> Export HTML</button>
+        <button class="btn btn-secondary" onclick="saveGame()"><i class="fas fa-save"></i> Save to Dashboard</button>
+      </div>
+
+      <!-- My Games -->
+      <div class="my-games">
+        <h3><i class="fas fa-list"></i> My Games</h3>
+        <div class="games-grid" id="myGamesGrid">
+          <div class="empty-games">
+            <i class="fas fa-gamepad"></i>
+            <p>No saved games yet. Create your first game above!</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var templates = [
+  { id: 'platformer', name: 'Platformer', icon: '🎮', desc: 'Jump & collect', color: '#ffffff' },
+  { id: 'shooter', name: 'Shooter', icon: '🎯', desc: 'Aim & destroy', color: '#ef4444' },
+  { id: 'runner', name: 'Runner', icon: '🏃', desc: 'Endless run', color: '#10b981' },
+  { id: 'puzzle', name: 'Puzzle', icon: '🧩', desc: 'Slide & solve', color: '#f59e0b' },
+  { id: 'clicker', name: 'Clicker', icon: '🖱️', desc: 'Tap & earn', color: '#ec4899' },
+  { id: 'snake', name: 'Snake', icon: '🐍', desc: 'Classic snake', color: '#22d3ee' },
+  { id: 'breakout', name: 'Breakout', icon: '🧱', desc: 'Brick breaker', color: '#a3a3a3' },
+  { id: 'space', name: 'Space', icon: '🚀', desc: 'Space shooter', color: '#06b6d4' }
+];
+
+var currentTemplate = null;
+var currentGameCode = null;
+var currentGameId = null;
+var savedGames = [];
+
+function init() {
+  renderTemplates();
+  loadSavedGames();
+}
+
+function renderTemplates() {
+  var grid = document.getElementById('templateGrid');
+  grid.innerHTML = templates.map(function(t) {
+    return '<div class="template-card" data-id="' + t.id + '" onclick="selectTemplate(\'' + t.id + '\')">' +
+      '<div class="icon">' + t.icon + '</div>' +
+      '<div class="name">' + t.name + '</div>' +
+      '<div class="desc">' + t.desc + '</div></div>';
+  }).join('');
+  selectTemplate('platformer');
+}
+
+function selectTemplate(id) {
+  currentTemplate = id;
+  document.querySelectorAll('.template-card').forEach(function(c) {
+    c.classList.toggle('active', c.dataset.id === id);
+  });
+  updatePreview();
+}
+
+function generateGameCode(templateId, title, bg, primary, difficulty, player) {
+  var diffs = { easy: { speed: 150, spawnRate: 3000, enemies: 2 }, normal: { speed: 250, spawnRate: 2000, enemies: 4 }, hard: { speed: 400, spawnRate: 1000, enemies: 6 } };
+  var d = diffs[difficulty] || diffs.normal;
+
+  var config = { title: title || 'My Game', bg: bg || '#0a0a1a', primary: primary || '#ffffff', player: player || 'Player', speed: d.speed, spawnRate: d.spawnRate, enemies: d.enemies };
+
+  var games = {
+    platformer: function(c) { return '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>' + c.title + '</title><script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"><\/script><style>body{margin:0;background:' + c.bg + ';display:flex;justify-content:center;align-items:center;min-height:100vh}canvas{display:block}</style></head><body><div style="position:fixed;top:0;left:0;right:0;z-index:9999;background:#0a0a0a;border-bottom:1px solid rgba(255,255,255,0.08);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;font-family:monospace;font-size:12px;color:#a3a3a3"><span>⚡ SINGLE BUILDER — This page merged into <b style="color:#fff">One AI Builder</b> (does all)</span><a href="/ai-builder.html" style="padding:6px 12px;background:#fff;color:#000;border-radius:8px;text-decoration:none;font-weight:600">Open Single Builder →</a></div><script>setTimeout(()=>location.href="/ai-builder.html",3000);</script><script>var config={type:Phaser.AUTO,width:800,height:500,backgroundColor:"' + c.bg + '",physics:{default:"arcade",arcade:{gravity:{y:300},debug:false}},scene:{preload:function(){this.load.image("star","data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'32\' height=\'32\'><polygon points=\'16,2 20,12 32,12 22,19 26,30 16,24 6,30 10,19 0,12 12,12\' fill=\'%23' + c.primary.slice(1) + '\'/></svg>");this.load.image("player","data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'32\' height=\'32\'><rect width=\'32\' height=\'32\' rx=\'6\' fill=\'%23' + c.primary.slice(1) + '\'/></svg>")},create:function(){var stars=this.physics.add.group();for(var i=0;i<12;i++){var s=stars.create(Phaser.Math.Between(50,750),Phaser.Math.Between(50,400),"star");s.setBounceY(Phaser.Math.FloatBetween(0.4,0.8))}this.player=this.physics.add.sprite(400,400,"player");this.player.setCollideWorldBounds(true);this.cursors=this.input.keyboard.createCursorKeys();this.score=0;this.scoreText=this.add.text(16,16,"Score: 0",{fontSize:"20px",fill:"' + c.primary + '"});this.physics.add.overlap(this.player,stars,function(p,s){s.destroy();this.score+=10;this.scoreText.setText("Score: "+this.score)},null,this)},update:function(){if(this.cursors.left.isDown)this.player.setVelocityX(-' + c.speed + ');else if(this.cursors.right.isDown)this.player.setVelocityX(' + c.speed + ');else this.player.setVelocityX(0);if(this.cursors.up.isDown&&this.player.body.touching.down)this.player.setVelocityY(-350)}}};var game=new Phaser.Game(config);<\/script></body></html>'; },
+
+    shooter: function(c) { return '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>' + c.title + '</title><script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"><\/script><style>body{margin:0;background:' + c.bg + ';display:flex;justify-content:center;align-items:center;min-height:100vh}canvas{display:block}</style></head><body><div style="position:fixed;top:0;left:0;right:0;z-index:9999;background:#0a0a0a;border-bottom:1px solid rgba(255,255,255,0.08);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;font-family:monospace;font-size:12px;color:#a3a3a3"><span>⚡ SINGLE BUILDER — This page merged into <b style="color:#fff">One AI Builder</b> (does all)</span><a href="/ai-builder.html" style="padding:6px 12px;background:#fff;color:#000;border-radius:8px;text-decoration:none;font-weight:600">Open Single Builder →</a></div><script>setTimeout(()=>location.href="/ai-builder.html",3000);</script><script>var config={type:Phaser.AUTO,width:800,height:500,backgroundColor:"' + c.bg + '",physics:{default:"arcade",arcade:{debug:false}},scene:{preload:function(){this.load.image("bullet","data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'8\' height=\'16\'><rect width=\'8\' height=\'16\' rx=\'4\' fill=\'%23' + c.primary.slice(1) + '\'/></svg>");this.load.image("enemy","data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'30\' height=\'30\'><circle cx=\'15\' cy=\'15\' r=\'12\' fill=\'%23ef4444\'/><circle cx=\'15\' cy=\'15\' r=\'6\' fill=\'%23dc2626\'/></svg>")},create:function(){this.player=this.add.rectangle(400,460,40,20,"' + c.primary + '");this.player.setData("ref",this.player);this.bullets=this.physics.add.group();this.enemies=this.physics.add.group();this.score=0;this.scoreText=this.add.text(16,16,"Score: 0",{fontSize:"20px",fill:"' + c.primary + '"});this.input.on("pointermove",function(p){this.player.x=Phaser.Math.Clamp(p.x,20,780)},this);this.input.on("pointerdown",function(){var b=this.bullets.create(this.player.x,this.player.y-10,"bullet");b.setVelocityY(-' + c.speed + ')},this);this.input.keyboard.on("keydown-SPACE",function(){var b=this.bullets.create(this.player.x,this.player.y-10,"bullet");b.setVelocityY(-' + c.speed + ')},this);this.time.addEvent({delay:c.spawnRate,callback:function(){var e=this.enemies.create(Phaser.Math.Between(30,770),-30,"enemy");e.setVelocityY(100+Math.random()*50);e.setData("hp",1)},callbackScope:this,loop:true});this.physics.add.overlap(this.bullets,this.enemies,function(b,e){b.destroy();e.destroy();this.score+=10;this.scoreText.setText("Score: "+this.score)},null,this)},update:function(){this.enemies.children.each(function(e){if(e.y>520){e.destroy();this.score=Math.max(0,this.score-5);this.scoreText.setText("Score: "+this.score)}},this)}}};var game=new Phaser.Game(config);<\/script></body></html>'; },
+
+    runner: function(c) { return '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>' + c.title + '</title><script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"><\/script><style>body{margin:0;background:' + c.bg + ';display:flex;justify-content:center;align-items:center;min-height:100vh}canvas{display:block}</style></head><body><div style="position:fixed;top:0;left:0;right:0;z-index:9999;background:#0a0a0a;border-bottom:1px solid rgba(255,255,255,0.08);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;font-family:monospace;font-size:12px;color:#a3a3a3"><span>⚡ SINGLE BUILDER — This page merged into <b style="color:#fff">One AI Builder</b> (does all)</span><a href="/ai-builder.html" style="padding:6px 12px;background:#fff;color:#000;border-radius:8px;text-decoration:none;font-weight:600">Open Single Builder →</a></div><script>setTimeout(()=>location.href="/ai-builder.html",3000);</script><script>var config={type:Phaser.AUTO,width:800,height:500,backgroundColor:"' + c.bg + '",physics:{default:"arcade",arcade:{gravity:{y:400},debug:false}},scene:{preload:function(){this.load.image("ground","data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'64\' height=\'32\'><rect width=\'64\' height=\'32\' fill=\'%23' + c.primary.slice(1) + '\' opacity=\'0.5\'/></svg>");this.load.image("obstacle","data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'20\' height=\'40\'><rect width=\'20\' height=\'40\' rx=\'4\' fill=\'%23ef4444\'/></svg>")},create:function(){this.ground=this.physics.add.staticGroup();this.ground.create(400,480,"ground").setScale(25,1).refreshBody();this.player=this.add.rectangle(150,430,20,30,"' + c.primary + '");this.physics.add.existing(this.player);this.player.body.setCollideWorldBounds(true);this.obstacles=this.physics.add.group();this.score=0;this.scoreText=this.add.text(16,16,"Score: 0",{fontSize:"20px",fill:"' + c.primary + '"});this.gameOver=false;this.speed=200;this.input.on("pointerdown",function(){if(this.gameOver){this.scene.restart();return}if(this.player.body.touching.down)this.player.setVelocityY(-350)},this);this.input.keyboard.on("keydown-SPACE",function(){if(this.gameOver){this.scene.restart();return}if(this.player.body.touching.down)this.player.setVelocityY(-350)},this);this.time.addEvent({delay:1500,callback:function(){if(this.gameOver)return;var o=this.obstacles.create(850,440,"obstacle");o.setVelocityX(-this.speed);this.speed=Math.min(this.speed+5,400)},callbackScope:this,loop:true});this.physics.add.collider(this.player,this.ground);this.physics.add.overlap(this.player,this.obstacles,function(){this.gameOver=true;this.physics.pause();this.add.text(400,200,"GAME OVER",{fontSize:"48px",fill:"#ef4444",fontFamily:"Arial"}).setOrigin(0.5);this.add.text(400,260,"Tap or press SPACE to restart",{fontSize:"16px",fill:"#aaa",fontFamily:"Arial"}).setOrigin(0.5)},null,this)},update:function(){if(!this.gameOver){this.score+=0.1;this.scoreText.setText("Score: "+Math.floor(this.score))}}}};var game=new Phaser.Game(config);<\/script></body></html>'; },
+
+    puzzle: function(c) { return '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>' + c.title + '</title><script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"><\/script><style>body{margin:0;background:' + c.bg + ';display:flex;justify-content:center;align-items:center;min-height:100vh}canvas{display:block}</style></head><body><div style="position:fixed;top:0;left:0;right:0;z-index:9999;background:#0a0a0a;border-bottom:1px solid rgba(255,255,255,0.08);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;font-family:monospace;font-size:12px;color:#a3a3a3"><span>⚡ SINGLE BUILDER — This page merged into <b style="color:#fff">One AI Builder</b> (does all)</span><a href="/ai-builder.html" style="padding:6px 12px;background:#fff;color:#000;border-radius:8px;text-decoration:none;font-weight:600">Open Single Builder →</a></div><script>setTimeout(()=>location.href="/ai-builder.html",3000);</script><script>var SIZE=4,TILE=100,GAP=4,S=Phaser.Math.Between;var config={type:Phaser.AUTO,width:SIZE*TILE+GAP,height:SIZE*TILE+GAP+40,backgroundColor:"' + c.bg + '",scene:{create:function(){this.tiles=[];var nums=[];for(var i=0;i<SIZE*SIZE;i++)nums.push(i);do{for(var i=nums.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=nums[i];nums[i]=nums[j];nums[j]=t}}while(nums[SIZE*SIZE-1]!==0);this.moves=0;var txt=this.add.text(8,8,"Moves: 0",{fontSize:"18px",fill:"' + c.primary + '"});for(var r=0;r<SIZE;r++){for(var c=0;c<SIZE;c++){var idx=r*SIZE+c;var val=nums[idx];if(val===0){this.emptyRow=r;this.emptyCol=c;continue}var tile=this.add.rectangle(c*TILE+GAP,r*TILE+GAP+40,TILE-GAP,TILE-GAP,"' + c.primary + '").setInteractive();var label=this.add.text(c*TILE+TILE/2,r*TILE+TILE/2+40,(val+1).toString(),{fontSize:"28px",fill:"#fff",fontFamily:"Arial"}).setOrigin(0.5);tile.val=val;tile.label=label;tile.row=r;tile.col=c;tile.on("pointerdown",function(){var t=this;if(Math.abs(t.row-scene.emptyRow)+Math.abs(t.col-scene.emptyCol)===1){scene.moves++;txt.setText("Moves: "+scene.moves);var tempR=t.row,tempC=t.col;t.row=scene.emptyRow;t.col=scene.emptyCol;scene.emptyRow=tempR;scene.emptyCol=tempC;t.x=scene.emptyCol*TILE+GAP;t.y=scene.emptyRow*TILE+GAP+40;t.label.x=t.x+TILE/2;t.label.y=t.y+TILE/2;scene.checkWin()}});this.tiles.push(tile)}}this.checkWin=function(){var won=true;for(var i=0;i<this.tiles.length;i++){var t=this.tiles[i];if(t.row*SIZE+t.col!==t.val){won=false;break}}if(won)this.add.text(400,250,"YOU WIN!",{fontSize:"48px",fill:"#10b981",fontFamily:"Arial"}).setOrigin(0.5)}}}};var scene=null;config.scene.create.call({add:Phaser.GameObjects.GameObjectFactory.prototype,text:Phaser.GameObjects.Text.prototype.constructor});<\/script></body></html>'; },
+
+    clicker: function(c) { return '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>' + c.title + '</title><script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"><\/script><style>body{margin:0;background:' + c.bg + ';display:flex;justify-content:center;align-items:center;min-height:100vh}canvas{display:block}</style></head><body><div style="position:fixed;top:0;left:0;right:0;z-index:9999;background:#0a0a0a;border-bottom:1px solid rgba(255,255,255,0.08);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;font-family:monospace;font-size:12px;color:#a3a3a3"><span>⚡ SINGLE BUILDER — This page merged into <b style="color:#fff">One AI Builder</b> (does all)</span><a href="/ai-builder.html" style="padding:6px 12px;background:#fff;color:#000;border-radius:8px;text-decoration:none;font-weight:600">Open Single Builder →</a></div><script>setTimeout(()=>location.href="/ai-builder.html",3000);</script><script>var config={type:Phaser.AUTO,width:400,height:500,backgroundColor:"' + c.bg + '",scene:{create:function(){this.score=0;this.multiplier=1;this.autoClicker=0;this.add.text(200,40,"' + c.title + '",{fontSize:"28px",fill:"' + c.primary + '",fontFamily:"Arial"}).setOrigin(0.5);this.scoreText=this.add.text(200,90,"Score: 0",{fontSize:"24px",fill:"#fff",fontFamily:"Arial"}).setOrigin(0.5);this.perSecText=this.add.text(200,120,"per sec: 0",{fontSize:"14px",fill:"#888",fontFamily:"Arial"}).setOrigin(0.5);var btn=this.add.circle(200,240,60,"' + c.primary + '").setInteractive();btn.on("pointerdown",function(){this.score+=this.multiplier;this.updateUI()},this);this.add.text(200,240,"CLICK",{fontSize:"24px",fill:"#fff",fontFamily:"Arial"}).setOrigin(0.5);var upg1=this.add.rectangle(200,340,200,50,"#1a1a2e").setInteractive();upg1.setStrokeStyle(1,0x6366f1);this.add.text(200,340,"Upgrade: x2 (cost: 50)",{fontSize:"12px",fill:"#aaa",fontFamily:"Arial"}).setOrigin(0.5);upg1.on("pointerdown",function(){if(this.score>=50){this.score-=50;this.multiplier*=2;this.updateUI()}},this);var upg2=this.add.rectangle(200,400,200,50,"#1a1a2e").setInteractive();upg2.setStrokeStyle(1,0x6366f1);this.add.text(200,400,"Auto Clicker (cost: 100)",{fontSize:"12px",fill:"#aaa",fontFamily:"Arial"}).setOrigin(0.5);upg2.on("pointerdown",function(){if(this.score>=100){this.score-=100;this.autoClicker++;this.updateUI();this.time.addEvent({delay:1000,callback:function(){this.score+=this.autoClicker;this.updateUI()},callbackScope:this,loop:true})}},this);this.updateUI=function(){this.scoreText.setText("Score: "+Math.floor(this.score));this.perSecText.setText("per sec: "+this.autoClicker)}}},scene:{create:function(){}}};config.scene=config.scene||{};config.scene.create=config.scene.create||function(){};var game=new Phaser.Game(config);<\/script></body></html>'; },
+
+    snake: function(c) { return '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>' + c.title + '</title><style>body{margin:0;background:' + c.bg + ';display:flex;justify-content:center;align-items:center;min-height:100vh;font-family:Arial,sans-serif}.game-wrap{text-align:center}canvas{background:#111;border:2px solid ' + c.primary + ';border-radius:8px}.score{color:' + c.primary + ';font-size:20px;margin:10px 0;font-weight:bold}.controls{color:#666;font-size:13px;margin-top:8px}.controls kbd{background:#1a1a2e;padding:4px 8px;border-radius:4px;color:' + c.primary + ';border:1px solid #333}</style></head><body><div style="position:fixed;top:0;left:0;right:0;z-index:9999;background:#0a0a0a;border-bottom:1px solid rgba(255,255,255,0.08);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;font-family:monospace;font-size:12px;color:#a3a3a3"><span>⚡ SINGLE BUILDER — This page merged into <b style="color:#fff">One AI Builder</b> (does all)</span><a href="/ai-builder.html" style="padding:6px 12px;background:#fff;color:#000;border-radius:8px;text-decoration:none;font-weight:600">Open Single Builder →</a></div><script>setTimeout(()=>location.href="/ai-builder.html",3000);</script><div class="game-wrap"><div class="score" id="score">Score: 0</div><canvas id="game" width="400" height="400"></canvas><div class="controls"><kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> or swipe · <kbd>R</kbd> restart</div></div><script>(function(){var c=document.getElementById("game"),ctx=c.getContext("2d"),grid=20,count=20;var snake=[{x:10,y:10}],dir={x:0,y:0},food={x:15,y:15},score=0,nextDir={x:0,y:0},dead=false;document.addEventListener("keydown",function(e){if(dead&&e.key==="r")return restart();var k=e.key;if(k==="ArrowUp")nextDir={x:0,y:-1};else if(k==="ArrowDown")nextDir={x:0,y:1};else if(k==="ArrowLeft")nextDir={x:-1,y:0};else if(k==="ArrowRight")nextDir={x:1,y:0};e.preventDefault()});function restart(){snake=[{x:10,y:10}];dir={x:0,y:0};nextDir={x:0,y:0};food={x:15,y:15};score=0;dead=false;document.getElementById("score").textContent="Score: 0"}function gameLoop(){if(!dead){var nd=nextDir;if(!(nd.x===0&&nd.y===0)&&!(nd.x===-dir.x&&nd.y===-dir.y))dir=nd;var head={x:snake[0].x+dir.x,y:snake[0].y+dir.y};if(head.x<0||head.x>=count||head.y<0||head.y>=count||snake.some(function(s){return s.x===head.x&&s.y===head.y})){dead=true;ctx.fillStyle="#ef4444";ctx.font="30px Arial";ctx.textAlign="center";ctx.fillText("GAME OVER",200,200);ctx.font="14px Arial";ctx.fillStyle="#888";ctx.fillText("Press R to restart",200,240);return}snake.unshift(head);if(head.x===food.x&&head.y===food.y){score++;document.getElementById("score").textContent="Score: "+score;food={x:Math.floor(Math.random()*count),y:Math.floor(Math.random()*count)}}else snake.pop()}ctx.fillStyle="#111";ctx.fillRect(0,0,400,400);ctx.fillStyle="' + c.primary + '";snake.forEach(function(s,i){ctx.fillRect(s.x*grid,s.y*grid,grid-1,grid-1)});ctx.fillStyle="#ef4444";ctx.fillRect(food.x*grid,food.y*grid,grid-1,grid-1);ctx.strokeStyle="rgba(99,102,241,0.1)";for(var i=0;i<=count;i++){ctx.beginPath();ctx.moveTo(i*grid,0);ctx.lineTo(i*grid,400);ctx.stroke();ctx.beginPath();ctx.moveTo(0,i*grid);ctx.lineTo(400,i*grid);ctx.stroke()}}setInterval(gameLoop,100)})();<\/script></body></html>'; },
+
+    breakout: function(c) { return '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>' + c.title + '</title><script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"><\/script><style>body{margin:0;background:' + c.bg + ';display:flex;justify-content:center;align-items:center;min-height:100vh}canvas{display:block}</style></head><body><div style="position:fixed;top:0;left:0;right:0;z-index:9999;background:#0a0a0a;border-bottom:1px solid rgba(255,255,255,0.08);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;font-family:monospace;font-size:12px;color:#a3a3a3"><span>⚡ SINGLE BUILDER — This page merged into <b style="color:#fff">One AI Builder</b> (does all)</span><a href="/ai-builder.html" style="padding:6px 12px;background:#fff;color:#000;border-radius:8px;text-decoration:none;font-weight:600">Open Single Builder →</a></div><script>setTimeout(()=>location.href="/ai-builder.html",3000);</script><script>var config={type:Phaser.AUTO,width:600,height:500,backgroundColor:"' + c.bg + '",physics:{default:"arcade",arcade:{debug:false}},scene:{create:function(){var bricks=this.physics.add.staticGroup();for(var r=0;r<5;r++){for(var c=0;c<8;c++){var b=bricks.create(40+c*70,30+r*30,"brick");b.setTint(Phaser.Display.Color.HSLToColor(r/5,0.8,0.5).color)}}this.paddle=this.add.rectangle(300,460,100,12,"' + c.primary + '");this.physics.add.existing(this.paddle,true);this.ball=this.add.circle(300,420,8,"#fff");this.physics.add.existing(this.ball);this.ball.body.setVelocity(150,200);this.ball.body.setBounce(1,1);this.ball.body.setCollideWorldBounds(true);this.physics.add.collider(this.ball,this.paddle,function(b,p){var diff=b.x-p.body.x;b.body.setVelocity(200*Math.sign(diff||1),-250)},null,this);this.physics.add.collider(this.ball,bricks,function(b,br){br.destroy();b.body.velocity.y=-b.body.velocity.y;if(bricks.countActive()===0){scene.add.text(300,200,"YOU WIN!",{fontSize:"48px",fill:"#10b981",fontFamily:"Arial"}).setOrigin(0.5)}},null,this);this.input.on("pointermove",function(p){this.paddle.x=Phaser.Math.Clamp(p.x,50,550)},this);this.ball.body.onWorldBounds=true;this.physics.world.on("worldbounds",function(){if(this.ball.y>480){this.scene.restart()}},this)}}};var game=new Phaser.Game(config);<\/script></body></html>'; },
+
+    space: function(c) { return '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>' + c.title + '</title><script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"><\/script><style>body{margin:0;background:' + c.bg + ';display:flex;justify-content:center;align-items:center;min-height:100vh}canvas{display:block}</style></head><body><div style="position:fixed;top:0;left:0;right:0;z-index:9999;background:#0a0a0a;border-bottom:1px solid rgba(255,255,255,0.08);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;font-family:monospace;font-size:12px;color:#a3a3a3"><span>⚡ SINGLE BUILDER — This page merged into <b style="color:#fff">One AI Builder</b> (does all)</span><a href="/ai-builder.html" style="padding:6px 12px;background:#fff;color:#000;border-radius:8px;text-decoration:none;font-weight:600">Open Single Builder →</a></div><script>setTimeout(()=>location.href="/ai-builder.html",3000);</script><script>var config={type:Phaser.AUTO,width:600,height:600,backgroundColor:"' + c.bg + '",physics:{default:"arcade",arcade:{debug:false}},scene:{preload:function(){this.load.image("star","data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'4\' height=\'4\'><circle cx=\'2\' cy=\'2\' r=\'2\' fill=\'%23fff\'/></svg>")},create:function(){this.player=this.add.triangle(300,500,0,20,20,20,10,0,"' + c.primary + '");this.physics.add.existing(this.player);this.player.body.setCollideWorldBounds(true);this.bullets=this.physics.add.group();this.enemies=this.physics.add.group();this.score=0;this.scoreText=this.add.text(16,16,"Score: 0",{fontSize:"20px",fill:"' + c.primary + '"});this.lives=3;this.livesText=this.add.text(16,44,"Lives: 3",{fontSize:"14px",fill:"#aaa"});this.cursors=this.input.keyboard.createCursorKeys();this.input.keyboard.on("keydown-SPACE",function(){if(this.player.active){var b=this.bullets.create(this.player.x,this.player.y-15,"star");b.setScale(2);b.body.setVelocity(0,-' + c.speed + ')}},this);this.input.on("pointermove",function(p){this.player.x=Phaser.Math.Clamp(p.x,30,570)},this);this.input.on("pointerdown",function(){if(this.player.active){var b=this.bullets.create(this.player.x,this.player.y-15,"star");b.setScale(2);b.body.setVelocity(0,-' + c.speed + ')}},this);this.time.addEvent({delay:c.spawnRate,callback:function(){var e=this.enemies.create(Phaser.Math.Between(30,570),-30,"star");e.setTint(0xef4444);e.setScale(3);var speed=80+Math.random()*60;e.body.setVelocity(0,speed);e.body.setCollideWorldBounds(true);e.body.onWorldBounds=true;this.physics.world.on("worldbounds",function(body){if(body.gameObject===e&&e.y>580){e.destroy();this.lives--;this.livesText.setText("Lives: "+this.lives);if(this.lives<=0){this.physics.pause();this.player.setVisible(false);this.add.text(300,250,"GAME OVER",{fontSize:"48px",fill:"#ef4444",fontFamily:"Arial"}).setOrigin(0.5);this.add.text(300,310,"Score: "+Math.floor(this.score),{fontSize:"24px",fill:"#aaa",fontFamily:"Arial"}).setOrigin(0.5)}}},this)},callbackScope:this,loop:true});this.physics.add.overlap(this.bullets,this.enemies,function(b,e){b.destroy();e.destroy();this.score+=10;this.scoreText.setText("Score: "+this.score)},null,this);this.physics.add.overlap(this.player,this.enemies,function(p,e){e.destroy();this.lives--;this.livesText.setText("Lives: "+this.lives);if(this.lives<=0){this.physics.pause();this.player.setVisible(false);this.add.text(300,250,"GAME OVER",{fontSize:"48px",fill:"#ef4444",fontFamily:"Arial"}).setOrigin(0.5);this.add.text(300,310,"Score: "+Math.floor(this.score),{fontSize:"24px",fill:"#aaa",fontFamily:"Arial"}).setOrigin(0.5)}},null,this)},update:function(){if(this.cursors.left.isDown)this.player.x-=5;if(this.cursors.right.isDown)this.player.x+=5}}};var game=new Phaser.Game(config);<\/script></body></html>'; }
+  };
+
+  var gen = games[templateId];
+  return gen ? gen(config) : '<html><body><div style="position:fixed;top:0;left:0;right:0;z-index:9999;background:#0a0a0a;border-bottom:1px solid rgba(255,255,255,0.08);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;font-family:monospace;font-size:12px;color:#a3a3a3"><span>⚡ SINGLE BUILDER — This page merged into <b style="color:#fff">One AI Builder</b> (does all)</span><a href="/ai-builder.html" style="padding:6px 12px;background:#fff;color:#000;border-radius:8px;text-decoration:none;font-weight:600">Open Single Builder →</a></div><script>setTimeout(()=>location.href="/ai-builder.html",3000);</script><h1>Template not found</h1></body></html>';
+}
+
+function updatePreview() {
+  if (!currentTemplate) return;
+  var title = document.getElementById('gameTitle').value || 'My Game';
+  var bg = document.getElementById('bgColor').value;
+  var primary = document.getElementById('primaryColor').value;
+  var diff = document.getElementById('difficulty').value;
+  var player = document.getElementById('playerName').value || 'Player';
+
+  currentGameCode = generateGameCode(currentTemplate, title, bg, primary, diff, player);
+
+  var iframe = document.getElementById('previewIframe');
+  var placeholder = document.getElementById('previewPlaceholder');
+  iframe.style.display = 'block';
+  placeholder.style.display = 'none';
+  iframe.srcdoc = currentGameCode;
+}
+
+function playGame() {
+  if (!currentGameCode) return;
+  var w = window.open('', '_blank');
+  w.document.write(currentGameCode);
+  w.document.close();
+}
+
+function fullscreenPreview() {
+  var iframe = document.getElementById('previewIframe');
+  if (iframe.requestFullscreen) iframe.requestFullscreen();
+  else if (iframe.webkitRequestFullscreen) iframe.webkitRequestFullscreen();
+}
+
+async function generateWithAI() {
+  var btn = event && event.target;
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...'; }
+
+  var title = document.getElementById('gameTitle').value || 'My Game';
+  var desc = prompt('Describe the game you want (e.g., "A platformer where you collect gems and avoid spikes"):');
+  if (!desc) { if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-robot"></i> Generate with AI'; } return; }
+
+  try {
+    var res = await fetch('/api/ai/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('keycode_token') || localStorage.getItem('token') || '') },
+      body: JSON.stringify({ description: desc + ' Title: ' + title })
+    });
+    var data = await res.json();
+
+    if (data.success && (data.code || data.html)) {
+      currentGameCode = data.code || data.html;
+      var iframe = document.getElementById('previewIframe');
+      iframe.style.display = 'block';
+      document.getElementById('previewPlaceholder').style.display = 'none';
+      iframe.srcdoc = currentGameCode;
+      showToast('AI game generated!', 'success');
+    } else {
+      showToast('AI generation failed. Using template instead.', 'info');
+      updatePreview();
+    }
+  } catch (e) {
+    showToast('Error: ' + e.message, 'error');
+    updatePreview();
+  }
+
+  if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-robot"></i> Generate with AI'; }
+}
+
+function exportGame() {
+  if (!currentGameCode) return;
+  var blob = new Blob([currentGameCode], { type: 'text/html' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = (document.getElementById('gameTitle').value || 'game').replace(/\s+/g, '-').toLowerCase() + '.html';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function saveGame() {
+  var token = localStorage.getItem('keycode_token') || localStorage.getItem('token');
+  if (!token) { window.location.href = 'login.html?redirect=/ai-builder.html?mode=game'; return; }
+  if (!currentGameCode) { showToast('Create a game first!', 'error'); return; }
+
+  var title = document.getElementById('gameTitle').value || 'My Game';
+  try {
+    var res = await fetch('/api/ai/game-save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ title: title, type: currentTemplate, code: currentGameCode })
+    });
+    var data = await res.json();
+    if (data.success) {
+      showToast('Game saved!', 'success');
+      loadSavedGames();
+    } else {
+      showToast('Error saving: ' + (data.error || 'Unknown'), 'error');
+    }
+  } catch (e) {
+    showToast('Error: ' + e.message, 'error');
+  }
+}
+
+async function loadSavedGames() {
+  var token = localStorage.getItem('keycode_token') || localStorage.getItem('token');
+  if (!token) return;
+
+  try {
+    var res = await fetch('/api/ai/game-list', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    var data = await res.json();
+    if (data.success && data.games) {
+      savedGames = data.games;
+      renderSavedGames();
+    }
+  } catch (e) { /* silently fail */ }
+}
+
+function renderSavedGames() {
+  var grid = document.getElementById('myGamesGrid');
+  if (!savedGames || savedGames.length === 0) {
+    grid.innerHTML = '<div class="empty-games"><i class="fas fa-gamepad"></i><p>No saved games yet. Create your first game above!</p></div>';
+    return;
+  }
+  grid.innerHTML = savedGames.map(function(g) {
+    return '<div class="game-card"><div class="g-title">' + escapeHtml(g.title || 'Untitled') + '</div>' +
+      '<div class="g-meta"><span>' + (g.type || 'custom') + '</span><span>' + new Date(g.createdAt || Date.now()).toLocaleDateString() + '</span></div>' +
+      '<div class="g-actions">' +
+      '<a href="/game.html?game=' + g.fileId + '" target="_blank"><i class="fas fa-play"></i> Play</a>' +
+      '<button onclick="deleteGame(\'' + g.fileId + '\')"><i class="fas fa-trash"></i></button>' +
+      '</div></div>';
+  }).join('');
+}
+
+async function deleteGame(fileId) {
+  var token = localStorage.getItem('keycode_token') || localStorage.getItem('token');
+  if (!token) return;
+  if (!confirm('Delete this game?')) return;
+  try {
+    await fetch('/api/ai/game-delete/' + fileId, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
+    showToast('Game deleted', 'info');
+    loadSavedGames();
+  } catch (e) { showToast('Error deleting', 'error'); }
+}
+
+function escapeHtml(s) {
+  var d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function showToast(msg, type) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + (type || 'info');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(function() { t.classList.remove('show'); }, 4000);
+}
+
+init();
+</script>
+</body>
+</html>

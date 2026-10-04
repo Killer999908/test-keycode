@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <title>Notifications - KEYCODE Studio</title>
+  <meta property="og:title" content="Notifications - KEYCODE Studio">
+  <meta property="og:description" content="View your notification history and real-time alerts">
+  <meta property="og:image" content="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjAwIiBoZWlnaHQ9IjYzMCIgdmlld0JveD0iMCAwIDEyMDAgNjMwIj4KICA8cmVjdCB3aWR0aD0iMTIwMCIgaGVpZ2h0PSI2MzAiIGZpbGw9IiMwYTBhMWEiLz4KICA8cmVjdCB4PSIwIiB5PSIwIiB3aWR0aD0iMTIwMCIgaGVpZ2h0PSI2MzAiIGZpbGw9InVybCgjZykiIG9wYWNpdHk9IjAuMTUiLz4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iZyIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiM2MzY2ZjEiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSI1MCUiIHN0b3AtY29sb3I9IiMyMmQzZWUiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjNjM2NmYxIi8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8dGV4dCB4PSI2MDAiIHk9IjI3MCIgZm9udC1mYW1pbHk9IkludGVyLCBzeXN0ZW0tdWksIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iOTYiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiNmZmZmZmYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGxldHRlci1zcGFjaW5nPSItMiI+S0VZQ09ERTwvdGV4dD4KICA8dGV4dCB4PSI2MDAiIHk9IjM0MCIgZm9udC1mYW1pbHk9IkludGVyLCBzeXN0ZW0tdWksIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjgiIGZpbGw9IiMyMmQzZWUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGxldHRlci1zcGFjaW5nPSI0IiBmb250LXdlaWdodD0iMzAwIj5BSS1QT1dFUkVEIFNUVURJTzwvdGV4dD4KICA8cmVjdCB4PSI1NDAiIHk9IjM3MCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSIzIiByeD0iMS41IiBmaWxsPSJ1cmwoI2cpIi8+CiAgPHRleHQgeD0iNjAwIiB5PSI0MTAiIGZvbnQtZmFtaWx5PSJJbnRlciwgc3lzdGVtLXVpLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE4IiBmaWxsPSIjOTRhM2I4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5CdWlsZCB0aGUgZnV0dXJlLCBvbmUgcHJvamVjdCBhdCBhIHRpbWUuPC90ZXh0Pgo8L3N2Zz4K">
+  <meta property="og:url" content="https://keycode-studio-production.up.railway.app/notifications">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Notifications - KEYCODE Studio">
+  <meta name="twitter:description" content="View your notification history and real-time alerts">
+  <meta name="twitter:image" content="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjAwIiBoZWlnaHQ9IjYzMCIgdmlld0JveD0iMCAwIDEyMDAgNjMwIj4KICA8cmVjdCB3aWR0aD0iMTIwMCIgaGVpZ2h0PSI2MzAiIGZpbGw9IiMwYTBhMWEiLz4KICA8cmVjdCB4PSIwIiB5PSIwIiB3aWR0aD0iMTIwMCIgaGVpZ2h0PSI2MzAiIGZpbGw9InVybCgjZykiIG9wYWNpdHk9IjAuMTUiLz4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iZyIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiM2MzY2ZjEiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSI1MCUiIHN0b3AtY29sb3I9IiMyMmQzZWUiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjNjM2NmYxIi8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8dGV4dCB4PSI2MDAiIHk9IjI3MCIgZm9udC1mYW1pbHk9IkludGVyLCBzeXN0ZW0tdWksIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iOTYiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiNmZmZmZmYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGxldHRlci1zcGFjaW5nPSItMiI+S0VZQ09ERTwvdGV4dD4KICA8dGV4dCB4PSI2MDAiIHk9IjM0MCIgZm9udC1mYW1pbHk9IkludGVyLCBzeXN0ZW0tdWksIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjgiIGZpbGw9IiMyMmQzZWUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGxldHRlci1zcGFjaW5nPSI0IiBmb250LXdlaWdodD0iMzAwIj5BSS1QT1dFUkVEIFNUVURJTzwvdGV4dD4KICA8cmVjdCB4PSI1NDAiIHk9IjM3MCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSIzIiByeD0iMS41IiBmaWxsPSJ1cmwoI2cpIi8+CiAgPHRleHQgeD0iNjAwIiB5PSI0MTAiIGZvbnQtZmFtaWx5PSJJbnRlciwgc3lzdGVtLXVpLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE4IiBmaWxsPSIjOTRhM2I4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5CdWlsZCB0aGUgZnV0dXJlLCBvbmUgcHJvamVjdCBhdCBhIHRpbWUuPC90ZXh0Pgo8L3N2Zz4K">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Syne:wght@400;500;600;700;800&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Syne:wght@400;500;600;700;800&display=swap"></noscript>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous">
+  <style>
+    body { background: var(--obsidian); min-height: 100vh; }
+    .notif-page { max-width: 800px; margin: 0 auto; padding: 100px 20px 60px; }
+    .notif-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; flex-wrap: wrap; gap: 16px; }
+    .notif-header h1 { font-family: var(--font-display); font-size: 1.8rem; margin: 0; }
+    .notif-header h1 i { color: var(--primary); margin-right: 10px; }
+    .notif-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .notif-actions select, .notif-actions button { padding: 10px 18px; background: var(--slate); border: 1px solid var(--glass-border); border-radius: 10px; color: var(--white); font-size: 13px; cursor: pointer; transition: all 0.2s; }
+    .notif-actions select:hover, .notif-actions button:hover { border-color: var(--primary); background: var(--graphite); }
+    .notif-actions .btn-danger { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3); color: var(--danger); }
+    .notif-actions .btn-danger:hover { background: rgba(239,68,68,0.2); }
+    .notif-list { display: flex; flex-direction: column; gap: 2px; }
+    .notif-card { display: flex; gap: 16px; padding: 18px 20px; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 12px; transition: all 0.2s; cursor: pointer; align-items: flex-start; }
+    .notif-card:hover { background: var(--glass-hover); border-color: rgba(99,102,241,0.2); }
+    .notif-card.unread { border-left: 3px solid var(--primary); background: rgba(99,102,241,0.04); }
+    .notif-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+    .notif-body { flex: 1; min-width: 0; }
+    .notif-title { font-size: 14px; font-weight: 600; color: var(--white); margin-bottom: 4px; }
+    .notif-message { font-size: 13px; color: var(--ash); line-height: 1.5; margin-bottom: 8px; }
+    .notif-meta { display: flex; align-items: center; gap: 12px; font-size: 11px; color: var(--ash); opacity: 0.7; }
+    .notif-type-badge { padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; text-transform: uppercase; }
+    .notif-empty { text-align: center; padding: 80px 20px; color: var(--ash); }
+    .notif-empty i { font-size: 48px; opacity: 0.2; margin-bottom: 16px; }
+    .notif-empty h3 { font-size: 1.2rem; margin-bottom: 8px; color: var(--pearl); }
+    .notif-loading { text-align: center; padding: 40px; color: var(--ash); }
+    .notif-loading i { font-size: 24px; }
+    .notif-type-icon { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+    .back-link { display: inline-flex; align-items: center; gap: 6px; color: var(--primary); text-decoration: none; font-size: 13px; margin-bottom: 20px; }
+    .back-link:hover { text-decoration: underline; }
+
+    /* Type-specific icon colors */
+    .notif-icon.order_update { background: rgba(99,102,241,0.15); color: var(--primary); }
+    .notif-icon.project_generated { background: rgba(34,211,238,0.15); color: var(--accent); }
+    .notif-icon.deploy_complete { background: rgba(16,185,129,0.15); color: var(--success); }
+    .notif-icon.payment_received { background: rgba(245,158,11,0.15); color: #f59e0b; }
+    .notif-icon.system_alert { background: rgba(239,68,68,0.15); color: var(--danger); }
+    .notif-icon.admin_alert { background: rgba(236,72,153,0.15); color: var(--secondary); }
+
+    .notif-type-badge.order_update { background: rgba(99,102,241,0.15); color: var(--primary); }
+    .notif-type-badge.project_generated { background: rgba(34,211,238,0.15); color: var(--accent); }
+    .notif-type-badge.deploy_complete { background: rgba(16,185,129,0.15); color: var(--success); }
+    .notif-type-badge.payment_received { background: rgba(245,158,11,0.15); color: #f59e0b; }
+    .notif-type-badge.system_alert { background: rgba(239,68,68,0.15); color: var(--danger); }
+    .notif-type-badge.admin_alert { background: rgba(236,72,153,0.15); color: var(--secondary); }
+
+    @media (max-width: 600px) {
+      .notif-page { padding: 80px 12px 40px; }
+      .notif-header { flex-direction: column; align-items: flex-start; }
+      .notif-card { padding: 14px; }
+    }
+  </style>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "Notifications - KEYCODE Studio",
+  "description": "View your notification history and real-time alerts",
+  "publisher": {
+    "@type": "Organization",
+    "name": "KEYCODE Studio"
+  }
+}
+</script>
+    </head>
+<body>
+  <div id="kc-loader">
+    <div id="kc-loader-scene"></div>
+      <div id="kc-bg-text" aria-hidden="true">KEYCODE</div>
+<div class="kc-loader-info" style="position:absolute;bottom:48px;left:50%;transform:translateX(-50%);">
+      <div id="kc-loader-bar-track"><div id="kc-loader-bar"></div></div>
+      <div id="kc-loader-pct" style="font-family:'Inter',sans-serif;font-size:11px;color:#555;letter-spacing:.12em;text-align:center;">0%</div>
+    </div>
+  </div>
+
+  <div id="site-nav"></div>
+
+  <div class="notif-page">
+    <a href="/" class="back-link"><i class="fas fa-arrow-left"></i> Back to Home</a>
+    <div class="notif-header">
+      <h1><i class="fas fa-bell"></i> Notifications</h1>
+      <div class="notif-actions">
+        <select id="notifTypeFilter" onchange="applyFilter()">
+          <option value="all">All Types</option>
+          <option value="order_update">Order Updates</option>
+          <option value="project_generated">Projects Generated</option>
+          <option value="deploy_complete">Deployments</option>
+          <option value="payment_received">Payments</option>
+          <option value="system_alert">System Alerts</option>
+          <option value="admin_alert">Admin Alerts</option>
+        </select>
+        <button onclick="markAllRead()"><i class="fas fa-check-double"></i> Mark All Read</button>
+        <button class="btn-danger" onclick="clearAll()"><i class="fas fa-trash-alt"></i> Clear All</button>
+      </div>
+    </div>
+
+    <div id="notifList" class="notif-list">
+      <div class="notif-loading"><i class="fas fa-spinner fa-spin"></i> Loading notifications...</div>
+    </div>
+  </div>
+
+  <script>
+    var token = localStorage.getItem('keycode_token');
+    var allNotifications = [];
+    var typeIcons = {
+      order_update: 'fa-shopping-bag',
+      project_generated: 'fa-laptop-code',
+      deploy_complete: 'fa-rocket',
+      payment_received: 'fa-credit-card',
+      system_alert: 'fa-shield-alt',
+      admin_alert: 'fa-user-shield'
+    };
+    var typeLabels = {
+      order_update: 'Order Update',
+      project_generated: 'Project',
+      deploy_complete: 'Deploy',
+      payment_received: 'Payment',
+      system_alert: 'System',
+      admin_alert: 'Admin'
+    };
+
+    if (!token) {
+      window.location.href = 'login.html?redirect=notifications';
+    }
+
+    function timeAgo(dateStr) {
+      var d = new Date(dateStr);
+      var now = new Date();
+      var sec = Math.floor((now - d) / 1000);
+      if (sec < 60) return 'just now';
+      var min = Math.floor(sec / 60);
+      if (min < 60) return min + 'm ago';
+      var hrs = Math.floor(min / 60);
+      if (hrs < 24) return hrs + 'h ago';
+      var days = Math.floor(hrs / 24);
+      if (days < 7) return days + 'd ago';
+      return d.toLocaleDateString();
+    }
+
+    function renderList(filter) {
+      var list = document.getElementById('notifList');
+      var filtered = filter && filter !== 'all' ? allNotifications.filter(function(n) { return n.type === filter; }) : allNotifications;
+
+      if (filtered.length === 0) {
+        list.innerHTML = '<div class="notif-empty"><i class="fas fa-bell-slash"></i><h3>No notifications</h3><p>' + (filter !== 'all' ? 'No ' + typeLabels[filter] + ' notifications.' : 'You\'re all caught up!') + '</p></div>';
+        return;
+      }
+
+      list.innerHTML = filtered.map(function(n) {
+        var icon = typeIcons[n.type] || 'fa-bell';
+        var label = typeLabels[n.type] || n.type;
+        var cls = n.read ? '' : 'unread';
+        return '<div class="notif-card ' + cls + '" onclick="markRead(\'' + n._id + '\')">' +
+          '<div class="notif-icon ' + n.type + '"><i class="fas ' + icon + '"></i></div>' +
+          '<div class="notif-body">' +
+          '<div class="notif-title">' + escHtml(n.title) + '</div>' +
+          '<div class="notif-message">' + escHtml(n.message) + '</div>' +
+          '<div class="notif-meta">' +
+          '<span class="notif-type-badge ' + n.type + '">' + label + '</span>' +
+          '<span>' + timeAgo(n.createdAt) + '</span>' +
+          (n.read ? '' : '<span style="color:var(--primary);font-weight:600;">● New</span>') +
+          '</div></div></div>';
+      }).join('');
+    }
+
+    function fetchAll() {
+      if (!token) return;
+      document.getElementById('notifList').innerHTML = '<div class="notif-loading"><i class="fas fa-spinner fa-spin"></i> Loading notifications...</div>';
+      fetch('/api/notifications', { headers: { 'Authorization': 'Bearer ' + token } })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          allNotifications = data.notifications || [];
+          var filter = document.getElementById('notifTypeFilter').value;
+          renderList(filter);
+        })
+        .catch(function(err) {
+          document.getElementById('notifList').innerHTML = '<div class="notif-empty"><i class="fas fa-exclamation-triangle" style="color:var(--danger);"></i><h3>Failed to load</h3><p>' + err.message + '</p></div>';
+        });
+    }
+
+    window.applyFilter = function() {
+      renderList(document.getElementById('notifTypeFilter').value);
+    };
+
+    window.markRead = function(id) {
+      fetch('/api/notifications/' + id + '/read', { method: 'PUT', headers: { 'Authorization': 'Bearer ' + token } }).catch(function(){});
+      var n = allNotifications.find(function(x) { return x._id === id; });
+      if (n) n.read = true;
+      renderList(document.getElementById('notifTypeFilter').value);
+    };
+
+    window.markAllRead = function() {
+      var ids = allNotifications.filter(function(n) { return !n.read; }).map(function(n) { return n._id; });
+      if (ids.length === 0) return;
+      Promise.all(ids.map(function(id) {
+        return fetch('/api/notifications/' + id + '/read', { method: 'PUT', headers: { 'Authorization': 'Bearer ' + token } });
+      })).then(function() {
+        allNotifications.forEach(function(n) { n.read = true; });
+        renderList(document.getElementById('notifTypeFilter').value);
+        showToast('All notifications marked as read', 'success');
+      });
+    };
+
+    window.clearAll = function() {
+      if (!confirm('Delete all notifications? This cannot be undone.')) return;
+      var ids = allNotifications.map(function(n) { return n._id; });
+      Promise.all(ids.map(function(id) {
+        return fetch('/api/notifications/' + id + '/read', { method: 'PUT', headers: { 'Authorization': 'Bearer ' + token } });
+      })).then(function() {
+        allNotifications = [];
+        renderList(document.getElementById('notifTypeFilter').value);
+        showToast('All notifications cleared', 'success');
+      });
+    };
+
+    function escHtml(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    fetchAll();
+  </script>
+
+  <!-- Toast & footer scripts from main site -->
+  <script>
+  (function(){
+    var c = document.createElement('div');
+    c.id = 'kcToastContainer';
+    c.style.cssText = 'position:fixed;top:16px;right:16px;z-index:99999;display:flex;flex-direction:column;gap:8px;max-width:380px';
+    document.body.appendChild(c);
+    var style = document.createElement('style');
+    style.textContent = '@keyframes kcToastIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}@keyframes kcToastOut{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(40px)}}';
+    document.head.appendChild(style);
+    window.showToast = function(m, type) {
+      type = type || 'info';
+      var colors = {info:'#ffffff',success:'#10b981',error:'#ef4444',warning:'#f59e0b'};
+      var icons = {info:'fa-info-circle',success:'fa-check-circle',error:'fa-exclamation-circle',warning:'fa-exclamation-triangle'};
+      var t = document.createElement('div');
+      t.style.cssText = 'padding:12px 16px;border-radius:10px;background:'+(colors[type]||'#ffffff')+';color:#fff;font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px;box-shadow:0 8px 32px rgba(0,0,0,0.4);animation:kcToastIn .3s ease;cursor:pointer';
+      t.innerHTML = '<i class="fas '+(icons[type]||'fa-info-circle')+'"></i> '+m;
+      t.onclick = function(){ t.style.animation='kcToastOut .2s ease';setTimeout(function(){t.remove()},200); };
+      c.appendChild(t);
+      setTimeout(function(){if(t.parentNode){t.style.animation='kcToastOut .2s ease';setTimeout(function(){t.remove()},200)}},4000);
+    };
+  })();
+  </script>
+  <div id="site-footer"></div>
+    <script src="/js/loading-screen.js"></script>
+<script src="/js/site.js"></script>
+<script src="/js/install.js" defer></script>
+
+  <script src="/js/scroll-3d-animations.js"></script>  <script src="/js/k-scroll.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+</body>
+</html>

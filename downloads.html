@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <title>Downloads - KEYCODE Studio</title>
+  <meta name="description" content="Browse and download all your AI-generated files: websites, PCBs, CAD models, and MCU firmware.">
+  <meta name="keywords" content="KEYCODE downloads, AI files, generated files download">
+  <meta name="author" content="KEYCODE Studio">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://keycode-studio-production.up.railway.app/downloads.html">
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://keycode-studio-production.up.railway.app/downloads.html">
+  <meta property="og:title" content="Downloads - KEYCODE Studio">
+  <meta property="og:description" content="Browse and download all your AI-generated files: websites, PCBs, CAD models, and MCU firmware.">
+  <meta property="og:image" content="https://keycode-studio-production.up.railway.app/og-image.svg">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Downloads - KEYCODE Studio">
+  <meta name="twitter:description" content="Browse and download all your AI-generated files.">
+  <meta name="twitter:image" content="https://keycode-studio-production.up.railway.app/og-image.svg">
+
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="KEYCODE">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="alternate icon" type="image/png" href="/assets/favicon-DMHYNXc2.png">
+
+  <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" media="print" onload="this.media='all'">
+
+  <style>
+    :root {
+      --bg: #0a0a1a;
+      --card: #12122a;
+      --card-hover: #1a1a3a;
+      --primary: #ffffff;
+      --accent: #22d3ee;
+      --text: #e2e8f0;
+      --ash: #94a3b8;
+      --border: rgba(255,255,255,0.06);
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --font: 'Inter', sans-serif;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { font-size: 16px; }
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    a { text-decoration: none; color: inherit; }
+    button { cursor: pointer; font-family: inherit; border: none; outline: none; }
+    input { font-family: inherit; outline: none; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 32px;
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-logo {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .header-logo i {
+      -webkit-text-fill-color: var(--primary);
+      margin-right: 8px;
+      font-size: 18px;
+    }
+    .header-nav {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .header-nav a {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ash);
+      transition: .25s;
+    }
+    .header-nav a:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+    .header-nav a.active {
+      color: #fff;
+      background: var(--primary);
+    }
+    .header-nav a.active i { margin-right: 6px; }
+
+    /* Container */
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 32px 32px 80px;
+    }
+
+    /* Hero */
+    .hero {
+      margin-bottom: 32px;
+    }
+    .hero h1 {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+    .hero h1 i { color: var(--primary); margin-right: 10px; }
+    .hero p {
+      color: var(--ash);
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    /* Quick Stats */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      transition: .25s;
+    }
+    .stat-card:hover { background: var(--card-hover); }
+    .stat-card .stat-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      margin-bottom: 12px;
+    }
+    .stat-card .stat-icon.files { background: rgba(99,102,241,0.15); color: var(--primary); }
+    .stat-card .stat-icon.size { background: rgba(34,211,238,0.15); color: var(--accent); }
+    .stat-card .stat-icon.latest { background: rgba(16,185,129,0.15); color: var(--success); }
+    .stat-card .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .stat-card .stat-label {
+      font-size: 13px;
+      color: var(--ash);
+    }
+
+    /* Filter Bar */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding: 16px 20px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+    .filter-pills {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .pill {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--ash);
+      background: transparent;
+      border: 1px solid var(--border);
+      transition: .25s;
+      white-space: nowrap;
+    }
+    .pill:hover { border-color: rgba(255,255,255,0.15); color: var(--text); }
+    .pill.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+    .filter-search {
+      flex: 1;
+      min-width: 180px;
+      position: relative;
+    }
+    .filter-search i {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--ash);
+      font-size: 14px;
+      pointer-events: none;
+    }
+    .filter-search input {
+      width: 100%;
+      padding: 8px 12px 8px 34px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 13px;
+      transition: .25s;
+    }
+    .filter-search input::placeholder { color: var(--ash); }
+    .filter-search input:focus { border-color: var(--primary); background: rgba(255,255,255,0.06); }
+    .filter-sort {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .filter-sort label {
+      font-size: 12px;
+      color: var(--ash);
+      white-space: nowrap;
+    }
+    .filter-sort select {
+      padding: 6px 10px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 12px;
+      outline: none;
+      cursor: pointer;
+    }
+    .filter-sort select:focus { border-color: var(--primary); }
+
+    /* View toggle + bulk bar */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .view-toggle {
+      display: flex;
+      gap: 4px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 3px;
+    }
+    .view-toggle button {
+      padding: 6px 12px;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--ash);
+      font-size: 14px;
+      transition: .25s;
+    }
+    .view-toggle button.active { background: var(--primary); color: #fff; }
+    .view-toggle button:hover:not(.active) { color: var(--text); }
+    .bulk-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .bulk-info {
+      font-size: 13px;
+      color: var(--ash);
+    }
+    .bulk-btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      transition: .25s;
+      display: none;
+    }
+    .bulk-btn.show { display: inline-flex; align-items: center; gap: 6px; }
+    .bulk-btn.download { background: var(--primary); color: #fff; }
+    .bulk-btn.download:hover { background: #5558e6; }
+    .bulk-btn.delete { background: rgba(239,68,68,0.15); color: var(--danger); border: 1px solid rgba(239,68,68,0.25); }
+    .bulk-btn.delete:hover { background: rgba(239,68,68,0.25); }
+
+    /* File Grid */
+    .file-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .file-grid.list {
+      grid-template-columns: 1fr;
+    }
+    .file-grid.list .file-card {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 20px;
+    }
+    .file-grid.list .file-card .file-icon-wrap { margin-bottom: 0; }
+    .file-grid.list .file-card .file-meta { flex-direction: row; flex-wrap: wrap; gap: 16px; }
+    .file-grid.list .file-card .file-desc { -webkit-line-clamp: 1; }
+    .file-grid.list .file-card .file-actions { flex-direction: row; }
+
+    .file-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      transition: .25s;
+      position: relative;
+      cursor: pointer;
+    }
+    .file-card:hover { background: var(--card-hover); border-color: rgba(255,255,255,0.12); }
+    .file-card.selected { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }
+
+    .file-check {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      z-index: 2;
+    }
+    .file-check input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--primary);
+      cursor: pointer;
+      opacity: 0.6;
+      transition: .25s;
+    }
+    .file-check input[type="checkbox"]:checked { opacity: 1; }
+    .file-card:hover .file-check input[type="checkbox"] { opacity: 1; }
+
+    .file-icon-wrap {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      margin-bottom: 12px;
+    }
+    .file-tool-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      margin-bottom: 10px;
+    }
+    .file-tool-badge.web { background: rgba(34,211,238,0.12); color: var(--accent); }
+    .file-tool-badge.pcb { background: rgba(16,185,129,0.12); color: var(--success); }
+    .file-tool-badge.cad { background: rgba(245,158,11,0.12); color: var(--warning); }
+    .file-tool-badge.mcu { background: rgba(239,68,68,0.12); color: var(--danger); }
+    .file-tool-badge.circ { background: rgba(168,85,247,0.12); color: #a855f7; }
+
+    .file-desc {
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 6px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .file-id {
+      font-size: 11px;
+      color: var(--ash);
+      font-family: monospace;
+      margin-bottom: 8px;
+      word-break: break-all;
+    }
+    .file-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 12px;
+      color: var(--ash);
+      margin-bottom: 14px;
+    }
+    .file-meta span { display: flex; align-items: center; gap: 4px; }
+    .file-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .file-actions .dl-btn {
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      background: rgba(99,102,241,0.1);
+      color: var(--primary);
+      transition: .25s;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .file-actions .dl-btn:hover { background: var(--primary); color: #fff; }
+    .file-actions .dl-btn.zip { background: rgba(34,211,238,0.1); color: var(--accent); }
+    .file-actions .dl-btn.zip:hover { background: var(--accent); color: #000; }
+
+    /* Skeleton */
+    .skeleton { pointer-events: none; }
+    @keyframes shimmer {
+      0% { background-position: -400px 0; }
+      100% { background-position: 400px 0; }
+    }
+    .skeleton-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .skeleton-shimmer {
+      background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 75%);
+      background-size: 400px 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 6px;
+    }
+    .skeleton-icon { width: 44px; height: 44px; border-radius: 10px; margin-bottom: 12px; }
+    .skeleton-badge { width: 60px; height: 20px; border-radius: 6px; margin-bottom: 10px; }
+    .skeleton-line { height: 14px; margin-bottom: 8px; }
+    .skeleton-line:last-child { width: 60%; }
+    .skeleton-meta { width: 120px; height: 12px; margin-bottom: 14px; }
+    .skeleton-btn { width: 70px; height: 28px; border-radius: 6px; }
+
+    /* Empty / Error */
+    .empty-state, .error-state {
+      text-align: center;
+      padding: 80px 20px;
+    }
+    .empty-state i, .error-state i {
+      font-size: 48px;
+      color: var(--ash);
+      margin-bottom: 16px;
+      opacity: 0.4;
+    }
+    .empty-state h3, .error-state h3 {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .empty-state p, .error-state p {
+      color: var(--ash);
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+    .retry-btn {
+      padding: 10px 24px;
+      border-radius: 8px;
+      background: var(--primary);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 500;
+      transition: .25s;
+    }
+    .retry-btn:hover { background: #5558e6; }
+    .retry-btn i { margin-right: 6px; }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: .3s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: auto; }
+    .modal {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      max-width: 520px;
+      width: 100%;
+      padding: 28px;
+      transform: translateY(20px) scale(0.97);
+      transition: .3s;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-overlay.open .modal { transform: translateY(0) scale(1); }
+    .modal-close {
+      float: right;
+      background: rgba(255,255,255,0.06);
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      color: var(--ash);
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: .25s;
+    }
+    .modal-close:hover { background: rgba(255,255,255,0.12); color: var(--text); }
+    .modal-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      margin-bottom: 16px;
+    }
+    .modal h2 {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .modal .modal-tool {
+      display: inline-flex;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      margin-bottom: 16px;
+    }
+    .modal .modal-desc {
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--ash);
+      margin-bottom: 20px;
+    }
+    .modal-info {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .modal-info-item {
+      background: rgba(255,255,255,0.03);
+      border-radius: 8px;
+      padding: 10px 14px;
+    }
+    .modal-info-item .label {
+      font-size: 11px;
+      color: var(--ash);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 2px;
+    }
+    .modal-info-item .value {
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .modal-info-item .value.mono { font-family: monospace; font-size: 12px; }
+    .modal-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .modal-actions .modal-btn {
+      flex: 1;
+      min-width: 120px;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: .25s;
+    }
+    .modal-actions .modal-btn.primary { background: var(--primary); color: #fff; }
+    .modal-actions .modal-btn.primary:hover { background: #5558e6; }
+    .modal-actions .modal-btn.secondary { background: rgba(255,255,255,0.06); color: var(--text); }
+    .modal-actions .modal-btn.secondary:hover { background: rgba(255,255,255,0.1); }
+    .modal-actions .modal-btn.success { background: rgba(16,185,129,0.15); color: var(--success); border: 1px solid rgba(16,185,129,0.25); }
+    .modal-actions .modal-btn.success:hover { background: rgba(16,185,129,0.25); }
+
+    /* Confirm dialog */
+    .confirm-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: .3s;
+    }
+    .confirm-overlay.open { opacity: 1; pointer-events: auto; }
+    .confirm-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+      transform: scale(0.95);
+      transition: .3s;
+    }
+    .confirm-overlay.open .confirm-box { transform: scale(1); }
+    .confirm-box i { font-size: 36px; color: var(--danger); margin-bottom: 12px; }
+    .confirm-box h3 { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
+    .confirm-box p { font-size: 14px; color: var(--ash); margin-bottom: 20px; }
+    .confirm-box .confirm-actions { display: flex; gap: 8px; justify-content: center; }
+    .confirm-box .confirm-actions button {
+      padding: 8px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      transition: .25s;
+    }
+    .confirm-box .confirm-actions .cancel { background: rgba(255,255,255,0.06); color: var(--text); }
+    .confirm-box .confirm-actions .cancel:hover { background: rgba(255,255,255,0.1); }
+    .confirm-box .confirm-actions .confirm-del { background: var(--danger); color: #fff; }
+    .confirm-box .confirm-actions .confirm-del:hover { background: #dc2626; }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .toast {
+      padding: 12px 20px;
+      border-radius: 10px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      animation: toastIn .3s ease, toastOut .3s ease 2.7s forwards;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+    .toast.success { border-color: rgba(16,185,129,0.3); }
+    .toast.success i { color: var(--success); }
+    .toast.error { border-color: rgba(239,68,68,0.3); }
+    .toast.error i { color: var(--danger); }
+    .toast.info { border-color: rgba(99,102,241,0.3); }
+    .toast.info i { color: var(--primary); }
+    @keyframes toastIn { from { transform: translateX(100px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes toastOut { from { opacity: 1; } to { opacity: 0; transform: translateY(-10px); } }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .container { padding: 20px 16px 60px; }
+      .header { padding: 12px 16px; }
+      .header-nav a span { display: none; }
+      .header-nav a.active span { display: inline; }
+      .stats-row { grid-template-columns: 1fr; }
+      .filter-bar { flex-direction: column; align-items: stretch; }
+      .filter-search { min-width: 0; }
+      .filter-sort { justify-content: flex-end; }
+      .file-grid { grid-template-columns: 1fr; }
+      .toolbar { flex-direction: column; align-items: stretch; }
+      .view-toggle { align-self: flex-start; }
+      .bulk-actions { flex-wrap: wrap; }
+      .modal { padding: 20px; }
+      .modal-info { grid-template-columns: 1fr; }
+      .hero h1 { font-size: 24px; }
+    }
+    @media (max-width: 480px) {
+      .header-logo { font-size: 16px; }
+      .stat-card { padding: 16px; }
+      .stat-card .stat-value { font-size: 20px; }
+    }
+  </style>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "Downloads - KEYCODE Studio",
+  "description": "Browse and download all your AI-generated files: websites, PCBs, CAD models, and MCU firmware.",
+  "publisher": {
+    "@type": "Organization",
+    "name": "KEYCODE Studio"
+  }
+}
+</script>
+    </head>
+<body>
+  <div id="kc-loader">
+    <div id="kc-loader-scene"></div>
+      <div id="kc-bg-text" aria-hidden="true">KEYCODE</div>
+<div class="kc-loader-info" style="position:absolute;bottom:48px;left:50%;transform:translateX(-50%);">
+      <div id="kc-loader-bar-track"><div id="kc-loader-bar"></div></div>
+      <div id="kc-loader-pct" style="font-family:'Inter',sans-serif;font-size:11px;color:#555;letter-spacing:.12em;text-align:center;">0%</div>
+    </div>
+  </div>
+
+  <div id="site-nav"></div>
+
+  <!-- Header -->
+  <header class="header">
+    <a href="/index.html" class="header-logo">
+      <i class="fas fa-crown"></i>KEYCODE
+    </a>
+    <nav class="header-nav">
+      <a href="/ai-builder.html"><i class="fas fa-layer-group"></i> <span>Builder</span></a>
+      <a href="/ai-builder.html?mode=playground"><i class="fas fa-flask"></i> <span>Playground</span></a>
+      <a href="/gallery.html"><i class="fas fa-images"></i> <span>Gallery</span></a>
+      <a href="/downloads.html" class="active"><i class="fas fa-download"></i> <span>Downloads</span></a>
+    </nav>
+  </header>
+
+  <!-- Main -->
+  <main class="container" id="app">
+    <!-- Hero -->
+    <section class="hero">
+      <h1><i class="fas fa-download"></i>Downloads</h1>
+      <p>Browse and download all your generated files across websites, PCBs, CAD models, and firmware.</p>
+    </section>
+
+    <!-- Quick Stats -->
+    <section class="stats-row" id="statsRow">
+      <div class="stat-card">
+        <div class="stat-icon files"><i class="fas fa-file"></i></div>
+        <div class="stat-value" id="statFiles">0</div>
+        <div class="stat-label">Total Files</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon size"><i class="fas fa-database"></i></div>
+        <div class="stat-value" id="statSize">0 B</div>
+        <div class="stat-label">Total Size</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon latest"><i class="fas fa-clock"></i></div>
+        <div class="stat-value" id="statLatest">—</div>
+        <div class="stat-label">Latest Export</div>
+      </div>
+    </section>
+
+    <!-- Filter Bar -->
+    <section class="filter-bar">
+      <div class="filter-pills" id="filterPills">
+        <button class="pill active" data-filter="all">All</button>
+        <button class="pill" data-filter="web">Websites</button>
+        <button class="pill" data-filter="pcb">PCBs</button>
+        <button class="pill" data-filter="cad">CAD</button>
+        <button class="pill" data-filter="mcu">Firmware</button>
+        <button class="pill" data-filter="circ">Circuits</button>
+      </div>
+      <div class="filter-search">
+        <i class="fas fa-search"></i>
+        <input type="text" id="searchInput" placeholder="Search files..." autocomplete="off">
+      </div>
+      <div class="filter-sort">
+        <label for="sortSelect">Sort:</label>
+        <select id="sortSelect">
+          <option value="newest">Newest</option>
+          <option value="oldest">Oldest</option>
+          <option value="size">Size</option>
+          <option value="name">Name</option>
+        </select>
+      </div>
+    </section>
+
+    <!-- Toolbar -->
+    <section class="toolbar">
+      <div class="view-toggle" id="viewToggle">
+        <button class="active" data-view="grid" title="Grid view"><i class="fas fa-th"></i></button>
+        <button data-view="list" title="List view"><i class="fas fa-list"></i></button>
+      </div>
+      <div class="bulk-actions" id="bulkActions">
+        <span class="bulk-info" id="bulkInfo"></span>
+        <button class="bulk-btn download" id="bulkDownload"><i class="fas fa-file-archive"></i> Download Selected as ZIP</button>
+        <button class="bulk-btn delete" id="bulkDelete"><i class="fas fa-trash-alt"></i> Delete Selected</button>
+      </div>
+    </section>
+
+    <!-- File Grid -->
+    <div id="fileContainer"></div>
+  </main>
+
+  <!-- Preview Modal -->
+  <div class="modal-overlay" id="previewModal">
+    <div class="modal">
+      <button class="modal-close" onclick="closePreview()"><i class="fas fa-times"></i></button>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <!-- Confirm Delete -->
+  <div class="confirm-overlay" id="confirmOverlay">
+    <div class="confirm-box">
+      <i class="fas fa-exclamation-triangle"></i>
+      <h3>Delete Files?</h3>
+      <p id="confirmText">Are you sure you want to delete the selected files?</p>
+      <div class="confirm-actions">
+        <button class="cancel" onclick="closeConfirm()">Cancel</button>
+        <button class="confirm-del" onclick="confirmDelete()">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <noscript><p style="text-align:center;padding:40px;color:var(--ash)">Please enable JavaScript to browse downloads.</p></noscript>
+
+  <script>
+    // ─── Mock Data ───────────────────────────────────────────────
+    var mockFiles = [
+      { id: 'web_1', tool: 'web', fileId: 'web_abc123', description: 'Modern SaaS Landing Page', createdAt: '2026-07-14T10:30:00Z', size: 2450000 },
+      { id: 'pcb_1', tool: 'pcb', fileId: 'pcb_def456', description: 'ESP32 Breakout Board', createdAt: '2026-07-13T14:20:00Z', size: 890000 },
+      { id: 'cad_1', tool: 'cad', fileId: 'cad_ghi789', description: 'Robot Arm Joint', createdAt: '2026-07-12T09:15:00Z', size: 4200000 },
+      { id: 'mcu_1', tool: 'mcu', fileId: 'mcu_jkl012', description: 'Temperature Sensor Firmware', createdAt: '2026-07-11T16:45:00Z', size: 128000 },
+      { id: 'circ_1', tool: 'circ', fileId: 'circ_mno345', description: 'LED Driver Circuit', createdAt: '2026-07-10T11:00:00Z', size: 560000 },
+      { id: 'web_2', tool: 'web', fileId: 'web_pqr678', description: 'E-commerce Dashboard', createdAt: '2026-07-09T08:30:00Z', size: 3100000 }
+    ];
+
+    var toolConfig = {
+      web: { icon: 'fa-globe', color: '#22d3ee', label: 'Website' },
+      pcb: { icon: 'fa-microchip', color: '#10b981', label: 'PCB' },
+      cad: { icon: 'fa-cube', color: '#f59e0b', label: 'CAD' },
+      mcu: { icon: 'fa-code', color: '#ef4444', label: 'Firmware' },
+      circ: { icon: 'fa-bolt', color: '#a855f7', label: 'Circuit' }
+    };
+
+    // ─── State ──────────────────────────────────────────────────
+    var files = [];
+    var filteredFiles = [];
+    var selectedIds = {};
+    var activeFilter = 'all';
+    var searchQuery = '';
+    var sortBy = 'newest';
+    var viewMode = 'grid';
+    var isLoading = true;
+    var pendingDelete = [];
+
+    // ─── DOM refs ───────────────────────────────────────────────
+    var $ = function(id) { return document.getElementById(id); };
+    var container = $('fileContainer');
+    var statFiles = $('statFiles');
+    var statSize = $('statSize');
+    var statLatest = $('statLatest');
+    var bulkInfo = $('bulkInfo');
+    var bulkDownload = $('bulkDownload');
+    var bulkDelete = $('bulkDelete');
+    var searchInput = $('searchInput');
+    var sortSelect = $('sortSelect');
+    var previewModal = $('previewModal');
+    var modalContent = $('modalContent');
+    var confirmOverlay = $('confirmOverlay');
+    var confirmText = $('confirmText');
+    var toastContainer = $('toastContainer');
+
+    // ─── Formatting helpers ─────────────────────────────────────
+    function formatSize(bytes) {
+      if (bytes === 0) return '0 B';
+      var units = ['B', 'KB', 'MB', 'GB'];
+      var i = Math.floor(Math.log(bytes) / Math.log(1024));
+      if (i >= units.length) i = units.length - 1;
+      return (bytes / Math.pow(1024, i)).toFixed(i > 0 ? 1 : 0) + ' ' + units[i];
+    }
+
+    function formatDate(str) {
+      var d = new Date(str);
+      var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      return months[d.getUTCMonth()] + ' ' + d.getUTCDate() + ', ' + d.getUTCFullYear();
+    }
+
+    function toolLabel(tool) { return (toolConfig[tool] || {}).label || tool; }
+    function toolIcon(tool) { return (toolConfig[tool] || {}).icon || 'fa-file'; }
+    function toolColor(tool) { return (toolConfig[tool] || {}).color || '#94a3b8'; }
+
+    // ─── Toast ──────────────────────────────────────────────────
+    function showToast(msg, type) {
+      var el = document.createElement('div');
+      el.className = 'toast ' + (type || 'info');
+      var iconMap = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle' };
+      var ic = document.createElement('i');
+      ic.className = 'fas ' + (iconMap[type] || iconMap.info);
+      el.appendChild(ic);
+      el.appendChild(document.createTextNode(' ' + String(msg || '')));
+      toastContainer.appendChild(el);
+      setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 3000);
+    }
+
+    // ─── API ────────────────────────────────────────────────────
+    function fetchProjects() {
+      return fetch('/api/ai/projects')
+        .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then(function(data) { return data.projects || []; })
+        .catch(function() {
+          console.warn('API failed, using mock data');
+          return null;
+        });
+    }
+
+    function loadFiles() {
+      isLoading = true;
+      renderSkeletons();
+
+      fetchProjects().then(function(data) {
+        if (data && data.length) {
+          files = data;
+        } else {
+          files = mockFiles.slice();
+        }
+        isLoading = false;
+        applyFiltersAndRender();
+        updateStats();
+      });
+    }
+
+    // ─── Rendering ──────────────────────────────────────────────
+    function renderSkeletons() {
+      var html = '<div class="file-grid" id="fileGrid">';
+      for (var i = 0; i < 8; i++) {
+        html += '<div class="skeleton-card"><div class="skeleton-shimmer skeleton-icon"></div><div class="skeleton-shimmer skeleton-badge"></div><div class="skeleton-shimmer skeleton-line"></div><div class="skeleton-shimmer skeleton-line"></div><div class="skeleton-shimmer skeleton-meta"></div><div class="skeleton-shimmer skeleton-btn"></div></div>';
+      }
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    function applyFiltersAndRender() {
+      var list = files.slice();
+
+      if (activeFilter !== 'all') {
+        list = list.filter(function(f) { return f.tool === activeFilter; });
+      }
+
+      if (searchQuery.trim()) {
+        var q = searchQuery.trim().toLowerCase();
+        list = list.filter(function(f) {
+          return f.description.toLowerCase().indexOf(q) !== -1 ||
+                 f.fileId.toLowerCase().indexOf(q) !== -1 ||
+                 f.id.toLowerCase().indexOf(q) !== -1;
+        });
+      }
+
+      // Sort
+      list.sort(function(a, b) {
+        switch (sortBy) {
+          case 'oldest': return new Date(a.createdAt) - new Date(b.createdAt);
+          case 'size': return b.size - a.size;
+          case 'name': return a.description.localeCompare(b.description);
+          default: return new Date(b.createdAt) - new Date(a.createdAt);
+        }
+      });
+
+      filteredFiles = list;
+      renderFiles(list);
+      updateBulkUI();
+    }
+
+    function renderFiles(list) {
+      if (list.length === 0) {
+        container.innerHTML =
+          '<div class="empty-state"><i class="fas fa-folder-open"></i><h3>No files yet</h3><p>Generate your first project to see files here.</p></div>';
+        return;
+      }
+
+      var cls = 'file-grid' + (viewMode === 'list' ? ' list' : '');
+      var html = '<div class="' + cls + '" id="fileGrid">';
+      for (var i = 0; i < list.length; i++) {
+        html += renderFileCard(list[i]);
+      }
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    function renderFileCard(f) {
+      var cfg = toolConfig[f.tool] || {};
+      var sel = selectedIds[f.id] ? ' selected' : '';
+      var checked = selectedIds[f.id] ? ' checked' : '';
+
+      var html = '<div class="file-card' + sel + '" onclick="openPreview(\'' + f.id + '\')" data-id="' + f.id + '">';
+      html += '<div class="file-check" onclick="event.stopPropagation()"><input type="checkbox" ' + checked + ' onchange="toggleSelect(\'' + f.id + '\', this.checked)"></div>';
+      html += '<div class="file-icon-wrap" style="background:' + cfg.color + '15;color:' + cfg.color + '"><i class="fas ' + cfg.icon + '"></i></div>';
+      html += '<div class="file-tool-badge ' + f.tool + '"><i class="fas ' + cfg.icon + '"></i> ' + cfg.label + '</div>';
+      html += '<div class="file-desc">' + esc(f.description) + '</div>';
+      html += '<div class="file-id">' + esc(f.fileId) + '</div>';
+      html += '<div class="file-meta"><span><i class="fas fa-calendar-alt"></i> ' + formatDate(f.createdAt) + '</span><span><i class="fas fa-file"></i> ' + formatSize(f.size) + '</span></div>';
+      html += '<div class="file-actions" onclick="event.stopPropagation()">';
+      html += '<button class="dl-btn" onclick="downloadFile(\'' + f.fileId + '\')"><i class="fas fa-download"></i> File</button>';
+      html += '<button class="dl-btn zip" onclick="downloadZip(\'' + f.fileId + '\')"><i class="fas fa-file-archive"></i> ZIP</button>';
+      html += '</div></div>';
+      return html;
+    }
+
+    function esc(s) {
+      var d = document.createElement('div');
+      d.textContent = s;
+      return d.innerHTML;
+    }
+
+    // ─── View toggle ────────────────────────────────────────────
+    document.getElementById('viewToggle').addEventListener('click', function(e) {
+      var btn = e.target.closest('button');
+      if (!btn) return;
+      var v = btn.getAttribute('data-view');
+      if (v === viewMode) return;
+      viewMode = v;
+      this.querySelectorAll('button').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      applyFiltersAndRender();
+    });
+
+    // ─── Filter pills ───────────────────────────────────────────
+    document.getElementById('filterPills').addEventListener('click', function(e) {
+      var btn = e.target.closest('.pill');
+      if (!btn) return;
+      this.querySelectorAll('.pill').forEach(function(p) { p.classList.remove('active'); });
+      btn.classList.add('active');
+      activeFilter = btn.getAttribute('data-filter');
+      applyFiltersAndRender();
+    });
+
+    // ─── Search ─────────────────────────────────────────────────
+    var searchTimer;
+    searchInput.addEventListener('input', function() {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(function() {
+        searchQuery = searchInput.value;
+        applyFiltersAndRender();
+      }, 200);
+    });
+
+    // ─── Sort ────────────────────────────────────────────────────
+    sortSelect.addEventListener('change', function() {
+      sortBy = this.value;
+      applyFiltersAndRender();
+    });
+
+    // ─── Selection ──────────────────────────────────────────────
+    function toggleSelect(id, checked) {
+      if (checked) { selectedIds[id] = true; } else { delete selectedIds[id]; }
+      var el = container.querySelector('.file-card[data-id="' + id + '"]');
+      if (el) { el.classList.toggle('selected', checked); }
+      updateBulkUI();
+    }
+
+    function updateBulkUI() {
+      var keys = Object.keys(selectedIds);
+      var count = keys.length;
+      if (count > 0) {
+        bulkInfo.textContent = count + ' file' + (count > 1 ? 's' : '') + ' selected';
+        bulkDownload.classList.add('show');
+        bulkDelete.classList.add('show');
+      } else {
+        bulkInfo.textContent = '';
+        bulkDownload.classList.remove('show');
+        bulkDelete.classList.remove('show');
+      }
+    }
+
+    // ─── Bulk Download ──────────────────────────────────────────
+    bulkDownload.addEventListener('click', function() {
+      var keys = Object.keys(selectedIds);
+      if (keys.length === 0) return;
+      var f = files.filter(function(f) { return selectedIds[f.id]; });
+      if (f.length === 0) return;
+      if (f.length === 1) {
+        downloadZip(f[0].fileId);
+        return;
+      }
+      // For multiple, download each in sequence (or zip endpoint)
+      // Ideally server would support multi-zip; here we sequentially open each
+      showToast('Downloading ' + f.length + ' files...', 'info');
+      for (var i = 0; i < f.length; i++) {
+        (function(fid) {
+          setTimeout(function() { window.open('/api/ai/download-zip/' + fid); }, i * 300);
+        })(f[i].fileId);
+      }
+    });
+
+    // ─── Bulk Delete ────────────────────────────────────────────
+    bulkDelete.addEventListener('click', function() {
+      var keys = Object.keys(selectedIds);
+      if (keys.length === 0) return;
+      pendingDelete = files.filter(function(f) { return selectedIds[f.id]; });
+      confirmText.textContent = 'Are you sure you want to delete ' + pendingDelete.length + ' file' + (pendingDelete.length > 1 ? 's' : '') + '?';
+      confirmOverlay.classList.add('open');
+    });
+
+    function closeConfirm() {
+      confirmOverlay.classList.remove('open');
+      pendingDelete = [];
+    }
+
+    function confirmDelete() {
+      var ids = pendingDelete.map(function(f) { return f.id; });
+      files = files.filter(function(f) { return ids.indexOf(f.id) === -1; });
+      // Deselect
+      ids.forEach(function(id) { delete selectedIds[id]; });
+      pendingDelete = [];
+      closeConfirm();
+      applyFiltersAndRender();
+      updateStats();
+      showToast('Files deleted', 'success');
+    }
+
+    // ─── Download helpers ───────────────────────────────────────
+    function downloadFile(fileId) {
+      window.open('/api/ai/download/' + fileId);
+    }
+
+    function downloadZip(fileId) {
+      window.open('/api/ai/download-zip/' + fileId);
+    }
+
+    // ─── Preview Modal ──────────────────────────────────────────
+    function openPreview(id) {
+      var f = files.filter(function(f) { return f.id === id; })[0];
+      if (!f) return;
+      var cfg = toolConfig[f.tool] || {};
+      var html = '';
+      html += '<div class="modal-icon" style="background:' + cfg.color + '15;color:' + cfg.color + '"><i class="fas ' + cfg.icon + '"></i></div>';
+      html += '<h2>' + esc(f.description) + '</h2>';
+      html += '<span class="modal-tool ' + f.tool + '" style="background:' + cfg.color + '15;color:' + cfg.color + '"><i class="fas ' + cfg.icon + '"></i> ' + cfg.label + '</span>';
+      html += '<p class="modal-desc">Full export of your ' + cfg.label.toLowerCase() + ' project. Download the file directly or as a compressed ZIP archive.</p>';
+      html += '<div class="modal-info">';
+      html += '<div class="modal-info-item"><div class="label">File ID</div><div class="value mono">' + esc(f.fileId) + '</div></div>';
+      html += '<div class="modal-info-item"><div class="label">Type</div><div class="value">' + cfg.label + '</div></div>';
+      html += '<div class="modal-info-item"><div class="label">Size</div><div class="value">' + formatSize(f.size) + '</div></div>';
+      html += '<div class="modal-info-item"><div class="label">Created</div><div class="value">' + formatDate(f.createdAt) + '</div></div>';
+      html += '</div>';
+      html += '<div class="modal-actions">';
+      html += '<button class="modal-btn primary" onclick="previewDownload(\'' + f.fileId + '\')"><i class="fas fa-download"></i> Download File</button>';
+      html += '<button class="modal-btn success" onclick="previewDownloadZip(\'' + f.fileId + '\')"><i class="fas fa-file-archive"></i> Download ZIP</button>';
+      html += '<button class="modal-btn secondary" onclick="copyLink(\'' + f.fileId + '\')"><i class="fas fa-link"></i> Copy Link</button>';
+      html += '<button class="modal-btn secondary" onclick="shareLink(\'' + f.fileId + '\')"><i class="fas fa-share-alt"></i> Share</button>';
+      html += '</div>';
+      modalContent.innerHTML = html;
+      previewModal.classList.add('open');
+    }
+
+    function closePreview() {
+      previewModal.classList.remove('open');
+    }
+
+    previewModal.addEventListener('click', function(e) {
+      if (e.target === this) closePreview();
+    });
+
+    function previewDownload(fid) { window.open('/api/ai/download/' + fid); closePreview(); }
+    function previewDownloadZip(fid) { window.open('/api/ai/download-zip/' + fid); closePreview(); }
+
+    function copyLink(fileId) {
+      var url = window.location.origin + '/api/ai/download/' + fileId;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(function() {
+          showToast('Download link copied to clipboard', 'success');
+        }).catch(function() {
+          fallbackCopy(url);
+        });
+      } else {
+        fallbackCopy(url);
+      }
+    }
+
+    function shareLink(fileId) {
+      var url = window.location.origin + '/api/ai/download/' + fileId;
+      if (navigator.share) {
+        navigator.share({ title: 'KEYCODE Download', text: 'Download my AI-generated file', url: url })
+          .catch(function() {});
+      } else {
+        copyLink(fileId);
+      }
+    }
+
+    function fallbackCopy(text) {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); showToast('Download link copied to clipboard', 'success'); } catch(e) { showToast('Failed to copy link', 'error'); }
+      document.body.removeChild(ta);
+    }
+
+    // ─── Stats ──────────────────────────────────────────────────
+    function updateStats() {
+      statFiles.textContent = files.length;
+      var totalSize = files.reduce(function(sum, f) { return sum + (f.size || 0); }, 0);
+      statSize.textContent = formatSize(totalSize);
+      if (files.length > 0) {
+        var sorted = files.slice().sort(function(a, b) { return new Date(b.createdAt) - new Date(a.createdAt); });
+        statLatest.textContent = formatDate(sorted[0].createdAt);
+      } else {
+        statLatest.textContent = '—';
+      }
+    }
+
+    // ─── Keyboard shortcuts ─────────────────────────────────────
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        if (confirmOverlay.classList.contains('open')) closeConfirm();
+        else if (previewModal.classList.contains('open')) closePreview();
+      }
+    });
+
+    // ─── Init ───────────────────────────────────────────────────
+    loadFiles();
+  </script>
+  <div id="site-footer"></div>
+    <script src="/js/loading-screen.js"></script>
+<script src="/js/site.js"></script>
+<script src="/js/install.js" defer></script>
+
+  <script src="/js/scroll-3d-animations.js"></script>  <script src="/js/k-scroll.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+</body>
+</html>

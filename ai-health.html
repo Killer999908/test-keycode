@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+<meta name="description" content="Real-time status of all AI model providers powering KEYCODE Studio">
+<title>AI Health - KEYCODE Studio</title>
+<meta property="og:title" content="AI Health - KEYCODE Studio">
+<meta property="og:description" content="Real-time AI provider status dashboard">
+<meta property="og:image" content="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjAwIiBoZWlnaHQ9IjYzMCIgdmlld0JveD0iMCAwIDEyMDAgNjMwIj4KICA8cmVjdCB3aWR0aD0iMTIwMCIgaGVpZ2h0PSI2MzAiIGZpbGw9IiMwYTBhMWEiLz4KICA8cmVjdCB4PSIwIiB5PSIwIiB3aWR0aD0iMTIwMCIgaGVpZ2h0PSI2MzAiIGZpbGw9InVybCgjZykiIG9wYWNpdHk9IjAuMTUiLz4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iZyIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiM2MzY2ZjEiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSI1MCUiIHN0b3AtY29sb3I9IiMyMmQzZWUiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjNjM2NmYxIi8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8dGV4dCB4PSI2MDAiIHk9IjI3MCIgZm9udC1mYW1pbHk9IkludGVyLCBzeXN0ZW0tdWksIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iOTYiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiNmZmZmZmYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGxldHRlci1zcGFjaW5nPSItMiI+S0VZQ09ERTwvdGV4dD4KICA8dGV4dCB4PSI2MDAiIHk9IjM0MCIgZm9udC1mYW1pbHk9IkludGVyLCBzeXN0ZW0tdWksIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjgiIGZpbGw9IiMyMmQzZWUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGxldHRlci1zcGFjaW5nPSI0IiBmb250LXdlaWdodD0iMzAwIj5BSS1QT1dFUkVEIFNUVURJTzwvdGV4dD4KICA8cmVjdCB4PSI1NDAiIHk9IjM3MCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSIzIiByeD0iMS41IiBmaWxsPSJ1cmwoI2cpIi8+CiAgPHRleHQgeD0iNjAwIiB5PSI0MTAiIGZvbnQtZmFtaWx5PSJJbnRlciwgc3lzdGVtLXVpLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE4IiBmaWxsPSIjOTRhM2I4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5CdWlsZCB0aGUgZnV0dXJlLCBvbmUgcHJvamVjdCBhdCBhIHRpbWUuPC90ZXh0Pgo8L3N2Zz4K">
+<meta property="og:url" content="https://keycode-studio-production.up.railway.app/ai-health">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="AI Health - KEYCODE Studio">
+<meta name="twitter:description" content="Real-time AI provider status dashboard">
+<meta name="twitter:image" content="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjAwIiBoZWlnaHQ9IjYzMCIgdmlld0JveD0iMCAwIDEyMDAgNjMwIj4KICA8cmVjdCB3aWR0aD0iMTIwMCIgaGVpZ2h0PSI2MzAiIGZpbGw9IiMwYTBhMWEiLz4KICA8cmVjdCB4PSIwIiB5PSIwIiB3aWR0aD0iMTIwMCIgaGVpZ2h0PSI2MzAiIGZpbGw9InVybCgjZykiIG9wYWNpdHk9IjAuMTUiLz4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iZyIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiM2MzY2ZjEiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSI1MCUiIHN0b3AtY29sb3I9IiMyMmQzZWUiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjNjM2NmYxIi8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8dGV4dCB4PSI2MDAiIHk9IjI3MCIgZm9udC1mYW1pbHk9IkludGVyLCBzeXN0ZW0tdWksIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iOTYiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiNmZmZmZmYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGxldHRlci1zcGFjaW5nPSItMiI+S0VZQ09ERTwvdGV4dD4KICA8dGV4dCB4PSI2MDAiIHk9IjM0MCIgZm9udC1mYW1pbHk9IkludGVyLCBzeXN0ZW0tdWksIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjgiIGZpbGw9IiMyMmQzZWUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGxldHRlci1zcGFjaW5nPSI0IiBmb250LXdlaWdodD0iMzAwIj5BSS1QT1dFUkVEIFNUVURJTzwvdGV4dD4KICA8cmVjdCB4PSI1NDAiIHk9IjM3MCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSIzIiByeD0iMS41IiBmaWxsPSJ1cmwoI2cpIi8+CiAgPHRleHQgeD0iNjAwIiB5PSI0MTAiIGZvbnQtZmFtaWx5PSJJbnRlciwgc3lzdGVtLXVpLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE4IiBmaWxsPSIjOTRhM2I4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5CdWlsZCB0aGUgZnV0dXJlLCBvbmUgcHJvamVjdCBhdCBhIHRpbWUuPC90ZXh0Pgo8L3N2Zz4K">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#ffffff">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"></noscript>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous">
+<style>
+:root{--bg:#0a0a1a;--card:#12122a;--primary:#ffffff;--accent:#22d3ee;--text:#e2e8f0;--ash:#94a3b8;--success:#10b981;--error:#ef4444;--warning:#f59e0b;--surface:#181825;--glass:rgba(255,255,255,0.06);--radius:12px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--card);border-radius:4px}
+
+/* Header */
+.header{background:rgba(10,10,26,0.85);backdrop-filter:blur(16px);border-bottom:1px solid var(--glass);position:sticky;top:0;z-index:100;padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between}
+.header-logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text)}
+.logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--primary),var(--accent));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff}
+.logo-text{font-size:18px;font-weight:800;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.header-right{display:flex;align-items:center;gap:12px;font-size:13px;color:var(--ash)}
+
+/* Hero */
+.hero{padding:40px 24px 20px;max-width:1200px;margin:0 auto;text-align:center}
+.hero h1{font-size:32px;font-weight:800;margin-bottom:6px}
+.hero p{font-size:14px;color:var(--ash);max-width:500px;margin:0 auto 20px;line-height:1.6}
+
+/* Overall status badge */
+.overall-badge{display:inline-flex;align-items:center;gap:8px;padding:8px 20px;border-radius:100px;font-size:13px;font-weight:600;margin-bottom:20px}
+.overall-badge .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.overall-badge.good{background:rgba(16,185,129,0.12);color:var(--success);border:1px solid rgba(16,185,129,0.2)}
+.overall-badge.good .dot{background:var(--success);box-shadow:0 0 8px rgba(16,185,129,0.5)}
+.overall-badge.degraded{background:rgba(245,158,11,0.12);color:var(--warning);border:1px solid rgba(245,158,11,0.2)}
+.overall-badge.degraded .dot{background:var(--warning);box-shadow:0 0 8px rgba(245,158,11,0.5)}
+.overall-badge.major{background:rgba(239,68,68,0.12);color:var(--error);border:1px solid rgba(239,68,68,0.2)}
+.overall-badge.major .dot{background:var(--error);box-shadow:0 0 8px rgba(239,68,68,0.5)}
+
+/* Controls */
+.controls{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:28px;flex-wrap:wrap}
+.countdown{font-size:13px;color:var(--ash);display:flex;align-items:center;gap:6px}
+.refresh-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:8px;border:1px solid var(--glass);background:var(--card);color:var(--text);font-size:13px;font-family:inherit;cursor:pointer;transition:.2s}
+.refresh-btn:hover{background:rgba(255,255,255,0.06);border-color:rgba(99,102,241,0.3)}
+.refresh-btn:disabled{opacity:.5;cursor:not-allowed}
+.refresh-btn i{font-size:14px}
+.refresh-btn .fa-spinner{animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Grid */
+.grid{max-width:1200px;margin:0 auto;padding:0 24px 60px;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+
+/* Card */
+.card{background:var(--card);border-radius:var(--radius);border:1px solid var(--glass);padding:20px;transition:.3s;position:relative;overflow:hidden}
+.card:hover{transform:translateY(-2px)}
+.card.online{border-left:3px solid var(--success)}
+.card.offline{border-left:3px solid var(--error)}
+.card.degraded{border-left:3px solid var(--warning)}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.card-name{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:700}
+.card-name i{width:20px;text-align:center;font-size:16px;color:var(--primary)}
+.status-indicator{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500}
+.status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.status-dot.online{background:var(--success);box-shadow:0 0 6px rgba(16,185,129,0.5)}
+.status-dot.offline{background:var(--error);box-shadow:0 0 6px rgba(239,68,68,0.5)}
+.status-dot.degraded{background:var(--warning);box-shadow:0 0 6px rgba(245,158,11,0.5)}
+.card-details{display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;color:var(--ash)}
+.card-details .label{color:rgba(148,163,184,0.6)}
+.card-details .value{color:var(--text);font-weight:500}
+.card-details .full{grid-column:1/-1}
+.error-msg{font-size:12px;color:var(--error);margin-top:8px;padding:6px 10px;background:rgba(239,68,68,0.08);border-radius:6px;word-break:break-all}
+
+/* History dots */
+.history{display:flex;align-items:center;gap:4px;margin-top:12px;padding-top:12px;border-top:1px solid var(--glass)}
+.history-label{font-size:10px;color:var(--ash);text-transform:uppercase;letter-spacing:.5px;margin-right:6px;opacity:.6}
+.history-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.history-dot.online{background:var(--success)}
+.history-dot.offline{background:var(--error)}
+.history-dot.degraded{background:var(--warning)}
+.history-dot.pending{background:var(--ash);opacity:.3}
+
+/* Skeleton */
+.skeleton{background:linear-gradient(90deg,var(--card) 25%,rgba(255,255,255,0.03) 50%,var(--card) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.skel-card{background:var(--card);border-radius:var(--radius);border:1px solid var(--glass);padding:20px}
+.skel-line{height:14px;border-radius:6px;margin-bottom:10px}
+.skel-line.w50{width:50%}.skel-line.w30{width:30%}.skel-line.w70{width:70%}
+.skel-line.w40{width:40%}.skel-line:last-child{margin-bottom:0}
+
+/* Error state */
+.error-state{text-align:center;padding:60px 24px;grid-column:1/-1}
+.error-state i{font-size:40px;color:var(--error);margin-bottom:16px}
+.error-state h3{font-size:18px;margin-bottom:6px}
+.error-state p{font-size:13px;color:var(--ash);margin-bottom:20px}
+.error-state .retry-btn{display:inline-flex;align-items:center;gap:8px;padding:10px 24px;border-radius:8px;border:none;background:var(--primary);color:#fff;font-size:14px;font-family:inherit;font-weight:600;cursor:pointer;transition:.2s}
+.error-state .retry-btn:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(99,102,241,0.3)}
+
+/* Empty state */
+.empty-state{text-align:center;padding:60px 24px;grid-column:1/-1}
+.empty-state i{font-size:40px;color:var(--ash);margin-bottom:16px;opacity:.4}
+.empty-state h3{font-size:18px;margin-bottom:6px}
+.empty-state p{font-size:13px;color:var(--ash)}
+
+/* Footer */
+.footer{text-align:center;padding:24px;font-size:12px;color:var(--ash);border-top:1px solid var(--glass)}
+.footer a{color:var(--primary);text-decoration:none}
+.footer a:hover{text-decoration:underline}
+
+/* Responsive */
+@media(max-width:640px){
+.hero h1{font-size:24px}
+.hero{padding:28px 16px 16px}
+.grid{padding:0 16px 40px;grid-template-columns:1fr}
+.card-details{grid-template-columns:1fr}
+.header{padding:0 16px}
+}
+</style>
+    </head>
+<body>
+  <div id="kc-loader">
+    <div id="kc-loader-scene"></div>
+      <div id="kc-bg-text" aria-hidden="true">KEYCODE</div>
+<div class="kc-loader-info" style="position:absolute;bottom:48px;left:50%;transform:translateX(-50%);">
+      <div id="kc-loader-bar-track"><div id="kc-loader-bar"></div></div>
+      <div id="kc-loader-pct" style="font-family:'Inter',sans-serif;font-size:11px;color:#555;letter-spacing:.12em;text-align:center;">0%</div>
+    </div>
+  </div>
+
+  <div id="site-nav"></div>
+
+<header class="header">
+  <a href="/" class="header-logo">
+    <div class="logo-icon"><i class="fas fa-code"></i></div>
+    <span class="logo-text">KEYCODE</span>
+  </a>
+  <div class="header-right">
+    <i class="fas fa-shield-halved"></i> AI Health
+  </div>
+</header>
+
+<section class="hero">
+  <h1>AI Provider Health</h1>
+  <p>Real-time status of all AI model providers powering KEYCODE Studio</p>
+  <div id="overallBadge" class="overall-badge"><span class="dot"></span><span>Checking...</span></div>
+  <div class="controls">
+    <div class="countdown" id="countdown"><i class="far fa-clock"></i> <span id="countdownText">Refreshing in 30s</span></div>
+    <button class="refresh-btn" id="refreshBtn" onclick="manualRefresh()"><i class="fas fa-rotate"></i> Refresh Now</button>
+  </div>
+</section>
+
+<div class="grid" id="grid"></div>
+
+<footer class="footer">
+  <a href="/">KEYCODE Studio</a> &middot; AI Provider Health Dashboard
+</footer>
+
+<script>
+const ICONS = {
+  DeepSeek: 'fa-microchip', Groq: 'fa-bolt', Mistral: 'fa-wind',
+  OpenRouter: 'fa-route', HuggingFace: 'fa-face-smile', Cloudflare: 'fa-cloud',
+  Qwen: 'fa-robot', Gemini: 'fa-gem', DeepInfra: 'fa-server', Anthropic: 'fa-user-astronaut'
+};
+
+const COLORS = {
+  DeepSeek: '#4f46e5', Groq: '#f97316', Mistral: '#06b6d4', OpenRouter: '#a3a3a3',
+  HuggingFace: '#fbbf24', Cloudflare: '#f6821f', Qwen: '#22c55e', Gemini: '#4285f4',
+  DeepInfra: '#a855f7', Anthropic: '#d946ef'
+};
+
+const grid = document.getElementById('grid');
+const badge = document.getElementById('overallBadge');
+const countdownText = document.getElementById('countdownText');
+const refreshBtn = document.getElementById('refreshBtn');
+
+let providers = [];
+let history = loadHistory();
+let countdown = 30;
+let timer = null;
+
+function loadHistory() {
+  try { return JSON.parse(localStorage.getItem('aiHealthHistory')) || {}; } catch { return {}; }
+}
+
+function saveHistory() {
+  try { localStorage.setItem('aiHealthHistory', JSON.stringify(history)); } catch {}
+}
+
+function getStatusClass(status) {
+  if (status === 'online') return 'online';
+  if (status === 'offline') return 'offline';
+  return 'degraded';
+}
+
+function getStatusText(status, error) {
+  if (status === 'online') return 'Online';
+  if (status === 'offline') return error || 'Offline';
+  return error || 'Degraded';
+}
+
+function renderSkeletons() {
+  grid.innerHTML = Array(8).fill(`
+    <div class="skel-card">
+      <div class="skel-line skel-line w30"></div>
+      <div class="skel-line skel-line w50" style="margin-top:14px"></div>
+      <div class="skel-line skel-line w70"></div>
+      <div class="skel-line skel-line w40"></div>
+    </div>
+  `).join('');
+}
+
+function render() {
+  if (!providers.length) {
+    grid.innerHTML = `<div class="empty-state"><i class="fas fa-server"></i><h3>No Providers</h3><p>No AI providers are currently configured.</p></div>`;
+    updateBadge();
+    return;
+  }
+
+  const onlineCount = providers.filter(p => p.status === 'online').length;
+  grid.innerHTML = providers.map(p => {
+    const sc = getStatusClass(p.status);
+    const icon = ICONS[p.name] || 'fa-cube';
+    const color = COLORS[p.name] || 'var(--primary)';
+    const statusText = getStatusText(p.status, p.error);
+    const st = Math.floor(p.latency) + 'ms';
+    const lastChecked = p.lastChecked ? new Date(p.lastChecked).toLocaleTimeString() : '—';
+    const providerHistory = history[p.name] || [];
+    const historyDots = providerHistory.slice(-5).map(h => `<span class="history-dot ${h}"></span>`).join('');
+    const pendingDots = Array(Math.max(0, 5 - providerHistory.length)).fill('<span class="history-dot pending"></span>').join('');
+
+    return `<div class="card ${sc}">
+      <div class="card-header">
+        <div class="card-name"><i class="fas ${icon}" style="color:${color}"></i>${p.name}</div>
+        <div class="status-indicator"><span class="status-dot ${sc}"></span>${sc === 'online' ? 'Online' : statusText}</div>
+      </div>
+      <div class="card-details">
+        ${p.model ? `<div class="full"><span class="label">Model</span><br><span class="value">${p.model}</span></div>` : ''}
+        ${p.latency != null ? `<div><span class="label">Latency</span><br><span class="value">${st}</span></div>` : ''}
+        <div><span class="label">Status</span><br><span class="value" style="color:${sc === 'online' ? 'var(--success)' : sc === 'offline' ? 'var(--error)' : 'var(--warning)'}">${statusText}</span></div>
+        <div><span class="label">Checked</span><br><span class="value">${lastChecked}</span></div>
+      </div>
+      ${providerHistory.length ? `<div class="history"><span class="history-label">Status History</span>${historyDots}${pendingDots}</div>` : ''}
+    </div>`;
+  }).join('');
+  updateBadge(onlineCount);
+}
+
+function updateBadge(onlineCount) {
+  const total = providers.length;
+  if (!total) {
+    badge.className = 'overall-badge major';
+    badge.innerHTML = '<span class="dot"></span><span>No Data</span>';
+    return;
+  }
+  if (onlineCount === total) {
+    badge.className = 'overall-badge good';
+    badge.innerHTML = `<span class="dot"></span><span>All Systems Operational (${onlineCount}/${total})</span>`;
+  } else if (onlineCount >= total / 2) {
+    badge.className = 'overall-badge degraded';
+    badge.innerHTML = `<span class="dot"></span><span>Degraded (${onlineCount}/${total} online)</span>`;
+  } else {
+    badge.className = 'overall-badge major';
+    badge.innerHTML = `<span class="dot"></span><span>Major Outage (${onlineCount}/${total} online)</span>`;
+  }
+}
+
+async function fetchProviders() {
+  try {
+    const res = await fetch('/api/ai/providers');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'API returned unsuccessful');
+    const ts = data.timestamp || new Date().toISOString();
+    providers = (data.providers || []).map(p => ({ ...p, lastChecked: ts }));
+    providers.forEach(p => {
+      if (!history[p.name]) history[p.name] = [];
+      history[p.name].push(p.status);
+      if (history[p.name].length > 20) history[p.name] = history[p.name].slice(-20);
+    });
+    saveHistory();
+    render();
+  } catch (err) {
+    grid.innerHTML = `<div class="error-state">
+      <i class="fas fa-triangle-exclamation"></i>
+      <h3>Failed to Load</h3>
+      <p>${err.message}</p>
+      <button class="retry-btn" onclick="manualRefresh()"><i class="fas fa-rotate"></i> Retry</button>
+    </div>`;
+    badge.className = 'overall-badge major';
+    badge.innerHTML = '<span class="dot"></span><span>Connection Error</span>';
+  }
+}
+
+function startCountdown() {
+  countdown = 30;
+  countdownText.textContent = 'Refreshing in 30s';
+  clearInterval(timer);
+  timer = setInterval(() => {
+    countdown--;
+    countdownText.textContent = `Refreshing in ${countdown}s`;
+    if (countdown <= 0) {
+      clearInterval(timer);
+      manualRefresh();
+    }
+  }, 1000);
+}
+
+async function manualRefresh() {
+  refreshBtn.disabled = true;
+  refreshBtn.innerHTML = '<i class="fas fa-spinner"></i> Refreshing...';
+  await fetchProviders();
+  startCountdown();
+  refreshBtn.disabled = false;
+  refreshBtn.innerHTML = '<i class="fas fa-rotate"></i> Refresh Now';
+}
+
+// Service worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(() => {});
+}
+
+// Init
+renderSkeletons();
+fetchProviders();
+startCountdown();
+</script>
+  <div id="site-footer"></div>
+    <script src="/js/loading-screen.js"></script>
+<script src="/js/site.js"></script>
+<script src="/js/install.js" defer></script>
+
+  <script src="/js/scroll-3d-animations.js"></script>  <script src="/js/k-scroll.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+</body>
+</html>

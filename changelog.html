@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <title>Changelog · KEYCODE Studio</title>
+  <meta name="description" content="Stay up to date with the latest features, improvements, and fixes across the KEYCODE platform.">
+  <meta name="keywords" content="KEYCODE changelog, release notes, product updates, new features">
+  <meta name="author" content="KEYCODE Studio">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://keycode-studio-production.up.railway.app/changelog.html">
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://keycode-studio-production.up.railway.app/changelog.html">
+  <meta property="og:title" content="Changelog · KEYCODE Studio">
+  <meta property="og:description" content="Stay up to date with the latest features, improvements, and fixes across the KEYCODE platform.">
+  <meta property="og:image" content="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjAwIiBoZWlnaHQ9IjYzMCIgdmlld0JveD0iMCAwIDEyMDAgNjMwIj4KICA8cmVjdCB3aWR0aD0iMTIwMCIgaGVpZ2h0PSI2MzAiIGZpbGw9IiMwYTBhMWEiLz4KICA8cmVjdCB4PSIwIiB5PSIwIiB3aWR0aD0iMTIwMCIgaGVpZ2h0PSI2MzAiIGZpbGw9InVybCgjZykiIG9wYWNpdHk9IjAuMTUiLz4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iZyIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiM2MzY2ZjEiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSI1MCUiIHN0b3AtY29sb3I9IiMyMmQzZWUiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjNjM2NmYxIi8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8dGV4dCB4PSI2MDAiIHk9IjI3MCIgZm9udC1mYW1pbHk9IkludGVyLCBzeXN0ZW0tdWksIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iOTYiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiNmZmZmZmYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGxldHRlci1zcGFjaW5nPSItMiI+S0VZQ09ERTwvdGV4dD4KICA8dGV4dCB4PSI2MDAiIHk9IjM0MCIgZm9udC1mYW1pbHk9IkludGVyLCBzeXN0ZW0tdWksIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjgiIGZpbGw9IiMyMmQzZWUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGxldHRlci1zcGFjaW5nPSI0IiBmb250LXdlaWdodD0iMzAwIj5BSS1QT1dFUkVEIFNUVURJTzwvdGV4dD4KICA8cmVjdCB4PSI1NDAiIHk9IjM3MCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSIzIiByeD0iMS41IiBmaWxsPSJ1cmwoI2cpIi8+CiAgPHRleHQgeD0iNjAwIiB5PSI0MTAiIGZvbnQtZmFtaWx5PSJJbnRlciwgc3lzdGVtLXVpLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE4IiBmaWxsPSIjOTRhM2I4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5CdWlsZCB0aGUgZnV0dXJlLCBvbmUgcHJvamVjdCBhdCBhIHRpbWUuPC90ZXh0Pgo8L3N2Zz4K">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Changelog · KEYCODE Studio">
+  <meta name="twitter:description" content="Latest features, improvements, and fixes from KEYCODE.">
+  <meta name="twitter:image" content="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjAwIiBoZWlnaHQ9IjYzMCIgdmlld0JveD0iMCAwIDEyMDAgNjMwIj4KICA8cmVjdCB3aWR0aD0iMTIwMCIgaGVpZ2h0PSI2MzAiIGZpbGw9IiMwYTBhMWEiLz4KICA8cmVjdCB4PSIwIiB5PSIwIiB3aWR0aD0iMTIwMCIgaGVpZ2h0PSI2MzAiIGZpbGw9InVybCgjZykiIG9wYWNpdHk9IjAuMTUiLz4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iZyIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiM2MzY2ZjEiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSI1MCUiIHN0b3AtY29sb3I9IiMyMmQzZWUiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjNjM2NmYxIi8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8dGV4dCB4PSI2MDAiIHk9IjI3MCIgZm9udC1mYW1pbHk9IkludGVyLCBzeXN0ZW0tdWksIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iOTYiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiNmZmZmZmYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGxldHRlci1zcGFjaW5nPSItMiI+S0VZQ09ERTwvdGV4dD4KICA8dGV4dCB4PSI2MDAiIHk9IjM0MCIgZm9udC1mYW1pbHk9IkludGVyLCBzeXN0ZW0tdWksIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjgiIGZpbGw9IiMyMmQzZWUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGxldHRlci1zcGFjaW5nPSI0IiBmb250LXdlaWdodD0iMzAwIj5BSS1QT1dFUkVEIFNUVURJTzwvdGV4dD4KICA8cmVjdCB4PSI1NDAiIHk9IjM3MCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSIzIiByeD0iMS41IiBmaWxsPSJ1cmwoI2cpIi8+CiAgPHRleHQgeD0iNjAwIiB5PSI0MTAiIGZvbnQtZmFtaWx5PSJJbnRlciwgc3lzdGVtLXVpLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE4IiBmaWxsPSIjOTRhM2I4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5CdWlsZCB0aGUgZnV0dXJlLCBvbmUgcHJvamVjdCBhdCBhIHRpbWUuPC90ZXh0Pgo8L3N2Zz4K">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "Changelog \u00b7 KEYCODE Studio",
+    "description": "Stay up to date with the latest features, improvements, and fixes across the KEYCODE platform.",
+    "publisher": {
+      "@type": "Organization",
+      "name": "KEYCODE Studio"
+    }
+  }
+  </script>
+
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="KEYCODE">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="alternate icon" type="image/png" href="/assets/favicon-DMHYNXc2.png">
+
+  <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" media="print" onload="this.media='all'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer"></noscript>
+
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px;scroll-behavior:smooth;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+body{
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  background:#0a0a1a;color:#e2e8f0;
+  min-height:100vh;line-height:1.6;overflow-x:hidden;
+}
+img{max-width:100%;height:auto;display:block}
+a{color:#ffffff;text-decoration:none}
+a:hover{color:#22d3ee}
+button{cursor:pointer;font-family:'Inter',sans-serif;border:none;background:none}
+input{font-family:'Inter',sans-serif}
+
+.container{max-width:1060px;margin:0 auto;padding:0 24px}
+
+/* Navbar */
+.navbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;height:64px;
+  max-width:1200px;margin:0 auto;
+  border-bottom:1px solid rgba(255,255,255,0.06);
+  position:sticky;top:0;z-index:100;
+  background:rgba(10,10,26,0.85);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+}
+.nav-logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:22px;color:#e2e8f0;letter-spacing:-0.5px}
+.nav-logo img{height:30px;width:auto}
+.nav-links{display:flex;align-items:center;gap:2px;list-style:none}
+.nav-links a{
+  padding:8px 16px;border-radius:8px;font-size:14px;font-weight:500;
+  color:#94a3b8;transition:all 0.2s ease;
+}
+.nav-links a:hover{color:#e2e8f0;background:rgba(255,255,255,0.04)}
+.nav-links a.active{color:#ffffff;background:rgba(99,102,241,0.12)}
+.nav-actions{display:flex;align-items:center;gap:12px}
+.mobile-menu-btn{display:none;background:none;border:none;color:#94a3b8;font-size:1.3rem;padding:4px}
+@media(max-width:768px){
+  .nav-links{display:none;position:absolute;top:64px;left:0;right:0;background:rgba(10,10,26,0.98);backdrop-filter:blur(16px);flex-direction:column;padding:12px;border-bottom:1px solid rgba(255,255,255,0.06)}
+  .nav-links.open{display:flex}
+  .mobile-menu-btn{display:block}
+}
+
+/* Hero */
+.hero{
+  padding:56px 0 40px;text-align:center;
+  position:relative;
+}
+.hero::after{
+  content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);
+  width:240px;height:1px;
+  background:linear-gradient(90deg,transparent,#ffffff,transparent);
+}
+.hero h1{font-size:clamp(2rem,5vw,3.2rem);font-weight:800;letter-spacing:-1.5px;line-height:1.15}
+.hero h1 span{background:linear-gradient(135deg,#ffffff,#22d3ee);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero p{color:#94a3b8;font-size:1.05rem;max-width:540px;margin:10px auto 0}
+
+/* Subscribe button */
+.subscribe-top{text-align:center;padding-bottom:32px}
+.btn-subscribe{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:10px 22px;border-radius:8px;font-size:14px;font-weight:600;
+  border:1px solid rgba(255,255,255,0.06);color:#94a3b8;
+  background:rgba(255,255,255,0.03);
+  transition:all 0.2s ease;
+}
+.btn-subscribe:hover{border-color:#ffffff;color:#e2e8f0;background:rgba(99,102,241,0.1)}
+.btn-subscribe i{font-size:13px}
+
+/* Timeline */
+.timeline{position:relative;padding:12px 0 60px}
+.timeline::before{
+  content:'';position:absolute;left:50%;top:0;bottom:0;
+  width:2px;background:rgba(255,255,255,0.06);
+  transform:translateX(-50%);
+}
+.timeline-entry{
+  position:relative;display:flex;margin-bottom:40px;
+}
+.timeline-entry:last-child{margin-bottom:0}
+.timeline-dot{
+  position:absolute;left:50%;top:32px;z-index:2;
+  width:16px;height:16px;border-radius:50%;
+  background:#12122a;border:2px solid rgba(255,255,255,0.06);
+  transform:translateX(-50%);
+  transition:border-color 0.3s ease;
+}
+.timeline-entry:hover .timeline-dot{border-color:#ffffff}
+.timeline-dot.latest{background:#ffffff;border-color:#ffffff;box-shadow:0 0 20px rgba(99,102,241,0.4)}
+.timeline-card{
+  width:calc(50% - 40px);margin-left:auto;
+  background:#12122a;border-radius:14px;padding:28px 30px;
+  border:1px solid rgba(255,255,255,0.06);
+  position:relative;transition:all 0.3s ease;
+}
+.timeline-entry:nth-child(odd) .timeline-card{margin-left:0;margin-right:auto}
+.timeline-card:hover{
+  border-color:rgba(99,102,241,0.3);
+  box-shadow:0 4px 32px rgba(99,102,241,0.08);
+  transform:translateY(-2px);
+}
+.timeline-card::before{
+  content:'';position:absolute;top:28px;width:12px;height:12px;
+  background:#12122a;transform:rotate(45deg);
+  border:1px solid rgba(255,255,255,0.06);
+}
+.timeline-entry:nth-child(odd) .timeline-card::before{right:-7px;border-left:none;border-bottom:none}
+.timeline-entry:nth-child(even) .timeline-card::before{left:-7px;border-right:none;border-top:none}
+
+@media(max-width:860px){
+  .timeline::before{left:20px}
+  .timeline-dot{left:20px}
+  .timeline-card{width:calc(100% - 52px);margin-left:52px!important}
+  .timeline-entry:nth-child(odd) .timeline-card{margin-left:52px!important}
+  .timeline-card::before{display:none}
+}
+
+/* Version header */
+.release-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.release-version{font-size:1.35rem;font-weight:700;letter-spacing:-0.3px}
+.release-version .date{font-weight:400;font-size:0.85rem;color:#94a3b8;margin-left:8px}
+.release-badges{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.badge{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;
+  letter-spacing:0.2px;text-transform:uppercase;
+}
+.badge-latest{background:rgba(99,102,241,0.15);color:#ffffff}
+.badge-tag{background:rgba(255,255,255,0.04);color:#94a3b8}
+
+.release-title{font-size:0.95rem;color:#94a3b8;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,0.06)}
+
+/* Category groups */
+.release-group{margin-bottom:20px}
+.release-group:last-child{margin-bottom:0}
+.release-group h4{
+  font-size:0.85rem;font-weight:600;text-transform:uppercase;
+  letter-spacing:0.5px;margin-bottom:10px;display:flex;align-items:center;gap:8px;
+}
+.release-group h4 .icon{font-size:1rem}
+.group-new h4 .icon{color:#ffffff}
+.group-improve h4 .icon{color:#22d3ee}
+.group-fix h4 .icon{color:#10b981}
+
+.release-group ul{list-style:none;display:flex;flex-direction:column;gap:6px}
+.release-group li{
+  font-size:0.9rem;color:#c8d0dc;padding:4px 0 4px 22px;
+  position:relative;line-height:1.45;
+}
+.release-group li::before{
+  content:'\f105';font-family:'Font Awesome 6 Free';
+  font-weight:900;position:absolute;left:2px;top:5px;
+  font-size:12px;color:rgba(255,255,255,0.2);
+}
+.release-group li strong{color:#e2e8f0;font-weight:600}
+
+/* Subscribe section */
+.subscribe-section{
+  margin-top:20px;padding:56px 20px 64px;
+  text-align:center;position:relative;
+}
+.subscribe-section::before{
+  content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:240px;height:1px;
+  background:linear-gradient(90deg,transparent,#ffffff,transparent);
+}
+.subscribe-section h2{font-size:1.5rem;font-weight:700;margin-bottom:8px}
+.subscribe-section p{color:#94a3b8;font-size:0.95rem;margin-bottom:24px}
+.subscribe-form{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  max-width:460px;margin:0 auto;flex-wrap:wrap;
+}
+.subscribe-form input{
+  flex:1;min-width:220px;padding:11px 16px;border-radius:8px;font-size:14px;
+  background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);
+  color:#e2e8f0;outline:none;transition:all 0.2s ease;
+}
+.subscribe-form input:focus{border-color:#ffffff;background:rgba(255,255,255,0.06)}
+.subscribe-form input::placeholder{color:#64748b}
+.subscribe-form button{
+  padding:11px 24px;border-radius:8px;font-size:14px;font-weight:600;
+  background:#ffffff;color:#fff;border:none;
+  transition:all 0.2s ease;
+}
+.subscribe-form button:hover{background:#5558e6;transform:translateY(-1px)}
+.subscribe-form button:disabled{opacity:0.6;cursor:not-allowed}
+.subscribe-form .fa-spinner{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.subscribe-success{
+  color:#10b981;font-size:0.9rem;margin-top:12px;display:none;
+}
+
+/* Footer */
+.footer{
+  padding:24px;text-align:center;border-top:1px solid rgba(255,255,255,0.06);
+  font-size:13px;color:#64748b;
+}
+.footer a{color:#94a3b8}
+.footer a:hover{color:#ffffff}
+
+/* Toast */
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
+  padding:12px 24px;border-radius:10px;font-size:14px;font-weight:500;
+  background:#12122a;border:1px solid rgba(255,255,255,0.06);
+  color:#e2e8f0;opacity:0;transition:all 0.4s ease;z-index:999;
+  pointer-events:none;backdrop-filter:blur(12px);
+  box-shadow:0 8px 32px rgba(0,0,0,0.4);
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.success{border-color:#10b981}
+.toast.error{border-color:#ef4444}
+</style>
+    </head>
+<body>
+  <div id="kc-loader">
+    <div id="kc-loader-scene"></div>
+      <div id="kc-bg-text" aria-hidden="true">KEYCODE</div>
+<div class="kc-loader-info" style="position:absolute;bottom:48px;left:50%;transform:translateX(-50%);">
+      <div id="kc-loader-bar-track"><div id="kc-loader-bar"></div></div>
+      <div id="kc-loader-pct" style="font-family:'Inter',sans-serif;font-size:11px;color:#555;letter-spacing:.12em;text-align:center;">0%</div>
+    </div>
+  </div>
+
+  <div id="site-nav"></div>
+
+  <div class="container">
+    <section class="hero">
+      <h1><span>Changelog</span></h1>
+      <p>Stay up to date with the latest features, improvements, and fixes</p>
+    </section>
+
+    <div class="subscribe-top">
+      <button class="btn-subscribe" onclick="openSubscribe()" aria-label="Subscribe to updates">
+        <i class="fas fa-rss"></i>
+        Subscribe to updates
+      </button>
+    </div>
+
+    <div class="timeline" id="timeline"></div>
+
+    <section class="subscribe-section" id="subscribe">
+      <h2>Never miss an update</h2>
+      <p>Subscribe to our newsletter to get notified about new releases</p>
+      <form class="subscribe-form" id="subscribeForm" action="/api/subscribe" method="POST">
+        <input type="email" name="email" placeholder="you@example.com" required autocomplete="email">
+        <button type="submit" id="subscribeBtn">
+          <span id="subscribeText">Subscribe</span>
+          <i class="fas fa-spinner" id="subscribeSpinner" style="display:none"></i>
+        </button>
+      </form>
+      <div class="subscribe-success" id="subscribeSuccess">
+        <i class="fas fa-check-circle"></i> You're subscribed! Thanks.
+      </div>
+    </section>
+  </div>
+
+  <footer class="footer">
+    <p>&copy; 2025 KEYCODE Studio. <a href="privacy.html">Privacy</a> &middot; <a href="terms.html">Terms</a> &middot; <a href="changelog.html">Changelog</a></p>
+  </footer>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+;(function(){'use strict';
+
+const releases = [{
+  version:'2.5.0',date:'Today',title:'Major Update',latest:true,
+  tags:['New Feature','Improvement','Fix'],
+  groups:[
+    {type:'new',items:['AI Playground — Try KEYCODE\'s AI generation without signing up','Deployments Dashboard — Manage all your deployments in one place','Download Center — Browse and download all generated files','Changelog page — You\'re looking at it!']},
+    {type:'improve',items:['OG/Twitter meta tags added to all 31 pages for better social sharing','Async CSS loading improves page load performance','Viewport now allows pinch-zoom for accessibility','Vite build optimizes all pages for production']},
+    {type:'fix',items:['Stripe publishable key no longer hardcoded','Service worker now precaches all pages','Duplicate 404/offline pages consolidated','Social links now point to real URLs']}
+  ]
+},{
+  version:'2.4.0',date:'3 days ago',title:'Platform Overhaul',
+  groups:[
+    {type:'new',items:['Notification Center with SSE real-time','AI Provider Health Dashboard','Project Gallery with filters','Live Website Preview']},
+    {type:'fix',items:['PORT and FRONTEND_URL server errors fixed','117 infrastructure issues resolved']}
+  ]
+},{
+  version:'2.3.0',date:'1 week ago',title:'AI Studio Expansion',
+  groups:[
+    {type:'new',items:['Code Review AI endpoint','Competitor Analysis tool','PCB Design generation']},
+    {type:'improve',items:['Rate limiting for AI endpoints','Better error handling']}
+  ]
+},{
+  version:'2.2.0',date:'2 weeks ago',title:'Security & Infrastructure',
+  groups:[
+    {type:'new',items:['Docker multi-stage build','CI/CD pipeline','WebSocket streaming','Swagger API documentation']},
+    {type:'improve',items:['Security hardening across all layers']}
+  ]
+},{
+  version:'2.1.0',date:'1 month ago',title:'Model Extraction',
+  groups:[
+    {type:'new',items:['20 Mongoose models extracted','Jest test suite']},
+    {type:'improve',items:['Code organization']}
+  ]
+},{
+  version:'2.0.0',date:'2 months ago',title:'Initial Launch',
+  groups:[
+    {type:'new',items:['AI-powered website generation','User authentication system','Payment processing','Admin panel']}
+  ]
+}];
+
+const groupMeta = {
+  new:{icon:'fa-rocket',label:'New Features',cls:'group-new'},
+  improve:{icon:'fa-sparkles',label:'Improvements',cls:'group-improve'},
+  fix:{icon:'fa-bug',label:'Bug Fixes',cls:'group-fix'}
+};
+
+const timeline = document.getElementById('timeline');
+
+releases.forEach((r,idx) => {
+  const entry = document.createElement('div');
+  entry.className = 'timeline-entry';
+
+  const dot = document.createElement('div');
+  dot.className = 'timeline-dot' + (r.latest ? ' latest' : '');
+  entry.appendChild(dot);
+
+  const card = document.createElement('div');
+  card.className = 'timeline-card';
+
+  let badgesHTML = '';
+  if (r.latest) badgesHTML += '<span class="badge badge-latest"><i class="fas fa-star"></i> Latest</span>';
+  if (r.tags) r.tags.forEach(t => {
+    badgesHTML += '<span class="badge badge-tag">' + t + '</span>';
+  });
+
+  card.innerHTML =
+    '<div class="release-header">' +
+      '<div class="release-version">v' + r.version + ' <span class="date">' + r.date + '</span></div>' +
+      '<div class="release-badges">' + badgesHTML + '</div>' +
+    '</div>' +
+    '<div class="release-title">' + r.title + '</div>';
+
+  r.groups.forEach(g => {
+    const meta = groupMeta[g.type] || {icon:'fa-circle',label:g.type,cls:''};
+    const groupDiv = document.createElement('div');
+    groupDiv.className = 'release-group ' + meta.cls;
+    let ul = '<h4><i class="fas ' + meta.icon + ' icon"></i> ' + meta.label + '</h4><ul>';
+    g.items.forEach(item => {
+      ul += '<li>' + item + '</li>';
+    });
+    ul += '</ul>';
+    groupDiv.innerHTML = ul;
+    card.appendChild(groupDiv);
+  });
+
+  entry.appendChild(card);
+  timeline.appendChild(entry);
+});
+
+/* Mobile menu */
+window.toggleMobileMenu = function(){
+  document.getElementById('navLinks').classList.toggle('open');
+};
+
+/* Subscribe button (top) - scroll + focus */
+window.openSubscribe = function(){
+  const el = document.getElementById('subscribe');
+  el.scrollIntoView({behavior:'smooth',block:'center'});
+  setTimeout(() => {
+    const inp = document.querySelector('#subscribeForm input');
+    if(inp) inp.focus();
+  },500);
+};
+
+/* Subscribe form */
+const form = document.getElementById('subscribeForm');
+const btn = document.getElementById('subscribeBtn');
+const txt = document.getElementById('subscribeText');
+const spin = document.getElementById('subscribeSpinner');
+const success = document.getElementById('subscribeSuccess');
+
+form.addEventListener('submit',async function(e){
+  e.preventDefault();
+  const email = this.email.value.trim();
+  if(!email) return;
+
+  btn.disabled = true;
+  txt.textContent = 'Subscribing...';
+  spin.style.display = 'inline-block';
+
+  try{
+    const res = await fetch('/api/subscribe',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({email})
+    });
+    if(!res.ok) throw new Error('Request failed');
+    success.style.display = 'block';
+    form.email.value = '';
+    form.email.parentElement.style.display = 'none';
+    showToast('Subscribed successfully!','success');
+  }catch(err){
+    showToast('Something went wrong. Try again.','error');
+  }finally{
+    btn.disabled = false;
+    txt.textContent = 'Subscribe';
+    spin.style.display = 'none';
+  }
+});
+
+function showToast(msg,type){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + (type||'') + ' show';
+  clearTimeout(t._hide);
+  t._hide = setTimeout(() => t.classList.remove('show'),3500);
+}
+
+/* Inline SVG sparkles fallback (fa-sparkles alias) */
+if(!document.querySelector('.fa-sparkles')){
+  const style = document.createElement('style');
+  style.textContent = '.fa-sparkles:before{content:"\\f0eb"}';
+  document.head.appendChild(style);
+}
+
+})();
+</script>
+
+<script>
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/sw.js').catch(function(){});
+}
+</script>
+
+  <div id="site-footer"></div>
+    <script src="/js/loading-screen.js"></script>
+<script src="/js/site.js"></script>
+<script src="/js/install.js" defer></script>
+
+  <script src="/js/scroll-3d-animations.js"></script>  <script src="/js/k-scroll.js" defer></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+</body>
+</html>

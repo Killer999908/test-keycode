@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Real-time AI Game Builder — KEYCODE Studio</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#030305;--obsidian:#0a0a0f;--graphite:#12121a;--slate:#1a1a24;--surface:#181825;--panel:rgba(15,17,34,0.72);
+  --primary:#ffffff;--primary-glow:#818cf8;--secondary:#ec4899;--accent:#22d3ee;
+  --success:#10b981;--warning:#f59e0b;--danger:#ef4444;--white:#fff;--ash:#94a3b8;
+  --glass-border:rgba(255,255,255,0.06);--glass-border-strong:rgba(255,255,255,0.12);
+  --grad:linear-gradient(135deg,#ffffff,#22d3ee);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:var(--void);color:var(--white);overflow-x:hidden;-webkit-font-smoothing:antialiased;min-height:100vh}
+body::before{content:"";position:fixed;inset:0;z-index:-2;background:radial-gradient(900px 480px at 12% -5%,rgba(99,102,241,0.12),transparent 60%),radial-gradient(800px 420px at 88% -5%,rgba(34,211,238,0.1),transparent 60%),radial-gradient(700px 500px at 50% 110%,rgba(236,72,153,0.08),transparent 60%)}
+body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.4;background-image:linear-gradient(rgba(255,255,255,0.015) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.015) 1px,transparent 1px);background-size:44px 44px}
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:var(--void)}::-webkit-scrollbar-thumb{background:#23263f;border-radius:6px}
+::selection{background:rgba(99,102,241,0.4)}
+
+/* Header */
+.header{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:rgba(10,10,15,0.9);backdrop-filter:blur(16px);border-bottom:1px solid var(--glass-border);position:sticky;top:0;z-index:100}
+.header .logo{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;display:flex;align-items:center;gap:8px}
+.header .logo i{font-size:16px;-webkit-text-fill-color:var(--primary)}
+.header .nav-links{display:flex;gap:10px}
+.header .nav-links a{padding:8px 16px;border-radius:8px;color:var(--ash);text-decoration:none;font-size:13px;font-weight:500;transition:.3s}
+.header .nav-links a:hover{color:var(--white);background:rgba(255,255,255,0.06)}
+.header .nav-links a.active,.header .nav-links a.dashboard-link{background:var(--grad);color:#fff}
+
+.container{max-width:1400px;margin:0 auto;padding:24px 20px}
+
+/* Hero */
+.hero{margin-bottom:20px}
+.hero h1{font-family:'Syne',sans-serif;font-size:32px;font-weight:800;line-height:1.1}
+.hero h1 .accent{background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{color:var(--ash);font-size:14px;margin-top:6px;max-width:700px;line-height:1.6}
+
+/* Prompt Row */
+.prompt-row{display:flex;gap:12px;align-items:flex-end;margin-bottom:16px;flex-wrap:gap}
+.prompt-row textarea{flex:1;min-height:90px;max-height:160px;resize:vertical;background:var(--obsidian);border:1px solid var(--glass-border-strong);border-radius:14px;color:var(--white);font-family:'Inter';font-size:13.5px;line-height:1.6;padding:14px 15px;outline:none;transition:.25s}
+.prompt-row textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(99,102,241,0.18)}
+.prompt-row textarea::placeholder{color:#5a648a}
+
+/* Engine selector */
+.engine-selector{display:flex;flex-direction:column;gap:6px}
+.engine-selector .lbl{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5a648a}
+.engine-seg{display:flex;background:var(--slate);border:1px solid var(--glass-border);border-radius:10px;padding:3px;gap:2px}
+.engine-seg button{border:none;background:transparent;color:var(--ash);font-family:'Inter';font-size:12.5px;font-weight:600;padding:8px 16px;border-radius:8px;cursor:pointer;transition:.2s;display:inline-flex;align-items:center;gap:6px}
+.engine-seg button:hover{color:var(--white)}
+.engine-seg button.active{background:var(--grad);color:#fff}
+
+/* Phase Status Bar */
+.status-bar{background:var(--panel);backdrop-filter:blur(14px);border:1px solid var(--glass-border);border-radius:14px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:14px;min-height:48px}
+.status-bar .phase-dots{display:flex;gap:6px;align-items:center}
+.status-bar .dot{width:8px;height:8px;border-radius:50%;background:#2a2f42;border:1px solid var(--glass-border)}
+.status-bar .dot.active{background:var(--primary);box-shadow:0 0 10px var(--primary);animation:pulse 1.5s infinite}
+.status-bar .dot.done{background:var(--success);box-shadow:0 0 8px var(--success)}
+.status-bar .phase-text{flex:1;font-size:13px;color:var(--ash);display:flex;align-items:center;gap:8px}
+.status-bar .phase-text .current{color:var(--white);font-weight:600}
+.status-bar .phase-text .provider{color:var(--primary);font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+.status-bar .btn-stop{padding:8px 18px;border:none;border-radius:10px;font-family:'Inter';font-size:12.5px;font-weight:700;cursor:pointer;transition:.2s;color:#fff;background:linear-gradient(135deg,var(--danger),#b91c1c);display:inline-flex;align-items:center;gap:6px}
+.status-bar .btn-stop:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(239,68,68,0.4)}
+.status-bar .btn-stop:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* Split View */
+.split-view{display:grid;grid-template-columns:1fr 1fr;gap:16px;min-height:500px;height:[calc(100vh-260px)]}
+@media(max-width:1024px){.split-view{grid-template-columns:1fr}}
+
+/* Code Panel */
+.code-panel{background:var(--obsidian);border:1px solid var(--glass-border);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+.code-panel .panel-header{padding:12px 18px;border-bottom:1px solid var(--glass-border);font-size:12.5px;font-weight:600;display:flex;align-items:center;justify-content:space-between}
+.code-panel .panel-header .left{display:flex;align-items:center;gap:8px}
+.code-panel .panel-header .left i{color:var(--primary)}
+.code-panel .panel-header .stats{color:var(--ash);font-size:10.5px}
+.code-editor-container{flex:1;overflow:hidden;position:relative}
+.code-editor-wrapper{display:flex;height:100%}
+.line-numbers{width:42px;background:#0d0f1a;box-sizing:border-box;padding:0 8px;font-family:'Fira Code',monospace;font-size:12px;line-height:1.5;color:#4a5065;text-align:right;user-select:none;border-right:1px solid var(--glass-border);overflow:hidden}
+.code-textarea{flex:1;min-width:0;background:transparent;color:#e7eaf6;font-family:'Fira Code',monospace;font-size:12px;line-height:1.5;resize:none;outline:none;border:none;overflow:auto;padding:14px;tab-size:2;white-space:pre;word-wrap:normal;overflow-wrap:normal;-webkit-font-smoothing:antialiased}
+.code-textarea::-webkit-scrollbar{width:8px}
+.code-textarea:focus{outline:none}
+.code-textarea[readonly]{cursor:default}
+.cursor-blink{animation:blink 1s step-end infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.typing-cursor{display:inline-block;width:1px;background:var(--accent);margin-left:2px;animation:blink 1s infinite}
+
+/* Preview Panel */
+.preview-panel{background:var(--obsidian);border:1px solid var(--glass-border);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+.preview-panel .panel-header{padding:12px 18px;border-bottom:1px solid var(--glass-border);font-size:12.5px;font-weight:600;display:flex;align-items:center;justify-content:space-between}
+.preview-panel .panel-header .left{display:flex;align-items:center;gap:8px}
+.preview-panel .panel-header .left i{color:var(--accent)}
+.preview-frame{flex:1;background:#000;position:relative;overflow:hidden;min-height:300px}
+.preview-frame iframe{width:100%;height:100%;border:none;display:block;background:#000}
+.preview-frame .placeholder{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--ash);background:radial-gradient(600px 300px at 50% 40%,rgba(99,102,241,0.1),transparent 70%),#05060f}
+.preview-frame .placeholder .big{font-size:48px;color:rgba(99,102,241,0.4)}
+.preview-frame .engine-pill{position:absolute;bottom:12px;left:12px;display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:100px;font-size:10.5px;font-weight:700;background:rgba(5,6,15,0.7);backdrop-filter:blur(8px);border:1px solid var(--glass-border);color:var(--accent)}
+.preview-frame .corner{position:absolute;top:10px;right:10px;display:flex;gap:6px}
+.preview-frame .corner button{width:32px;height:32px;border-radius:9px;border:1px solid var(--glass-border);background:rgba(5,6,15,0.66);backdrop-filter:blur(8px);color:var(--white);cursor:pointer;font-size:13px;display:grid;place-items:center;transition:.2s}
+.preview-frame .corner button:hover{background:var(--primary);color:#fff}
+
+/* Refine Chat */
+.chat-section{background:var(--obsidian);border:1px solid var(--glass-border);border-radius:16px;overflow:hidden;margin-top:16px}
+.chat-section .panel-header{padding:12px 18px;border-bottom:1px solid var(--glass-border);font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:8px}
+.chat-section .panel-header i{color:var(--secondary)}
+.chat-messages{height:140px;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+.chat-messages .msg{padding:8px 12px;border-radius:10px;font-size:12.5px;line-height:1.5;max-width:80%}
+.chat-messages .msg.user{background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;margin-left:auto;border-radius:14px 4px 14px 14px}
+.chat-messages .msg.ai{background:rgba(255,255,255,0.03);border:1px solid var(--glass-border);color:var(--ash);margin-right:auto;border-radius:4px 14px 14px 14px}
+.chat-messages .msg.ai strong{color:var(--white);font-weight:600}
+.chat-messages .msg.code{border:none;background:#0d0f1a;font-family:'Fira Code',monospace;font-size:10.5px;max-width:90%;white-space:pre-wrap;overflow-x:auto}
+.chat-input{padding:12px 16px;border-top:1px solid var(--glass-border);display:flex;gap:8px}
+.chat-input textarea{flex:1;min-height:44px;max-height:100px;resize:vertical;background:var(--slate);border:1px solid var(--glass-border);border-radius:10px;color:var(--white);font-family:'Inter';font-size:12.5px;line-height:1.5;padding:9px 12px;outline:none;transition:.2s}
+.chat-input textarea:focus{border-color:var(--primary)}
+.chat-input textarea::placeholder{color:#5a648a}
+.chat-input button{padding:0 18px;border:none;border-radius:10px;font-family:'Inter';font-size:12.5px;font-weight:700;cursor:pointer;background:var(--grad);color:#fff;transition:.2s;display:inline-flex;align-items:center;gap:6px}
+.chat-input button:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(99,102,241,0.3)}
+.chat-input button:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+
+/* Action Bar */
+.action-bar{display:flex;gap:10px;padding:14px 0}
+.action-bar .btn{padding:11px 22px;border-radius:11px;border:none;font-family:'Inter';font-size:13px;font-weight:600;cursor:pointer;transition:.25s;display:inline-flex;align-items:center;gap:8px}
+.btn-primary{background:var(--grad);color:#fff}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 28px rgba(99,102,241,0.42)}
+.btn-primary:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-secondary{background:var(--slate);color:var(--ash);border:1px solid var(--glass-border)}
+.btn-secondary:hover{background:rgba(255,255,255,0.06);color:var(--white)}
+.btn-success{background:linear-gradient(135deg,var(--success),#059669);color:#fff}
+.btn-success:hover{box-shadow:0 8px 24px rgba(16,185,129,0.35)}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);padding:13px 24px;border-radius:13px;font-size:13px;font-weight:500;z-index:999;opacity:0;pointer-events:none;transition:.35s;max-width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.45)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.success{background:rgba(16,185,129,0.14);border:1px solid rgba(16,185,129,0.4);color:#6ee7b7}
+.toast.error{background:rgba(239,68,68,0.14);border:1px solid rgba(239,68,68,0.4);color:#fca5a5}
+.toast.info{background:rgba(99,102,241,0.14);border:1px solid rgba(99,102,241,0.4);color:#a5b4fc}
+</style>
+</head>
+<body><div style="position:fixed;top:0;left:0;right:0;z-index:9999;background:#0a0a0a;border-bottom:1px solid rgba(255,255,255,0.08);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;font-family:monospace;font-size:12px;color:#a3a3a3"><span>⚡ SINGLE BUILDER — This page merged into <b style="color:#fff">One AI Builder</b> (does all)</span><a href="/ai-builder.html" style="padding:6px 12px;background:#fff;color:#000;border-radius:8px;text-decoration:none;font-weight:600">Open Single Builder →</a></div><script>setTimeout(()=>location.href="/ai-builder.html",3000);</script>
+
+<header class="header">
+  <div class="logo"><i class="fas fa-cube"></i> KEYCODE</div>
+  <nav class="nav-links">
+    <a href="/">Home</a>
+    <a href="/ai-builder.html?mode=game">Game Studio</a>
+    <a href="/ai-builder.html?mode=realtime" class="active">Real-time Builder</a>
+    <a href="/dashboard.html" class="dashboard-link">Dashboard</a>
+  </nav>
+</header>
+
+<div class="container">
+  <!-- Hero -->
+  <div class="hero">
+    <h1>Real-time <span class="accent">Game Builder</span></h1>
+    <p>Watch the AI code a full game in real-time, right before your eyes. Stream token-by-token, interrupt anytime to request changes — the AI adapts and keeps going.</p>
+  </div>
+
+  <!-- Prompt Row -->
+  <div class="prompt-row">
+    <textarea id="aiPrompt" placeholder="Describe your dream game… e.g. 'A 3D space shooter where you pilot a neon fighter, dodge asteroid fields, and collect energy cores to upgrade your weapons'"></textarea>
+    <div class="engine-selector">
+      <div class="lbl">Engine</div>
+      <div class="engine-seg" id="engineSeg">
+        <button data-e="auto" class="active"><i class="fas fa-robot"></i> Auto</button>
+        <button data-e="3d"><i class="fas fa-cube"></i> 3D</button>
+        <button data-e="2d"><i class="fas fa-gamepad"></i> 2D</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Phase Status Bar -->
+  <div class="status-bar" id="statusBar">
+    <div class="phase-dots" id="phaseDots">
+      <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    </div>
+    <div class="phase-text">
+      <span class="current" id="phaseText">Enter a description and click Generate to start.</span>
+      <span class="provider" id="providerBadge" style="display:none"></span>
+    </div>
+    <button class="btn-stop" id="btnStop" onclick="stopGeneration()" style="display:none"><i class="fas fa-stop"></i> Stop AI</button>
+  </div>
+
+  <!-- Split View: Code + Preview -->
+  <div class="split-view">
+    <!-- Code Panel -->
+    <div class="code-panel">
+      <div class="panel-header">
+        <div class="left"><i class="fas fa-file-code"></i> <span id="codePanelTitle">Game Code (HTML)</span></div>
+        <div class="stats" id="codeStats">0 lines · 0 chars</div>
+      </div>
+      <div class="code-editor-container">
+        <div class="code-editor-wrapper">
+          <div class="line-numbers" id="lineNumbers">1</div>
+          <textarea class="code-textarea" id="codeEditor" readonly spellcheck="false" wrap="off"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preview Panel -->
+    <div class="preview-panel">
+      <div class="panel-header">
+        <div class="left"><i class="fas fa-eye"></i> Live Preview</div>
+        <div class="corner">
+          <button title="Play fullscreen" onclick="playGame()" id="btnPlay"><i class="fas fa-expand"></i></button>
+        </div>
+      </div>
+      <div class="preview-frame" id="previewFrame">
+        <div class="placeholder" id="previewPlaceholder">
+          <i class="fas fa-cube big"></i>
+          <p>Your game will appear here as the AI codes it in real-time</p>
+        </div>
+        <iframe id="previewIframe" style="display:none" sandbox="allow-scripts allow-same-origin allow-pointer-lock" allow="autoplay; fullscreen"></iframe>
+        <div class="engine-pill" id="enginePill" style="display:none">
+          <i class="fas fa-cube"></i><span id="enginePillText">THREE.JS</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Bar -->
+  <div class="action-bar">
+    <button class="btn btn-primary" id="btnGenerate" onclick="generateGame()">
+      <i class="fas fa-wand-magic-sparkles"></i> Generate with AI
+    </button>
+    <button class="btn btn-success" id="btnSave" onclick="saveGame()" style="display:none">
+      <i class="fas fa-save"></i> Save to Dashboard
+    </button>
+    <button class="btn btn-secondary" id="btnExport" onclick="exportGame()">
+      <i class="fas fa-download"></i> Export HTML
+    </button>
+    <button class="btn btn-secondary" id="btnRegen" onclick="regenerateFromCode()">
+      <i class="fas fa-redo"></i> Refine Current Code
+    </button>
+  </div>
+
+  <!-- Refine Chat -->
+  <div class="chat-section">
+    <div class="panel-header">
+      <i class="fas fa-comments"></i>
+      <span>Refine — ask the AI to change anything</span>
+      <span class="stats" id="chatHint" style="margin-left:auto;color:#5a648a">e.g. "make it harder", "change background to purple", "add a double jump"</span>
+    </div>
+    <div class="chat-messages" id="chatMessages"></div>
+    <div class="chat-input">
+      <textarea id="refineInput" placeholder="Tell the AI what to change…" disabled></textarea>
+      <button id="btnRefine" onclick="sendRefinement()" disabled>Refine</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ==================== GLOBAL STATE ==================== */
+var abortController = null;
+var currentJobId = null;
+var isGenerating = false;
+var currentCode = '';
+var currentTitle = 'My Game';
+var currentType = 'game';
+var currentIs3D = true;
+var chatHistory = [];
+
+/* ==================== UTILS ==================== */
+function escapeHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showToast(msg, type) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + (type || 'info');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(function(){ t.classList.remove('show'); }, 4000);
+}
+
+function setBtnState(btnId, loading, text) {
+  var btn = document.getElementById(btnId);
+  btn.disabled = loading;
+  if (loading) {
+    var orig = btn.innerHTML;
+    btn.dataset.orig = orig;
+    btn.innerHTML = '<i class="fas fa-circle-notch spin"></i> ' + text;
+  } else {
+    btn.innerHTML = btn.dataset.orig || btn.innerHTML;
+  }
+}
+
+/* ==================== SSE PARSING ==================== */
+async function sseFetch(url, body, onEvent, options) {
+  var ctrl = new AbortController();
+  var opts = options || {};
+  if (opts.onAbortInit) opts.onAbortInit(ctrl);
+  
+  var response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    signal: ctrl.signal,
+  });
+
+  var reader = response.body.getReader();
+  var decoder = new TextDecoder();
+  var buffer = '';
+
+  while (true) {
+    var ref = await reader.read();
+    var done = ref.done, value = ref.value;
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    var endIdx;
+    while ((endIdx = buffer.indexOf('\n\n')) !== -1) {
+      var evtText = buffer.slice(0, endIdx);
+      buffer = buffer.slice(endIdx + 2);
+      if (evtText.startsWith('data: ')) {
+        try {
+          var evt = JSON.parse(evtText.slice(6));
+          if (onEvent) onEvent(evt);
+        } catch(e) {
+          console.warn('[SSE] parse error:', e);
+        }
+      }
+    }
+  }
+  return ctrl;
+}
+
+/* ==================== CODE EDITOR ==================== */
+function updateCodeEditor(code) {
+  var ta = document.getElementById('codeEditor');
+  ta.value = code;
+  updateLineNumbers();
+  updateCodeStats();
+  // Auto-scroll to bottom during generation
+  ta.scrollTop = ta.scrollHeight;
+}
+
+function appendCodeDelta(delta) {
+  var ta = document.getElementById('codeEditor');
+  var start = ta.selectionStart;
+  var end = ta.selectionEnd;
+  var cur = ta.value;
+  if (isGenerating && ta.value.length > 0 && start === end && start === cur.length) {
+    ta.value = cur + delta;
+  } else {
+    // If cursor was manually placed, just append
+    ta.value = cur + delta;
+  }
+  updateLineNumbers();
+  updateCodeStats();
+  ta.scrollTop = ta.scrollHeight;
+}
+
+function updateLineNumbers() {
+  var ta = document.getElementById('codeEditor');
+  var lines = ta.value.split('\n');
+  var count = lines.length;
+  var html = '';
+  for (var i = 1; i <= count; i++) {
+    html += i + '\n';
+  }
+  document.getElementById('lineNumbers').textContent = html;
+}
+
+function updateCodeStats() {
+  var ta = document.getElementById('codeEditor');
+  var lines = ta.value ? ta.value.split('\n').length : 0;
+  var chars = ta.value.length;
+  document.getElementById('codeStats').textContent = lines + ' lines · ' + chars + ' chars';
+}
+
+/* ==================== PREVIEW ==================== */
+function updatePreview(code) {
+  var iframe = document.getElementById('previewIframe');
+  var placeholder = document.getElementById('previewPlaceholder');
+  if (code && code.length > 50) {
+    iframe.style.display = 'block';
+    placeholder.style.display = 'none';
+    iframe.srcdoc = code;
+  }
+}
+
+function setEngineBadge(is3D, engine) {
+  var pill = document.getElementById('enginePill');
+  var txt = document.getElementById('enginePillText');
+  var badge = document.getElementById('engineBadge') || document.getElementById('enginePill');
+  if (is3D) {
+    pill.style.display = 'inline-flex';
+    pill.innerHTML = '<i class="fas fa-cube"></i><span>THREE.JS · 3D</span>';
+    txt.textContent = 'THREE.JS · 3D';
+  } else {
+    pill.style.display = 'inline-flex';
+    pill.innerHTML = '<i class="fas fa-gamepad"></i><span>PHASER · 2D</span>';
+    txt.textContent = 'PHASER · 2D';
+  }
+}
+
+/* ==================== STATUS BAR ==================== */
+function setPhase(idx, message) {
+  var dots = document.getElementById('phaseDots').children;
+  for (var i = 0; i < dots.length; i++) {
+    dots[i].className = 'dot' + (i < idx ? ' done' : i === idx ? ' active' : '');
+  }
+  var txt = document.getElementById('phaseText');
+  if (message) txt.textContent = message;
+}
+
+function setProvider(name) {
+  var badge = document.getElementById('providerBadge');
+  if (name) {
+    badge.textContent = name;
+    badge.style.display = 'inline-block';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+/* ==================== CHAT ==================== */
+function addChatMessage(role, text, isCode) {
+  if (!text) return;
+  chatHistory.push({ role: role, text: text });
+  var container = document.getElementById('chatMessages');
+  var div = document.createElement('div');
+  div.className = 'msg ' + role + (isCode ? ' code' : '');
+  if (role === 'user') {
+    div.textContent = text;
+  } else {
+    div.innerHTML = '<strong>AI:</strong> ' + escapeHtml(text);
+  }
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+/* ==================== GENERATION ==================== */
+async function generateGame() {
+  var prompt = document.getElementById('aiPrompt').value.trim();
+  if (!prompt) { showToast('Describe a game first!', 'info'); return; }
+
+  var engine = document.querySelector('#engineSeg button.active').dataset.e;
+
+  // Reset state
+  currentCode = '';
+  currentJobId = null;
+  document.getElementById('codeEditor').value = '';
+  document.getElementById('lineNumbers').textContent = '1';
+  document.getElementById('codeStats').textContent = '0 lines · 0 chars';
+  document.getElementById('previewIframe').style.display = 'none';
+  document.getElementById('previewPlaceholder').style.display = 'flex';
+  document.getElementById('enginePill').style.display = 'none';
+  document.getElementById('btnSave').style.display = 'none';
+  document.getElementById('chatMessages').innerHTML = '';
+  chatHistory = [];
+
+  isGenerating = true;
+  setBtnState('btnGenerate', true, 'Generating...');
+  document.getElementById('btnStop').style.display = 'inline-flex';
+  document.getElementById('refineInput').disabled = false;
+
+  var sse = await sseFetch('/api/ai/stream-game', { description: prompt, engine: engine }, function(evt) {
+    handleGameEvent(evt);
+  }, {
+    onAbortInit: function(ctrl) { abortController = ctrl; }
+  }).catch(function(e) {
+    if (e.name !== 'AbortError') {
+      console.error('[SSE] stream-game error:', e);
+      showToast('Connection error. Is the server running?', 'error');
+    }
+  });
+
+  isGenerating = false;
+  setBtnState('btnGenerate', false, 'Generate with AI');
+  abortController = null;
+}
+
+function handleGameEvent(evt) {
+  switch (evt.type) {
+    case 'metadata':
+      currentJobId = evt.jobId;
+      currentIs3D = evt.is3D;
+      setEngineBadge(evt.is3D, evt.engine);
+      if (evt.title) currentTitle = evt.title;
+      document.getElementById('codePanelTitle').textContent = evt.title ? (evt.title + ' — Code') : 'Game Code (HTML)';
+      break;
+
+    case 'status':
+      setPhase(evt.phase, evt.message);
+      if (evt.provider) setProvider(evt.provider);
+      break;
+
+    case 'html':
+      if (evt.delta) {
+        appendCodeDelta(evt.delta);
+      } else {
+        updateCodeEditor(evt.htm);
+      }
+      updatePreview(evt.htm);
+      if (evt.complete) {
+        currentCode = evt.htm;
+      }
+      break;
+
+    case 'token':
+      // tokens are for the typing indicator; code editor updated via html events
+      break;
+
+    case 'complete':
+      currentCode = evt.code || currentCode;
+      currentTitle = evt.title || currentTitle;
+      currentType = evt.type || currentType;
+      document.getElementById('btnSave').style.display = 'inline-flex';
+      addChatMessage('ai', 'Game "' + currentTitle + '" is ready! 🎮 Try asking me to refine it — e.g. "add more enemies" or "change the color scheme".', false);
+      setPhase(3, '✅ Game complete! Ready to play.');
+      document.getElementById('btnStop').style.display = 'none';
+      document.getElementById('refineInput').disabled = false;
+      document.getElementById('refineInput').focus();
+      break;
+
+    case 'error':
+      showToast('Error: ' + evt.message, 'error');
+      setPhase(0, 'Error: ' + evt.message);
+      document.getElementById('btnStop').style.display = 'none';
+      document.getElementById('refineInput').disabled = currentCode ? false : true;
+      break;
+  }
+}
+
+function stopGeneration() {
+  if (abortController) {
+    abortController.abort();
+  }
+  isGenerating = false;
+  document.getElementById('btnStop').style.display = 'none';
+  setBtnState('btnGenerate', false, 'Generate with AI');
+  document.getElementById('refineInput').disabled = currentCode ? false : true;
+  setPhase(0, '⏹️ Generation stopped. AI has your current version — tell it what to improve below.');
+  addChatMessage('ai', 'I stopped generating. Here\'s what I have so far. What would you like me to change?', false);
+}
+
+/* ==================== REFINE ==================== */
+async function sendRefinement() {
+  var input = document.getElementById('refineInput');
+  var prompt = input.value.trim();
+  if (!prompt) return;
+
+  var btn = document.getElementById('btnRefine');
+  input.disabled = true;
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Refining…';
+
+  addChatMessage('user', prompt, false);
+
+  currentCode = document.getElementById('codeEditor').value;
+  document.getElementById('btnSave').style.display = 'inline-flex';
+
+  var sse = await sseFetch('/api/ai/refine-game-stream', {
+    jobId: currentJobId,
+    instructions: prompt,
+    currentCode: currentCode
+  }, function(evt) {
+    handleRefineEvent(evt);
+  }, {
+    onAbortInit: function(ctrl) { abortController = ctrl; }
+  }).catch(function(e) {
+    if (e.name !== 'AbortError') {
+      console.error('[SSE] refine error:', e);
+      showToast('Refinement error: ' + e.message, 'error');
+    }
+  });
+
+  input.disabled = false;
+  btn.disabled = false;
+  btn.innerHTML = 'Refine';
+  input.value = '';
+  abortController = null;
+  document.getElementById('refineInput').focus();
+}
+
+function handleRefineEvent(evt) {
+  switch (evt.type) {
+    case 'metadata':
+      if (evt.title) {
+        currentTitle = evt.title;
+        document.getElementById('codePanelTitle').textContent = currentTitle + ' — Code';
+      }
+      break;
+
+    case 'status':
+      setPhase(evt.phase || 0, evt.message);
+      break;
+
+    case 'html':
+      if (evt.delta) {
+        appendCodeDelta(evt.delta);
+      } else {
+        updateCodeEditor(evt.htm);
+      }
+      updatePreview(evt.htm);
+      if (evt.complete) currentCode = evt.htm;
+      break;
+
+    case 'complete':
+      currentCode = evt.code || currentCode;
+      currentJobId = evt.jobId;
+      document.getElementById('btnSave').style.display = 'inline-flex';
+      break;
+
+    case 'error':
+      showToast('Refine error: ' + evt.message, 'error');
+      break;
+  }
+}
+
+function regenerateFromCode() {
+  var code = document.getElementById('codeEditor').value.trim();
+  if (!code) { showToast('Generate a game first!', 'info'); return; }
+  document.getElementById('refineInput').value = 'Continue improving this game. Make it more polished and add more features.';
+  sendRefinement();
+}
+
+/* ==================== ACTIONS ==================== */
+function playGame() {
+  if (!currentCode) { showToast('Create a game first!', 'info'); return; }
+  var w = window.open('', '_blank');
+  w.document.write(currentCode);
+  w.document.close();
+}
+
+function saveGame() {
+  var token = localStorage.getItem('keycode_token') || localStorage.getItem('token');
+  if (!token) { window.location.href = 'login.html?redirect=/ai-builder.html?mode=realtime'; return; }
+  if (!currentCode) { showToast('Create a game first!', 'error'); return; }
+
+  var title = document.getElementById('gameTitle') ? document.getElementById('gameTitle').value : currentTitle;
+  fetch('/api/ai/game-save', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+    body: JSON.stringify({ title: currentTitle, type: currentType, code: currentCode })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(data) {
+    if (data.success) { showToast('Game saved to dashboard!', 'success'); }
+    else showToast('Error saving: ' + (data.error || 'Unknown'), 'error');
+  })
+  .catch(function(e){ showToast('Error: ' + e.message, 'error'); });
+}
+
+function exportGame() {
+  if (!currentCode) { showToast('Create a game first!', 'error'); return; }
+  var blob = new Blob([currentCode], { type: 'text/html' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = (currentTitle || 'game').replace(/\s+/g, '-').toLowerCase() + '.html';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* ==================== INIT ==================== */
+document.getElementById('aiPrompt').placeholder = 'Describe your dream game… e.g. "A 3D cyberpunk racing game where you drift through neon city streets, avoiding obstacles and collecting power-ups"';
+
+document.querySelectorAll('#engineSeg button').forEach(function(b) {
+  b.addEventListener('click', function() {
+    document.querySelectorAll('#engineSeg button').forEach(function(x){ x.classList.remove('active'); });
+    b.classList.add('active');
+  });
+});
+</script>
+</body>
+</html>

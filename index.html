@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KEYCODE Studio — where excellence meets intelligence</title>
+  <meta name="description" content="KEYCODE Studio — where excellence meets intelligence — world-class. Full-stack apps, 3D worlds, CAD & fab-ready PCBs by a pod of AI agents. Award-winning, premium, sub-second.">
+  <meta name="theme-color" content="#0a0a0b">
+  <meta name="author" content="KEYCODE Studio">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <meta name="keywords" content="AI studio, 3D game engine, full-stack, CAD, PCB, Three.js, WebGL, premium web development">
+  <link rel="canonical" href="https://keycode.studio/">
+  <meta name="color-scheme" content="dark">
+  <meta name="format-detection" content="telephone=no">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="KEYCODE Studio">
+  <meta property="og:title" content="KEYCODE Studio — World-Class AI Engineering">
+  <meta property="og:description" content="Award-winning studio. Full-stack apps, 3D worlds, CAD & PCBs — engineered end to end by AI agents. Premium, cinematic, sub-second.">
+  <meta property="og:url" content="https://keycode.studio/">
+  <meta property="og:image" content="/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:locale" content="en_US">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="KEYCODE Studio — World-Class AI Engineering">
+  <meta name="twitter:description" content="Premium cinematic WebGL studio. where excellence meets intelligence.">
+  <meta name="twitter:image" content="/og-image.png">
+  <meta name="twitter:creator" content="@keycode_studio">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.json">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ProfessionalService",
+    "name": "KEYCODE Studio",
+    "description": "World-class AI engineering studio — full-stack apps, 3D worlds, CAD & fab-ready PCBs. Premium, cinematic, award-winning.",
+    "url": "https://keycode.studio/",
+    "sameAs": ["https://github.com/keycode-studio", "https://x.com/keycode_studio"],
+    "award": "Best Website 2026 Nominee",
+    "makesOffer": [
+      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "AI Full-Stack Coding" } },
+      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "3D Game Engine" } },
+      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "3D Scan to CAD" } },
+      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "PCB Fabrication" } }
+    ]
+  }
+  </script>
+  <link rel="preload" as="image" href="/og-image.png" fetchpriority="high">
+
+  <noscript>
+    <style>.loader { display: none; } #ui { position: static; } .content { position: static; opacity: 1 !important; pointer-events: auto !important; }</style>
+  </noscript>
+
+  <!-- Boot watchdog: the homepage can never be silently empty.
+       If the app fails to mount (stale SW cache, blocked module, network flap),
+       this retries with cache-bypass, then shows a graceful fallback with
+       real links instead of a blank screen. -->
+  <script>
+  (function () {
+    var tries = 0;
+    function appBooted() {
+      return !!document.querySelector('#ui') && document.body.classList.contains('ready');
+    }
+    function escape() {
+      if (document.getElementById('kc-boot-fail')) return;
+      var f = document.createElement('div');
+      f.id = 'kc-boot-fail';
+      f.style.cssText = 'position:fixed;inset:0;z-index:2147483647;background:#08080a;display:grid;place-items:center;padding:24px;text-align:center;font-family:Inter,system-ui,sans-serif;color:#fafafa';
+      f.innerHTML = '<div style="max-width:440px">' +
+        '<div style="font-weight:800;letter-spacing:.2em;font-size:13px;margin-bottom:14px;color:#a1a1aa">KEYCODE</div>' +
+        '<h1 style="font-size:22px;font-weight:600;margin:0 0 10px">One moment — the stage is re-decorating.</h1>' +
+        '<p style="color:#a1a1aa;font-size:14px;line-height:1.6;margin:0 0 22px">The immersive version hit a snag (usually a stale offline cache). The essentials are one click away:</p>' +
+        '<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">' +
+        '<a href="/ai-builder.html" style="padding:11px 20px;border-radius:999px;background:#fff;color:#0a0a0b;text-decoration:none;font-weight:600;font-size:13px">Open AI Builder</a>' +
+        '<a href="/dashboard.html" style="padding:11px 20px;border-radius:999px;border:1px solid rgba(255,255,255,.25);color:#fafafa;text-decoration:none;font-size:13px">Dashboard</a>' +
+        '<a href="/gallery.html" style="padding:11px 20px;border-radius:999px;border:1px solid rgba(255,255,255,.25);color:#fafafa;text-decoration:none;font-size:13px">Works</a>' +
+        '</div></div>';
+      document.body.appendChild(f);
+    }
+    setTimeout(function loop() {
+      if (appBooted()) return;
+      tries++;
+      if (tries === 2) {
+        // Reload once, bypassing every cache (also re-registers a fresh SW)
+        if (!sessionStorage.getItem('kc-boot-retry')) {
+          sessionStorage.setItem('kc-boot-retry', '1');
+          location.reload();
+          return;
+        }
+      }
+      if (tries >= 4) { escape(); return; }
+      setTimeout(loop, 1600);
+    }, 1600);
+  })();
+  </script>
+  <script type="module" crossorigin src="/assets/main-DVO08Rry.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/assets/three-BJkcZDqc.js">
+  <link rel="modulepreload" crossorigin href="/assets/cinematic-C-tScqnC.js">
+  <link rel="stylesheet" crossorigin href="/assets/main-CI4w95NM.css">
+</head>
+<body>
+  <div id="app"></div>
+  <noscript>
+    <div style="padding:3rem;font-family:sans-serif;color:#eee;background:#0a0a0b;min-height:100vh">
+      <h1>KEYCODE Studio</h1>
+      <p>where excellence meets intelligence. Enable JavaScript for the full cinematic experience.</p>
+      <p><a href="/signup.html">Start Building</a></p>
+    </div>
+  </noscript>
+</body>
+</html>

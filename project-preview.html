@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="KEYCODE Studio - AI-powered development platform">
+<meta property="og:title" content="Project Preview - KEYCODE">
+<meta property="og:description" content="KEYCODE Studio - AI-powered development platform">
+<meta property="og:image" content="https://keycode.studio/og-image.png">
+<meta property="og:url" content="https://keycode.studio/project-preview.html">
+<meta name="twitter:card" content="summary_large_image">
+<title>Project Preview - KEYCODE</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-Avb2QiuDEEvB4bZJYdft2mNjVShBftLdPG8FJ0V7irTLQ8Uo0qcPxh4Plq7G5tGm0rU+1SPhVotteLpBERwTkw==" crossorigin="anonymous">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --void: #050508; --obsidian: #0a0a0f; --graphite: #111117; --slate: #1a1a24;
+  --primary: #ffffff; --primary-glow: rgba(99,102,241,0.3); --primary-deep: #4f46e5;
+  --secondary: #a3a3a3; --accent: #06b6d4; --success: #22c55e; --danger: #ef4444;
+  --white: #ffffff; --ivory: #f1f5f9; --pearl: #e2e8f0; --silver: #94a3b8; --ash: #64748b;
+  --font-display: 'Syne', sans-serif; --font-body: 'Inter', sans-serif;
+}
+body { font-family: var(--font-body); background: var(--void); color: var(--white); min-height: 100vh; }
+.header {
+  background: var(--graphite); border-bottom: 1px solid var(--slate); padding: 16px 32px;
+  display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100;
+}
+.header h1 { font-family: var(--font-display); font-size: 20px; background: linear-gradient(135deg,var(--primary),var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.header-left { display: flex; align-items: center; gap: 16px; }
+.back-btn { color: var(--silver); text-decoration: none; font-size: 14px; display: flex; align-items: center; gap: 6px; }
+.back-btn:hover { color: var(--white); }
+.header-right { display: flex; gap: 12px; align-items: center; }
+
+.main { display: grid; grid-template-columns: 1fr 1fr; gap: 0; height: calc(100vh - 63px); }
+.panel { display: flex; flex-direction: column; overflow: hidden; }
+.panel-header { padding: 16px 20px; background: var(--graphite); border-bottom: 1px solid var(--slate); display: flex; align-items: center; justify-content: space-between; }
+.panel-header h2 { font-family: var(--font-display); font-size: 14px; font-weight: 600; color: var(--white); display: flex; align-items: center; gap: 8px; }
+.panel-header h2 i { color: var(--primary); }
+.panel-body { flex: 1; overflow: auto; padding: 20px; display: flex; align-items: center; justify-content: center; background: var(--obsidian); position: relative; }
+.panel-body svg { max-width: 100%; max-height: 100%; }
+
+.left-panel { border-right: 1px solid var(--slate); }
+.right-panel { border-left: 1px solid var(--slate); }
+
+.tabs { display: flex; gap: 4px; }
+.tab { padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid transparent; background: transparent; color: var(--silver); transition: all 0.2s; }
+.tab:hover { color: var(--white); border-color: var(--slate); }
+.tab.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+.placeholder {
+  display: flex; flex-direction: column; align-items: center; gap: 12px; color: var(--ash); text-align: center;
+}
+.placeholder i { font-size: 48px; opacity: 0.3; }
+.placeholder p { font-size: 14px; max-width: 300px; }
+
+.project-info {
+  padding: 20px; background: var(--graphite); border-top: 1px solid var(--slate);
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;
+}
+.info-card {
+  background: var(--obsidian); border: 1px solid var(--slate); border-radius: 10px; padding: 14px;
+}
+.info-card h3 { font-size: 11px; text-transform: uppercase; color: var(--ash); letter-spacing: 0.5px; margin-bottom: 4px; }
+.info-card .value { font-size: 14px; color: var(--white); font-weight: 600; }
+.info-card .sub { font-size: 11px; color: var(--silver); margin-top: 2px; }
+
+.spinner { width: 32px; height: 32px; border: 3px solid var(--slate); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.error-state { color: var(--danger); text-align: center; padding: 40px; }
+.error-state i { font-size: 40px; margin-bottom: 12px; }
+
+.order-btn {
+  padding: 8px 20px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer;
+  border: none; transition: all 0.2s; display: flex; align-items: center; gap: 6px; font-family: var(--font-body);
+}
+.order-btn.primary { background: var(--primary); color: white; }
+.order-btn.primary:hover { background: var(--primary-deep); box-shadow: 0 0 20px var(--primary-glow); }
+.order-btn.secondary { background: transparent; color: var(--silver); border: 1px solid var(--slate); }
+.order-btn.secondary:hover { border-color: var(--primary); color: var(--white); }
+
+.manufacturers { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.mfr-btn {
+  padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 500; cursor: pointer; text-decoration: none;
+  border: 1px solid var(--slate); background: var(--obsidian); color: var(--silver); transition: all 0.2s;
+  display: flex; align-items: center; gap: 4px;
+}
+.mfr-btn:hover { border-color: var(--primary); color: var(--white); background: rgba(99,102,241,0.1); }
+.mfr-btn i { font-size: 10px; }
+
+.loading-overlay {
+  position: absolute; inset: 0; background: rgba(5,5,8,0.85); display: flex; align-items: center;
+  justify-content: center; z-index: 10; flex-direction: column; gap: 12px;
+}
+
+.toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 8px; }
+.toast {
+  padding: 12px 20px; border-radius: 10px; font-size: 13px; background: var(--graphite);
+  border: 1px solid var(--slate); color: var(--white); animation: slideIn 0.3s ease;
+  display: flex; align-items: center; gap: 8px; min-width: 280px;
+}
+.toast.success { border-color: var(--success); }
+.toast.error { border-color: var(--danger); }
+.toast i { font-size: 16px; }
+.toast.success i { color: var(--success); }
+.toast.error i { color: var(--danger); }
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+</style>
+    </head>
+<body>
+  <div id="kc-loader">
+    <div id="kc-loader-scene"></div>
+      <div id="kc-bg-text" aria-hidden="true">KEYCODE</div>
+<div class="kc-loader-info" style="position:absolute;bottom:48px;left:50%;transform:translateX(-50%);">
+      <div id="kc-loader-bar-track"><div id="kc-loader-bar"></div></div>
+      <div id="kc-loader-pct" style="font-family:'Inter',sans-serif;font-size:11px;color:#555;letter-spacing:.12em;text-align:center;">0%</div>
+    </div>
+  </div>
+
+<div class="header">
+  <div class="header-left">
+    <a href="/control-panel.html" class="back-btn"><i class="fas fa-arrow-left"></i> Dashboard</a>
+    <h1><i class="fas fa-cube"></i> Project Preview</h1>
+  </div>
+  <div class="header-right">
+    <button class="order-btn secondary" onclick="orderPCB()"><i class="fas fa-microchip"></i> Order PCB</button>
+    <button class="order-btn secondary" onclick="order3D()"><i class="fas fa-cube"></i> Order 3D Print</button>
+    <button class="order-btn primary" onclick="orderAll()"><i class="fas fa-rocket"></i> Order All</button>
+  </div>
+</div>
+
+<div class="main">
+  <!-- Left: 3D Viewer -->
+  <div class="panel left-panel">
+    <div class="panel-header">
+      <h2><i class="fas fa-cube"></i> 3D Preview</h2>
+      <div class="tabs">
+        <button class="tab active" onclick="switch3D('stl')">STL</button>
+        <button class="tab" onclick="switch3D('openscad')">OpenSCAD</button>
+      </div>
+    </div>
+    <div class="panel-body" id="viewer3d">
+      <div class="placeholder" id="placeholder3d">
+        <i class="fas fa-cube"></i>
+        <p>Enter a project description below to generate a 3D preview</p>
+      </div>
+      <iframe id="stlFrame" style="width:100%;height:100%;border:none;display:none;" allowfullscreen></iframe>
+      <pre id="openscadCode" style="display:none;width:100%;height:100%;background:#0a0a0f;color:#e2e8f0;padding:20px;font-size:12px;overflow:auto;white-space:pre-wrap;font-family:monospace;"></pre>
+      <div class="loading-overlay" id="loading3d" style="display:none;">
+        <div class="spinner"></div>
+        <span style="color:var(--silver);font-size:13px;">Generating 3D model...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: PCB/Schematic Viewer -->
+  <div class="panel right-panel">
+    <div class="panel-header">
+      <h2><i class="fas fa-microchip"></i> PCB / Schematic</h2>
+      <div class="tabs">
+        <button class="tab active" onclick="switchPCB('pcb')">PCB Layout</button>
+        <button class="tab" onclick="switchPCB('bom')">BOM</button>
+        <button class="tab" onclick="switchPCB('circuit')">Circuit</button>
+      </div>
+    </div>
+    <div class="panel-body" id="viewerPcb">
+      <div class="placeholder" id="placeholderPcb">
+        <i class="fas fa-microchip"></i>
+        <p>Enter a project description to generate PCB layout</p>
+      </div>
+      <div id="pcbSvgContainer" style="display:none;width:100%;height:100%;overflow:auto;"></div>
+      <div id="bomTable" style="display:none;width:100%;height:100%;overflow:auto;padding:20px;">
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+          <thead><tr style="color:var(--ash);border-bottom:1px solid var(--slate);">
+            <th style="padding:8px;text-align:left;">Ref</th>
+            <th style="padding:8px;text-align:left;">Value</th>
+            <th style="padding:8px;text-align:left;">Package</th>
+            <th style="padding:8px;text-align:left;">MPN</th>
+          </tr></thead>
+          <tbody id="bomBody"></tbody>
+        </table>
+      </div>
+      <div id="circuitView" style="display:none;width:100%;height:100%;overflow:auto;padding:20px;"></div>
+    </div>
+  </div>
+</div>
+
+<div class="project-info" id="projectInfo">
+  <div class="info-card">
+    <h3>Project</h3>
+    <div class="value" id="infoName">—</div>
+    <div class="sub" id="infoType">Enter a description to begin</div>
+  </div>
+  <div class="info-card">
+    <h3>Components</h3>
+    <div class="value" id="infoParts">0</div>
+    <div class="sub">BOM items</div>
+  </div>
+  <div class="info-card">
+    <h3>Est. PCB Cost</h3>
+    <div class="value" id="infoPcbCost">—</div>
+    <div class="sub">JLCPCB 5pcs</div>
+  </div>
+  <div class="info-card">
+    <h3>Est. 3D Print Cost</h3>
+    <div class="value" id="infoPrintCost">—</div>
+    <div class="sub">PLA, standard quality</div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+const API = '/api';
+let currentProject = null;
+
+function getToken() { return localStorage.getItem('token') || localStorage.getItem('keycode_token') || ''; }
+
+function showToast(msg, type) {
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${msg}`;
+  c.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 4000);
+}
+
+// Parse URL for project description or load from session
+const params = new URLSearchParams(window.location.search);
+const desc = params.get('q') || localStorage.getItem('lastProjectDesc') || '';
+
+if (desc) {
+  document.getElementById('infoName').textContent = desc.slice(0, 60);
+  generateProject(desc);
+}
+
+async function generateProject(description) {
+  showToast('Generating project plan...', 'success');
+  document.getElementById('loading3d').style.display = 'flex';
+  document.getElementById('placeholder3d').style.display = 'none';
+  document.getElementById('placeholderPcb').style.display = 'none';
+
+  try {
+    const res = await fetch(API + '/ai/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+      body: JSON.stringify({ description })
+    });
+    const data = await res.json();
+    if (!data || data.error) throw new Error(data.error || 'Generation failed');
+
+    currentProject = data;
+    localStorage.setItem('lastProjectDesc', description);
+    renderProject(data);
+    showToast('Project generated successfully!', 'success');
+  } catch (e) {
+    document.getElementById('loading3d').style.display = 'none';
+    document.getElementById('placeholder3d').style.display = 'flex';
+    document.getElementById('placeholderPcb').style.display = 'flex';
+    showToast(e.message, 'error');
+  }
+}
+
+function renderProject(data) {
+  document.getElementById('loading3d').style.display = 'none';
+
+  // Info cards
+  document.getElementById('infoName').textContent = (data.summary || 'Project').slice(0, 60);
+  document.getElementById('infoType').textContent = data.type || 'Custom design';
+
+  const bom = data.bom || data.components || [];
+  document.getElementById('infoParts').textContent = bom.length;
+
+  // PCB cost estimate
+  const pcbCost = data.width && data.height ? Math.max(2, Math.round(data.width * data.height * 0.015)) : '—';
+  document.getElementById('infoPcbCost').textContent = typeof pcbCost === 'number' ? '$' + pcbCost : pcbCost;
+
+  // 3D print cost estimate
+  const printCost = data.dimensions ? Math.max(5, Math.round((data.dimensions.length || 50) * (data.dimensions.width || 50) * (data.dimensions.height || 20) * 0.0001)) : '—';
+  document.getElementById('infoPrintCost').textContent = typeof printCost === 'number' ? '$' + printCost : printCost;
+
+  // 3D Preview
+  if (data.preview3d) {
+    document.getElementById('stlFrame').src = data.preview3d;
+    document.getElementById('stlFrame').style.display = 'block';
+    document.getElementById('placeholder3d').style.display = 'none';
+  } else {
+    document.getElementById('placeholder3d').innerHTML = '<i class="fas fa-cube"></i><p>3D preview not available</p>';
+    document.getElementById('placeholder3d').style.display = 'flex';
+  }
+
+  // OpenSCAD code
+  const scadCode = document.getElementById('openscadCode');
+  if (data.openscad) {
+    scadCode.textContent = data.openscad;
+  }
+
+  // PCB SVG
+  const pcbContainer = document.getElementById('pcbSvgContainer');
+  if (data.pcbSvg || data.svg) {
+    pcbContainer.innerHTML = data.pcbSvg || data.svg;
+    pcbContainer.style.display = 'block';
+    document.getElementById('placeholderPcb').style.display = 'none';
+  }
+
+  // BOM Table
+  const bomBody = document.getElementById('bomBody');
+  if (bom.length > 0) {
+    bomBody.innerHTML = bom.map(c => `
+      <tr style="border-bottom:1px solid var(--slate);">
+        <td style="padding:6px 8px;color:var(--primary);font-family:monospace;">${c.ref || c.reference || '—'}</td>
+        <td style="padding:6px 8px;">${c.value || '—'}</td>
+        <td style="padding:6px 8px;color:var(--silver);">${c.package || '—'}</td>
+        <td style="padding:6px 8px;color:var(--silver);font-size:11px;">${c.mpn || c.mp || '—'}</td>
+      </tr>
+    `).join('');
+  }
+
+  // Circuit view
+  const circuitDiv = document.getElementById('circuitView');
+  if (data.netlist && data.netlist.length > 0) {
+    circuitDiv.innerHTML = '<h3 style="font-size:13px;color:var(--ash);margin-bottom:12px;">Netlist</h3>' +
+      data.netlist.map(n => `<div style="margin-bottom:8px;font-size:12px;">
+        <span style="color:var(--accent);font-family:monospace;">${n.net || n.name}:</span>
+        <span style="color:var(--silver);font-family:monospace;"> ${(n.nodes || n.pins || []).join(', ')}</span>
+      </div>`).join('');
+  }
+}
+
+function switch3D(mode) {
+  document.querySelectorAll('#viewer3d .tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('stlFrame').style.display = mode === 'stl' ? 'block' : 'none';
+  document.getElementById('openscadCode').style.display = mode === 'openscad' ? 'block' : 'none';
+}
+
+function switchPCB(mode) {
+  document.querySelectorAll('#viewerPcb .tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('pcbSvgContainer').style.display = mode === 'pcb' ? 'block' : 'none';
+  document.getElementById('bomTable').style.display = mode === 'bom' ? 'block' : 'none';
+  document.getElementById('circuitView').style.display = mode === 'circuit' ? 'block' : 'none';
+}
+
+async function orderPCB() {
+  if (!currentProject) return showToast('No project to order', 'error');
+  try {
+    const res = await fetch(API + '/order/manufacture', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+      body: JSON.stringify({ type: 'pcb', project: currentProject })
+    });
+    const d = await res.json();
+    if (d.url) window.open(d.url, '_blank');
+    showToast(d.message || 'Order placed!', 'success');
+  } catch (e) { showToast(e.message, 'error'); }
+}
+
+async function order3D() {
+  if (!currentProject) return showToast('No project to order', 'error');
+  try {
+    const res = await fetch(API + '/order/manufacture', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+      body: JSON.stringify({ type: '3d', project: currentProject })
+    });
+    const d = await res.json();
+    if (d.url) window.open(d.url, '_blank');
+    showToast(d.message || 'Order placed!', 'success');
+  } catch (e) { showToast(e.message, 'error'); }
+}
+
+async function orderAll() {
+  await orderPCB();
+  await order3D();
+}
+</script>
+
+  <script src="/js/scroll-3d-animations.js"></script>  <script src="/js/k-scroll.js" defer></script>
+
+  <div id="site-footer"></div>
+    <script src="/js/loading-screen.js"></script>
+<script src="/js/site.js"></script>
+<script src="/js/install.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+</body>
+</html>
