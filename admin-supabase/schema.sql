@@ -234,6 +234,10 @@ ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.system_config ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.backups ENABLE ROW LEVEL SECURITY;
 
+-- Users can only read their own record
+CREATE POLICY "Users can read own profile"
+  ON public.users FOR SELECT USING (auth.uid() = id);
+
 -- Admin can read all users
 CREATE POLICY "Admins can read all users"
   ON public.users FOR SELECT USING (
