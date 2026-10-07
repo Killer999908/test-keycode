@@ -520,8 +520,9 @@ function renderDeployments() {
 
   filtered.forEach(d => {
     const tr = document.createElement('tr');
-    const statusLabel = d.status.charAt(0).toUpperCase() + d.status.slice(1);
-    const statusBadge = 'badge-' + d.status;
+    const dStatus = d.status || 'unknown';
+    const statusLabel = dStatus.charAt(0).toUpperCase() + dStatus.slice(1);
+    const statusBadge = 'badge-' + dStatus;
     const spinnerHtml = d.status === 'deploying' ? ' <i class="fas fa-spinner fa-spin" style="font-size:10px"></i>' : '';
     const timeAgo = timeSince(d.createdAt);
     tr.innerHTML = `
