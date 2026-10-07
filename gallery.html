@@ -6,10 +6,10 @@
   <title>Project Gallery - KEYCODE Studio</title>
   <meta name="description" content="Browse all AI-generated projects - websites, PCBs, CAD models, and MCU firmware created with KEYCODE AI.">
   <meta name="robots" content="index, follow">
-  <link rel="canonical" href="https://keycode-studio-production.up.railway.app/gallery.html">
+  <link rel="canonical" href="/gallery.html">
 
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://keycode-studio-production.up.railway.app/gallery.html">
+  <meta property="og:url" content="/gallery.html">
   <meta property="og:title" content="Project Gallery - KEYCODE Studio">
   <meta property="og:description" content="Browse all AI-generated projects - websites, PCBs, CAD models, and MCU firmware.">
   <meta property="og:image" content="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjAwIiBoZWlnaHQ9IjYzMCIgdmlld0JveD0iMCAwIDEyMDAgNjMwIj4KICA8cmVjdCB3aWR0aD0iMTIwMCIgaGVpZ2h0PSI2MzAiIGZpbGw9IiMwYTBhMWEiLz4KICA8cmVjdCB4PSIwIiB5PSIwIiB3aWR0aD0iMTIwMCIgaGVpZ2h0PSI2MzAiIGZpbGw9InVybCgjZykiIG9wYWNpdHk9IjAuMTUiLz4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iZyIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiM2MzY2ZjEiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSI1MCUiIHN0b3AtY29sb3I9IiMyMmQzZWUiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjNjM2NmYxIi8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8dGV4dCB4PSI2MDAiIHk9IjI3MCIgZm9udC1mYW1pbHk9IkludGVyLCBzeXN0ZW0tdWksIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iOTYiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiNmZmZmZmYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGxldHRlci1zcGFjaW5nPSItMiI+S0VZQ09ERTwvdGV4dD4KICA8dGV4dCB4PSI2MDAiIHk9IjM0MCIgZm9udC1mYW1pbHk9IkludGVyLCBzeXN0ZW0tdWksIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjgiIGZpbGw9IiMyMmQzZWUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGxldHRlci1zcGFjaW5nPSI0IiBmb250LXdlaWdodD0iMzAwIj5BSS1QT1dFUkVEIFNUVURJTzwvdGV4dD4KICA8cmVjdCB4PSI1NDAiIHk9IjM3MCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSIzIiByeD0iMS41IiBmaWxsPSJ1cmwoI2cpIi8+CiAgPHRleHQgeD0iNjAwIiB5PSI0MTAiIGZvbnQtZmFtaWx5PSJJbnRlciwgc3lzdGVtLXVpLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE4IiBmaWxsPSIjOTRhM2I4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5CdWlsZCB0aGUgZnV0dXJlLCBvbmUgcHJvamVjdCBhdCBhIHRpbWUuPC90ZXh0Pgo8L3N2Zz4K">
@@ -614,19 +614,35 @@
       function fetchProjects() {
         showLoading();
 
-        fetch('/api/ai/projects')
+        var token = null;
+        try { token = localStorage.getItem('keycode_token') || localStorage.getItem('token'); } catch(e) {}
+
+        var headers = {};
+        if (token) headers['Authorization'] = 'Bearer ' + token;
+
+        fetch('/api/ai/projects', { headers: headers })
           .then(function(res) {
+            if (res.status === 401) {
+              allProjects = [];
+              filterAndRender();
+              return;
+            }
             if (!res.ok) throw new Error('Server returned ' + res.status);
             return res.json();
           })
           .then(function(data) {
-            if (!data.success) throw new Error(data.error || 'Request failed');
+            if (!data || !data.success) {
+              allProjects = Array.isArray(data && data.projects) ? data.projects : [];
+              filterAndRender();
+              return;
+            }
             allProjects = Array.isArray(data.projects) ? data.projects : [];
             filterAndRender();
           })
           .catch(function(err) {
-            console.error('Gallery fetch error:', err);
-            showError(err.message);
+            allProjects = [];
+            filterAndRender();
+            console.warn('Gallery fetch unavailable:', err.message);
           });
       }
 

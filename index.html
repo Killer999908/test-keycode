@@ -3,121 +3,896 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>KEYCODE Studio — where excellence meets intelligence</title>
-  <meta name="description" content="KEYCODE Studio — where excellence meets intelligence — world-class. Full-stack apps, 3D worlds, CAD & fab-ready PCBs by a pod of AI agents. Award-winning, premium, sub-second.">
-  <meta name="theme-color" content="#0a0a0b">
-  <meta name="author" content="KEYCODE Studio">
-  <meta name="robots" content="index, follow, max-image-preview:large">
-  <meta name="keywords" content="AI studio, 3D game engine, full-stack, CAD, PCB, Three.js, WebGL, premium web development">
-  <link rel="canonical" href="https://keycode.studio/">
+  <title>KEYCODE Studio — Architect Worlds</title>
+  <meta name="description" content="KEYCODE Studio — an AI engineering studio. Full-stack apps, 3D worlds, CAD & PCBs engineered end to end. Architect worlds that move hearts and spark hope.">
+  <meta name="theme-color" content="#000000">
   <meta name="color-scheme" content="dark">
-  <meta name="format-detection" content="telephone=no">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="/">
 
-  <!-- Open Graph -->
   <meta property="og:type" content="website">
-  <meta property="og:site_name" content="KEYCODE Studio">
-  <meta property="og:title" content="KEYCODE Studio — World-Class AI Engineering">
-  <meta property="og:description" content="Award-winning studio. Full-stack apps, 3D worlds, CAD & PCBs — engineered end to end by AI agents. Premium, cinematic, sub-second.">
-  <meta property="og:url" content="https://keycode.studio/">
+  <meta property="og:title" content="KEYCODE Studio">
+  <meta property="og:description" content="Architect worlds that move hearts and spark hope.">
+  <meta property="og:url" content="/">
   <meta property="og:image" content="/og-image.png">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
-  <meta property="og:locale" content="en_US">
 
-  <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="KEYCODE Studio — World-Class AI Engineering">
-  <meta name="twitter:description" content="Premium cinematic WebGL studio. where excellence meets intelligence.">
+  <meta name="twitter:title" content="KEYCODE Studio">
+  <meta name="twitter:description" content="Architect worlds that move hearts and spark hope.">
   <meta name="twitter:image" content="/og-image.png">
-  <meta name="twitter:creator" content="@keycode_studio">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-  <link rel="manifest" href="/manifest.json">
 
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "ProfessionalService",
     "name": "KEYCODE Studio",
-    "description": "World-class AI engineering studio — full-stack apps, 3D worlds, CAD & fab-ready PCBs. Premium, cinematic, award-winning.",
-    "url": "https://keycode.studio/",
-    "sameAs": ["https://github.com/keycode-studio", "https://x.com/keycode_studio"],
-    "award": "Best Website 2026 Nominee",
-    "makesOffer": [
-      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "AI Full-Stack Coding" } },
-      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "3D Game Engine" } },
-      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "3D Scan to CAD" } },
-      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "PCB Fabrication" } }
-    ]
+    "description": "AI engineering studio — full-stack apps, 3D worlds, CAD & PCBs.",
+    "url": "/"
   }
   </script>
-  <link rel="preload" as="image" href="/og-image.png" fetchpriority="high">
 
-  <noscript>
-    <style>.loader { display: none; } #ui { position: static; } .content { position: static; opacity: 1 !important; pointer-events: auto !important; }</style>
-  </noscript>
-
-  <!-- Boot watchdog: the homepage can never be silently empty.
-       If the app fails to mount (stale SW cache, blocked module, network flap),
-       this retries with cache-bypass, then shows a graceful fallback with
-       real links instead of a blank screen. -->
-  <script>
-  (function () {
-    var tries = 0;
-    function appBooted() {
-      return !!document.querySelector('#ui') && document.body.classList.contains('ready');
-    }
-    function escape() {
-      if (document.getElementById('kc-boot-fail')) return;
-      var f = document.createElement('div');
-      f.id = 'kc-boot-fail';
-      f.style.cssText = 'position:fixed;inset:0;z-index:2147483647;background:#08080a;display:grid;place-items:center;padding:24px;text-align:center;font-family:Inter,system-ui,sans-serif;color:#fafafa';
-      f.innerHTML = '<div style="max-width:440px">' +
-        '<div style="font-weight:800;letter-spacing:.2em;font-size:13px;margin-bottom:14px;color:#a1a1aa">KEYCODE</div>' +
-        '<h1 style="font-size:22px;font-weight:600;margin:0 0 10px">One moment — the stage is re-decorating.</h1>' +
-        '<p style="color:#a1a1aa;font-size:14px;line-height:1.6;margin:0 0 22px">The immersive version hit a snag (usually a stale offline cache). The essentials are one click away:</p>' +
-        '<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">' +
-        '<a href="/ai-builder.html" style="padding:11px 20px;border-radius:999px;background:#fff;color:#0a0a0b;text-decoration:none;font-weight:600;font-size:13px">Open AI Builder</a>' +
-        '<a href="/dashboard.html" style="padding:11px 20px;border-radius:999px;border:1px solid rgba(255,255,255,.25);color:#fafafa;text-decoration:none;font-size:13px">Dashboard</a>' +
-        '<a href="/gallery.html" style="padding:11px 20px;border-radius:999px;border:1px solid rgba(255,255,255,.25);color:#fafafa;text-decoration:none;font-size:13px">Works</a>' +
-        '</div></div>';
-      document.body.appendChild(f);
-    }
-    setTimeout(function loop() {
-      if (appBooted()) return;
-      tries++;
-      if (tries === 2) {
-        // Reload once, bypassing every cache (also re-registers a fresh SW)
-        if (!sessionStorage.getItem('kc-boot-retry')) {
-          sessionStorage.setItem('kc-boot-retry', '1');
-          location.reload();
-          return;
-        }
-      }
-      if (tries >= 4) { escape(); return; }
-      setTimeout(loop, 1600);
-    }, 1600);
-  })();
+  <script type="importmap">
+  { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
   </script>
-  <script type="module" crossorigin src="/assets/main-DVO08Rry.js"></script>
-  <link rel="modulepreload" crossorigin href="/assets/modulepreload-polyfill-B5Qt9EMX.js">
-  <link rel="modulepreload" crossorigin href="/assets/three-BJkcZDqc.js">
-  <link rel="modulepreload" crossorigin href="/assets/cinematic-C-tScqnC.js">
-  <link rel="stylesheet" crossorigin href="/assets/main-CI4w95NM.css">
+
+  <style>
+    /* ============ base ============ */
+    * { box-sizing: border-box; padding: 0; margin: 0; }
+    html { scroll-behavior: auto; }
+    html, body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+      color: #fff;
+      background: #000;
+      overflow-x: hidden;
+    }
+    body.is-loaded { overflow-x: hidden; }
+    img { max-width: 100%; vertical-align: top; }
+    a { color: #fff; text-decoration: none; }
+    button { appearance: none; background: none; border: none; color: inherit; cursor: pointer; font: inherit; }
+    ::selection { background: #fff; color: #000; }
+    ::-webkit-scrollbar { width: 0; height: 0; }
+    .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+    /* fine pointers: hide native cursor, we draw our own */
+    @media (hover:hover) and (pointer:fine) {
+      body.has-cursor, body.has-cursor a, body.has-cursor button { cursor: none; }
+    }
+
+    /* ============ progress hairline ============ */
+    #progress {
+      position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: 1000;
+      background: #fff; transform-origin: 0 50%; transform: scaleX(0);
+    }
+
+    /* ============ custom cursor ============ */
+    .cursor-dot, .cursor-ring {
+      position: fixed; top: 0; left: 0; border-radius: 50%;
+      pointer-events: none; z-index: 10001; mix-blend-mode: difference;
+      opacity: 0; transition: opacity .3s ease;
+    }
+    .cursor-dot { width: 6px; height: 6px; background: #fff; }
+    .cursor-ring {
+      width: 34px; height: 34px; border: 1px solid rgba(255,255,255,.65);
+      transition: width .25s ease, height .25s ease, opacity .3s ease;
+    }
+    body.cursor-on .cursor-dot, body.cursor-on .cursor-ring { opacity: 1; }
+    body.cursor-hover .cursor-ring { width: 56px; height: 56px; }
+    @media (hover:none), (pointer:coarse) { .cursor-dot, .cursor-ring { display: none; } }
+
+    /* ============ preloader ============ */
+    #preloader {
+      position: fixed; inset: 0; background: #000; z-index: 9999;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 1.25rem; transition: opacity .7s ease, visibility .7s ease;
+    }
+    #preloader.done { opacity: 0; visibility: hidden; pointer-events: none; }
+    .preloader__word { font-size: 30px; font-weight: 900; letter-spacing: .18em; }
+    .preloader__pct {
+      font-family: 'JetBrains Mono', monospace; font-size: 13px; letter-spacing: .3em;
+      color: rgba(255,255,255,.45);
+    }
+    .preloader__bar { width: 180px; height: 1px; background: rgba(255,255,255,.15); overflow: hidden; }
+    .preloader__bar i { display: block; height: 100%; width: 100%; background: #fff; transform: scaleX(0); transform-origin: 0 50%; }
+
+    /* ============ header ============ */
+    .header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      padding: 1.4rem 2rem; display: flex; align-items: center; justify-content: space-between;
+      mix-blend-mode: difference;
+    }
+    .wordmark { font-weight: 900; letter-spacing: .16em; font-size: 19px; color: #fff; white-space: nowrap; }
+    .header__nav { display: flex; gap: 2.2rem; }
+    .header__nav a {
+      font-size: 12px; letter-spacing: .18em; text-transform: uppercase;
+      color: rgba(255,255,255,.75); transition: color .3s ease;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .header__nav a:hover { color: #fff; }
+    .header__right { display: flex; align-items: center; gap: 1.25rem; }
+    .btn-outline {
+      display: inline-block; padding: .8rem 1.6rem; border: 1px solid #fff;
+      font-size: 11px; letter-spacing: .18em; text-transform: uppercase;
+      font-family: 'JetBrains Mono', monospace;
+      position: relative; overflow: hidden; transition: color .35s ease;
+      transform: translate(0,0); will-change: transform;
+    }
+    .btn-outline::before {
+      content: ''; position: absolute; inset: 0; background: #fff;
+      transform: scaleY(0); transform-origin: 50% 100%; transition: transform .35s cubic-bezier(.65,0,.35,1);
+      z-index: -1;
+    }
+    .btn-outline:hover { color: #000; }
+    .btn-outline:hover::before { transform: scaleY(1); }
+
+    .sound-toggle { display: flex; align-items: flex-end; gap: 2.5px; height: 14px; }
+    .sound-toggle .bar { width: 2px; background: #fff; height: 6px; transition: height .25s ease; }
+    .sound-toggle .bar:nth-child(2) { height: 12px; }
+    .sound-toggle .bar:nth-child(3) { height: 8px; }
+    body.sound-on .sound-toggle .bar { animation: eq 1s ease-in-out infinite alternate; }
+    body.sound-on .sound-toggle .bar:nth-child(2) { animation-delay: .15s; }
+    body.sound-on .sound-toggle .bar:nth-child(3) { animation-delay: .3s; }
+    @keyframes eq { from { height: 4px; } to { height: 14px; } }
+    body:not(.sound-on) .sound-toggle .bar { opacity: .35; }
+
+    .hamburger { display: none; flex-direction: column; gap: 5px; padding: 6px; }
+    .hamburger span { width: 24px; height: 2px; background: #fff; transition: .3s; }
+
+    /* ============ side menu ============ */
+    .side-menu {
+      position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,.96);
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2rem;
+      opacity: 0; visibility: hidden; transition: .4s ease;
+    }
+    .side-menu.is-open { opacity: 1; visibility: visible; }
+    .side-menu a { font-size: 15px; letter-spacing: .25em; text-transform: uppercase; font-family:'JetBrains Mono',monospace; }
+    .side-menu__close { position: absolute; top: 1.4rem; right: 2rem; display: flex; flex-direction: column; gap: 5px; }
+    .side-menu__close span { width: 24px; height: 2px; background: #fff; }
+    .side-menu__close span:first-child { transform: rotate(45deg) translate(4px,5px); }
+    .side-menu__close span:last-child { transform: rotate(-45deg) translate(4px,-5px); }
+
+    /* ============ scroll indicator ============ */
+    .scroll-indicator {
+      position: fixed; right: 1.6rem; top: 50%; transform: translateY(-50%);
+      display: flex; flex-direction: column; gap: 1.4rem; z-index: 90;
+    }
+    .scroll-indicator__line {
+      width: 1px; height: 54px; background: rgba(255,255,255,.14); position: relative;
+    }
+    .scroll-indicator__line::after {
+      content: ''; position: absolute; left: -2px; top: 0; width: 5px; height: 100%;
+      background: #fff; opacity: 0; transition: opacity .4s ease;
+    }
+    .scroll-indicator__line.is-active::after { opacity: 1; }
+    .scroll-indicator__label {
+      position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+      font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: .25em;
+      color: rgba(255,255,255,.3); text-transform: uppercase; transition: color .4s ease;
+    }
+    .scroll-indicator__line.is-active .scroll-indicator__label { color: #fff; }
+
+    /* ============ snap sections ============ */
+    .snap-container { height: 100vh; overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; }
+    .snap-section {
+      height: 100vh; scroll-snap-align: start; position: relative;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 1.5rem; padding: 5.5rem 2rem 2.5rem; overflow: hidden;
+    }
+    .section__label {
+      position: absolute; top: 5.2rem; left: 2rem;
+      font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: .3em;
+      text-transform: uppercase; color: rgba(255,255,255,.28);
+    }
+
+    /* ============ hero ============ */
+    #hero-canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; display: block; }
+    .hero__inner { position: relative; z-index: 1; text-align: center; margin-top: 38vh; }
+    .hero__tag {
+      font-size: clamp(13px, 1.6vw, 17px); font-weight: 300; letter-spacing: .32em;
+      text-transform: uppercase; color: rgba(255,255,255,.85);
+    }
+    .hero__sub {
+      margin-top: 1.1rem; font-size: 12px; letter-spacing: .22em; text-transform: uppercase;
+      color: rgba(255,255,255,.4); font-family: 'JetBrains Mono', monospace;
+    }
+    .hero__scroll {
+      position: absolute; bottom: 5.4rem; left: 50%; transform: translateX(-50%);
+      font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: .3em;
+      text-transform: uppercase; color: rgba(255,255,255,.35);
+      display: flex; flex-direction: column; align-items: center; gap: .6rem; z-index: 1;
+    }
+    .hero__scroll::after {
+      content: ''; width: 1px; height: 34px; background: rgba(255,255,255,.4);
+      animation: drop 1.8s cubic-bezier(.65,0,.35,1) infinite;
+    }
+    @keyframes drop { 0%{transform:scaleY(0);transform-origin:top} 45%{transform:scaleY(1);transform-origin:top}
+      55%{transform:scaleY(1);transform-origin:bottom} 100%{transform:scaleY(0);transform-origin:bottom} }
+
+    /* marquee strip at hero bottom */
+    .marquee {
+      position: absolute; bottom: 0; left: 0; right: 0; z-index: 1;
+      border-top: 1px solid rgba(255,255,255,.08);
+      padding: .85rem 0; overflow: hidden; white-space: nowrap;
+      -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+              mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+    }
+    .marquee__track { display: inline-flex; gap: 2.6rem; animation: marquee 26s linear infinite; will-change: transform; }
+    .marquee__track span {
+      font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: .3em;
+      text-transform: uppercase; color: rgba(255,255,255,.45);
+    }
+    .marquee__track span i { font-style: normal; color: rgba(255,255,255,.2); margin-right: 2.6rem; }
+    @keyframes marquee { to { transform: translateX(-50%); } }
+
+    /* ============ reveal system ============ */
+    [data-reveal] { opacity: 0; transform: translateY(28px); transition: opacity .9s ease, transform .9s cubic-bezier(.22,1,.36,1); transition-delay: calc(var(--i, 0) * 90ms); }
+    [data-reveal].is-in { opacity: 1; transform: none; }
+    .reveal-line { display: block; overflow: hidden; }
+    .reveal-line > span { display: block; transform: translateY(115%); transition: transform 1s cubic-bezier(.22,1,.36,1) calc(var(--i,0) * 120ms); }
+    .is-in .reveal-line > span, .reveal-line.is-in > span { transform: none; }
+
+    /* ============ works ============ */
+    .works-section .section__title { font-size: clamp(26px, 4vw, 46px); font-weight: 300; letter-spacing: -.01em; }
+    .works-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
+      background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.08);
+      width: 100%; max-width: 1040px; margin: 0 auto;
+    }
+    .works-item { position: relative; aspect-ratio: 16/10; background: #000; overflow: hidden; cursor: pointer; }
+    .works-item img { width: 100%; height: 100%; object-fit: cover; opacity: .85;
+      transition: transform .8s cubic-bezier(.22,1,.36,1), opacity .5s ease; filter: grayscale(1) contrast(1.05); }
+    .works-item:hover img { transform: scale(1.06); opacity: 1; }
+    .works-item__overlay {
+      position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end;
+      padding: 1.2rem; background: linear-gradient(to top, rgba(0,0,0,.85), rgba(0,0,0,0) 55%);
+      opacity: 0; transition: opacity .45s ease;
+    }
+    .works-item:hover .works-item__overlay { opacity: 1; }
+    .works-item__date { font-family:'JetBrains Mono',monospace; font-size: 10px; letter-spacing: .2em; color: rgba(255,255,255,.55); }
+    .works-item__title { font-size: 16px; font-weight: 600; margin-top: .3rem; }
+    .works-item__cat { display: flex; gap: .4rem; margin-top: .5rem; }
+    .works-item__cat span {
+      font-family:'JetBrains Mono',monospace; font-size: 9px; letter-spacing: .15em; text-transform: uppercase;
+      border: 1px solid rgba(255,255,255,.3); padding: .2rem .5rem; color: rgba(255,255,255,.75);
+    }
+
+    /* ============ about ============ */
+    .mission-title { font-size: clamp(34px, 6.5vw, 84px); font-weight: 300; line-height: 1.12; letter-spacing: -.02em; text-align: center; }
+    .mission-text { max-width: 620px; text-align: center; font-size: 14px; line-height: 2; color: rgba(255,255,255,.55); }
+    .stats-row { display: flex; gap: 4.5rem; margin-top: .6rem; }
+    .stat { text-align: center; }
+    .stat-num { font-size: clamp(28px, 4vw, 44px); font-weight: 700; letter-spacing: -.02em; }
+    .stat-num small { font-size: .55em; font-weight: 500; color: rgba(255,255,255,.6); }
+    .stat-label { font-family:'JetBrains Mono',monospace; font-size: 10px; letter-spacing: .25em; text-transform: uppercase; color: rgba(255,255,255,.35); margin-top: .35rem; }
+
+    /* ============ services ============ */
+    .services-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.1rem; max-width: 980px; width: 100%; margin: 0 auto; }
+    .service-item {
+      position: relative; padding: 1.6rem; border: 1px solid rgba(255,255,255,.12);
+      overflow: hidden; transition: border-color .4s ease;
+    }
+    .service-item::after {
+      content: ''; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .4s ease;
+      background: radial-gradient(280px circle at var(--mx, 50%) var(--my, 50%), rgba(255,255,255,.1), transparent 65%);
+    }
+    .service-item:hover { border-color: rgba(255,255,255,.4); }
+    .service-item:hover::after { opacity: 1; }
+    .service-item__icon { width: 40px; height: 40px; margin-bottom: 1rem; }
+    .service-item__icon svg { width: 100%; height: 100%; }
+    .service-item__title { font-size: 21px; font-weight: 600; margin-bottom: .55rem; }
+    .service-item__desc { font-size: 13px; line-height: 1.75; color: rgba(255,255,255,.5); }
+
+    /* ============ footer ============ */
+    .footer { padding: 4rem 2rem 2.5rem; border-top: 1px solid rgba(255,255,255,.08); }
+    .footer__inner { max-width: 1040px; margin: 0 auto; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 2.5rem; }
+    .footer__col h4 { font-family:'JetBrains Mono',monospace; font-size: 10px; letter-spacing: .3em; text-transform: uppercase; color: rgba(255,255,255,.3); margin-bottom: 1rem; }
+    .footer__col a { display: block; font-size: 13px; color: rgba(255,255,255,.6); margin-bottom: .5rem; transition: color .3s; }
+    .footer__col a:hover { color: #fff; }
+    .footer__bottom { max-width: 1040px; margin: 3rem auto 0; padding-top: 1.6rem; border-top: 1px solid rgba(255,255,255,.08);
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+    .footer__copy { font-family:'JetBrains Mono',monospace; font-size: 11px; color: rgba(255,255,255,.3); letter-spacing: .1em; }
+
+    /* ============ outro ============ */
+    .outro { position: fixed; inset: 0; z-index: 9990; background: #000; display: flex; align-items: center; justify-content: center;
+      opacity: 0; visibility: hidden; transition: .6s ease; }
+    .outro.is-visible { opacity: 1; visibility: visible; }
+    .outro__content { text-align: center; }
+    .outro__logo { font-size: 44px; font-weight: 900; letter-spacing: .18em; }
+    .outro__text { font-family:'JetBrains Mono',monospace; font-size: 11px; letter-spacing: .3em; text-transform: uppercase; color: rgba(255,255,255,.4); margin-top: 1rem; }
+
+    /* ============ sound intro ============ */
+    .sound-intro { position: fixed; inset: 0; z-index: 9995; background: rgba(0,0,0,.9);
+      display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: .4s ease; }
+    .sound-intro.is-visible { opacity: 1; visibility: visible; }
+    .sound-intro__panel { text-align: center; padding: 2.5rem; }
+    .sound-intro__label { font-family:'JetBrains Mono',monospace; font-size: 10px; letter-spacing: .4em; text-transform: uppercase; color: rgba(255,255,255,.35); margin-bottom: 1rem; }
+    .sound-intro__text { font-size: 14px; margin-bottom: 1.8rem; }
+    .sound-intro__actions { display: flex; gap: 1rem; justify-content: center; }
+    .sound-intro__btn { padding: .85rem 1.9rem; font-family:'JetBrains Mono',monospace; font-size: 11px; letter-spacing: .18em; text-transform: uppercase; transition: .3s; }
+    .sound-intro__accept { border: 1px solid #fff; }
+    .sound-intro__accept:hover { background: #fff; color: #000; }
+    .sound-intro__decline { color: rgba(255,255,255,.45); }
+    .sound-intro__decline:hover { color: #fff; }
+
+    /* ============ responsive ============ */
+    @media (max-width: 860px) {
+      .scroll-indicator { display: none; }
+      .header__nav { display: none; }
+      .hamburger { display: flex; }
+      .works-grid { grid-template-columns: repeat(2, 1fr); }
+      .services-grid { grid-template-columns: 1fr; }
+      .stats-row { gap: 2.5rem; }
+    }
+    @media (max-width: 520px) {
+      .works-grid { grid-template-columns: 1fr; }
+      .snap-section { padding: 5rem 1.25rem 2rem; }
+      .stats-row { gap: 1.8rem; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .marquee__track { animation: none; }
+      [data-reveal] { opacity: 1; transform: none; transition: none; }
+      .reveal-line > span { transform: none; transition: none; }
+      .hero__scroll::after { animation: none; }
+    }
+  </style>
 </head>
 <body>
-  <div id="app"></div>
-  <noscript>
-    <div style="padding:3rem;font-family:sans-serif;color:#eee;background:#0a0a0b;min-height:100vh">
-      <h1>KEYCODE Studio</h1>
-      <p>where excellence meets intelligence. Enable JavaScript for the full cinematic experience.</p>
-      <p><a href="/signup.html">Start Building</a></p>
+  <h1 class="vh">KEYCODE Studio — AI Engineering Studio. Full-stack apps, 3D worlds, CAD & PCBs.</h1>
+
+  <!-- preloader -->
+  <div id="preloader">
+    <div class="preloader__word">KEYCODE</div>
+    <div class="preloader__bar"><i id="pre-bar"></i></div>
+    <div class="preloader__pct" id="pre-pct">000</div>
+  </div>
+
+  <!-- chrome -->
+  <div id="progress"></div>
+  <div class="cursor-dot" id="cursor-dot"></div>
+  <div class="cursor-ring" id="cursor-ring"></div>
+
+  <header class="header">
+    <a href="#top" class="wordmark" data-hover>KEYCODE</a>
+    <nav class="header__nav">
+      <a href="#works" data-scramble data-hover>WORKS</a>
+      <a href="#about" data-scramble data-hover>ABOUT</a>
+      <a href="#services" data-scramble data-hover>SERVICES</a>
+    </nav>
+    <div class="header__right">
+      <a href="/ai-builder.html" class="btn-outline magnetic" data-hover>Start Project</a>
+      <button class="sound-toggle" id="sound-toggle" aria-label="Toggle sound" data-hover>
+        <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+      </button>
+      <button class="hamburger" id="hamburger" aria-label="Menu" data-hover>
+        <span></span><span></span><span></span>
+      </button>
     </div>
-  </noscript>
+  </header>
+
+  <nav class="side-menu" id="side-menu">
+    <button class="side-menu__close" id="side-close" aria-label="Close"><span></span><span></span></button>
+    <a href="#top" data-menu-link>Top</a>
+    <a href="#works" data-menu-link>Works</a>
+    <a href="#about" data-menu-link>About</a>
+    <a href="#services" data-menu-link>Services</a>
+    <a href="/ai-builder.html" data-menu-link>Start Project</a>
+  </nav>
+
+  <div class="scroll-indicator" id="scroll-indicator">
+    <div class="scroll-indicator__line" data-section="top"><span class="scroll-indicator__label">Top</span></div>
+    <div class="scroll-indicator__line" data-section="works"><span class="scroll-indicator__label">Works</span></div>
+    <div class="scroll-indicator__line" data-section="about"><span class="scroll-indicator__label">About</span></div>
+    <div class="scroll-indicator__line" data-section="services"><span class="scroll-indicator__label">Service</span></div>
+  </div>
+
+  <div class="snap-container" id="main">
+
+    <!-- HERO -->
+    <section class="snap-section" id="top">
+      <canvas id="hero-canvas"></canvas>
+      <div class="hero__inner">
+        <p class="hero__tag" data-reveal style="--i:1">Architect worlds that<br>move hearts &amp; spark hope</p>
+        <p class="hero__sub" data-reveal style="--i:2">AI-ENGINEERED — FULL-STACK · 3D · CAD · PCB</p>
+      </div>
+      <div class="hero__scroll">scroll</div>
+      <div class="marquee" aria-hidden="true">
+        <div class="marquee__track" id="marquee-track">
+          <span>Full-Stack Apps<i>✦</i></span><span>3D Worlds<i>✦</i></span><span>CAD &amp; PCB<i>✦</i></span><span>Metaverse<i>✦</i></span><span>AI Agents<i>✦</i></span><span>Sub-Second<i>✦</i></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- WORKS -->
+    <section class="snap-section works-section" id="works">
+      <div class="section__label" data-scramble>Works — Selected</div>
+      <h2 class="section__title" data-reveal style="--i:0">Selected Works</h2>
+      <div class="works-grid">
+        <div class="works-item" data-reveal style="--i:1" data-hover>
+          <img src="/assets/works-platform.svg" alt="AI Full-Stack Platform" loading="lazy">
+          <div class="works-item__overlay"><div class="works-item__date">2026.01</div><div class="works-item__title">AI Full-Stack Platform</div><div class="works-item__cat"><span>Full-Stack</span><span>AI</span></div></div>
+        </div>
+        <div class="works-item" data-reveal style="--i:2" data-hover>
+          <img src="/assets/works-game.svg" alt="3D Game Engine" loading="lazy">
+          <div class="works-item__overlay"><div class="works-item__date">2025.11</div><div class="works-item__title">3D Game Engine</div><div class="works-item__cat"><span>WebGL</span><span>Game</span></div></div>
+        </div>
+        <div class="works-item" data-reveal style="--i:3" data-hover>
+          <img src="/assets/works-pcb.svg" alt="PCB Design Suite" loading="lazy">
+          <div class="works-item__overlay"><div class="works-item__date">2025.09</div><div class="works-item__title">PCB Design Suite</div><div class="works-item__cat"><span>CAD</span><span>Hardware</span></div></div>
+        </div>
+        <div class="works-item" data-reveal style="--i:4" data-hover>
+          <img src="/assets/works-fashion.svg" alt="Virtual Fashion Week" loading="lazy">
+          <div class="works-item__overlay"><div class="works-item__date">2025.07</div><div class="works-item__title">Virtual Fashion Week</div><div class="works-item__cat"><span>Metaverse</span><span>3D</span></div></div>
+        </div>
+        <div class="works-item" data-reveal style="--i:5" data-hover>
+          <img src="/assets/works-gallery.svg" alt="Immersive Gallery" loading="lazy">
+          <div class="works-item__overlay"><div class="works-item__date">2025.05</div><div class="works-item__title">Immersive Gallery</div><div class="works-item__cat"><span>WebGL</span><span>Art</span></div></div>
+        </div>
+        <div class="works-item" data-reveal style="--i:6" data-hover>
+          <img src="/assets/works-chain.svg" alt="Smart Contracts" loading="lazy">
+          <div class="works-item__overlay"><div class="works-item__date">2025.03</div><div class="works-item__title">Smart Contracts</div><div class="works-item__cat"><span>Blockchain</span><span>Full-Stack</span></div></div>
+        </div>
+      </div>
+      <a href="/gallery.html" class="btn-outline magnetic" data-reveal style="--i:7" data-hover>View All Works</a>
+    </section>
+
+    <!-- ABOUT -->
+    <section class="snap-section" id="about">
+      <div class="section__label" data-scramble>About — Mission</div>
+      <h2 class="mission-title">
+        <span class="reveal-line" style="--i:0"><span>We don't write code.</span></span>
+        <span class="reveal-line" style="--i:1"><span>We architect worlds —</span></span>
+        <span class="reveal-line" style="--i:2"><span>delivered by AI agents.</span></span>
+      </h2>
+      <p class="mission-text" data-reveal style="--i:1">
+        A pod of AI agents designs, builds and ships full-stack applications, immersive 3D worlds and fab-ready PCBs — at a pace no human team can match.
+      </p>
+      <div class="stats-row" data-reveal style="--i:2">
+        <div class="stat"><div class="stat-num"><span data-count="120">0</span><small>+</small></div><div class="stat-label">Projects Shipped</div></div>
+        <div class="stat"><div class="stat-num"><span data-count="14">0</span><small>days</small></div><div class="stat-label">Avg. Delivery</div></div>
+        <div class="stat"><div class="stat-num"><span data-count="99.9" data-dec="1">0</span><small>%</small></div><div class="stat-label">Uptime</div></div>
+      </div>
+    </section>
+
+    <!-- SERVICES -->
+    <section class="snap-section" id="services">
+      <div class="section__label" data-scramble>Service — Capabilities</div>
+      <h2 class="section__title" data-reveal style="--i:0">What We Do</h2>
+      <div class="services-grid">
+        <div class="service-item" data-reveal style="--i:1" data-hover>
+          <div class="service-item__icon"><svg viewBox="0 0 40 40" fill="none"><rect x="4" y="4" width="32" height="32" stroke="#fff"/><path d="M14 20L20 14L26 20L20 26Z" fill="#fff"/></svg></div>
+          <h3 class="service-item__title">AI Full-Stack</h3>
+          <p class="service-item__desc">Complete web applications engineered end-to-end by AI agents. Concept to deployment in days, not months.</p>
+        </div>
+        <div class="service-item" data-reveal style="--i:2" data-hover>
+          <div class="service-item__icon"><svg viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="14" stroke="#fff"/><path d="M20 11V20L26 24" stroke="#fff" stroke-width="1.5"/></svg></div>
+          <h3 class="service-item__title">3D Worlds</h3>
+          <p class="service-item__desc">Immersive WebGL experiences and game engines — virtual environments that captivate worldwide.</p>
+        </div>
+        <div class="service-item" data-reveal style="--i:3" data-hover>
+          <div class="service-item__icon"><svg viewBox="0 0 40 40" fill="none"><rect x="7" y="13" width="26" height="16" stroke="#fff"/><path d="M14 21H26M20 13V29" stroke="#fff"/></svg></div>
+          <h3 class="service-item__title">CAD &amp; PCB</h3>
+          <p class="service-item__desc">Fab-ready PCB designs and precision CAD — schematic to manufacturing in one workflow.</p>
+        </div>
+        <div class="service-item" data-reveal style="--i:4" data-hover>
+          <div class="service-item__icon"><svg viewBox="0 0 40 40" fill="none"><path d="M7 29L20 9L33 29Z" stroke="#fff"/><path d="M14 29L20 19L26 29" stroke="#fff"/></svg></div>
+          <h3 class="service-item__title">Metaverse</h3>
+          <p class="service-item__desc">Virtual showrooms, live events, digital fashion — the next generation of online presence.</p>
+        </div>
+      </div>
+      <a href="/ai-builder.html" class="btn-outline magnetic" data-reveal style="--i:5" data-hover>Start a Project</a>
+    </section>
+  </div>
+
+  <!-- footer -->
+  <footer class="footer">
+    <div class="footer__inner">
+      <div class="footer__col"><h4>Studio</h4><a href="#top">Top</a><a href="#works">Works</a><a href="#about">About</a></div>
+      <div class="footer__col"><h4>Build</h4><a href="/ai-builder.html">AI Builder</a><a href="/dashboard.html">Start Project</a><a href="/dashboard.html">Dashboard</a></div>
+      <div class="footer__col"><h4>Connect</h4><a href="/" target="_blank" rel="noopener">X / Twitter</a><a href="/" target="_blank" rel="noopener">GitHub</a><a href="/support.html">Support</a></div>
+    </div>
+    <div class="footer__bottom">
+      <span class="footer__copy">© 2026 KEYCODE STUDIO</span>
+      <span class="wordmark" style="font-size:14px;">KEYCODE</span>
+    </div>
+  </footer>
+
+  <!-- outro -->
+  <div class="outro" id="outro">
+    <div class="outro__content">
+      <div class="outro__logo">KEYCODE</div>
+      <p class="outro__text">Thank you</p>
+    </div>
+  </div>
+
+  <!-- sound intro -->
+  <div class="sound-intro" id="sound-intro">
+    <div class="sound-intro__panel">
+      <p class="sound-intro__label">sound</p>
+      <p class="sound-intro__text">This experience includes sound.<br>Enable it?</p>
+      <div class="sound-intro__actions">
+        <button class="sound-intro__btn sound-intro__accept" id="sound-accept" data-hover>Enable Sound</button>
+        <button class="sound-intro__btn sound-intro__decline" id="sound-decline" data-hover>Silent</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import * as THREE from 'three';
+
+    const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const finePointer  = matchMedia('(hover:hover) and (pointer:fine)').matches;
+    const isMobile     = innerWidth < 768;
+
+    /* =============== SOUND (synthesized, no assets) =============== */
+    let audioCtx = null, ambientGain = null, soundOn = false;
+    function initAudio() {
+      if (audioCtx) return;
+      try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        ambientGain = audioCtx.createGain(); ambientGain.gain.value = 0;
+        const filt = audioCtx.createBiquadFilter(); filt.type = 'lowpass'; filt.frequency.value = 220;
+        filt.connect(ambientGain); ambientGain.connect(audioCtx.destination);
+        [[55,.5],[55.6,.5],[110.4,.14]].forEach(([f,v]) => {
+          const o = audioCtx.createOscillator(); o.type = 'sine'; o.frequency.value = f;
+          const g = audioCtx.createGain(); g.gain.value = v;
+          o.connect(g); g.connect(filt); o.start();
+        });
+        const lfo = audioCtx.createOscillator(); lfo.frequency.value = .06;
+        const lg = audioCtx.createGain(); lg.gain.value = 70;
+        lfo.connect(lg); lg.connect(filt.frequency); lfo.start();
+      } catch (_) { audioCtx = null; }
+    }
+    function setAmbient(on) {
+      if (!audioCtx) return;
+      ambientGain.gain.cancelScheduledValues(audioCtx.currentTime);
+      ambientGain.gain.linearRampToValueAtTime(on ? .045 : 0, audioCtx.currentTime + .8);
+    }
+    function blip(freq = 880, vol = .04, dur = .12) {
+      if (!audioCtx || !soundOn) return;
+      const t = audioCtx.currentTime;
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = 'sine'; o.frequency.value = freq;
+      g.gain.setValueAtTime(vol, t);
+      g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(t); o.stop(t + dur + .02);
+    }
+    function applySound(on) {
+      soundOn = on;
+      document.body.classList.toggle('sound-on', on);
+      if (on) { initAudio(); audioCtx?.resume?.(); }
+      setAmbient(on);
+      try { localStorage.setItem('sound-preference', on ? 'enabled' : 'disabled'); } catch (_) {}
+    }
+
+    const soundIntro = document.getElementById('sound-intro');
+    document.getElementById('sound-accept').addEventListener('click', () => {
+      applySound(true); soundIntro.classList.remove('is-visible'); blip(660, .05);
+    });
+    document.getElementById('sound-decline').addEventListener('click', () => {
+      applySound(false); soundIntro.classList.remove('is-visible');
+    });
+    document.getElementById('sound-toggle').addEventListener('click', () => {
+      applySound(!soundOn); blip(soundOn ? 880 : 440, .05);
+    });
+    function showSoundIntro() {
+      let pref = null;
+      try { pref = localStorage.getItem('sound-preference'); } catch (_) {}
+      if (pref === 'enabled') { applySound(true); return; }
+      if (pref === 'disabled') { applySound(false); return; }
+      soundIntro.classList.add('is-visible');
+    }
+
+    /* =============== PRELOADER =============== */
+    const pre = document.getElementById('preloader');
+    const preBar = document.getElementById('pre-bar');
+    const prePct = document.getElementById('pre-pct');
+    function runPreloader(done) {
+      let p = 0;
+      const t0 = performance.now(), DUR = reduceMotion ? 200 : 1400;
+      (function step() {
+        p = Math.min(1, (performance.now() - t0) / DUR);
+        const v = Math.round(p * 100);
+        preBar.style.transform = `scaleX(${p})`;
+        prePct.textContent = String(v).padStart(3, '0');
+        if (p < 1) requestAnimationFrame(step);
+        else { pre.classList.add('done'); done(); }
+      })();
+    }
+
+    /* =============== SCRAMBLE TEXT =============== */
+    const SCRAMBLE_CHARS = '!<>-_\\/[]{}—=+*^?#';
+    function scramble(el, speed = 1) {
+      const final = el.dataset.text || (el.dataset.text = el.textContent);
+      if (reduceMotion) { el.textContent = final; return; }
+      let frame = 0;
+      const total = Math.max(16, final.length * 2.4) / speed;
+      cancelAnimationFrame(el._scr);
+      (function tick() {
+        frame++;
+        const lock = Math.floor((frame / total) * final.length);
+        let out = '';
+        for (let i = 0; i < final.length; i++) {
+          const c = final[i];
+          out += (i < lock || c === ' ') ? c : SCRAMBLE_CHARS[(Math.random() * SCRAMBLE_CHARS.length) | 0];
+        }
+        el.textContent = out;
+        if (lock < final.length) el._scr = requestAnimationFrame(tick);
+        else el.textContent = final;
+      })();
+    }
+    document.querySelectorAll('[data-scramble]').forEach(el => {
+      el.closest('a')?.addEventListener('mouseenter', () => scramble(el, 1.4));
+    });
+
+    /* =============== CUSTOM CURSOR =============== */
+    if (finePointer && !reduceMotion) {
+      document.body.classList.add('has-cursor');
+      const dot = document.getElementById('cursor-dot');
+      const ring = document.getElementById('cursor-ring');
+      let mx = -100, my = -100, rx = -100, ry = -100, shown = false;
+      addEventListener('mousemove', e => {
+        mx = e.clientX; my = e.clientY;
+        if (!shown) { shown = true; document.body.classList.add('cursor-on'); }
+      }, { passive: true });
+      (function loop() {
+        rx += (mx - rx) * .16; ry += (my - ry) * .16;
+        dot.style.transform  = `translate(${mx - 3}px, ${my - 3}px)`;
+        ring.style.transform = `translate(${rx - ring.offsetWidth / 2}px, ${ry - ring.offsetHeight / 2}px)`;
+        requestAnimationFrame(loop);
+      })();
+      document.addEventListener('mouseover', e => {
+        document.body.classList.toggle('cursor-hover', !!e.target.closest('a, button, [data-hover]'));
+      });
+    }
+
+    /* =============== MAGNETIC BUTTONS =============== */
+    if (finePointer && !reduceMotion) {
+      document.querySelectorAll('.magnetic').forEach(el => {
+        el.addEventListener('mousemove', e => {
+          const r = el.getBoundingClientRect();
+          const x = (e.clientX - r.left - r.width / 2) * .3;
+          const y = (e.clientY - r.top - r.height / 2) * .3;
+          el.style.transform = `translate(${x}px, ${y}px)`;
+        });
+        el.addEventListener('mouseleave', () => { el.style.transform = 'translate(0,0)'; });
+      });
+    }
+
+    /* =============== REVEALS & COUNTERS =============== */
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(en => { if (en.isIntersecting) { en.target.classList.add('is-in'); io.unobserve(en.target); } });
+    }, { threshold: .25 });
+    document.querySelectorAll('[data-reveal], .reveal-line').forEach(el => io.observe(el));
+
+    function countUp(el) {
+      const target = parseFloat(el.dataset.count);
+      const dec = parseInt(el.dataset.dec || '0', 10);
+      if (reduceMotion) { el.textContent = target.toFixed(dec); return; }
+      const t0 = performance.now(), DUR = 1500;
+      (function step() {
+        const p = Math.min(1, (performance.now() - t0) / DUR);
+        el.textContent = (target * (1 - Math.pow(1 - p, 3))).toFixed(dec);
+        if (p < 1) requestAnimationFrame(step);
+      })();
+    }
+    const ioStats = new IntersectionObserver(entries => {
+      entries.forEach(en => { if (en.isIntersecting) { countUp(en.target); ioStats.unobserve(en.target); } });
+    }, { threshold: .6 });
+    document.querySelectorAll('[data-count]').forEach(el => ioStats.observe(el));
+
+    // scramble section labels when they enter view
+    const ioScramble = new IntersectionObserver(entries => {
+      entries.forEach(en => { if (en.isIntersecting) { scramble(en.target); ioScramble.unobserve(en.target); } });
+    }, { threshold: .5 });
+    document.querySelectorAll('.section__label[data-scramble]').forEach(el => ioScramble.observe(el));
+
+    /* =============== SERVICE CARD GLOW =============== */
+    document.querySelectorAll('.service-item').forEach(card => {
+      card.addEventListener('pointermove', e => {
+        const r = card.getBoundingClientRect();
+        card.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+        card.style.setProperty('--my', (e.clientY - r.top) + 'px');
+      });
+    });
+
+    /* =============== MENU =============== */
+    const sideMenu = document.getElementById('side-menu');
+    document.getElementById('hamburger').addEventListener('click', () => sideMenu.classList.add('is-open'));
+    document.getElementById('side-close').addEventListener('click', () => sideMenu.classList.remove('is-open'));
+    document.querySelectorAll('[data-menu-link]').forEach(a =>
+      a.addEventListener('click', () => sideMenu.classList.remove('is-open')));
+
+    /* =============== SCROLL: indicator + progress + outro =============== */
+    const container = document.getElementById('main');
+    const sections = ['top', 'works', 'about', 'services'];
+    const indicatorLines = document.querySelectorAll('.scroll-indicator__line');
+    const progressBar = document.getElementById('progress');
+    const outro = document.getElementById('outro');
+    let lastSection = 'top';
+
+    function onScroll() {
+      const vh = innerHeight;
+      let current = 'top';
+      for (const id of sections) {
+        const el = document.getElementById(id);
+        if (!el) continue;
+        const r = el.getBoundingClientRect();
+        if (r.top <= vh / 2 && r.bottom >= vh / 2) { current = id; break; }
+      }
+      if (current !== lastSection) { lastSection = current; blip(520, .035, .1); }
+      indicatorLines.forEach(l => l.classList.toggle('is-active', l.dataset.section === current));
+
+      const containerSpan = container.scrollHeight - container.clientHeight;
+      const pageSpan = Math.max(0, document.body.offsetHeight - vh);
+      const total = containerSpan + pageSpan || 1;
+      progressBar.style.transform = `scaleX(${Math.min(1, (container.scrollTop + scrollY) / total)})`;
+
+      const pageNearEnd = vh + scrollY >= document.body.offsetHeight - 100;
+      outro.classList.toggle('is-visible', pageNearEnd);
+    }
+    container.addEventListener('scroll', onScroll, { passive: true });
+    addEventListener('scroll', onScroll, { passive: true });
+    addEventListener('resize', onScroll);
+    onScroll();
+
+    // smooth anchors
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', e => {
+        const target = document.querySelector(a.getAttribute('href'));
+        if (target) { e.preventDefault(); target.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth' }); blip(660, .045); }
+      });
+    });
+
+    // hover blips (throttled)
+    let lastBlip = 0;
+    document.addEventListener('mouseover', e => {
+      if (!e.target.closest('a, button, [data-hover]')) return;
+      const now = performance.now();
+      if (now - lastBlip > 90) { lastBlip = now; blip(1320, .018, .07); }
+    });
+
+    /* =============== WEBGL PARTICLE-TEXT HERO =============== */
+    function initParticles() {
+      const canvas = document.getElementById('hero-canvas');
+      const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: !isMobile });
+      renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
+
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(60, 1, .1, 200);
+      camera.position.z = 42;
+
+      // sample "KEYCODE" text into points
+      const off = document.createElement('canvas');
+      const OW = 1000, OH = 260;
+      off.width = OW; off.height = OH;
+      const octx = off.getContext('2d', { willReadFrequently: true });
+      octx.fillStyle = '#fff';
+      octx.font = '900 185px Inter, sans-serif';
+      octx.textAlign = 'center'; octx.textBaseline = 'middle';
+      octx.fillText('KEYCODE', OW / 2, OH / 2 + 8);
+      const data = octx.getImageData(0, 0, OW, OH).data;
+
+      const step = isMobile ? 5 : 3;
+      const homes = [];
+      for (let y = 0; y < OH; y += step) {
+        for (let x = 0; x < OW; x += step) {
+          if (data[(y * OW + x) * 4 + 3] > 128) homes.push(x - OW / 2, OH / 2 - y);
+        }
+      }
+      const N = homes.length / 2;
+
+      const pos = new Float32Array(N * 3);
+      const scatter = new Float32Array(N * 2);
+      const delay = new Float32Array(N);
+      const phase = new Float32Array(N);
+      const worldW = 64, scale = (worldW / OW) * (isMobile ? 1.15 : 1);
+      for (let i = 0; i < N; i++) {
+        scatter[i * 2]     = (Math.random() - .5) * 160;
+        scatter[i * 2 + 1] = (Math.random() - .5) * 90;
+        delay[i]  = (homes[i * 2] / OW + .5) * .9 + Math.random() * .25;
+        phase[i]  = Math.random() * Math.PI * 2;
+        pos[i * 3]     = scatter[i * 2];
+        pos[i * 3 + 1] = scatter[i * 2 + 1];
+        pos[i * 3 + 2] = (Math.random() - .5) * 6;
+      }
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      const mat = new THREE.PointsMaterial({
+        color: 0xffffff, size: .085, sizeAttenuation: true,
+        transparent: true, opacity: .9, depthWrite: false,
+        blending: THREE.AdditiveBlending
+      });
+      const points = new THREE.Points(geo, mat);
+      scene.add(points);
+
+      // Start centered; mouse effects only activate after a real pointermove
+      // (otherwise headless/touch devices get a camera that flies off-text).
+      let mx = 0, my = 0, hasMouse = false, smx = 0, smy = 0;
+      addEventListener('pointermove', e => {
+        mx = (e.clientX / innerWidth) * 2 - 1;
+        my = -(e.clientY / innerHeight) * 2 + 1;
+        hasMouse = true;
+      }, { passive: true });
+
+      function resize() {
+        const w = canvas.clientWidth || innerWidth, h = canvas.clientHeight || innerHeight;
+        renderer.setSize(w, h, false);
+        camera.aspect = w / h; camera.updateProjectionMatrix();
+      }
+      resize(); addEventListener('resize', resize);
+
+      const R = 5.2, PUSH = .9;
+      const clock = new THREE.Clock();
+      let visible = true;
+      document.addEventListener('visibilitychange', () => { visible = !document.hidden; });
+
+      function frame() {
+        requestAnimationFrame(frame);
+        if (!visible) return;
+        // skip rendering when hero scrolled far away
+        const r = document.getElementById('top').getBoundingClientRect();
+        if (r.bottom < -vh()) return;
+
+        const t = clock.getElapsedTime();
+        if (hasMouse) { smx += (mx - smx) * .06; smy += (my - smy) * .06; }
+        const aspect = camera.aspect;
+        const worldH = 2 * camera.position.z * Math.tan((camera.fov * Math.PI / 180) / 2);
+        const mwx = hasMouse ? smx * worldH * aspect / 2 : -99999;
+        const mwy = hasMouse ? smy * worldH / 2 : -99999;
+
+        const arr = geo.attributes.position.array;
+        for (let i = 0; i < N; i++) {
+          const hx = homes[i * 2] * scale;
+          const hy = homes[i * 2 + 1] * scale + 2.5;
+          const p = reduceMotion ? 1 : Math.min(1, Math.max(0, (t - delay[i]) / 1.3));
+          const ease = 1 - Math.pow(1 - p, 3);
+          let x = scatter[i * 2]     + (hx - scatter[i * 2])     * ease;
+          let y = scatter[i * 2 + 1] + (hy - scatter[i * 2 + 1]) * ease;
+          // idle wobble
+          x += Math.sin(t * .9 + phase[i]) * .12;
+          y += Math.cos(t * .8 + phase[i]) * .12;
+          // mouse repulsion
+          const dx = x - mwx, dy = y - mwy;
+          const d2 = dx * dx + dy * dy;
+          if (d2 < R * R && d2 > .0001) {
+            const d = Math.sqrt(d2), f = (1 - d / R) * PUSH;
+            x += (dx / d) * f; y += (dy / d) * f;
+          }
+          arr[i * 3] = x; arr[i * 3 + 1] = y;
+        }
+        geo.attributes.position.needsUpdate = true;
+
+        camera.position.x = hasMouse ? smx * 2.2 : 0;
+        camera.position.y = hasMouse ? smy * 1.4 : 0;
+        camera.lookAt(0, 2.5, 0);
+        renderer.render(scene, camera);
+      }
+      frame();
+      function vh() { return innerHeight; }
+    }
+
+    /* =============== BOOT =============== */
+    try { initParticles(); }
+    catch (e) { console.warn('[keycode] WebGL hero unavailable:', e?.message); }
+
+    runPreloader(() => {
+      document.body.classList.add('is-loaded');
+      setTimeout(showSoundIntro, 350);
+      document.querySelectorAll('.section__label[data-scramble]').forEach(el => {
+        if (el.getBoundingClientRect().top < innerHeight) scramble(el);
+      });
+    });
+  </script>
+  <div id="site-footer"></div>
+  <script src="/js/footer.js" defer></script>
 </body>
 </html>

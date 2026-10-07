@@ -7,8 +7,8 @@
   <meta name="description" content="Secure checkout - Purchase KEYCODE Studio plans and services.">
   <meta property="og:title" content="Checkout - KEYCODE Studio">
 <meta property="og:description" content="Secure checkout - Purchase KEYCODE Studio plans and services.">
-<meta property="og:image" content="https://keycode.studio/og-image.png">
-<meta property="og:url" content="https://keycode.studio/checkout.html">
+<meta property="og:image" content="/og-image.png">
+<meta property="og:url" content="/checkout.html">
 <meta name="twitter:card" content="summary_large_image">
 <title>Checkout - KEYCODE Studio</title>
   <link rel="icon" type="image/svg+xml" href="/assets/favicon-dRp91c1F.svg">
@@ -585,22 +585,64 @@
       total = orderData.price;
     }
 
-    function applyCoupon() {
+    // Minimal toast used when a payment gateway needs user attention
+    // (e.g. Stripe keys not configured). Auto-dismisses after 6s.
+    function showToast(message, type) {
+      let t = document.getElementById('kc-toast');
+      if (!t) {
+        t = document.createElement('div');
+        t.id = 'kc-toast';
+        t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);max-width:90%;z-index:10001;padding:14px 22px;border-radius:10px;font-size:13px;font-weight:500;color:#fff;box-shadow:0 8px 30px rgba(0,0,0,.4);white-space:pre-line;text-align:center;';
+        document.body.appendChild(t);
+      }
+      t.style.background = type === 'error'
+        ? 'linear-gradient(135deg,#ef4444,#dc2626)'
+        : 'linear-gradient(135deg,#10b981,#059669)';
+      t.textContent = message;
+      t.style.display = 'block';
+      clearTimeout(t._kcToastTimer);
+      t._kcToastTimer = setTimeout(() => { t.style.display = 'none'; }, 6000);
+    }
+
+    async function applyCoupon() {
       const code = document.getElementById('couponCode').value;
       const result = document.getElementById('couponResult');
-      
-      if (code.toUpperCase() === 'SAVE20') {
-        const discount = total * 0.2;
-        total = total - discount;
-        appliedCoupon = { code, discount };
-        
+      if (!code.trim()) {
+        result.innerHTML = '<span style="color:var(--danger);">Enter a coupon code</span>';
+        return;
+      }
+
+      // Validate against the backend so admin-created coupons,
+      // usage limits, expiry and minimums are all honored.
+      const baseTotal = Number(orderData.price || 499);
+      try {
+        const res = await fetch('/api/coupons/validate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code, subtotal: baseTotal })
+        });
+        const d = await res.json();
+
+        if (!d.valid) {
+          appliedCoupon = null;
+          total = baseTotal;
+          document.getElementById('discountRow').style.display = 'none';
+          document.getElementById('totalAmount').textContent = '$' + baseTotal.toFixed(2);
+          result.innerHTML = '<span style="color:var(--danger);">' + (d.message || 'Invalid coupon code') + '</span>';
+          return;
+        }
+
+        const discount = Number(d.discount_amount || 0);
+        total = Math.max(0, baseTotal - discount);
+        appliedCoupon = { code: d.code, discount };
+
         document.getElementById('discountRow').style.display = 'flex';
         document.getElementById('discountAmount').textContent = '-$' + discount.toFixed(2);
         document.getElementById('totalAmount').textContent = '$' + total.toFixed(2);
-        result.innerHTML = '<span class="coupon-applied"><i class="fas fa-check"></i> 20% discount applied!</span>';
-        result.querySelector('.coupon-applied').innerHTML += '<span class="discount-code">SAVE20</span>';
-      } else {
-        result.innerHTML = '<span style="color:var(--danger);">Invalid coupon code</span>';
+        result.innerHTML = '<span class="coupon-applied"><i class="fas fa-check"></i> ' + (d.message || 'Coupon applied') + '</span>';
+        result.querySelector('.coupon-applied').innerHTML += '<span class="discount-code">' + d.code + '</span>';
+      } catch (e) {
+        result.innerHTML = '<span style="color:var(--danger);">Could not validate coupon — try again</span>';
       }
     }
 
@@ -666,7 +708,7 @@
 
         const response = await fetch('/api/website-order', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': 'Bearer ' + token } : {}) },
           body: JSON.stringify(payload)
         });
 

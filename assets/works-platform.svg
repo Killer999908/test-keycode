@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500">
+  <defs>
+    <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0a0a12"/>
+      <stop offset="1" stop-color="#161628"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.45" r="0.65">
+      <stop offset="0" stop-color="#6c5ce7" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#6c5ce7" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="800" height="500" fill="url(#g1)"/>
+  <circle cx="400" cy="225" r="190" fill="url(#glow)"/>
+  <g fill="none" stroke="#a29bfe" stroke-opacity="0.35">
+    <circle cx="400" cy="225" r="120"/>
+    <circle cx="400" cy="225" r="70" stroke-opacity="0.5"/>
+  </g>
+  <g stroke="#00e5ff" stroke-opacity="0.55">
+    <path d="M400 155 v-40 M400 295 v40 M330 225 h-40 M470 225 h40"/>
+    <path d="M355 180 l-25 -25 M445 270 l25 25 M445 180 l25 -25 M355 270 l-25 25" stroke-opacity="0.4"/>
+  </g>
+  <circle cx="400" cy="225" r="10" fill="#00e5ff"/>
+  <text x="400" y="420" text-anchor="middle" font-family="monospace" font-size="20" fill="#a29bfe" letter-spacing="6">AI FULL-STACK PLATFORM</text>
+</svg>

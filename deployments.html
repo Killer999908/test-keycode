@@ -9,7 +9,7 @@
 <meta property="og:title" content="Deployments - KEYCODE Studio">
 <meta property="og:description" content="Manage your project deployments, domains, and hosting on KEYCODE Studio.">
 <meta property="og:image" content="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjAwIiBoZWlnaHQ9IjYzMCIgdmlld0JveD0iMCAwIDEyMDAgNjMwIj4KICA8cmVjdCB3aWR0aD0iMTIwMCIgaGVpZ2h0PSI2MzAiIGZpbGw9IiMwYTBhMWEiLz4KICA8cmVjdCB4PSIwIiB5PSIwIiB3aWR0aD0iMTIwMCIgaGVpZ2h0PSI2MzAiIGZpbGw9InVybCgjZykiIG9wYWNpdHk9IjAuMTUiLz4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iZyIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiM2MzY2ZjEiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSI1MCUiIHN0b3AtY29sb3I9IiMyMmQzZWUiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjNjM2NmYxIi8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8dGV4dCB4PSI2MDAiIHk9IjI3MCIgZm9udC1mYW1pbHk9IkludGVyLCBzeXN0ZW0tdWksIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iOTYiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiNmZmZmZmYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGxldHRlci1zcGFjaW5nPSItMiI+S0VZQ09ERTwvdGV4dD4KICA8dGV4dCB4PSI2MDAiIHk9IjM0MCIgZm9udC1mYW1pbHk9IkludGVyLCBzeXN0ZW0tdWksIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjgiIGZpbGw9IiMyMmQzZWUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGxldHRlci1zcGFjaW5nPSI0IiBmb250LXdlaWdodD0iMzAwIj5BSS1QT1dFUkVEIFNUVURJTzwvdGV4dD4KICA8cmVjdCB4PSI1NDAiIHk9IjM3MCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSIzIiByeD0iMS41IiBmaWxsPSJ1cmwoI2cpIi8+CiAgPHRleHQgeD0iNjAwIiB5PSI0MTAiIGZvbnQtZmFtaWx5PSJJbnRlciwgc3lzdGVtLXVpLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE4IiBmaWxsPSIjOTRhM2I4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5CdWlsZCB0aGUgZnV0dXJlLCBvbmUgcHJvamVjdCBhdCBhIHRpbWUuPC90ZXh0Pgo8L3N2Zz4K">
-<meta property="og:url" content="https://keycode-studio-production.up.railway.app/deployments">
+<meta property="og:url" content="/deployments">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Deployments - KEYCODE Studio">
@@ -400,11 +400,11 @@ async function apiFetch(url, options) {
 // ===== MOCK DATA =====
 function getMockDeployments() {
   return [
-    { id: 'd1', projectName: 'keycode-home', domain: 'keycode.studio', status: 'live', hosting: 'Pro', createdAt: '2026-07-10T14:22:00Z', ssl: true },
-    { id: 'd2', projectName: 'ai-builder', domain: 'builder.keycode.studio', status: 'live', hosting: 'Business', createdAt: '2026-07-08T09:15:00Z', ssl: true },
-    { id: 'd3', projectName: 'api-gateway', domain: 'api.keycode.studio', status: 'live', hosting: 'Pro', createdAt: '2026-07-05T18:30:00Z', ssl: true },
-    { id: 'd4', projectName: 'admin-panel', domain: 'admin.keycode.studio', status: 'deploying', hosting: 'Starter', createdAt: '2026-07-14T11:00:00Z', ssl: false },
-    { id: 'd5', projectName: 'legacy-site', domain: 'legacy.keycode.studio', status: 'failed', hosting: 'Starter', createdAt: '2026-07-01T06:45:00Z', ssl: false },
+    { id: 'd1', projectName: 'keycode-home', domain: 'yourdomain.com', status: 'live', hosting: 'Pro', createdAt: '2026-07-10T14:22:00Z', ssl: true },
+    { id: 'd2', projectName: 'ai-builder', domain: 'builder.yourdomain.com', status: 'live', hosting: 'Business', createdAt: '2026-07-08T09:15:00Z', ssl: true },
+    { id: 'd3', projectName: 'api-gateway', domain: 'api.yourdomain.com', status: 'live', hosting: 'Pro', createdAt: '2026-07-05T18:30:00Z', ssl: true },
+    { id: 'd4', projectName: 'admin-panel', domain: 'admin.yourdomain.com', status: 'deploying', hosting: 'Starter', createdAt: '2026-07-14T11:00:00Z', ssl: false },
+    { id: 'd5', projectName: 'legacy-site', domain: 'legacy.yourdomain.com', status: 'failed', hosting: 'Starter', createdAt: '2026-07-01T06:45:00Z', ssl: false },
   ];
 }
 
@@ -418,10 +418,10 @@ function getMockHosting() {
 
 function getMockDomains() {
   return [
-    { domain: 'keycode.studio', status: 'active', dns: 'Cloudflare' },
-    { domain: 'builder.keycode.studio', status: 'active', dns: 'Cloudflare' },
-    { domain: 'api.keycode.studio', status: 'active', dns: 'Cloudflare' },
-    { domain: 'dev.keycode.studio', status: 'pending', dns: 'Pending' },
+    { domain: 'yourdomain.com', status: 'active', dns: 'Cloudflare' },
+    { domain: 'builder.yourdomain.com', status: 'active', dns: 'Cloudflare' },
+    { domain: 'api.yourdomain.com', status: 'active', dns: 'Cloudflare' },
+    { domain: 'dev.yourdomain.com', status: 'pending', dns: 'Pending' },
   ];
 }
 
@@ -441,8 +441,8 @@ function getMockActivity() {
   return [
     { icon: 'build', text: 'admin-panel built successfully', time: now - 3600000 },
     { icon: 'deploy', text: 'admin-panel deployed to production', time: now - 1800000 },
-    { icon: 'ssl', text: 'SSL certificate renewed for keycode.studio', time: now - 86400000 },
-    { icon: 'dns', text: 'DNS updated for dev.keycode.studio', time: now - 172800000 },
+    { icon: 'ssl', text: 'SSL certificate renewed for yourdomain.com', time: now - 86400000 },
+    { icon: 'dns', text: 'DNS updated for dev.yourdomain.com', time: now - 172800000 },
     { icon: 'build', text: 'ai-builder rebuilt and redeployed', time: now - 259200000 },
   ];
 }
@@ -709,7 +709,7 @@ async function handleDeploy(e) {
 
   setStep(0);
 
-  const domainFull = domain ? domain + (document.querySelector('#domainSuggestions .active')?.textContent?.split(' ')[0] || '') : (name + '.keycode.studio');
+  const domainFull = domain ? domain + (document.querySelector('#domainSuggestions .active')?.textContent?.split(' ')[0] || '') : (name + '.yourdomain.com');
 
   await new Promise(r => setTimeout(r, 1200));
   setStep(1);

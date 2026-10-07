@@ -978,6 +978,7 @@ async function buildSite(text,planCtx,imgs){
   setCode(finalHtml);
   showPane('preview');
   setBuild('ok','Ready');
+  $('#saveBtn').disabled=false;
   const kb=Math.round(fullCode.length/1024);
   meta.textContent=fullCode.split('\n').length+' lines · '+kb+'KB';
   addDoneCard(fullCode.split('\n').length+' lines · '+kb+'KB · live preview',
@@ -1109,5 +1110,7 @@ addEventListener('keydown',e=>{
   if(e.key==='Escape'&&streaming&&abortCtrl){ abortCtrl.abort(); }
 });
 </script>
+  <div id="site-footer"></div>
+  <script src="/js/footer.js" defer></script>
 </body>
 </html>

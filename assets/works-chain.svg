@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500">
+  <defs>
+    <linearGradient id="g6" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0a0a12"/>
+      <stop offset="1" stop-color="#08202a"/>
+    </linearGradient>
+    <radialGradient id="glow6" cx="0.5" cy="0.45" r="0.65">
+      <stop offset="0" stop-color="#00cec9" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#00cec9" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="800" height="500" fill="url(#g6)"/>
+  <circle cx="400" cy="225" r="190" fill="url(#glow6)"/>
+  <g stroke="#81ecec" stroke-opacity="0.6" fill="none">
+    <path d="M340 170 h120 l-18 22 h-84 Z"/>
+    <circle cx="400" cy="240" r="34"/>
+    <path d="M400 206 v-14 M400 274 v14 M366 240 h-14 M434 240 h14" stroke-opacity="0.4"/>
+  </g>
+  <text x="400" y="420" text-anchor="middle" font-family="monospace" font-size="20" fill="#81ecec" letter-spacing="6">SMART CONTRACTS</text>
+</svg>

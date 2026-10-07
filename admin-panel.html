@@ -302,7 +302,7 @@
           <div style="width:36px;height:36px;background:var(--gradient-1);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;">A</div>
           <div style="flex:1;">
             <div id="adminName" style="font-size:14px;font-weight:600;">Admin</div>
-            <div id="adminEmail" style="font-size:11px;color:var(--ash);">admin@keycode.studio</div>
+            <div id="adminEmail" style="font-size:11px;color:var(--ash);">admin@example.com</div>
           </div>
         </div>
         <button onclick="logout()" style="width:100%;padding:10px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);border-radius:10px;color:var(--danger);cursor:pointer;font-size:13px;"><i class="fas fa-sign-out-alt"></i> Logout</button>
@@ -1240,6 +1240,7 @@
           '</select></td>' +
         '</tr>';
 }).join('') || '<tr><td colspan="10" class="empty-state"><i class="fas fa-shopping-bag" style="font-size:24px;margin-bottom:8px;"></i><h3>No orders yet</h3><p>Orders will appear here when customers make purchases on the main site. Try checking the Overview tab for recent activity.</p></td></tr>';
+    }
 
     function filterByStatus(s) {
       const orders = window._allOrders || [];

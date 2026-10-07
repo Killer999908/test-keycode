@@ -2,14 +2,14 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>KEYCODE Studio News</title>
-    <link>https://keycode.studio/news</link>
+    <link>/news</link>
     <description>Latest updates, releases, and announcements from KEYCODE Studio</description>
     <language>en-us</language>
     <lastBuildDate>Mon, 20 Jul 2026 00:00:00 +0000</lastBuildDate>
-    <atom:link href="https://keycode.studio/rss.xml" rel="self" type="application/rss+xml"/>
+    <atom:link href="/rss.xml" rel="self" type="application/rss+xml"/>
     <item>
       <title>KEYCODE Studio v3.0 — Award-Winning Redesign</title>
-      <link>https://keycode.studio/news</link>
+      <link>/news</link>
       <description>Complete visual overhaul with 3D scroll-triggered animations, interactive particle backgrounds, and a unified design system across all pages.</description>
       <pubDate>Sun, 19 Jul 2026 00:00:00 +0000</pubDate>
       <guid>keycode-v3-0-redesign</guid>
@@ -17,7 +17,7 @@
     </item>
     <item>
       <title>AI Builder Now Supports Multi-Agent Workflows</title>
-      <link>https://keycode.studio/news</link>
+      <link>/news</link>
       <description>Our AI website builder now orchestrates multiple AI agents in parallel for faster, higher quality generation.</description>
       <pubDate>Wed, 15 Jul 2026 00:00:00 +0000</pubDate>
       <guid>ai-builder-multi-agent</guid>
@@ -25,7 +25,7 @@
     </item>
     <item>
       <title>New PCB Designer with Real-time Simulation</title>
-      <link>https://keycode.studio/news</link>
+      <link>/news</link>
       <description>Design and simulate circuits in real-time with our updated PCB tool. Auto-routing and KiCad export included.</description>
       <pubDate>Fri, 10 Jul 2026 00:00:00 +0000</pubDate>
       <guid>pcb-designer-realtime</guid>
@@ -33,7 +33,7 @@
     </item>
     <item>
       <title>CAD &amp; 3D Modeling Adds OpenSCAD Support</title>
-      <link>https://keycode.studio/news</link>
+      <link>/news</link>
       <description>Generate parametric 3D models using OpenSCAD syntax directly in the browser. Export to STL, STEP, and 3MF.</description>
       <pubDate>Sun, 05 Jul 2026 00:00:00 +0000</pubDate>
       <guid>cad-openscad-support</guid>
@@ -41,7 +41,7 @@
     </item>
     <item>
       <title>Game Development Platform Launches</title>
-      <link>https://keycode.studio/news</link>
+      <link>/news</link>
       <description>Create AI-powered HTML5 games with Phaser.js. Generate platformers, shooters, and puzzles from text prompts.</description>
       <pubDate>Sun, 28 Jun 2026 00:00:00 +0000</pubDate>
       <guid>game-platform-launch</guid>
@@ -49,7 +49,7 @@
     </item>
     <item>
       <title>KEYCODE Studio Reaches 500 Projects Delivered</title>
-      <link>https://keycode.studio/news</link>
+      <link>/news</link>
       <description>Milestone achievement: over 500 projects delivered to clients worldwide. Thank you for your trust.</description>
       <pubDate>Sat, 20 Jun 2026 00:00:00 +0000</pubDate>
       <guid>500-projects-milestone</guid>
@@ -57,7 +57,7 @@
     </item>
     <item>
       <title>New Pricing Plans &amp; Free Tier Expansion</title>
-      <link>https://keycode.studio/news</link>
+      <link>/news</link>
       <description>Updated pricing with more generous free tier. All users now get 10 AI generations per day at no cost.</description>
       <pubDate>Mon, 15 Jun 2026 00:00:00 +0000</pubDate>
       <guid>pricing-free-tier</guid>
@@ -65,7 +65,7 @@
     </item>
     <item>
       <title>Security Upgrade: WebAuthn &amp; MFA</title>
-      <link>https://keycode.studio/news</link>
+      <link>/news</link>
       <description>Added passkey support, hardware security key authentication, and adaptive multi-factor authentication.</description>
       <pubDate>Wed, 10 Jun 2026 00:00:00 +0000</pubDate>
       <guid>security-webauthn-mfa</guid>
@@ -73,7 +73,7 @@
     </item>
     <item>
       <title>Mobile App Beta — Early Access</title>
-      <link>https://keycode.studio/news</link>
+      <link>/news</link>
       <description>Try the KEYCODE Studio mobile app for iOS and Android. Manage projects, chat with AI, and track orders on the go.</description>
       <pubDate>Fri, 05 Jun 2026 00:00:00 +0000</pubDate>
       <guid>mobile-app-beta</guid>
@@ -81,7 +81,7 @@
     </item>
     <item>
       <title>Stripe &amp; Razorpay Payment Integration</title>
-      <link>https://keycode.studio/news</link>
+      <link>/news</link>
       <description>Global payments via Stripe and India-specific payments via Razorpay are now live with automated invoicing.</description>
       <pubDate>Thu, 28 May 2026 00:00:00 +0000</pubDate>
       <guid>stripe-razorpay-integration</guid>
@@ -89,7 +89,7 @@
     </item>
     <item>
       <title>AI Health Dashboard Goes Live</title>
-      <link>https://keycode.studio/news</link>
+      <link>/news</link>
       <description>Monitor AI provider status, latency, and availability in real-time. Built-in fallback routing for reliability.</description>
       <pubDate>Wed, 20 May 2026 00:00:00 +0000</pubDate>
       <guid>ai-health-dashboard</guid>
@@ -97,7 +97,7 @@
     </item>
     <item>
       <title>Open Source Contribution Program Announced</title>
-      <link>https://keycode.studio/news</link>
+      <link>/news</link>
       <description>We are open-sourcing parts of the platform. Community contributions welcome via GitHub.</description>
       <pubDate>Fri, 15 May 2026 00:00:00 +0000</pubDate>
       <guid>open-source-program</guid>

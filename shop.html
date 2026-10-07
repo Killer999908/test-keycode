@@ -7,8 +7,8 @@
 <meta name="description" content="KEYCODE Studio shop - Browse premium templates, components, and services.">
 <meta property="og:title" content="Shop - KEYCODE Marketplace">
 <meta property="og:description" content="Browse premium AI-generated templates, PCB components, 3D models, and firmware plugins at KEYCODE Marketplace.">
-<meta property="og:image" content="https://keycode.studio/og-image.png">
-<meta property="og:url" content="https://keycode.studio/shop.html">
+<meta property="og:image" content="/og-image.png">
+<meta property="og:url" content="/shop.html">
 <meta name="twitter:card" content="summary_large_image">
 <title>Shop - KEYCODE Marketplace</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
@@ -201,7 +201,7 @@ var cart = JSON.parse(localStorage.getItem('keycodeCart') || '[]');
 var stripe = null;
 var stripeElements = null;
 var stripePayment = null;
-var STRIPE_KEY = /*STRIPE_KEY_PLACEHOLDER*/;
+var STRIPE_KEY = ''; // set your publishable key here (or via build step) to enable Stripe Elements
 
 // Init Stripe if key is available
 if (STRIPE_KEY && !STRIPE_KEY.includes('placeholder')) {

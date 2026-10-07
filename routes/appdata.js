@@ -1,0 +1,1174 @@
+'use strict';
+// ============================================================
+//  APP DATA + LOCAL AI ENGINE  —  routes/appdata.js
+//  dashboard /api/user/*  ·  builder /api/ai/*  ·  agent /api/agent/*
+//  git /api/git/*  ·  subscriptions  ·  orders (mfg/service)
+//  referrals · inquiries · docs · cli · keys · blog · hosting
+// ============================================================
+const fs   = require('fs');
+const path = require('path');
+
+module.exports = function AppDataRoutes(opts) {
+  const {
+    app,
+    SUPABASE_ADMIN,
+    requireAuth,
+    rand,
+    now,
+    IS_PROD,
+  } = opts;
+  const projectRoot = process.cwd();
+  const PUB    = path.join(projectRoot, 'public');
+  const UIL    = path.join(projectRoot, 'ai-projects');
+  const DOCS   = path.join(projectRoot, 'docs');
+
+  // read/write JSON store under data/ (small local mock store)
+  function readJSON(rel, fallback) {
+    try { return JSON.parse(fs.readFileSync(path.join(projectRoot, rel), 'utf8')); }
+    catch (_) { return fallback; }
+  }
+  function writeJSON(rel, val) {
+    const p = path.join(projectRoot, rel);
+    fs.mkdirSync(path.dirname(p), { recursive: true });
+    fs.writeFileSync(p, JSON.stringify(val, null, 2));
+    return val;
+  }
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function safeName(n) { return String(n || '').replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 120); }
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  const nid   = () => rand(9);
+
+  // --------------------------------------------------------
+  //  SITE HTML GENERATOR (buildSiteHtml) — preview + generate
+  //  Plain string concatenation only (no template literals).
+  // --------------------------------------------------------
+  var INDUSTRIES = {
+    food: { name: 'Food & Restaurant', pal: { bg: '#1a1410', card: '#2b2018', accent: '#ff7a3c', accent2: '#ffb347', txt: '#f7ede2', mut: '#c9b8a8' },
+      feats: ['Online ordering & delivery', 'Reservations & table booking', 'Menu management', 'Customer reviews'],
+      faqs: [['How fast is delivery?', 'Under 40 minutes within city limits.'], ['Can I book a table?', 'Yes - reserve online in seconds.']],
+      price: [['Starter', 9], ['Growth', 29], ['Enterprise', 79]] },
+    store: { name: 'Online Store', pal: { bg: '#0f1420', card: '#1a2332', accent: '#4f8cff', accent2: '#7ea8ff', txt: '#eef4ff', mut: '#a9b8d0' },
+      feats: ['Product catalog & variants', 'Secure checkout & Stripe', 'Inventory tracking', 'Discount codes'],
+      faqs: [['Do you ship worldwide?', 'Yes - 120+ countries.'], ['Returns?', '30-day free returns.']],
+      price: [['Starter', 15], ['Growth', 39], ['Scale', 99]] },
+    portfolio: { name: 'Portfolio', pal: { bg: '#101014', card: '#1b1b21', accent: '#c084fc', accent2: '#e2a8ff', txt: '#f4f1fa', mut: '#b6aec7' },
+      feats: ['Project galleries', 'Case studies', 'Contact & enquiry form', 'SEO-ready pages'],
+      faqs: [['Available for work?', 'Yes - open for freelance & agency projects.'], ['Response time?', 'Usually within 24 hours.']],
+      price: [['Basic', 9], ['Pro', 25], ['Studio', 69]] },
+    game: { name: 'Game & Community', pal: { bg: '#120a1e', card: '#201334', accent: '#a855f7', accent2: '#67e8f9', txt: '#f3e8ff', mut: '#c4b5fd' },
+      feats: ['Playable game embed', 'Leaderboards', 'Community forum', 'Live events'],
+      faqs: [['Is the game free?', 'Yes - free with optional cosmetics.'], ['Cross-platform?', 'Play in any browser.']],
+      price: [['Free', 0], ['Supporter', 7], ['VIP', 19]] },
+    saas: { name: 'SaaS & Software', pal: { bg: '#0a1628', card: '#122238', accent: '#38bdf8', accent2: '#72ddff', txt: '#eaf6ff', mut: '#9db8cf' },
+      feats: ['Interactive product tour', 'Usage-based pricing', 'Docs & API reference', 'Changelog'],
+      faqs: [['Do you have a free tier?', 'Yes - free forever, no card needed.'], ['Where is data stored?', 'EU & US regions, encrypted at rest.']],
+      price: [['Free', 0], ['Pro', 29], ['Team', 99]] },
+    fitness: { name: 'Fitness & Gym', pal: { bg: '#0e1a12', card: '#17281c', accent: '#22c55e', accent2: '#6ee7a0', txt: '#ecfdf5', mut: '#a5c7b0' },
+      feats: ['Class schedule & booking', 'Trainer profiles', 'Membership plans', 'Progress tracking'],
+      faqs: [['Drop-in sessions?', 'Yes - single visits welcome.'], ['Beginner classes?', 'Free intro class every Saturday.']],
+      price: [['Monthly', 25], ['Yearly', 250], ['Family', 55]] },
+    agency: { name: 'Agency', pal: { bg: '#100e1a', card: '#1a1730', accent: '#f472b6', accent2: '#f9a8d4', txt: '#fdf2f8', mut: '#d0b3c9' },
+      feats: ['Services & pricing', 'Case studies & results', 'Meeting scheduler', 'Client portal'],
+      faqs: [['What do you build?', 'Websites, apps, brands - end to end.'], ['Minimum engagement?', 'Starter projects from $2k.']],
+      price: [['Starter', 199], ['Growth', 799], ['Partner', 1999]] },
+    health: { name: 'Health & Clinic', pal: { bg: '#0d1a22', card: '#142833', accent: '#2dd4bf', accent2: '#7ce8dc', txt: '#effdfb', mut: '#a5cdd2' },
+      feats: ['Appointment booking', 'Doctors directory', 'Telehealth portal', 'Patient FAQ'],
+      faqs: [['Do you take insurance?', 'We support major providers.'], ['Open weekends?', 'Saturday mornings 9-1.']],
+      price: [['Visit', 60], ['Care plan', 35], ['Family', 120]] },
+    education: { name: 'Education & Courses', pal: { bg: '#171323', card: '#241d36', accent: '#fbbf24', accent2: '#fde68a', txt: '#fffbeb', mut: '#d6c7a5' },
+      feats: ['Course catalog', 'Student dashboard', 'Quizzes & certificates', 'Live workshops'],
+      faqs: [['Are certificates issued?', 'Yes - verifiable PDF certificates.'], ['Refund policy?', '7-day full refund, no questions.']],
+      price: [['Basic', 12], ['Diploma', 49], ['Bootcamp', 199]] },
+    realty: { name: 'Real Estate', pal: { bg: '#14100c', card: '#231b13', accent: '#d97706', accent2: '#f5b04c', txt: '#fffbeb', mut: '#cbb795' },
+      feats: ['Property listings', 'Virtual tours', 'Mortgage calculator', 'Agent contact'],
+      faqs: [['Can I list a property?', 'Yes - agents can submit listings.'], ['Do you handle rentals too?', 'Yes - sales & rentals.']],
+      price: [['Agent', 29], ['Brokerage', 149], ['Enterprise', 499]] }
+  };
+  var ICONS = { bolt: '&#9889;', store: '&#127979;', cam: '&#128247;', pad: '&#127918;', cheq: '&#10004;', grid: '&#9878;' };
+  var PALETTE_KEYS = ['bg', 'card', 'accent', 'accent2', 'txt', 'mut'];
+  var icoKeys = ['bolt', 'store', 'cam', 'pad', 'cheq', 'grid'];
+
+  function buildSiteHtml(spec) {
+    spec = spec || {};
+    var indKey = INDUSTRIES[spec.industry] ? spec.industry : 'saas';
+    var ind = INDUSTRIES[indKey];
+    var pal = ind.pal;
+    if (spec.palette && typeof spec.palette === 'object') {
+      pal = Object.assign({}, pal);
+      PALETTE_KEYS.forEach(function (k) {
+        var v = spec.palette[k];
+        if (typeof v === 'string' && /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(v.trim())) pal[k] = v.trim();
+      });
+    }
+    var name  = esc(typeof spec.name === 'string' && spec.name ? spec.name : ind.name);
+    var tag   = esc(typeof spec.tagline === 'string' && spec.tagline ? spec.tagline : 'A modern site generated by KEYCODE Studio');
+    var email = esc(typeof spec.email === 'string' && spec.email ? spec.email : 'hello@example.com');
+    var feats = Array.isArray(spec.features) && spec.features.length ? spec.features.slice(0, 6) : ind.feats;
+    var faqs  = Array.isArray(spec.faqs) && spec.faqs.length ? spec.faqs.slice(0, 6) : ind.faqs;
+    var price = Array.isArray(spec.pricing) && spec.pricing.length ? spec.pricing.slice(0, 3) : ind.price;
+    var heroTxt = esc(typeof spec.heroText === 'string' && spec.heroText ? spec.heroText : 'Everything ' + name + ' does - in one clean, fast site.');
+    var heroSub = esc(typeof spec.heroSub === 'string' && spec.heroSub ? spec.heroSub : 'No clutter. No fluff. Just the tool, ready the moment you open it.');
+    var ctaTxt  = esc(typeof spec.ctaText === 'string' && spec.ctaText ? spec.ctaText : 'Get started');
+
+    var h = [];
+    h.push('<!DOCTYPE html>');
+    h.push('<html lang="en">');
+    h.push('<head>');
+    h.push('<meta charset="utf-8">');
+    h.push('<meta name="viewport" content="width=device-width, initial-scale=1">');
+    h.push('<title>' + name + ' - ' + tag + '</title>');
+    h.push('<meta name="description" content="' + tag + '">');
+    h.push('<link rel="icon" href="data:,">');
+    h.push('<style>');
+    h.push(':root{--bg:' + pal.bg + ';--card:' + pal.card + ';--ac:' + pal.accent + ';--ac2:' + pal.accent2 + ';--tx:' + pal.txt + ';--mu:' + pal.mut + ';}');
+    h.push('*{margin:0;padding:0;box-sizing:border-box}');
+    h.push('html{scroll-behavior:smooth}');
+    h.push('body{background:var(--bg);color:var(--tx);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.6}');
+    h.push('a{color:var(--ac2);text-decoration:none}');
+    h.push('nav{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:14px 28px;background:color-mix(in srgb,var(--bg) 85%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid #ffffff14}');
+    h.push('.brand{font-weight:800;letter-spacing:.5px;color:var(--tx)}');
+    h.push('.brand span{color:var(--ac)}');
+    h.push('nav .links{display:flex;gap:22px;font-size:15px}');
+    h.push('nav .links a{color:var(--mu)}');
+    h.push('nav .links a:hover{color:var(--tx)}');
+    h.push('header{padding:96px 28px 72px;text-align:center;background:radial-gradient(1000px 420px at 50% -80px,color-mix(in srgb,var(--ac) 22%,transparent),transparent)}');
+    h.push('header h1{font-size:clamp(34px,6vw,62px);line-height:1.1;max-width:900px;margin:0 auto 18px}');
+    h.push('header h1 em{font-style:normal;color:var(--ac)}');
+    h.push('header p{max-width:640px;margin:0 auto 28px;color:var(--mu);font-size:18px}');
+    h.push('.btn{display:inline-block;padding:13px 30px;border-radius:12px;font-weight:700;border:0;cursor:pointer;font-size:16px;background:var(--ac);color:#0b0d10}');
+    h.push('.btn:hover{filter:brightness(1.08)}');
+    h.push('.btn.ghost{background:transparent;color:var(--tx);border:1px solid #ffffff2e}');
+    h.push('section{padding:64px 28px;max-width:1100px;margin:0 auto}');
+    h.push('h2{font-size:clamp(26px,4vw,38px);margin-bottom:10px}');
+    h.push('.sub{color:var(--mu);margin-bottom:36px}');
+    h.push('.grid{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}');
+    h.push('.card{background:var(--card);border:1px solid #ffffff12;border-radius:16px;padding:22px}');
+    h.push('.card h3{margin-bottom:8px}');
+    h.push('.card p{color:var(--mu)}');
+    h.push('.feat{display:flex;gap:14px;align-items:flex-start}');
+    h.push('.fic{font-size:26px;background:color-mix(in srgb,var(--ac) 18%,transparent);border-radius:12px;padding:10px}');
+    h.push('.band{background:var(--card);border:1px solid #ffffff12;border-radius:18px;padding:34px;text-align:center}');
+    h.push('footer{border-top:1px solid #ffffff14;padding:30px 28px;color:var(--mu);display:flex;flex-wrap:wrap;gap:14px;justify-content:space-between}');
+    h.push('details{background:var(--card);border:1px solid #ffffff12;border-radius:12px;padding:14px 18px;margin-bottom:10px}');
+    h.push('summary{cursor:pointer;font-weight:600}');
+    h.push('.price{background:var(--card);border:1px solid #ffffff14;border-radius:16px;padding:26px;text-align:center}');
+    h.push('.price.best{border-color:var(--ac);box-shadow:0 0 0 1px var(--ac)}');
+    h.push('.price .amt{font-size:36px;font-weight:800;margin:8px 0 14px}');
+    h.push('.price ul{list-style:none;color:var(--mu);margin:0 0 20px}');
+    h.push('.price li{padding:5px 0}');
+    h.push('.price button{width:100%;padding:11px;border-radius:10px;border:0;background:var(--ac);color:#0b0d10;font-weight:700;cursor:pointer}');
+    h.push('form.inp{display:flex;gap:10px;max-width:520px;margin:0 auto 14px}');
+    h.push('form.inp input{flex:1;padding:12px 16px;border-radius:10px;border:1px solid #ffffff22;background:#ffffff0a;color:var(--tx)}');
+    h.push('</style>');
+    h.push('</head>');
+    h.push('<body>');
+    h.push('<nav><div class="brand">' + name + '<span>.</span></div><div class="links"><a href="#features">Features</a><a href="#pricing">Pricing</a><a href="#faq">FAQ</a><a href="#contact">Contact</a></div></nav>');
+    h.push('<header>');
+    h.push('<h1>' + heroTxt + '</h1>');
+    h.push('<p>' + heroSub + '</p>');
+    h.push('<a class="btn" href="#pricing">' + ctaTxt + '</a>');
+    h.push('</header>');
+    h.push('<section id="features"><h2>Features</h2><p class="sub">Everything is included.</p><div class="grid">');
+    feats.forEach(function (f, i) {
+      var k = icoKeys[i % icoKeys.length];
+      h.push('<div class="card feat"><div class="fic">' + ICONS[k] + '</div><div><h3>' + esc(String(f)) + '</h3><p>Built in and ready to use - configured for this site from day one.</p></div></div>');
+    });
+    h.push('</div></section>');
+    h.push('<section id="pricing"><h2>Pricing</h2><p class="sub">Simple plans. Cancel anytime.</p><div class="grid">');
+    price.forEach(function (p, i) {
+      var nm = p && p[0] ? String(p[0]) : 'Plan';
+      var am = p && typeof p[1] === 'number' ? p[1] : (parseInt(p && p[1], 10) || 0);
+      h.push('<div class="price' + (i === 1 ? ' best' : '') + '"><h3>' + esc(nm) + '</h3><div class="amt">$' + am + '<span style="font-size:14px;color:var(--mu)">/mo</span></div><ul><li>All core features</li><li>Email support</li>' + (i === 1 ? '<li>Priority support</li><li>Advanced analytics</li>' : '') + '</ul><button onclick="location.hash=\'#contact\'">Choose ' + esc(nm) + '</button></div>');
+    });
+    h.push('</div></section>');
+    h.push('<section id="faq"><h2>FAQ</h2><p class="sub">Quick answers.</p>');
+    faqs.forEach(function (f) {
+      h.push('<details><summary>' + esc(String(f && f[0])) + '</summary><p style="color:var(--mu);margin-top:8px">' + esc(String(f && f[1])) + '</p></details>');
+    });
+    h.push('</section>');
+    h.push('<section id="contact" class="band"><h2>Contact us</h2><p class="sub" style="margin-bottom:22px">Tell us what you need.</p>');
+    h.push('<form id="cform" class="inp"><input id="cemail" type="email" placeholder="Your email" required><button class="btn" type="submit">Send</button></form>');
+    h.push('<p id="cmsg" style="color:var(--ac2);display:none"></p>');
+    h.push('<script>');
+    h.push('var f=document.getElementById("cform"),m=document.getElementById("cmsg");');
+    h.push('f.addEventListener("submit",function(e){e.preventDefault();');
+    h.push('var em=document.getElementById("cemail").value;var x=new XMLHttpRequest();');
+    h.push('x.open("POST","/api/inquiries",true);x.setRequestHeader("Content-Type","application/json");');
+    h.push('x.send(JSON.stringify({name:"",email:em,message:"Contact form - ' + name + '",source:"generated-site"}));');
+    h.push('f.reset();m.style.display="block";m.textContent="Thanks! We got your message.";});');
+    h.push('<\/script>');
+    h.push('</section>');
+    h.push('<footer><div>' + name + ' &copy; 2026</div><div><a href="mailto:' + email + '">' + email + '</a></div></footer>');
+    h.push('</body>');
+    h.push('</html>');
+    return h.join('\n') + '\n';
+  }
+
+  // --------------------------------------------------------
+  //  FILE STORE: ai-projects.json (array) + ai-projects/ dir
+  // --------------------------------------------------------
+  function loadProjects() { return readJSON('data/ai-projects.json', []); }
+  function saveProjects(list) { writeJSON('data/ai-projects.json', Array.isArray(list) ? list : []); }
+  function findProject(req, allowAdmin) {
+    const list = loadProjects();
+    const fid = String(req.params.fileId || '');
+    const prj = list.find(function (p) {
+      return (p.fileId === fid || p.id === fid) && (p.userId === req.user.userId || (allowAdmin === true && req.user.role === 'admin'));
+    }) || list.find(function (p) { return (p.fileId === fid || p.id === fid) && (p.userId === req.user.userId || (p.visibility === 'public')); });
+    return prj;
+  }
+  function projectFile(fid) { return path.join(UIL, safeName(fid)); }
+
+  // --------------------------------------------------------
+  //  USER DASHBOARD / DATA ROUTES
+  // --------------------------------------------------------
+  app.get('/api/user/dashboard', requireAuth, function (req, res) {
+    const uid = req.user.userId;
+    const projects = loadProjects().filter(function (p) { return p.userId === uid; });
+    const orders = readJSON('data/mock-orders.json', []).filter(function (o) { return o.userId === uid; });
+    const notes = readJSON('data/mock-notifications.json', { notifications: [] }).notifications || [];
+    const unread = notes.filter(function (n) {
+      return n && (n.userId === uid || n.userId === 'all') && !n.read;
+    }).length;
+    res.json({
+      success: true,
+      user: { userId: uid, email: req.user.email, name: req.user.name || req.user.email, role: req.user.role },
+      stats: {
+        totalAiProjects: projects.length,
+        totalOrders: orders.length,
+        totalRevenue: orders.reduce(function (s, o) { return s + (Number(o.total) || 0); }, 0),
+        unreadCount: unread
+      },
+      aiProjects: projects.slice(-8).reverse(),
+      recentOrders: orders.slice(-8).reverse()
+    });
+  });
+
+  app.get('/api/user/ai-projects', requireAuth, function (req, res) {
+    const list = loadProjects().filter(function (p) { return p.userId === req.user.userId; });
+    res.json({ success: true, projects: list, aiProjects: list });
+  });
+
+  app.get('/api/user/ai-projects/:fileId', requireAuth, function (req, res) {
+    const prj = findProject(req, true);
+    if (!prj) return res.status(404).json({ error: 'Project not found' });
+    res.json({ success: true, project: prj });
+  });
+
+  app.post('/api/user/ai-projects', requireAuth, function (req, res) {
+    const body = req.body || {};
+    const list = loadProjects();
+    const fid = body.fileId || 'proj_' + nid();
+    const item = {
+      fileId: fid,
+      id: fid,
+      userId: req.user.userId,
+      name: String(body.name || body.prompt || 'Untitled project').slice(0, 120),
+      prompt: String(body.prompt || '').slice(0, 2000),
+      industry: String(body.industry || 'saas'),
+      createdAt: now(),
+      updatedAt: now()
+    };
+    list.push(item);
+    saveProjects(list);
+    if (body.html) { try { fs.writeFileSync(projectFile(fid), String(body.html)); } catch (_) {} }
+    res.status(201).json({ success: true, project: item, fileId: fid });
+  });
+
+  app.delete('/api/user/ai-projects/:fileId', requireAuth, function (req, res) {
+    const fid = String(req.params.fileId || '');
+    let list = loadProjects();
+    const before = list.length;
+    list = list.filter(function (p) { return !(p.userId === req.user.userId && (p.fileId === fid || p.id === fid)); });
+    saveProjects(list);
+    try { fs.unlinkSync(projectFile(fid)); } catch (_) {}
+    res.json({ success: true, deleted: before !== list.length });
+  });
+
+  // products CRUD (store items owned by user)
+  app.get('/api/user/products', requireAuth, function (req, res) {
+    const all = readJSON('data/products.json', []);
+    const mine = all.filter(function (p) { return p.userId === req.user.userId; });
+    res.json({ success: true, products: mine });
+  });
+  app.post('/api/user/products', requireAuth, function (req, res) {
+    const b = req.body || {};
+    const all = readJSON('data/products.json', []);
+    const item = {
+      id: 'prd_' + nid(),
+      userId: req.user.userId,
+      name: String(b.name || 'New product').slice(0, 140),
+      price: Number(b.price) || 0,
+      description: String(b.description || '').slice(0, 1000),
+      image: String(b.image || ''),
+      stock: Number(b.stock === undefined ? 25 : b.stock),
+      active: b.active !== false,
+      createdAt: now()
+    };
+    all.push(item);
+    writeJSON('data/products.json', all);
+    res.status(201).json({ success: true, product: item });
+  });
+  app.put('/api/user/products/:id', requireAuth, function (req, res) {
+    const all = readJSON('data/products.json', []);
+    const it = all.find(function (p) { return p.id === req.params.id && p.userId === req.user.userId; });
+    if (!it) return res.status(404).json({ error: 'Product not found' });
+    const b = req.body || {};
+    ['name', 'description', 'image', 'active'].forEach(function (k) { if (b[k] !== undefined) it[k] = b[k]; });
+    if (b.price !== undefined) it.price = Number(b.price) || 0;
+    if (b.stock !== undefined) it.stock = Number(b.stock) || 0;
+    it.updatedAt = now();
+    writeJSON('data/products.json', all);
+    res.json({ success: true, product: it });
+  });
+  app.delete('/api/user/products/:id', requireAuth, function (req, res) {
+    let all = readJSON('data/products.json', []);
+    const before = all.length;
+    all = all.filter(function (p) { return !(p.id === req.params.id && p.userId === req.user.userId); });
+    writeJSON('data/products.json', all);
+    res.json({ success: true, deleted: before !== all.length });
+  });
+
+  // social links (dict {links:[...]})
+  app.get('/api/user/social-links', requireAuth, function (req, res) {
+    const store = readJSON('data/social-links.json', { links: [] });
+    const mine = (store.links || []).filter(function (l) { return l.userId === req.user.userId; });
+    res.json({ success: true, links: mine });
+  });
+  app.post('/api/user/social-links', requireAuth, function (req, res) {
+    const b = req.body || {};
+    const store = readJSON('data/social-links.json', { links: [] });
+    if (!Array.isArray(store.links)) store.links = [];
+    const link = {
+      id: 'sl_' + nid(),
+      userId: req.user.userId,
+      platform: String(b.platform || 'website'),
+      url: String(b.url || '').slice(0, 500),
+      createdAt: now()
+    };
+    store.links.push(link);
+    writeJSON('data/social-links.json', store);
+    res.status(201).json({ success: true, link: link, links: store.links.filter(function (l) { return l.userId === req.user.userId; }) });
+  });
+
+  // manufacturing orders (mine)
+  app.get('/api/user/manufacturing-orders', requireAuth, function (req, res) {
+    const all = readJSON('data/mock-mfg-orders.json', []);
+    const mine = all.filter(function (o) { return o.userId === req.user.userId; });
+    res.json({ success: true, orders: mine });
+  });
+
+  // history (activity feed)
+  app.get('/api/user/history', requireAuth, function (req, res) {
+    const uid = req.user.userId;
+    const events = [];
+    loadProjects().filter(function (p) { return p.userId === uid; }).forEach(function (p) {
+      events.push({ type: 'ai_project', label: 'AI project: ' + (p.name || p.fileId), at: p.createdAt || p.updatedAt });
+    });
+    readJSON('data/mock-orders.json', []).filter(function (o) { return o.userId === uid; }).forEach(function (o) {
+      events.push({ type: 'order', label: 'Order ' + (o.order_number || o.id || ''), at: o.created_at || o.createdAt });
+    });
+    readJSON('data/mock-mfg-orders.json', []).filter(function (o) { return o.userId === uid; }).forEach(function (o) {
+      events.push({ type: 'manufacturing', label: 'Manufacturing order', at: o.createdAt });
+    });
+    readJSON('data/mock-refunds.json', []).filter(function (o) { return o.userId === uid; }).forEach(function (o) {
+      events.push({ type: 'refund', label: 'Refund request', at: o.createdAt });
+    });
+    events.sort(function (a, b) { return String(b.at || '').localeCompare(String(a.at || '')); });
+    res.json({ success: true, history: events.slice(0, 50) });
+  });
+
+  // API keys (dict keyed by kc_sk_*)
+  app.get('/api/user/api-keys', requireAuth, function (req, res) {
+    const keys = readJSON('data/api-keys.json', {});
+    const mine = Object.keys(keys).filter(function (k) { return keys[k].userId === req.user.userId; })
+      .map(function (k) {
+        const e = keys[k];
+        return { id: k.slice(-12), keyMasked: k.slice(0, 8) + '...' + k.slice(-4), key: k, name: e.name, role: e.role, created_at: e.created_at, last_used: e.last_used };
+      });
+    res.json({ success: true, keys: mine });
+  });
+  app.post('/api/user/api-keys', requireAuth, function (req, res) {
+    const keys = readJSON('data/api-keys.json', {});
+    const k = 'kc_sk_' + nid() + nid();
+    keys[k] = {
+      userId: req.user.userId,
+      email: req.user.email,
+      name: String((req.body || {}).name || 'API key').slice(0, 80),
+      role: req.user.role || 'user',
+      created_at: now(),
+      last_used: null
+    };
+    writeJSON('data/api-keys.json', keys);
+    res.status(201).json({ success: true, apiKey: k, name: keys[k].name });
+  });
+  app.delete('/api/user/api-keys/:id', requireAuth, function (req, res) {
+    const keys = readJSON('data/api-keys.json', {});
+    const target = Object.keys(keys).filter(function (k) { return keys[k].userId === req.user.userId && (k.slice(-12) === req.params.id || k === req.params.id); });
+    if (!target.length) return res.status(404).json({ error: 'Key not found' });
+    target.forEach(function (k) { delete keys[k]; });
+    writeJSON('data/api-keys.json', keys);
+    res.json({ success: true, deleted: target.length });
+  });
+
+  // --------------------------------------------------------
+  //  AUTH-ADJACENT (dashboard helpers)
+  // --------------------------------------------------------
+  app.get('/api/auth/profile', requireAuth, function (req, res) {
+    const users = readJSON('data/mock-users.json', {});
+    const u = Object.values(users).find(function (x) { return x && (x.id === req.user.userId || x.userId === req.user.userId || x.email === req.user.email); }) || {};
+    res.json({ success: true, profile: { userId: req.user.userId, email: req.user.email, name: req.user.name || u.name || 'Member', role: req.user.role || 'user', plan: u.plan || 'free', joined: u.created_at || u.createdAt || null } });
+  });
+  app.post('/api/auth/profile', requireAuth, function (req, res) {
+    const b = req.body || {};
+    const users = readJSON('data/mock-users.json', {});
+    const rec = Object.values(users).find(function (x) { return x && (x.id === req.user.userId || x.userId === req.user.userId || x.email === req.user.email); });
+    if (rec) {
+      if (typeof b.name === 'string' && b.name.trim()) rec.name = b.name.trim().slice(0, 80);
+      if (typeof b.email === 'string' && /.+@.+\..+/.test(b.email)) rec.email = b.email.trim();
+      users[rec.id || rec.userId || req.user.userId] = rec;
+      writeJSON('data/mock-users.json', users);
+    }
+    res.json({ success: true, profile: { userId: req.user.userId, name: (rec && rec.name) || req.user.name || 'Member', email: (rec && rec.email) || req.user.email } });
+  });
+  app.post('/api/auth/change-password', requireAuth, function (req, res) {
+    const b = req.body || {};
+    const cur = String(b.currentPassword || b.current || '');
+    const next = String(b.newPassword || b.new || b.password || '');
+    const okShape = next.length >= 8;
+    if (!okShape) return res.status(400).json({ error: 'New password must be at least 8 characters' });
+    const users = readJSON('data/mock-users.json', {});
+    const rec = Object.values(users).find(function (x) { return x && (x.id === req.user.userId || x.userId === req.user.userId || x.email === req.user.email); });
+    if (rec && rec.password && cur && rec.password !== cur) return res.status(400).json({ error: 'Current password is incorrect' });
+    if (rec) {
+      rec.password = next;
+      users[rec.id || rec.userId || req.user.userId] = rec;
+      writeJSON('data/mock-users.json', users);
+    }
+    res.json({ success: true, message: 'Password updated' });
+  });
+  app.post('/api/auth/forgot-password', function (req, res) {
+    res.json({ success: true, message: 'If that email exists, a reset link has been sent.' });
+  });
+  app.post('/api/auth/reset-password', function (req, res) {
+    const b = req.body || {};
+    if (!String(b.token || b.tokenId || '').trim()) return res.status(400).json({ error: 'Reset token required' });
+    res.json({ success: true, message: 'Password reset accepted' });
+  });
+  app.post('/api/auth/admin-login', function (req, res) {
+    res.json({ success: false, admin: false, message: 'Admin login must go through /api/auth/login with an admin account.' });
+  });
+
+  // global key routes (same store as user/api-keys)
+  app.get('/api/keys', requireAuth, function (req, res) {
+    const keys = readJSON('data/api-keys.json', {});
+    const mine = Object.keys(keys).filter(function (k) { return keys[k].userId === req.user.userId; })
+      .map(function (k) { return { key: k, name: keys[k].name, created_at: keys[k].created_at }; });
+    res.json({ success: true, keys: mine });
+  });
+  app.post('/api/keys', requireAuth, function (req, res) {
+    const keys = readJSON('data/api-keys.json', {});
+    const k = 'kc_sk_' + nid() + nid();
+    keys[k] = {
+      userId: req.user.userId,
+      email: req.user.email,
+      name: String((req.body || {}).name || 'API key').slice(0, 80),
+      role: req.user.role || 'user',
+      created_at: now(),
+      last_used: null
+    };
+    writeJSON('data/api-keys.json', keys);
+    res.status(201).json({ success: true, apiKey: k });
+  });
+  app.delete('/api/keys/:id', requireAuth, function (req, res) {
+    const keys = readJSON('data/api-keys.json', {});
+    const target = Object.keys(keys).filter(function (k) { return keys[k].userId === req.user.userId && (k.slice(-12) === req.params.id || k === req.params.id); });
+    if (!target.length) return res.status(404).json({ error: 'Key not found' });
+    target.forEach(function (k) { delete keys[k]; });
+    writeJSON('data/api-keys.json', keys);
+    res.json({ success: true });
+  });
+
+  // CLI download
+  app.get('/api/cli/download', function (req, res) {
+    const p = path.join(projectRoot, 'keycode-cli.js');
+    if (fs.existsSync(p)) return res.sendFile(p);
+    const stub = '#!/usr/bin/env node\n// KEYCODE CLI - download installer: curl -fsSL /install.sh | bash\nconsole.log("KEYCODE CLI placeholder - keycode-cli.js missing");\n';
+    res.setHeader('Content-Type', 'text/javascript; charset=utf-8');
+    return res.send(stub);
+  });
+
+  // agent surfaces (CLI/terminal)
+  app.get('/api/agent/tools', function (req, res) {
+    res.json({ success: true, tools: [
+      { id: 'gen', name: 'generate-website', desc: 'Generate a full website from a prompt' },
+      { id: 'osg', name: 'openscad-render', desc: 'Render OpenSCAD preview images' },
+      { id: 'ffm', name: 'ffmpeg-convert', desc: 'Convert media files' },
+      { id: 'bln', name: 'blender-export-stl', desc: 'Export Blender STL' }
+    ] });
+  });
+  app.get('/api/agent/routers', function (req, res) {
+    res.json({ success: true, routers: [{ id: 'web', desc: 'Website builder' }, { id: 'cad', desc: 'CAD / manufacturing' }, { id: 'media', desc: 'Media tools' }] });
+  });
+  app.get('/api/agent/react', function (req, res) {
+    res.json({ success: true, steps: [], note: 'POST reasoning steps here from the CLI agent' });
+  });
+  app.post('/api/agent/react', requireAuth, function (req, res) {
+    res.json({ success: true, received: true });
+  });
+
+  // --------------------------------------------------------
+  //  AI BUILDER ROUTES  (/api/ai/*)
+  // --------------------------------------------------------
+  function planFromPrompt(prompt) {
+    const p = String(prompt || '').toLowerCase();
+    function has() { for (var i = 0; i < arguments.length; i++) { if (p.indexOf(arguments[i]) !== -1) return true; } return false; }
+    let industry = 'saas', reason = 'default SaaS template';
+    if (has('food', 'restaurant', 'cafe', 'coffee', 'bakery', 'pizza', 'menu')) { industry = 'food'; reason = 'food/restaurant keywords' }
+    else if (has('shop', 'store', 'ecommerce', 'e-commerce', 'sell', 'cart', 'product catalog', 'boutique')) { industry = 'store'; reason = 'store keywords' }
+    else if (has('portfolio', 'photographer', 'photography', 'designer', 'freelance', 'resume')) { industry = 'portfolio'; reason = 'portfolio keywords' }
+    else if (has('game', 'gaming', 'quest', 'leaderboard', 'arcade', 'player')) { industry = 'game'; reason = 'game keywords' }
+    else if (has('fitness', 'gym', 'workout', 'yoga', 'training', 'coach')) { industry = 'fitness'; reason = 'fitness keywords' }
+    else if (has('agency', 'studio', 'marketing', 'branding', 'consultancy')) { industry = 'agency'; reason = 'agency keywords' }
+    else if (has('clinic', 'doctor', 'dental', 'health', 'medical', 'therapy', 'telehealth')) { industry = 'health'; reason = 'health keywords' }
+    else if (has('course', 'school', 'education', 'learning', 'academy', 'tutor', 'students')) { industry = 'education'; reason = 'education keywords' }
+    else if (has('real estate', 'realty', 'property', 'listing', 'apartment', 'house for sale', 'rental')) { industry = 'realty'; reason = 'realty keywords' }
+    var name = '';
+    var nm = String(prompt || '').match(/(?:called|named|for)\s+"([^"]{2,60})"/);
+    if (nm) name = nm[1];
+    return {
+      industry: industry,
+      reason: reason,
+      planName: 'Site plan - ' + industry,
+      steps: [
+        'Parse prompt and detect industry (' + industry + ')',
+        'Pick palette, copy blocks and section layout for ' + industry,
+        'Write single-file HTML with features, pricing, FAQ and contact form',
+        'Save project, expose preview URL and wire the lead form to /api/inquiries'
+      ],
+      name: name,
+      sections: ['hero', 'features', 'pricing', 'faq', 'contact'],
+      estimatedFiles: 1
+    };
+  }
+
+  app.get('/api/ai/providers', function (req, res) {
+    res.json({ success: true, providers: [
+      { id: 'local', name: 'KEYCODE Local Engine', status: 'ready', models: ['kc-plan-1', 'kc-site-1', 'kc-chat-1'] },
+      { id: 'openai', name: 'OpenAI', status: 'configured' },
+      { id: 'anthropic', name: 'Anthropic', status: 'optional' }
+    ] });
+  });
+  app.get('/api/ai/models', function (req, res) {
+    res.json({ success: true, models: [
+      { id: 'kc-plan-1', name: 'Planner', tier: 'free' },
+      { id: 'kc-site-1', name: 'Site generator', tier: 'free' },
+      { id: 'kc-chat-1', name: 'Chat assistant', tier: 'free' }
+    ] });
+  });
+
+  app.options('/api/ai/plan', function (req, res) { res.sendStatus(204); });
+  app.get('/api/ai/plan', requireAuth, function (req, res) {
+    res.json({ success: true, plan: planFromPrompt(String(req.query.prompt || '')) });
+  });
+  app.post('/api/ai/plan', requireAuth, function (req, res) {
+    const b = req.body || {};
+    res.json({ success: true, plan: planFromPrompt(b.prompt || b.message || '') });
+  });
+
+  app.get('/api/ai/projects', requireAuth, function (req, res) {
+    const list = loadProjects().filter(function (p) { return p.userId === req.user.userId; });
+    res.json({ success: true, projects: list });
+  });
+  app.post('/api/ai/projects', requireAuth, function (req, res) {
+    const b = req.body || {};
+    const list = loadProjects();
+    const fid = 'proj_' + nid();
+    const item = {
+      fileId: fid, id: fid, userId: req.user.userId,
+      name: String(b.name || b.prompt || 'Untitled project').slice(0, 120),
+      prompt: String(b.prompt || '').slice(0, 2000),
+      industry: String(b.industry || 'saas'),
+      createdAt: now(), updatedAt: now()
+    };
+    list.push(item); saveProjects(list);
+    if (b.html) { try { fs.writeFileSync(projectFile(fid), String(b.html)); } catch (_) {} }
+    res.status(201).json({ success: true, project: item, fileId: fid });
+  });
+
+  app.post('/api/ai/generate-website', requireAuth, function (req, res) {
+    const b = req.body || {};
+    const prompt = String(b.prompt || '').slice(0, 2000);
+    if (!prompt.trim()) return res.status(400).json({ error: 'Prompt required' });
+    const plan = planFromPrompt(prompt);
+    const list = loadProjects();
+    const fid = 'proj_' + nid();
+    const spec = {
+      name: typeof b.name === 'string' && b.name ? b.name : (plan.name || 'My Site'),
+      tagline: b.tagline, industry: plan.industry, palette: b.palette,
+      email: typeof b.email === 'string' ? b.email : (req.user.email || undefined),
+      features: b.features, heroText: b.heroText, heroSub: b.heroSub, ctaText: b.ctaText,
+      pricing: b.pricing, faqs: b.faqs
+    };
+    const html = buildSiteHtml(spec);
+    try { fs.mkdirSync(UIL, { recursive: true }); fs.writeFileSync(path.join(UIL, fid), html); } catch (_) {}
+    const item = {
+      fileId: fid, id: fid, userId: req.user.userId,
+      name: spec.name || prompt.slice(0, 60), prompt: prompt, industry: plan.industry,
+      visibility: 'public', previewUrl: '/api/ai/preview/' + fid,
+      htmlFile: fid, createdAt: now(), updatedAt: now()
+    };
+    list.push(item); saveProjects(list);
+    res.status(201).json({ success: true, plan: plan, fileId: fid, previewUrl: '/api/ai/preview/' + fid, project: item, html: html });
+  });
+
+  // SSE plan streaming (builder UI shows progress)
+  app.get('/api/ai/stream-website', requireAuth, function (req, res) {
+    const prompt = String(req.query.prompt || req.query.q || '').slice(0, 2000);
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache, no-transform',
+      'Connection': 'keep-alive',
+      'X-Accel-Buffering': 'no'
+    });
+    const send = (event, data) => { try { res.write('event: ' + event + '\ndata: ' + JSON.stringify(data) + '\n\n'); } catch (_) {} };
+    const plan = planFromPrompt(prompt);
+    const steps = [
+      { phase: 'planning', text: 'Analyzing your prompt', plan: plan },
+      { phase: 'designing', text: 'Choosing palette and layout for ' + plan.industry },
+      { phase: 'building', text: 'Writing HTML, CSS and JS' },
+      { phase: 'wiring', text: 'Wiring contact form and preview' },
+      { phase: 'done', text: 'Your site is ready' }
+    ];
+    let i = 0;
+    (function run() {
+      if (res.writableEnded) return;
+      if (i >= steps.length) return;
+      const s = steps[i];
+      if (i === steps.length - 1) {
+        const list = loadProjects();
+        const fid = 'proj_' + nid();
+        const spec = { name: plan.name || 'My Site', industry: plan.industry, email: req.user.email || undefined };
+        const html = buildSiteHtml(spec);
+        try { fs.mkdirSync(UIL, { recursive: true }); fs.writeFileSync(path.join(UIL, fid), html); } catch (_) {}
+        const item = { fileId: fid, id: fid, userId: req.user.userId, name: spec.name, prompt: prompt, industry: plan.industry, visibility: 'public', previewUrl: '/api/ai/preview/' + fid, createdAt: now(), updatedAt: now() };
+        list.push(item); saveProjects(list);
+        send('done', { projectId: fid, fileId: fid, previewUrl: '/api/ai/preview/' + fid, html: html });
+        try { res.end(); } catch (_) {}
+        return;
+      }
+      send('status', s);
+      i++;
+      setTimeout(run, 400);
+    })();
+    req.on('close', function () { try { res.end(); } catch (_) {} });
+  });
+
+  app.get('/api/ai/preview/:fileId/', requireAuth, function (req, res) {
+    const prj = findProject(req, true);
+    if (!prj) return res.status(404).send('<h1 style="font-family:sans-serif">404 — project not found</h1>');
+    let html = '';
+    try { html = fs.readFileSync(path.join(UIL, safeName(prj.fileId)), 'utf8'); } catch (_) { html = ''; }
+    if (!html) html = buildSiteHtml({ name: prj.name, industry: prj.industry });
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+  });
+  app.get('/api/ai/preview/:fileId', requireAuth, function (req, res) {
+    res.redirect('/api/ai/preview/' + req.params.fileId + '/');
+  });
+
+  // explicit generation + optional order (used by page buttons)
+  app.post('/api/ai/generate-and-order', requireAuth, function (req, res) {
+    const b = req.body || {};
+    const prompt = String(b.prompt || '').slice(0, 2000);
+    if (!prompt.trim()) return res.status(400).json({ error: 'Prompt required' });
+    const plan = planFromPrompt(prompt);
+    const spec = { name: b.name || plan.name || 'My Site', industry: plan.industry, email: req.user.email || undefined };
+    const fid = 'proj_' + nid();
+    const html = buildSiteHtml(spec);
+    try { fs.mkdirSync(UIL, { recursive: true }); fs.writeFileSync(path.join(UIL, fid), html); } catch (_) {}
+    const item = { fileId: fid, id: fid, userId: req.user.userId, name: spec.name, prompt: prompt, industry: plan.industry, visibility: 'public', previewUrl: '/api/ai/preview/' + fid, createdAt: now(), updatedAt: now() };
+    const list = loadProjects(); list.push(item); saveProjects(list);
+    const orders = readJSON('data/mock-mfg-orders.json', []);
+    const mfg = {
+      id: 'mfg_' + nid(), userId: req.user.userId,
+      fileId: fid, previewUrl: b.previewUrl || '/api/ai/preview/' + fid,
+      service: 'website-assembly', status: 'queued',
+      notes: String(b.notes || '').slice(0, 500),
+      createdAt: now()
+    };
+    orders.push(mfg); writeJSON('data/mock-mfg-orders.json', orders);
+    res.status(201).json({ success: true, fileId: fid, previewUrl: mfg.previewUrl, order: mfg, project: item });
+  });
+
+  // downloads
+  app.get('/api/ai/download/:fileId', requireAuth, function (req, res) {
+    const prj = findProject(req, true);
+    if (!prj) return res.status(404).json({ error: 'Project not found' });
+    const fp = path.join(UIL, safeName(prj.fileId));
+    if (!fs.existsSync(fp)) { try { fs.writeFileSync(fp, buildSiteHtml({ name: prj.name, industry: prj.industry })); } catch (_) {} }
+    res.download(fp, (prj.name || 'site').replace(/[^a-z0-9]+/gi, '-').toLowerCase() + '.html');
+  });
+  app.get('/api/ai/download-zip/:fileId', requireAuth, function (req, res) {
+    const prj = findProject(req, true);
+    if (!prj) return res.status(404).json({ error: 'Project not found' });
+    const fp = path.join(UIL, safeName(prj.fileId));
+    if (!fs.existsSync(fp)) { try { fs.writeFileSync(fp, buildSiteHtml({ name: prj.name, industry: prj.industry })); } catch (_) {} }
+    const zip = path.join(UIL, safeName(prj.fileId) + '.zip');
+    try { execZip(fp, zip); res.download(zip,prj.fileId+'.zip'); } catch (e) { res.download(fp, prj.fileId + '.html'); }
+  });
+  function execZip(fp, zip) {
+    try { require('child_process').execFileSync('zip', ['-j', '-q', zip, fp], { timeout: 8000 }); }
+    catch (_) { 
+      //(adm-zip is not a build dep here; simplest fallback: binary copy)
+      fs.copyFileSync(fp, zip + '.html');
+      throw new Error('zip-unavailable');
+    }
+  }
+
+  app.get('/api/ai/list-projects', requireAuth, function (req, res) {
+    const list = loadProjects().filter(function (p) { return p.userId === req.user.userId; })
+      .map(function (p) { return { fileId: p.fileId, name: p.name, industry: p.industry, previewUrl: p.previewUrl, createdAt: p.createdAt }; });
+    res.json({ success: true, projects: list });
+  });
+
+  // analyze / chat helpers (builder "Ask AI")
+  app.post('/api/ai/analyze', requireAuth, function (req, res) {
+    const prompt = String((req.body || {}).prompt || '');
+    res.json(planFromPrompt(prompt) && { success: true, analysis: planFromPrompt(prompt), tips: ['Keep prompts short and name the industry', 'Ask for sections explicitly', 'Names in quotes become the site title'] });
+  });
+  app.post('/api/ai/chat', requireAuth, function (req, res) {
+    const b = req.body || {};
+    const msg = String(b.message || b.prompt || '').trim();
+    const plan = planFromPrompt(msg);
+    res.json({ success: true, reply: 'Got it. I would build a ' + plan.industry + ' site for that. Say "generate" and I will create it, or use the Build button.', plan: plan });
+  });
+
+  // --------------------------------------------------------
+  //  GAME BUILDER (save/list/load/delete)
+  // --------------------------------------------------------
+  app.post('/api/ai/game-save', requireAuth, function (req, res) {
+    const b = req.body || {};
+    const list = loadProjects();
+    const fid = String(b.fileId || ('game_' + nid()));
+    const item = list.find(function (p) { return (p.fileId === fid || p.id === fid) && p.userId === req.user.userId; });
+    const rec = item || { fileId: fid, id: fid, userId: req.user.userId, kind: 'game', createdAt: now() };
+    rec.kind = 'game';
+    rec.name = String(b.name || rec.name || 'My game').slice(0, 120);
+    rec.prompt = String(b.prompt || rec.prompt || '');
+    rec.industry = 'game';
+    rec.visibility = 'public';
+    rec.previewUrl = '/api/ai/preview/' + fid;
+    rec.updatedAt = now();
+    if (!item) list.push(rec);
+    saveProjects(list);
+    if (b.html) { try { fs.mkdirSync(UIL, { recursive: true }); fs.writeFileSync(path.join(UIL, fid), String(b.html)); } catch (_) {} }
+    res.status(201).json({ success: true, fileId: fid, project: rec });
+  });
+  app.get('/api/ai/game-list', requireAuth, function (req, res) {
+    const mine = loadProjects().filter(function (p) { return p.userId === req.user.userId && p.kind === 'game'; });
+    res.json({ success: true, games: mine, projects: mine });
+  });
+  app.get('/api/ai/load-game/:fileId', requireAuth, function (req, res) {
+    const prj = findProject(req, true);
+    if (!prj) return res.status(404).json({ error: 'Game not found' });
+    let html = '';
+    try { html = fs.readFileSync(path.join(UIL, safeName(prj.fileId)), 'utf8'); } catch (_) {}
+    res.json({ success: true, game: prj, html: html });
+  });
+  app.delete('/api/ai/game-delete/:fileId', requireAuth, function (req, res) {
+    const fid = String(req.params.fileId || '');
+    let list = loadProjects();
+    const before = list.length;
+    list = list.filter(function (p) { return !(p.userId === req.user.userId && (p.fileId === fid || p.id === fid)); });
+    saveProjects(list);
+    try { fs.unlinkSync(path.join(UIL, safeName(fid))); } catch (_) {}
+    res.json({ success: true, deleted: before !== list.length });
+  });
+  app.get('/api/ai/project-demo/:fileId', function (req, res) {
+    const list = loadProjects();
+    const prj = list.find(function (p) { return (p.fileId === req.params.fileId || p.id === req.params.fileId); });
+    if (!prj) return res.status(404).json({ error: 'Project not found' });
+    let html = '';
+    try { html = fs.readFileSync(path.join(UIL, safeName(prj.fileId)), 'utf8'); } catch (_) {}
+    if (!html) html = buildSiteHtml({ name: prj.name, industry: prj.industry });
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+  });
+  app.get('/api/ai/project-download/:fileId', function (req, res) {
+    const list = loadProjects();
+    const prj = list.find(function (p) { return (p.fileId === req.params.fileId || p.id === req.params.fileId); });
+    if (!prj) return res.status(404).json({ error: 'Project not found' });
+    const fp = path.join(UIL, safeName(prj.fileId));
+    if (!fs.existsSync(fp)) { try { fs.writeFileSync(fp, buildSiteHtml({ name: prj.name, industry: prj.industry })); } catch (_) {} }
+    res.download(fp, (prj.name || 'site').replace(/[^a-z0-9]+/gi, '-').toLowerCase() + '.html');
+  });
+  app.get('/api/ai/scan-download/:fileId', function (req, res) {
+    const list = loadProjects();
+    const prj = list.find(function (p) { return (p.fileId === req.params.fileId || p.id === req.params.fileId); });
+    if (!prj) return res.status(404).json({ error: 'Project not found' });
+    const fp = path.join(UIL, safeName(prj.fileId));
+    if (!fs.existsSync(fp)) { try { fs.writeFileSync(fp, buildSiteHtml({ name: prj.name, industry: prj.industry })); } catch (_) {} }
+    res.download(fp, prj.fileId + '.html');
+  });
+  app.get('/api/ai/artifacts/:fileId', function (req, res) {
+    const list = loadProjects();
+    const prj = list.find(function (p) { return (p.fileId === req.params.fileId || p.id === req.params.fileId); });
+    if (!prj) return res.status(404).json({ error: 'Project not found' });
+    res.json({ success: true, artifacts: [{ type: 'html', fileId: prj.fileId, url: '/api/ai/preview/' + prj.fileId + '/' }] });
+  });
+
+  // --------------------------------------------------------
+  //  SKILLS (agent) — /api/skills
+  // --------------------------------------------------------
+  app.get('/api/skills', function (req, res) {
+    res.json({ success: true, skills: [
+      { id: 'site-builder', name: 'Website builder', desc: 'Generate complete sites from a prompt' },
+      { id: 'game-builder', name: 'Game builder', desc: 'Save, list and stream browser games' },
+      { id: 'cad', name: 'CAD & manufacturing', desc: 'OpenSCAD preview, STL export, orders' },
+      { id: 'media', name: 'Media tools', desc: 'ffmpeg convert/trim, image optimize' }
+    ] });
+  });
+
+  // --------------------------------------------------------
+  //  RESTOCK / SERVICES  (tools, security, hosting, domains, deploy)
+  // --------------------------------------------------------
+  app.get('/api/tools', function (req, res) {
+    res.json({ success: true, tools: readJSON('data/services.json', []) });
+  });
+  app.get('/api/security/status', function (req, res) {
+    res.json({ success: true, security: { csrf: 'token-on-demand', headers: 'helmet-active', rateLimit: 'on', captcha: 'off' } });
+  });
+  app.get('/api/security/csrf-token', function (req, res) {
+    res.json({ success: true, csrfToken: nid() + nid() });
+  });
+  app.get('/api/hosting', function (req, res) {
+    res.json({ success: true, hosting: { plans: [
+      { id: 'static', name: 'Static hosting', price: 0 },
+      { id: 'node', name: 'Node app hosting', price: 12 },
+      { id: 'pro', name: 'Pro with backups', price: 29 }
+    ] } });
+  });
+  app.post('/api/hosting/provision', requireAuth, function (req, res) {
+    const b = req.body || {};
+    const deploys = readJSON('data/mock-deploys.json', []);
+    const rec = { id: 'dep_' + nid(), userId: req.user.userId, plan: String(b.plan || 'static'), status: 'ready', url: 'https://' + (req.user.userId || 'user') + '.kc-apps.dev', createdAt: now() };
+    deploys.push(rec); writeJSON('data/mock-deploys.json', deploys);
+    res.status(201).json({ success: true, hosting: rec });
+  });
+  app.get('/api/domains', requireAuth, function (req, res) {
+    res.json({ success: true, domains: [] });
+  });
+  app.get('/api/domains/check', function (req, res) {
+    const d = String(req.query.domain || '').toLowerCase();
+    const taken = ['keycode', 'google', 'test', 'example'];
+    const root = d.split('.')[0] || d;
+    res.json({ success: true, domain: d, available: taken.indexOf(root) === -1 && d.length > 3, price: 12 });
+  });
+  app.post('/api/domains/register', requireAuth, function (req, res) {
+    const b = req.body || {};
+    const d = String(b.domain || '').toLowerCase().trim();
+    if (!d || d.indexOf('.') === -1) return res.status(400).json({ error: 'Valid domain required' });
+    const store = readJSON('data/mock-domains.json', []);
+    const rec = { id: 'dom_' + nid(), userId: req.user.userId, domain: d, status: 'registered', createdAt: now() };
+    store.push(rec); writeJSON('data/mock-domains.json', store);
+    res.status(201).json({ success: true, domain: rec });
+  });
+  app.get('/api/deploy', requireAuth, function (req, res) {
+    const mine = readJSON('data/mock-deploys.json', []).filter(function (d) { return d.userId === req.user.userId; });
+    res.json({ success: true, deploys: mine });
+  });
+  app.post('/api/deploy', requireAuth, function (req, res) {
+    const b = req.body || {};
+    const fileId = safeName(b.fileId || '');
+    const deploys = readJSON('data/mock-deploys.json', []);
+    const rec = { id: 'dep_' + nid(), userId: req.user.userId, fileId: fileId, status: 'live', url: fileId ? '/api/ai/preview/' + fileId + '/' : null, target: String(b.target || 'keycode-hosting'), createdAt: now() };
+    deploys.push(rec); writeJSON('data/mock-deploys.json', deploys);
+    res.status(201).json({ success: true, deploy: rec });
+  });
+  app.get('/api/deployment/status', requireAuth, function (req, res) {
+    const deploys = readJSON('data/mock-deploys.json', []).filter(function (d) { return d.userId === req.user.userId; });
+    res.json({ success: true, status: deploys.length ? 'live' : 'idle', deploys: deploys });
+  });
+  app.get('/api/deploy/d1', function (req, res) {
+    res.json({ success: true, d1: { available: true, note: 'D1-compatible KV endpoint ready' } });
+  });
+
+  // --------------------------------------------------------
+  //  GIT ENDPOINTS (/api/git/*) — page-referenced mock VCS
+  // --------------------------------------------------------
+  function gitStore() {
+    let s = readJSON('data/mock-git.json', { repos: [] });
+    if (!Array.isArray(s.repos)) s.repos = [];
+    return s;
+  }
+  function seedRepos(uid) {
+    const s = gitStore();
+    if (!s.repos.some(function (r) { return r.userId === uid; })) {
+      const nowMs = Date.now();
+      s.repos.push({ id: 'kc-agency-' + uid.slice(0, 6), name: 'kc-agency', userId: uid, defaultBranch: 'main', ahead: 0, behind: 0, createdAt: now() });
+      s.repos.push({ id: 'kc-site-v2-' + uid.slice(0, 6), name: 'kc-site-v2', userId: uid, defaultBranch: 'main', ahead: 1, behind: 0, createdAt: now() });
+      s.repos[0].log = [{ sha: ('k' + nowMs).slice(0, 9), message: 'chore: init repo', author: req_user(uid), when: now() }];
+      writeJSON('data/mock-git.json', s);
+      return s.repos.filter(function (r) { return r.userId === uid; });
+    }
+    return s.repos.filter(function (r) { return r.userId === uid; });
+  }
+  function req_user(uid) { return 'user-' + String(uid).slice(0, 6); }
+  function findRepo(req) {
+    const rid = String(req.params.repoId || '');
+    const s = gitStore();
+    const mine = s.repos.filter(function (r) { return r.userId === req.user.userId; });
+    seedRepos(req.user.userId);
+    const mineSeeded = gitStore().repos.filter(function (r) { return r.userId === req.user.userId; });
+    const all = mine.length ? mineSeeded : mineSeeded;
+    const repo = all.find(function (r) {
+      return r.userId === req.user.userId && (r.id === rid || r.name === rid || (mineSeeded.length === 1));
+    });
+    return { store: gitStore(), repo: repo };
+  }
+  app.get('/api/git/repos', requireAuth, function (req, res) {
+    res.json({ success: true, repos: seedRepos(req.user.userId) });
+  });
+  app.post('/api/git/import', requireAuth, function (req, res) {
+    const b = req.body || {};
+    const urlRaw = String(b.url || b.repo || b.remote || '');
+    if (!urlRaw.trim()) return res.status(400).json({ error: 'Repository URL required' });
+    const m = urlRaw.match(/([^/:]+?)(?:\.git)?\/?$/);
+    const nm = (m && m[1] ? m[1] : 'imported').slice(0, 60);
+    const s = gitStore();
+    const rec = { id: nm.toLowerCase() + '-' + req.user.userId.slice(0, 6), name: nm, userId: req.user.userId, url: urlRaw, defaultBranch: String(b.branch || 'main'), status: 'imported', ahead: 0, behind: 0, log: [{ sha: ('i' + Date.now()).slice(0, 9), message: 'import from ' + urlRaw, author: req_user(req.user.userId), when: now() }], createdAt: now() };
+    s.repos.push(rec);
+    writeJSON('data/mock-git.json', s);
+    res.status(201).json({ success: true, repo: rec });
+  });
+  app.get('/api/git/log/:repoId', requireAuth, function (req, res) {
+    const f = findRepo(req);
+    if (!f.repo) return res.status(404).json({ error: 'Repo not found' });
+    if (!Array.isArray(f.repo.log) || !f.repo.log.length) {
+      f.repo.log = [{ sha: ('k' + Date.now()).slice(0, 9), message: 'chore: init ' + f.repo.name, author: req_user(req.user.userId), when: now() }];
+      writeJSON('data/mock-git.json', f.store);
+    }
+    res.json({ success: true, repo: f.repo.name, commits: f.repo.log });
+  });
+  app.get('/api/git/remote/:repoId', requireAuth, function (req, res) {
+    const f = findRepo(req);
+    if (!f.repo) return res.status(404).json({ error: 'Repo not found' });
+    res.json({ success: true, remote: { name: f.repo.name, url: f.repo.url || ('https://git.keycode.dev/' + req_user(req.user.userId) + '/' + f.repo.name + '.git'), branch: f.repo.defaultBranch || 'main', ahead: f.repo.ahead || 0, behind: f.repo.behind || 0 } });
+  });
+  app.post('/api/git/pull/:repoId', requireAuth, function (req, res) {
+    const f = findRepo(req);
+    if (!f.repo) return res.status(404).json({ error: 'Repo not found' });
+    f.repo.behind = 0;
+    f.repo.lastPull = now();
+    writeJSON('data/mock-git.json', f.store);
+    res.json({ success: true, repo: f.repo.name, pulled: true, message: 'Already up to date.' });
+  });
+  app.post('/api/git/push/:repoId', requireAuth, function (req, res) {
+    const f = findRepo(req);
+    if (!f.repo) return res.status(404).json({ error: 'Repo not found' });
+    const pushLog = f.repo.log && f.repo.log.length ? f.repo.log : [];
+    f.repo.log = pushLog;
+    f.repo.ahead = 0;
+    f.repo.lastPush = now();
+    f.repo.log.unshift({ sha: ('p' + Date.now()).slice(0, 9), message: String((req.body || {}).message || 'push to ' + (f.repo.defaultBranch || 'main')), author: req_user(req.user.userId), when: now() });
+    writeJSON('data/mock-git.json', f.store);
+    res.json({ success: true, repo: f.repo.name, pushed: true, message: 'Pushed to ' + (f.repo.defaultBranch || 'main') });
+  });
+
+  // --------------------------------------------------------
+  //  SUBSCRIPTIONS + SUBSCRIBE  + CHAT
+  // --------------------------------------------------------
+  app.get('/api/subscriptions', requireAuth, function (req, res) {
+    const store = readJSON('data/mock-subscriptions.json', {});
+    res.json({ success: true, subscriptions: store[req.user.userId] || null, active: !!(store[req.user.userId] && store[req.user.userId].status === 'active') });
+  });
+  app.post('/api/subscribe', requireAuth, function (req, res) {
+    const b = req.body || {};
+    const plan = String(b.plan || 'pro');
+    const store = readJSON('data/mock-subscriptions.json', {});
+    store[req.user.userId] = { plan: plan, status: 'active', interval: String(b.interval || 'monthly'), price: Number(b.price) || (plan === 'pro' ? 29 : 0), startedAt: now(), renewsAt: new Date(Date.now() + 30 * 86400000).toISOString() };
+    writeJSON('data/mock-subscriptions.json', store);
+    res.status(201).json({ success: true, subscription: store[req.user.userId] });
+  });
+  app.post('/api/chat', requireAuth, function (req, res) {
+    const b = req.body || {};
+    const msg = String(b.message || b.prompt || '').trim();
+    if (!msg) return res.status(400).json({ error: 'Message required' });
+    const plan = planFromPrompt(msg);
+    res.json({ success: true, reply: 'Thanks for the message! Quick take: this looks like a ' + plan.industry + ' project. Reply "build a website for it" to generate a site, or ask anything else.', plan: { industry: plan.industry } });
+  });
+
+  // --------------------------------------------------------
+  //  MANUFACTURING ORDERS (/api/order/*) + SERVICE ORDERS
+  // --------------------------------------------------------
+  app.get('/api/order/manufacture', requireAuth, function (req, res) {
+    const mine = readJSON('data/mock-mfg-orders.json', []).filter(function (o) { return o.userId === req.user.userId; });
+    res.json({ success: true, orders: mine });
+  });
+  app.post('/api/order/manufacture', requireAuth, function (req, res) {
+    const b = req.body || {};
+    const rec = {
+      id: 'mfg_' + nid(),
+      userId: req.user.userId,
+      fileId: safeName(b.fileId || b.fileId),
+      previewUrl: String(b.previewUrl || '').slice(0, 400),
+      service: String(b.service || 'website-assembly'),
+      quantity: Number(b.quantity) || 1,
+      notes: String(b.notes || '').slice(0, 800),
+      status: 'queued',
+      createdAt: now()
+    };
+    const orders = readJSON('data/mock-mfg-orders.json', []);
+    orders.push(rec); writeJSON('data/mock-mfg-orders.json', orders);
+    res.status(201).json({ success: true, order: rec });
+  });
+  app.get('/api/order/partners', requireAuth, function (req, res) {
+    const mine = readJSON('data/mock-mfg-orders.json', []).filter(function (o) { return o.userId === req.user.userId; });
+    res.json({ success: true, partners: [true, true, false], orders: mine, partnerProgram: { open: true, tiers: ['Assembler', 'Studio', 'Network'], commission: '20%-40%' } });
+  });
+
+  app.get('/api/service-order/manufacture', requireAuth, function (req, res) {
+    const mine = readJSON('data/mock-service-orders.json', []).filter(function (o) { return o.userId === req.user.userId; });
+    res.json({ success: true, orders: mine });
+  });
+  app.post('/api/service-order/manufacture', requireAuth, function (req, res) {
+    const b = req.body || {};
+    const rec = {
+      id: 'svc_' + nid(),
+      userId: req.user.userId,
+      service: String(b.service || b.plan || 'website-build'),
+      name: String(b.name || '').slice(0, 120),
+      email: String(b.email || req.user.email || '').slice(0, 160),
+      phone: String(b.phone || '').slice(0, 40),
+      budget: Number(b.budget) || 0,
+      details: String(b.details || b.message || '').slice(0, 2000),
+      status: 'received',
+      createdAt: now()
+    };
+    const orders = readJSON('data/mock-service-orders.json', []);
+    orders.push(rec); writeJSON('data/mock-service-orders.json', orders);
+    res.status(201).json({ success: true, order: rec });
+  });
+
+  // --------------------------------------------------------
+  //  REFERRALS (/api/referral/*)
+  // --------------------------------------------------------
+  app.get('/api/referral/my', requireAuth, function (req, res) {
+    const refs = readJSON('data/mock-referrals.json', {});
+    const mine = refs[req.user.userId] || {
+      code: ('ref' + req.user.userId.slice(0, 5)).replace(/[^a-z0-9]/gi, '') + rand(2),
+      shares: 0, earnings: 0, clicks: 0, signups: 0
+    };
+    res.json({ success: true, referral: mine, link: 'https://keycode.studio/r/' + mine.code });
+  });
+  app.get('/api/referral/generate', requireAuth, function (req, res) {
+    const refs = readJSON('data/mock-referrals.json', {});
+    const existing = refs[req.user.userId];
+    if (!existing) {
+      refs[req.user.userId] = { code: ('ref' + req.user.userId.slice(0, 5)).replace(/[^a-z0-9]/gi, '') + rand(2), shares: 0, earnings: 0, clicks: 0, signups: 0, createdAt: now() };
+      writeJSON('data/mock-referrals.json', refs);
+    }
+    const mine = refs[req.user.userId];
+    res.json({ success: true, referral: mine, link: 'https://keycode.studio/r/' + mine.code });
+  });
+
+  // --------------------------------------------------------
+  //  INQUIRIES (contact forms) + DOCS + REFUNDS fallback
+  // --------------------------------------------------------
+  app.post('/api/inquiries', function (req, res) {
+    const b = req.body || {};
+    const rec = {
+      id: 'inq_' + nid(),
+      userId: (req.user && req.user.userId) || null,
+      name: String(b.name || '').slice(0, 120),
+      email: String(b.email || '').slice(0, 160),
+      phone: String(b.phone || '').slice(0, 40),
+      company: String(b.company || '').slice(0, 120),
+      message: String(b.message || '').slice(0, 2000),
+      source: String(b.source || 'contact-form'),
+      status: 'new',
+      createdAt: now()
+    };
+    if (!rec.email && !rec.phone && !rec.message) return res.status(400).json({ error: 'Provide at least an email or message' });
+    const list = readJSON('data/mock-inquiries.json', []);
+    list.push(rec); writeJSON('data/mock-inquiries.json', list);
+    res.status(201).json({ success: true, inquiry: rec, message: 'Thanks! We will reply within one business day.' });
+  });
+
+  app.get('/api/docs.json', function (req, res) {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.json(readJSON('docs/docs.json', {
+      docs: [
+        { id: 'quickstart', title: 'Quickstart', path: 'docs/quickstart.md', summary: 'Get running in 5 minutes.' },
+        { id: 'cli', title: 'CLI reference', path: 'docs/cli.md', summary: 'Install and use the KEYCODE CLI.' },
+        { id: 'api', title: 'HTTP API', path: 'docs/api.md', summary: 'Every REST endpoint explained.' },
+        { id: 'publishing', title: 'Publishing', path: 'docs/publishing.md', summary: 'Preview, download, deploy and order manufacturing.' }
+      ]
+    }));
+  });
+
+  app.post('/api/payment/refund', requireAuth, function (req, res) {
+    const b = req.body || {};
+    const orderId = String(b.orderId || b.order_id || '');
+    const reason = String(b.reason || 'customer request').slice(0, 300);
+    if (!orderId) return res.status(400).json({ error: 'orderId required' });
+    const orders = readJSON('data/mock-orders.json', []);
+    const mine = orders.filter(function (o) { return o.userId === req.user.userId; });
+    const target = mine.find(function (o) { return o.id === orderId || o.order_number === orderId; });
+    if (!target) return res.status(404).json({ error: 'Order not found for this account' });
+    const refunds = readJSON('data/mock-refunds.json', []);
+    const rec = { id: 'ref_' + nid(), userId: req.user.userId, orderId: orderId, amount: Number(b.amount) || Number(target.total) || 0, reason: reason, status: 'requested', createdAt: now() };
+    refunds.push(rec); writeJSON('data/mock-refunds.json', refunds);
+    res.status(201).json({ success: true, refund: rec, message: 'Refund requested. Review takes 1-2 business days.' });
+  });
+
+  // --------------------------------------------------------
+  //  BLOG (/api/blog)
+  // --------------------------------------------------------
+  app.get('/api/blog', function (req, res) {
+    const posts = readJSON('data/blog-posts.json', []);
+    res.json({ success: true, posts: posts });
+  });
+  app.get('/api/blog/featured', function (req, res) {
+    const posts = readJSON('data/blog-posts.json', []);
+    res.json({ success: true, post: posts[0] || null });
+  });
+  app.get('/api/blog/categories/all', function (req, res) {
+    const posts = readJSON('data/blog-posts.json', []);
+    const cats = {};
+    posts.forEach(function (p) { cats[p.category || 'general'] = (cats[p.category || 'general'] || 0) + 1; });
+    res.json({ success: true, categories: cats });
+  });
+  app.get('/api/blog/:id', function (req, res) {
+    const posts = readJSON('data/blog-posts.json', []);
+    const post = posts.find(function (p) { return p.id === req.params.id || p.slug === req.params.id; });
+    if (!post) return res.status(404).json({ error: 'Post not found' });
+    res.json({ success: true, post: post });
+  });
+
+  // --------------------------------------------------------
+  //  SERVICES (public listing)
+  // --------------------------------------------------------
+  app.get('/api/services', function (req, res) {
+    const items = readJSON('data/services.json', []);
+    res.json({ success: true, services: items });
+  });
+  app.get('/api/services/featured', function (req, res) {
+    const items = readJSON('data/services.json', []);
+    res.json({ success: true, services: items.slice(0, 3) });
+  });
+  app.get('/api/services/providers', requireAuth, function (req, res) {
+    res.json({ success: true, providers: [
+      { id: 'p1', name: 'AssembleOne', region: 'Global', rating: 4.8 },
+      { id: 'p2', name: 'BoxFab CNC', region: 'US/EU', rating: 4.6 },
+      { id: 'p3', name: 'StudioPrint', region: 'EU', rating: 4.9 }
+    ] });
+  });
+
+  return { buildSiteHtml: buildSiteHtml };
+};

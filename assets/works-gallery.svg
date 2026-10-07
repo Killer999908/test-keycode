@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500">
+  <defs>
+    <linearGradient id="g5" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0a0a12"/>
+      <stop offset="1" stop-color="#0e2030"/>
+    </linearGradient>
+    <radialGradient id="glow5" cx="0.5" cy="0.45" r="0.65">
+      <stop offset="0" stop-color="#0984e3" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#0984e3" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="800" height="500" fill="url(#g5)"/>
+  <circle cx="400" cy="225" r="190" fill="url(#glow5)"/>
+  <g fill="none" stroke="#74b9ff" stroke-opacity="0.5">
+    <rect x="330" y="150" width="60" height="60" rx="4"/>
+    <rect x="410" y="150" width="60" height="60" rx="4"/>
+    <rect x="330" y="230" width="60" height="60" rx="4"/>
+    <rect x="410" y="230" width="60" height="60" rx="4"/>
+  </g>
+  <g fill="#74b9ff" fill-opacity="0.35">
+    <rect x="342" y="162" width="36" height="36"/>
+    <rect x="422" y="242" width="36" height="36"/>
+  </g>
+  <text x="400" y="420" text-anchor="middle" font-family="monospace" font-size="20" fill="#74b9ff" letter-spacing="6">IMMERSIVE GALLERY</text>
+</svg>

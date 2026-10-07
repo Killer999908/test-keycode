@@ -1,4 +1,4 @@
-const CACHE = 'keycode-v11';
+const CACHE = 'keycode-v12';
 const PRECACHE = [
   '/',
   '/offline.html',
@@ -54,34 +54,68 @@ self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
   if (e.request.method !== 'GET' || url.origin !== location.origin) return;
 
+  // NEVER intercept API calls: live data must always come from the network.
+  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/preview/')) return;
+
+  // HTML pages: network-first, fall back to cache, then offline page.
+  if (url.pathname === '/' || url.pathname === '/index.html' || url.pathname.endsWith('.html')) {
+    return e.respondWith(
+      fetch(e.request)
+        .then(response => {
+          const clone = response.clone();
+          caches.open(CACHE).then(c => c.put(e.request, clone)).catch(() => {});
+          return response;
+        })
+        .catch(() => caches.match(e.request).then(cached => cached || OFFLINE_RESPONSE))
+    );
+  }
+
+  // offline.html: serve cached or fetch, never offline fallback.
   if (url.pathname === '/offline.html') {
     return e.respondWith(
       caches.match('/offline.html').then(cached => cached || fetch(e.request).catch(() => OFFLINE_RESPONSE))
     );
   }
 
-  if (url.pathname === '/' || url.pathname === '/index.html' || url.pathname.endsWith('.html')) {
+  // Scripts & styles: network-first — a failed parse is worse than a fresh fetch.
+  // Always return a real response; never Response.error() for executable resources.
+  const dest = e.request.destination;
+  if (dest === 'script' || dest === 'style') {
     return e.respondWith(
-      fetch(e.request).then(response => {
-        const clone = response.clone();
-        caches.open(CACHE).then(c => c.put(e.request, clone)).catch(() => {});
-        return response;
-      }).catch(() => caches.match(e.request).then(cached => cached || OFFLINE_RESPONSE))
+      fetch(e.request)
+        .then(response => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE).then(c => c.put(e.request, clone)).catch(() => {});
+          }
+          return response;
+        })
+        .catch(() => caches.match(e.request).then(cached => cached || new Response('OK', { status: 200, statusText: 'OK' })))
     );
   }
 
+  // Images, fonts, media: cache-first, network as fallback.
+  if (dest === 'image' || dest === 'font' || dest === 'media' || dest === 'audio' || dest === 'video') {
+    return e.respondWith(
+      caches.match(e.request).then(cached => cached || fetch(e.request).catch(() => {}))
+    );
+  }
+
+  // Everything else (fetch, XHR, etc.): stale-while-revalidate.
   e.respondWith(
     caches.match(e.request).then(cached => {
-      const fetchAndCache = (e.preloadResponse || fetch(e.request)).then(response => {
+      const fromNetwork = (e.preloadResponse || fetch(e.request)).then(response => {
         if (response && response.ok) {
           const clone = response.clone();
           caches.open(CACHE).then(c => c.put(e.request, clone)).catch(() => {});
         }
         return response;
       });
-      // Stale-while-revalidate: instant from cache, refreshed in background
-      const network = fetchAndCache.catch(() => cached || undefined);
-      return cached ? (fetchAndCache.catch(() => cached), cached) : network.then(r => r || OFFLINE_FALLBACK(e));
-    }).catch(() => OFFLINE_FALLBACK(e))
+      if (cached) {
+        fromNetwork.catch(() => {});
+        return cached;
+      }
+      return fromNetwork.then(r => r || new Response(null, { status: 204 }));
+    }).catch(() => new Response(null, { status: 204 }))
   );
 });

@@ -9,7 +9,7 @@
 <meta property="og:title" content="API Keys - KEYCODE Studio">
 <meta property="og:description" content="Manage your API keys for programmatic access to KEYCODE services">
 <meta property="og:image" content="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjAwIiBoZWlnaHQ9IjYzMCIgdmlld0JveD0iMCAwIDEyMDAgNjMwIj4KICA8cmVjdCB3aWR0aD0iMTIwMCIgaGVpZ2h0PSI2MzAiIGZpbGw9IiMwYTBhMWEiLz4KICA8cmVjdCB4PSIwIiB5PSIwIiB3aWR0aD0iMTIwMCIgaGVpZ2h0PSI2MzAiIGZpbGw9InVybCgjZykiIG9wYWNpdHk9IjAuMTUiLz4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iZyIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiM2MzY2ZjEiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSI1MCUiIHN0b3AtY29sb3I9IiMyMmQzZWUiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjNjM2NmYxIi8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8dGV4dCB4PSI2MDAiIHk9IjI3MCIgZm9udC1mYW1pbHk9IkludGVyLCBzeXN0ZW0tdWksIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iOTYiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiNmZmZmZmYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGxldHRlci1zcGFjaW5nPSItMiI+S0VZQ09ERTwvdGV4dD4KICA8dGV4dCB4PSI2MDAiIHk9IjM0MCIgZm9udC1mYW1pbHk9IkludGVyLCBzeXN0ZW0tdWksIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjgiIGZpbGw9IiMyMmQzZWUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGxldHRlci1zcGFjaW5nPSI0IiBmb250LXdlaWdodD0iMzAwIj5BSS1QT1dFUkVEIFNUVURJTzwvdGV4dD4KICA8cmVjdCB4PSI1NDAiIHk9IjM3MCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSIzIiByeD0iMS41IiBmaWxsPSJ1cmwoI2cpIi8+CiAgPHRleHQgeD0iNjAwIiB5PSI0MTAiIGZvbnQtZmFtaWx5PSJJbnRlciwgc3lzdGVtLXVpLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE4IiBmaWxsPSIjOTRhM2I4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5CdWlsZCB0aGUgZnV0dXJlLCBvbmUgcHJvamVjdCBhdCBhIHRpbWUuPC90ZXh0Pgo8L3N2Zz4K">
-<meta property="og:url" content="https://keycode-studio-production.up.railway.app/api-keys">
+<meta property="og:url" content="/api-keys">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="API Keys - KEYCODE Studio">
@@ -381,6 +381,18 @@ var apiKeys = [];
 var revokeTargetId = null;
 var generatedFullKey = '';
 
+// Server-backed key store (data/api-keys.json via /api/keys). The full key is
+// returned ONLY at creation — afterwards only masked metadata is available.
+async function syncKeys() {
+  try {
+    var r = await fetch('/api/keys', { headers: { 'Authorization': 'Bearer ' + TOKEN } });
+    if (r.ok) {
+      var j = await r.json();
+      localStorage.setItem('keycode_api_keys', JSON.stringify(j.keys || []));
+    }
+  } catch (e) { /* offline — show cached list */ }
+}
+
 function loadKeys() {
   try {
     var raw = localStorage.getItem('keycode_api_keys');
@@ -453,24 +465,22 @@ function renderKeys() {
   }
 
   container.innerHTML = '<div class="key-list">' + apiKeys.map(function(k) {
-    var p = permLabel(k.permission);
-    var statusCls = k.status === 'active' ? 'active' : 'disabled';
-    var statusIcon = k.status === 'active' ? 'fa-toggle-on' : 'fa-toggle-off';
+    var p = permLabel(k.permission || 'read');
+    var masked = k.prefix || (k.key ? maskKey(k.key) : 'kc_sk_…');
     return '<div class="key-card" data-id="' + k.id + '">' +
       '<div class="key-card-left">' +
         '<div class="key-card-top">' +
-          '<input class="key-name" value="' + escHtml(k.name) + '" placeholder="Key name" onchange="renameKey(\'' + k.id + '\', this.value)" onkeydown="if(event.key===\'Enter\')this.blur()" maxlength="64" spellcheck="false">' +
+          '<input class="key-name" value="' + escHtml(k.name || 'Agent key') + '" placeholder="Key name" onchange="renameKey(\'' + k.id + '\', this.value)" onkeydown="if(event.key===\'Enter\')this.blur()" maxlength="64" spellcheck="false">' +
           '<span class="permission-badge ' + p.cls + '">' + p.text + '</span>' +
         '</div>' +
-        '<div><span class="key-masked">' + escHtml(maskKey(k.key)) + '</span></div>' +
+        '<div><span class="key-masked">' + escHtml(masked) + '</span></div>' +
         '<div class="key-meta">' +
-          '<span><i class="far fa-calendar"></i> Created ' + formatDate(k.createdAt) + '</span>' +
-          '<span><i class="far fa-clock"></i> Last used ' + timeAgo(k.lastUsed) + '</span>' +
-          (k.expiresAt ? '<span><i class="far fa-hourglass"></i> Expires ' + formatDate(k.expiresAt) + '</span>' : '<span><i class="fas fa-infinity"></i> Never expires</span>') +
+          '<span><i class="far fa-calendar"></i> Created ' + formatDate(k.created_at || k.createdAt) + '</span>' +
+          '<span><i class="far fa-clock"></i> Last used ' + timeAgo(k.last_used || k.lastUsed) + '</span>' +
+          '<span><i class="fas fa-infinity"></i> Active until revoked</span>' +
         '</div>' +
       '</div>' +
       '<div class="key-card-actions">' +
-        '<button class="status-toggle ' + statusCls + '" onclick="toggleKeyStatus(\'' + k.id + '\')"><span class="dot"></span> ' + (k.status === 'active' ? 'Active' : 'Disabled') + '</button>' +
         '<button class="copy-btn" onclick="copyKey(\'' + k.id + '\')" title="Copy key"><i class="fas fa-copy"></i></button>' +
         '<button class="revoke-btn" onclick="openRevokeModal(\'' + k.id + '\')" title="Revoke key"><i class="fas fa-trash-can"></i></button>' +
       '</div>' +
@@ -505,15 +515,8 @@ function copyKey(id) {
   apiKeys = loadKeys();
   var key = apiKeys.find(function(k) { return k.id === id; });
   if (!key) return;
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(key.key).then(function() {
-      showToast('API key copied to clipboard', 'success');
-    }).catch(function() {
-      fallbackCopy(key.key);
-    });
-  } else {
-    fallbackCopy(key.key);
-  }
+  // The full secret is only shown once at creation; saved rows carry a masked prefix.
+  showToast('For security the full key is shown only when created — use “Copy Key” right after generating, or create a new one.');
 }
 
 function fallbackCopy(text) {
@@ -542,7 +545,7 @@ function closeGenerateModal() {
   document.getElementById('generateModal').classList.remove('open');
 }
 
-function generateKey() {
+async function generateKey() {
   var name = document.getElementById('keyNameInput').value.trim();
   if (!name) {
     document.getElementById('keyNameInput').focus();
@@ -554,28 +557,53 @@ function generateKey() {
 
   var permission = document.getElementById('keyPermission').value;
   var expiration = document.getElementById('keyExpiration').value;
-  var keyValue = generateKeyValue();
+  var keyValue = '';
+
+  // Create the key on the server (kc_sk_... — shown once)
+  try {
+    var r = await fetch('/api/keys', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
+      body: JSON.stringify({ name: name })
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    var j = await r.json();
+    keyValue = j.key;
+  } catch (e) {
+    showToast('Could not create key: ' + e.message, 'error');
+    return;
+  }
   generatedFullKey = keyValue;
 
-  var newKey = {
-    id: generateKeyId(),
+  apiKeys = loadKeys();
+  apiKeys.unshift({
+    id: keyValue.slice(-6),
     name: name,
-    key: keyValue,
+    prefix: 'kc_sk_' + keyValue.slice(7, 13) + '…',
     permission: permission,
     status: 'active',
-    createdAt: new Date().toISOString(),
-    lastUsed: null,
-    expiresAt: getExpDate(expiration)
-  };
-
-  apiKeys = loadKeys();
-  apiKeys.unshift(newKey);
+    created_at: new Date().toISOString(),
+    last_used: null
+  });
   saveKeys(apiKeys);
 
   document.getElementById('genStep1').classList.add('hidden');
   document.getElementById('genStep2').classList.remove('hidden');
   document.getElementById('generatedKeyDisplay').textContent = keyValue;
   renderKeys();
+
+  // "Connect your agent" helper — copy the exact login command
+  var step2 = document.getElementById('genStep2');
+  if (step2 && !step2.querySelector('.agent-cmd')) {
+    var div = document.createElement('div');
+    div.className = 'agent-cmd';
+    div.style.cssText = 'margin-top:14px;text-align:left';
+    div.innerHTML = '<div style="font-size:12px;color:var(--ash);margin-bottom:6px">Connect the KEYCODE agent (terminal):</div>' +
+      '<code id="agentLoginCmd" style="display:block;background:#0b0b14;border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:10px 12px;color:#22d3ee;font-size:12px;overflow-x:auto;white-space:nowrap"></code>';
+    step2.appendChild(div);
+  }
+  var cmdEl = document.getElementById('agentLoginCmd');
+  if (cmdEl) cmdEl.textContent = 'keycode login ' + keyValue;
 }
 
 function copyGeneratedKey() {
@@ -606,12 +634,18 @@ function closeRevokeModal() {
 
 function confirmRevoke() {
   if (!revokeTargetId) return;
-  apiKeys = loadKeys();
-  apiKeys = apiKeys.filter(function(k) { return k.id !== revokeTargetId; });
-  saveKeys(apiKeys);
-  renderKeys();
-  closeRevokeModal();
-  showToast('API key revoked successfully', 'success');
+  fetch('/api/keys/' + revokeTargetId, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + TOKEN } })
+    .then(function(r) { return r.json(); })
+    .then(function(j) {
+      if (!j.success) throw new Error(j.error || 'revoke failed');
+      apiKeys = loadKeys();
+      apiKeys = apiKeys.filter(function(k) { return k.id !== revokeTargetId; });
+      saveKeys(apiKeys);
+      renderKeys();
+      closeRevokeModal();
+      showToast('API key revoked successfully', 'success');
+    })
+    .catch(function(e) { showToast('Failed to revoke key: ' + e.message, 'error'); });
 }
 
 // FAQ Toggle
@@ -697,6 +731,7 @@ async function init() {
     dashboard.classList.remove('hidden');
     var plan = userData.plan || 'Free';
     document.getElementById('planName').textContent = plan;
+    await syncKeys();
     renderKeys();
     renderUsage();
   } catch(e) {
