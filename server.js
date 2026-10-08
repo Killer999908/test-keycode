@@ -293,6 +293,15 @@ const AppData = require('./routes/appdata')({
 });
 
 // ===========================================================================
+//  AUTONOMOUS AGENT  (/api/agent/*)
+// ===========================================================================
+const AgentRoutes = require('./routes/agent')({
+  app,
+  requireAuth,
+  now,
+});
+
+// ===========================================================================
 //  WEBSITE ORDERS  (checkout flow)
 // ===========================================================================
 const WebsiteOrders = require('./routes/website-order')({

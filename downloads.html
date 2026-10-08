@@ -934,7 +934,8 @@
 
     // ─── API ────────────────────────────────────────────────────
     function fetchProjects() {
-      return fetch('/api/ai/projects')
+      const token = localStorage.getItem('token') || localStorage.getItem('keycode_token') || '';
+      return fetch('/api/ai/projects', { headers: token ? { 'Authorization': 'Bearer ' + token } : {} })
         .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
         .then(function(data) { return data.projects || []; })
         .catch(function() {
@@ -1255,6 +1256,7 @@
     <script src="/js/loading-screen.js"></script>
 <script src="/js/site.js"></script>
 <script src="/js/install.js" defer></script>
+<script src="/js/footer.js" defer></script>
 
   <script src="/js/scroll-3d-animations.js"></script>  <script src="/js/k-scroll.js" defer></script>
 

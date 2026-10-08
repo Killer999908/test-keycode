@@ -7,6 +7,7 @@
 // ============================================================
 const fs   = require('fs');
 const path = require('path');
+const ai   = require('../lib/ai-provider');
 
 module.exports = function AppDataRoutes(opts) {
   const {
@@ -333,6 +334,50 @@ module.exports = function AppDataRoutes(opts) {
     res.json({ success: true, deleted: before !== all.length });
   });
 
+  // public storefront catalog (shop.html)
+  app.get('/api/products', function (req, res) {
+    const all = readJSON('data/products.json', []);
+    const visible = all.filter(function (p) { return p.active !== false; });
+    res.json({ success: true, products: visible });
+  });
+
+  // guest checkout from shop.html: { items:[{productId,quantity}], customer:{name,email} }
+  app.post('/api/shop/checkout', function (req, res) {
+    const b = req.body || {};
+    const items = Array.isArray(b.items) ? b.items.filter(function (it) { return it && it.productId && Number(it.quantity) > 0; }) : [];
+    if (!items.length) return res.status(400).json({ success: false, error: 'Cart is empty' });
+    const customer = b.customer || {};
+    if (!customer.name || !customer.email) return res.status(400).json({ success: false, error: 'Name and email required' });
+    const all = readJSON('data/products.json', []);
+    const lineItems = [];
+    let total = 0;
+    for (const it of items) {
+      const p = all.find(function (x) { return x.id === it.productId; });
+      if (!p) return res.status(400).json({ success: false, error: 'Product not found: ' + it.productId });
+      const qty = Math.floor(Number(it.quantity)) || 1;
+      if (typeof p.stock === 'number' && p.stock < qty) return res.status(400).json({ success: false, error: 'Insufficient stock for ' + (p.name || it.productId) });
+      lineItems.push({ productId: p.id, name: p.name || 'Item', price: Number(p.price) || 0, quantity: qty });
+      total += (Number(p.price) || 0) * qty;
+    }
+    for (const it of items) {
+      const p = all.find(function (x) { return x.id === it.productId; });
+      if (p && typeof p.stock === 'number') p.stock = Math.max(0, p.stock - Math.floor(Number(it.quantity)));
+    }
+    writeJSON('data/products.json', all);
+    const order = {
+      id: 'ord_' + nid(),
+      items: lineItems,
+      total: Math.round(total * 100) / 100,
+      customer: { name: String(customer.name).slice(0, 140), email: String(customer.email).slice(0, 200) },
+      status: 'paid',
+      createdAt: now()
+    };
+    const orders = readJSON('data/shop-orders.json', []);
+    orders.push(order);
+    writeJSON('data/shop-orders.json', orders);
+    res.status(201).json({ success: true, order: order });
+  });
+
   // social links (dict {links:[...]})
   app.get('/api/user/social-links', requireAuth, function (req, res) {
     const store = readJSON('data/social-links.json', { links: [] });
@@ -502,15 +547,7 @@ module.exports = function AppDataRoutes(opts) {
     return res.send(stub);
   });
 
-  // agent surfaces (CLI/terminal)
-  app.get('/api/agent/tools', function (req, res) {
-    res.json({ success: true, tools: [
-      { id: 'gen', name: 'generate-website', desc: 'Generate a full website from a prompt' },
-      { id: 'osg', name: 'openscad-render', desc: 'Render OpenSCAD preview images' },
-      { id: 'ffm', name: 'ffmpeg-convert', desc: 'Convert media files' },
-      { id: 'bln', name: 'blender-export-stl', desc: 'Export Blender STL' }
-    ] });
-  });
+  // agent surfaces (CLI/terminal) — real implementation in routes/agent.js
   app.get('/api/agent/routers', function (req, res) {
     res.json({ success: true, routers: [{ id: 'web', desc: 'Website builder' }, { id: 'cad', desc: 'CAD / manufacturing' }, { id: 'media', desc: 'Media tools' }] });
   });
@@ -556,28 +593,107 @@ module.exports = function AppDataRoutes(opts) {
     };
   }
 
+  // ---- optional real-AI helpers (null => caller falls back to local engine) ----
+  async function aiPlan(prompt) {
+    const local = planFromPrompt(prompt);
+    const info = ai.llmInfo();
+    if (!info.configured) return local;
+    const j = await ai.llmJSON(
+      'Analyze this website request. Return ONLY JSON: {"industry": one of saas|store|portfolio|game|fitness|agency|health|education|realty|food, "name": short brand name, "tagline": one sentence, "sections": array of section ids, "steps": array of 3-5 short build steps}. Request: ' + JSON.stringify(String(prompt || '')),
+      { system: 'You are a website planning assistant. Reply with JSON only, no prose.', timeoutMs: 15000, maxTokens: 600 }
+    );
+    if (!j || typeof j !== 'object' || Array.isArray(j)) return local;
+    const allowed = ['saas', 'store', 'portfolio', 'game', 'fitness', 'agency', 'health', 'education', 'realty', 'food'];
+    const merged = Object.assign({}, local);
+    if (allowed.indexOf(String(j.industry).toLowerCase()) !== -1) merged.industry = String(j.industry).toLowerCase();
+    if (typeof j.name === 'string' && j.name.trim()) merged.name = j.name.trim().slice(0, 60);
+    if (typeof j.tagline === 'string' && j.tagline.trim()) merged.tagline = j.tagline.trim().slice(0, 160);
+    if (Array.isArray(j.steps) && j.steps.length) merged.steps = j.steps.map(function (s) { return String(s).slice(0, 140); }).slice(0, 6);
+    if (Array.isArray(j.sections) && j.sections.length) merged.sections = j.sections.map(function (s) { return String(s).slice(0, 30); }).slice(0, 8);
+    merged.engine = 'ai:' + info.model;
+    return merged;
+  }
+
+  async function aiSiteHtml(prompt, spec) {
+    const info = ai.llmInfo();
+    if (!info.configured) return null;
+    const sys = 'You are an expert web developer. Generate a complete production-quality single-file HTML website. Rules: one HTML5 document; all CSS in one <style> tag; all JS in one <script> tag; no external frameworks or CDNs (a Google Fonts <link> is allowed); responsive; semantic sections hero, features, pricing, faq, contact; the contact form must send with fetch() to /api/inquiries as JSON {name,email,message} and show inline success/error; polished modern design with a coherent palette; no lorem ipsum or placeholder text.';
+    const p = 'Build the website for this request: ' + JSON.stringify(String(prompt || '')) +
+      (spec && spec.email ? ' Contact email for the site: ' + spec.email + '.' : '');
+    const r = await ai.llmComplete(p, { system: sys, maxTokens: 16000, temperature: 0.8 });
+    if (!r) return null;
+    let t = r.text.trim();
+    const fence = t.match(/```(?:html)?\s*([\s\S]*?)```/i);
+    if (fence) t = fence[1].trim();
+    if (!/<html/i.test(t) || t.length < 300) { console.warn('[ai-provider] generated HTML failed validation'); return null; }
+    return t;
+  }
+
+  async function aiBom(desc) {
+    const info = ai.llmInfo();
+    if (!info.configured) return null;
+    const j = await ai.llmJSON(
+      'Design the bill of materials for this electronics project. Return ONLY a JSON array of 6-30 components, each {"part": functional name, "value": value or rating, "package": footprint, "mpn": realistic manufacturer part number, "qty": number}. Always include: a suitable MCU, decoupling capacitors, pull-up resistors, and a programming/debug header. Project: ' + JSON.stringify(String(desc || '')),
+      { system: 'You are an electronics engineer. Reply with JSON only, no prose.', timeoutMs: 25000, maxTokens: 2000 }
+    );
+    if (!Array.isArray(j)) return null;
+    const bom = [];
+    const counters = {};
+    for (const it of j.slice(0, 30)) {
+      if (!it || typeof it !== 'object') continue;
+      const part = String(it.part || it.value || '').trim();
+      if (!part) continue;
+      const kind = /^\s*(u|ic|mcu|module|sensor|driver|regulator|charger)/i.test(part) ? 'U'
+        : /^\s*(cap|capacitor|c\d)/i.test(part) ? 'C'
+        : /^\s*(res|resistor|r\d)/i.test(part) ? 'R'
+        : /^\s*led/i.test(part) ? 'LED'
+        : /^\s*(conn|header|connector|jst|usb)/i.test(part) ? 'J'
+        : /^\s*(sw|switch|button)/i.test(part) ? 'SW'
+        : /^\s*(y|xtal|crystal|osc)/i.test(part) ? 'Y'
+        : /^\s*(l|inductor)/i.test(part) ? 'L' : 'U';
+      counters[kind] = (counters[kind] || 0) + 1;
+      bom.push({
+        reference: String(it.reference || (kind + counters[kind])).slice(0, 8),
+        value: String(it.value || part).slice(0, 40),
+        package: String(it.package || 'SMD').slice(0, 24),
+        mpn: String(it.mpn || part).slice(0, 40),
+      });
+    }
+    if (bom.length < 3) return null;
+    return bom;
+  }
+
   app.get('/api/ai/providers', function (req, res) {
-    res.json({ success: true, providers: [
-      { id: 'local', name: 'KEYCODE Local Engine', status: 'ready', models: ['kc-plan-1', 'kc-site-1', 'kc-chat-1'] },
-      { id: 'openai', name: 'OpenAI', status: 'configured' },
-      { id: 'anthropic', name: 'Anthropic', status: 'optional' }
-    ] });
+    const info = ai.llmInfo();
+    const providers = [
+      { id: 'local', name: 'KEYCODE Local Engine', status: 'ready', models: ['kc-plan-1', 'kc-site-1', 'kc-chat-1'] }
+    ];
+    if (info.configured) {
+      providers.push({ id: info.provider, name: info.provider, status: 'ready', model: info.model, models: [info.model] });
+    } else {
+      providers.push({ id: 'external-ai', name: 'External AI', status: 'not_configured', hint: 'set AI_PROVIDER + AI_API_KEY (+ AI_MODEL, AI_BASE_URL) in .env' });
+    }
+    res.json({ success: true, providers: providers });
   });
   app.get('/api/ai/models', function (req, res) {
-    res.json({ success: true, models: [
+    const info = ai.llmInfo();
+    const models = [];
+    if (info.configured) models.push({ id: info.model, name: 'AI (' + info.provider + ')', tier: 'ai' });
+    models.push(
       { id: 'kc-plan-1', name: 'Planner', tier: 'free' },
       { id: 'kc-site-1', name: 'Site generator', tier: 'free' },
       { id: 'kc-chat-1', name: 'Chat assistant', tier: 'free' }
-    ] });
+    );
+    res.json({ success: true, models: models });
   });
 
   app.options('/api/ai/plan', function (req, res) { res.sendStatus(204); });
-  app.get('/api/ai/plan', requireAuth, function (req, res) {
-    res.json({ success: true, plan: planFromPrompt(String(req.query.prompt || '')) });
+  app.get('/api/ai/plan', requireAuth, async function (req, res) {
+    res.json({ success: true, plan: await aiPlan(String(req.query.prompt || '')) });
   });
-  app.post('/api/ai/plan', requireAuth, function (req, res) {
+  app.post('/api/ai/plan', requireAuth, async function (req, res) {
     const b = req.body || {};
-    res.json({ success: true, plan: planFromPrompt(b.prompt || b.message || '') });
+    res.json({ success: true, plan: await aiPlan(b.prompt || b.message || '') });
   });
 
   app.get('/api/ai/projects', requireAuth, function (req, res) {
@@ -600,7 +716,7 @@ module.exports = function AppDataRoutes(opts) {
     res.status(201).json({ success: true, project: item, fileId: fid });
   });
 
-  app.post('/api/ai/generate-website', requireAuth, function (req, res) {
+  app.post('/api/ai/generate-website', requireAuth, async function (req, res) {
     const b = req.body || {};
     const prompt = String(b.prompt || '').slice(0, 2000);
     if (!prompt.trim()) return res.status(400).json({ error: 'Prompt required' });
@@ -614,7 +730,7 @@ module.exports = function AppDataRoutes(opts) {
       features: b.features, heroText: b.heroText, heroSub: b.heroSub, ctaText: b.ctaText,
       pricing: b.pricing, faqs: b.faqs
     };
-    const html = buildSiteHtml(spec);
+    const html = (await aiSiteHtml(prompt, spec)) || buildSiteHtml(spec);
     try { fs.mkdirSync(UIL, { recursive: true }); fs.writeFileSync(path.join(UIL, fid), html); } catch (_) {}
     const item = {
       fileId: fid, id: fid, userId: req.user.userId,
@@ -627,7 +743,7 @@ module.exports = function AppDataRoutes(opts) {
   });
 
   // SSE plan streaming (builder UI shows progress)
-  app.get('/api/ai/stream-website', requireAuth, function (req, res) {
+  app.get('/api/ai/stream-website', requireAuth, async function (req, res) {
     const prompt = String(req.query.prompt || req.query.q || '').slice(0, 2000);
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
@@ -650,15 +766,19 @@ module.exports = function AppDataRoutes(opts) {
       if (i >= steps.length) return;
       const s = steps[i];
       if (i === steps.length - 1) {
-        const list = loadProjects();
-        const fid = 'proj_' + nid();
-        const spec = { name: plan.name || 'My Site', industry: plan.industry, email: req.user.email || undefined };
-        const html = buildSiteHtml(spec);
-        try { fs.mkdirSync(UIL, { recursive: true }); fs.writeFileSync(path.join(UIL, fid), html); } catch (_) {}
-        const item = { fileId: fid, id: fid, userId: req.user.userId, name: spec.name, prompt: prompt, industry: plan.industry, visibility: 'public', previewUrl: '/api/ai/preview/' + fid, createdAt: now(), updatedAt: now() };
-        list.push(item); saveProjects(list);
-        send('done', { projectId: fid, fileId: fid, previewUrl: '/api/ai/preview/' + fid, html: html });
-        try { res.end(); } catch (_) {}
+        (async function () {
+          const spec = { name: plan.name || 'My Site', industry: plan.industry, email: req.user.email || undefined };
+          const info = ai.llmInfo();
+          if (info.configured) send('status', { phase: 'building', text: 'Generating with AI (' + info.model + ')' });
+          const html = (await aiSiteHtml(prompt, spec)) || buildSiteHtml(spec);
+          const list = loadProjects();
+          const fid = 'proj_' + nid();
+          try { fs.mkdirSync(UIL, { recursive: true }); fs.writeFileSync(path.join(UIL, fid), html); } catch (_) {}
+          const item = { fileId: fid, id: fid, userId: req.user.userId, name: spec.name, prompt: prompt, industry: plan.industry, visibility: 'public', previewUrl: '/api/ai/preview/' + fid, createdAt: now(), updatedAt: now() };
+          list.push(item); saveProjects(list);
+          send('done', { projectId: fid, fileId: fid, previewUrl: '/api/ai/preview/' + fid, html: html });
+          try { res.end(); } catch (_) {}
+        })();
         return;
       }
       send('status', s);
@@ -741,10 +861,19 @@ module.exports = function AppDataRoutes(opts) {
     const prompt = String((req.body || {}).prompt || '');
     res.json(planFromPrompt(prompt) && { success: true, analysis: planFromPrompt(prompt), tips: ['Keep prompts short and name the industry', 'Ask for sections explicitly', 'Names in quotes become the site title'] });
   });
-  app.post('/api/ai/chat', requireAuth, function (req, res) {
+  app.post('/api/ai/chat', requireAuth, async function (req, res) {
     const b = req.body || {};
     const msg = String(b.message || b.prompt || '').trim();
-    const plan = planFromPrompt(msg);
+    const plan = await aiPlan(msg);
+    const info = ai.llmInfo();
+    if (info.configured) {
+      const r = await ai.llmComplete(msg, {
+        system: 'You are the KEYCODE Studio build assistant. Reply in at most 80 words: friendly, concrete, and end by guiding the user to describe their project for the AI Builder (or press Build).',
+        maxTokens: 300,
+        timeoutMs: 20000,
+      });
+      if (r) return res.json({ success: true, reply: r.text.trim(), plan: plan, engine: info.model });
+    }
     res.json({ success: true, reply: 'Got it. I would build a ' + plan.industry + ' site for that. Say "generate" and I will create it, or use the Build button.', plan: plan });
   });
 
@@ -1281,14 +1410,23 @@ module.exports = function AppDataRoutes(opts) {
       return buf.toString('base64');
     } catch (_) { return null; }
   }
-  app.post('/api/ai/pcb-stream', function (req, res) {
+  app.post('/api/ai/pcb-stream', async function (req, res) {
     const b = req.body || {};
     const desc = String(b.description || '').slice(0, 2000);
     if (!desc.trim()) { res.status(400).json({ error: 'description required' }); return; }
     const user = pcbUser(req);
     res.writeHead(200, { 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-cache, no-transform', 'Connection': 'keep-alive', 'X-Accel-Buffering': 'no' });
     const send = (obj) => { try { res.write('data: ' + JSON.stringify(obj) + '\n\n'); } catch (_) {} };
-    const bom = pcbBomFor(desc);
+    let closed = false;
+    res.on('close', function () { closed = true; });
+    const info = ai.llmInfo();
+    send({ type: 'status', message: info.configured ? 'Designing with AI (' + info.model + ')' : 'Parsing design requirements' });
+    let bom = null;
+    if (info.configured) {
+      bom = await aiBom(desc);
+      if (bom && !closed) send({ type: 'status', message: 'AI selected ' + bom.length + ' parts' });
+    }
+    if (!bom) bom = pcbBomFor(desc);
     const svg = pcbSvgFor(desc, bom);
     const h = strHash(desc);
     const steps = [
@@ -1299,8 +1437,7 @@ module.exports = function AppDataRoutes(opts) {
       { type: 'pcbSvg', svg: svg },
       { type: 'status', message: 'Running fab checks' }
     ];
-    let i = 0, closed = false;
-    req.on('close', function () { closed = true; try { res.end(); } catch (_) {} });
+    let i = 0;
     (function run() {
       if (closed || res.writableEnded) return;
       if (i < steps.length) { send(steps[i]); i++; setTimeout(run, 260); return; }

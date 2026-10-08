@@ -117,102 +117,14 @@
     </div>
   </div>
   <div class="toast" id="toast"></div>
-  <script>
-    const form = document.getElementById('loginForm');
-    const btn = document.getElementById('loginBtn');
-    const err = document.getElementById('loginError');
-    const emailInput = document.getElementById('emailInput');
-    const passwordInput = document.getElementById('passwordInput');
-
-    function showToast(msg, type) {
-      const t = document.getElementById('toast');
-      t.textContent = msg; t.className = 'toast show ' + (type||'');
-      setTimeout(() => t.classList.remove('show'), 4000);
-    }
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      err.textContent = '';
-      btn.classList.add('loading');
-      btn.disabled = true;
-
-      try {
-        const loginRes = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: emailInput.value, password: passwordInput.value })
-        });
-        const loginData = await loginRes.json();
-
-        if (loginData.mfaRequired) {
-          err.textContent = 'Multi-factor authentication required. Please use a passkey.';
-          btn.classList.remove('loading');
-          btn.disabled = false;
-          return;
-        }
-
-        if (loginData.token && loginData.user?.role === 'admin') {
-          // Try admin-login as fallback
-          const adminRes = await fetch('/api/auth/admin-login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: emailInput.value, password: passwordInput.value })
-          });
-          const adminData = await adminRes.json();
-
-          if (adminData.token) {
-            // Store in sessionStorage for admin panel
-            sessionStorage.setItem('adminToken', adminData.token);
-            sessionStorage.setItem('adminUser', JSON.stringify(adminData.user));
-            showToast('Authentication successful! Redirecting...', 'success');
-            setTimeout(() => window.location.href = '/admin', 800);
-          } else {
-            // Fallback: try the regular token
-            const userRes = await fetch('/api/auth/me', {
-              headers: { 'Authorization': 'Bearer ' + loginData.token }
-            });
-            const userData = await userRes.json();
-            if (userData.role === 'admin') {
-              sessionStorage.setItem('adminToken', loginData.token);
-              sessionStorage.setItem('adminUser', JSON.stringify(userData));
-              showToast('Authentication successful! Redirecting...', 'success');
-              setTimeout(() => window.location.href = '/admin', 800);
-            } else {
-              err.textContent = 'Access denied. This account does not have admin privileges.';
-            }
-          }
-        } else {
-          const adminRes = await fetch('/api/auth/admin-login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: emailInput.value, password: passwordInput.value })
-          });
-          const adminData = await adminRes.json();
-          if (adminData.token && adminData.user?.role === 'admin') {
-            sessionStorage.setItem('adminToken', adminData.token);
-            sessionStorage.setItem('adminUser', JSON.stringify(adminData.user));
-            showToast('Authentication successful! Redirecting...', 'success');
-            setTimeout(() => window.location.href = '/admin', 800);
-          } else {
-            err.textContent = adminData.error || 'Invalid admin credentials';
-          }
-        }
-      } catch (error) {
-        err.textContent = 'Connection error. Is the server running?';
-      }
-
-      btn.classList.remove('loading');
-      btn.disabled = false;
-    });
-  </script>
-<script>navigator.serviceWorker.register('/sw.js').catch(function(e){console.error('SW registration failed:',e)});</script>
-
   <script src="/js/scroll-3d-animations.js"></script>  <script src="/js/k-scroll.js" defer></script>
 
   <div id="site-footer"></div>
     <script src="/js/loading-screen.js"></script>
 <script src="/js/site.js"></script>
 <script src="/js/install.js" defer></script>
+<script src="/js/footer.js" defer></script>
+<script src="/js/sw-register.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
 </body>

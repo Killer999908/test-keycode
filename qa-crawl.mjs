@@ -23,12 +23,13 @@ const reg = await fetch(BASE + '/api/auth/register', {
 const token = reg.token || reg.accessToken;
 console.log('token_ok=' + !!token, '| crawling', unique.length, 'pages');
 
-const browser = await chromium.launch({ executablePath: '/usr/bin/chromium', args: ['--no-sandbox', '--disable-dev-shm-usage'] });
+let browser = await chromium.launch({ executablePath: '/usr/bin/chromium', args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu'] });
 const report = [];
 
 for (const p of unique) {
-  const ctx = await browser.newContext();
-  const page = await ctx.newPage();
+  let ctx, page;
+  try { ctx = await browser.newContext(); page = await ctx.newPage(); }
+  catch { try { await browser.close(); } catch {} ; browser = await chromium.launch({ executablePath: '/usr/bin/chromium', args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu'] }); ctx = await browser.newContext(); page = await ctx.newPage(); }
   const local = [], external = [];
   page.on('response', r => { if (r.status() >= 400) (r.url().startsWith(BASE) ? local : external).push(`${r.status()} ${r.url().replace(BASE, '')}`); });
   page.on('requestfailed', r => (r.url().startsWith(BASE) ? local : external).push('FAILED ' + r.url().replace(BASE, '')));
@@ -39,7 +40,7 @@ for (const p of unique) {
   try { await page.goto(BASE + '/' + p, { waitUntil: 'load', timeout: 20000 }); await page.waitForTimeout(1600); }
   catch (e) { local.push('goto ' + String(e).split('\n')[0].slice(0, 100)); }
   if (local.length) report.push({ page: p, local, external: external.length });
-  await ctx.close();
+  try { await ctx.close(); } catch { try { await browser.close(); } catch {} ; browser = await chromium.launch({ executablePath: '/usr/bin/chromium', args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu'] }); }
 }
 await browser.close();
 
