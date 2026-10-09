@@ -13,13 +13,59 @@
 // ============================================================
 const agent = require('../lib/agent-core');
 const tools = require('../lib/agent-tools');
+const ai = require('../lib/ai-provider');
+const ai_poolStatus = () => ai.poolStatus();
 const { Readable } = require('stream');
 
 module.exports = function AgentRoutes(opts) {
   const { app, requireAuth, now } = opts;
 
-  // running-task registry (SSE)
-  const running = new Set();
+  // running-task registry + fair per-user queue
+  // Instead of rejecting users when busy, runs are queued FIFO with a
+  // per-user fair-share slot: pick the next queued run whose owner has
+  // the fewest active runs. MAX_CONCURRENT / MAX_PER_USER via env.
+  const MAX_CONCURRENT = Math.max(1, parseInt(process.env.AGENT_MAX_CONCURRENT || '6', 10));
+  const MAX_PER_USER = Math.max(1, parseInt(process.env.AGENT_MAX_PER_USER || '2', 10));
+  const QUEUE_LIMIT = Math.max(10, parseInt(process.env.AGENT_QUEUE_LIMIT || '100', 10));
+  const running = new Set(); // requests currently executing
+  const waiting = [];        // {req,res,goal,opts}
+
+  function activeCountFor(userId) {
+    let n = 0;
+    for (const r of running) { if (r.userId === userId) n++; }
+    return n;
+  }
+  function pumpQueue() {
+    while (running.size < MAX_CONCURRENT && waiting.length) {
+      // fair share: prefer the user with fewest active runs
+      let best = 0, bestCount = Infinity;
+      for (let i = 0; i < waiting.length; i++) {
+        const c = activeCountFor(waiting[i].userId);
+        if (c < bestCount) { bestCount = c; best = i; if (c === 0) break; }
+      }
+      const item = waiting.splice(best, 1)[0];
+      startRun(item);
+    }
+  }
+  function startRun(item) {
+    running.add(item);
+    agent.runTask(item.opts, item.onEvent)
+      .then(function (session) { item.onDone(session); })
+      .catch(function (e) { item.onError(e); })
+      .finally(function () { running.delete(item); pumpQueue(); });
+  }
+
+  function enqueue(res, opts, onEvent, onDone, onError, userIdLabel) {
+    if (waiting.length >= QUEUE_LIMIT) {
+      res.status(429).json({ success: false, error: 'Agent queue is full — try again shortly', queued: false });
+      return null;
+    }
+    const item = { userId: userIdLabel, opts: opts, onEvent: onEvent, onDone: onDone, onError: onError, res: res };
+    waiting.push(item);
+    res.setHeader('X-Agent-Queued', String(waiting.length));
+    pumpQueue();
+    return item;
+  }
 
   app.get('/api/agent/tools', function (req, res) {
     res.json({ success: true, tools: tools.manifest() });
@@ -53,24 +99,21 @@ module.exports = function AgentRoutes(opts) {
     res.status(201).json({ success: true, skill: skill });
   });
 
-  // blocking run
-  app.post('/api/agent/run', requireAuth, async function (req, res) {
+  // blocking run — queued fairly, never rejected unless the queue is full
+  app.post('/api/agent/run', requireAuth, function (req, res) {
     const b = req.body || {};
     const goal = String(b.goal || '').trim();
     if (!goal) return res.status(400).json({ success: false, error: 'goal required' });
-    if (running.size >= 3) return res.status(429).json({ success: false, error: 'too many concurrent agent runs' });
-    running.add(req);
-    try {
-      const session = await agent.runTask({
-        goal: goal,
-        userId: req.user && req.user.userId,
-        maxSteps: b.maxSteps,
-        allowedTools: Array.isArray(b.allowedTools) ? b.allowedTools : undefined,
-      }, function () { });
-      res.json({ success: session.status === 'done', session: session });
-    } catch (e) {
-      res.status(500).json({ success: false, error: String(e && e.message || e) });
-    } finally { running.delete(req); }
+    const uid = req.user && req.user.userId;
+    enqueue(res, {
+      goal: goal,
+      userId: uid,
+      maxSteps: b.maxSteps,
+      allowedTools: Array.isArray(b.allowedTools) ? b.allowedTools : undefined,
+    }, function () { },
+    function (session) { res.json({ success: session.status === 'done', session: session }); },
+    function (e) { try { res.status(500).json({ success: false, error: String(e && e.message || e) }); } catch (_) { } },
+    uid);
   });
 
   // SSE live run — token in query for EventSource
@@ -90,20 +133,33 @@ module.exports = function AgentRoutes(opts) {
     });
     const send = (obj) => { try { res.write('data: ' + JSON.stringify(obj) + '\n\n'); } catch (_) { } };
     send({ type: 'start', goal: goal });
-    running.add(req);
-    try {
-      const session = await agent.runTask({
-        goal: goal,
-        userId: req.user && req.user.userId,
-        maxSteps: Number(req.query.maxSteps) || undefined,
-      }, function (evt) { send(evt); });
+    enqueue(res, {
+      goal: goal,
+      userId: req.user && req.user.userId,
+      maxSteps: Number(req.query.maxSteps) || undefined,
+    },
+    function (evt) { send(evt); },
+    function (session) {
       send({ type: 'result', sessionId: session.id, status: session.status, final: session.final });
-    } catch (e) {
-      send({ type: 'error', error: String(e && e.message || e) });
-    } finally {
-      running.delete(req);
       try { res.end(); } catch (_) { }
-    }
+    },
+    function (e) {
+      send({ type: 'error', error: String(e && e.message || e) });
+      try { res.end(); } catch (_) { }
+    },
+    req.user && req.user.userId);
+  });
+
+  app.get('/api/agent/status', function (req, res) {
+    res.json({
+      success: true,
+      running: running.size,
+      waiting: waiting.length,
+      maxConcurrent: MAX_CONCURRENT,
+      maxPerUser: MAX_PER_USER,
+      queueLimit: QUEUE_LIMIT,
+      llmPool: ai_poolStatus(),
+    });
   });
 
   // legacy CLI ingest
