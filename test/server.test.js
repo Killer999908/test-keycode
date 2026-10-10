@@ -214,25 +214,27 @@ describe('agent workspaces and account isolation', () => {
   });
 
   test('POST /api/agent/react streams start event and artifacts endpoint serves saved file', async () => {
-    const previousProvider = process.env.AI_PROVIDER;
-    process.env.AI_PROVIDER = 'disabled'; // force local engine — no network in tests
+    const runTask = jest.spyOn(agent, 'runTask').mockImplementation(async function (_opts, onEvent) {
+      onEvent({ type: 'final', text: 'pong' });
+      return { id: 'test-session', status: 'done', final: 'pong', steps: [] };
+    });
     try {
-    const reactRes = await request(app).post('/api/agent/react')
-      .set('Authorization', 'Bearer ' + tokenA)
-      .send({ task: 'ping', maxSteps: 1, workspaceId: workspaceId });
-    expect(reactRes.status).toBe(200);
-    expect(reactRes.text).toContain('data: {"type":"start"');
+      const reactRes = await request(app).post('/api/agent/react')
+        .set('Authorization', 'Bearer ' + tokenA)
+        .send({ task: 'ping', maxSteps: 1, workspaceId: workspaceId });
+      expect(reactRes.status).toBe(200);
+      expect(reactRes.text).toContain('data: {"type":"start"');
+      expect(reactRes.text).toContain('"type":"done"');
 
-    // Artifacts route serves files from user default workspace
-    const defDir = agent.getWorkspaceDir(agentUserA, 'default');
-    fs.writeFileSync(path.join(defDir, 'sample-build.zip'), 'zipbytes');
-    const dlZip = await request(app).get('/api/agent/artifacts/sample-build.zip')
-      .set('Authorization', 'Bearer ' + tokenA);
-    expect(dlZip.status).toBe(200);
-    expect(dlZip.text).toBe('zipbytes');
+      // Artifacts route serves files from user default workspace
+      const defDir = agent.getWorkspaceDir(agentUserA, 'default');
+      fs.writeFileSync(path.join(defDir, 'sample-build.zip'), 'zipbytes');
+      const dlZip = await request(app).get('/api/agent/artifacts/sample-build.zip')
+        .set('Authorization', 'Bearer ' + tokenA);
+      expect(dlZip.status).toBe(200);
+      expect(dlZip.text).toBe('zipbytes');
     } finally {
-      if (previousProvider === undefined) delete process.env.AI_PROVIDER;
-      else process.env.AI_PROVIDER = previousProvider;
+      runTask.mockRestore();
     }
   });
 });

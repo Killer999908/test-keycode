@@ -388,7 +388,11 @@ function toast(message, type) {
 // ===== API with fallback =====
 async function apiFetch(url, options) {
   try {
-    const res = await fetch(url, options);
+    const requestOptions = options || {};
+    const headers = new Headers(requestOptions.headers || {});
+    const token = localStorage.getItem('keycode_token') || localStorage.getItem('token') || localStorage.getItem('authToken');
+    if (token && !headers.has('Authorization')) headers.set('Authorization', 'Bearer ' + token);
+    const res = await fetch(url, { ...requestOptions, headers });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     return await res.json();
   } catch (e) {
