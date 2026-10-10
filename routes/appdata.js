@@ -904,6 +904,12 @@ module.exports = function AppDataRoutes(opts) {
       const html = (await aiSiteHtml(prompt, spec)) || buildSiteHtml(spec);
       send({ type: 'html', html: html, partial: false });
       send({ type: 'complete', data: { html: html } });
+      // persist the generated site (mirrors the GET handler's save behavior)
+      const plist = loadProjects();
+      const pfid = 'proj_' + nid();
+      try { fs.mkdirSync(UIL, { recursive: true }); fs.writeFileSync(path.join(UIL, pfid), html); } catch (_) {}
+      const pitem = { fileId: pfid, id: pfid, userId: req.user.userId, name: spec.name || prompt.slice(0,60), prompt: prompt, industry: plan.industry, visibility: 'public', previewUrl: '/api/ai/preview/' + pfid, htmlFile: pfid, createdAt: now(), updatedAt: now() };
+      plist.push(pitem); saveProjects(plist);
       res.end();
     } catch (e) {
       console.error('[ai.stream-website] generation failed:', e);
