@@ -58,8 +58,11 @@ module.exports = function AuthRoutes(opts) {
     fs.writeFileSync(MOCK_PATH, JSON.stringify(db, null, 2));
   }
 
-  // phone OTP store (in-memory, fine for a single-process dev server)
-  const otpStore = new Map();   // key: email|phone  ->  { code, expires, channel }
+  // OTPs are short-lived and scoped to a contact; limit resend and guess attempts.
+  const otpStore = new Map();
+  const OTP_TTL_MS = 10 * 60 * 1000;
+  const OTP_RESEND_MS = 60 * 1000;
+  const OTP_MAX_ATTEMPTS = 5;
 
   function issueTokenAndRespond(res, user, extras = {}) {
     const token = signSession(user);
@@ -350,39 +353,48 @@ module.exports = function AuthRoutes(opts) {
   app.post('/api/auth/send-otp', async (req, res) => {
     try {
       const { email, phone } = req.body || {};
-      const target = (email || phone || '').toString().trim().toLowerCase();
-      if (!target) return res.status(400).json({ error: 'email or phone required' });
+      if (email && phone) return res.status(400).json({ error: 'Choose email or phone, not both.' });
+      if (phone) return res.status(501).json({ error: 'SMS sign-in is not available yet. Use email OTP instead.' });
+      const target = String(email || '').trim().toLowerCase();
+      if (!target) return res.status(400).json({ error: 'email required' });
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(target)) return res.status(400).json({ error: 'valid email required' });
 
-      const code = String(Math.floor(100000 + Math.random() * 900000));
-      const expires = Date.now() + 1000 * 60 * 10; // 10 min
-      otpStore.set(target, { code, expires, channel: email ? 'email' : 'phone' });
+      const previous = otpStore.get(target);
+      if (previous && previous.sendAfter > Date.now()) {
+        return res.status(429).json({
+          error: 'Please wait before requesting another code.',
+          retryAfter: Math.ceil((previous.sendAfter - Date.now()) / 1000),
+        });
+      }
 
-      // Email OTP is delivered via lib/mailer when a provider is configured.
+      const code = String(crypto.randomInt(0, 1000000)).padStart(6, '0');
+      const entry = { code: code, expires: Date.now() + OTP_TTL_MS, sendAfter: Date.now() + OTP_RESEND_MS, attempts: 0, channel: 'email' };
+      otpStore.set(target, entry);
       let emailed = false;
-      if (email) {
+      if (mailer.isConfigured()) {
         const mail = await mailer.send({
-          to: email,
+          to: target,
           subject: 'KEYCODE Studio — your verification code',
           text: 'Your verification code is: ' + code + '\n\nIt expires in 10 minutes.',
           html: '<p>Your KEYCODE Studio verification code is:</p><p style="font-size:28px;letter-spacing:6px"><b>' + code + '</b></p><p style="color:#888">Expires in 10 minutes.</p>',
         });
         emailed = mail.delivered;
-      }
-      if (!emailed) {
-        // No email provider configured (or phone target): log so dev can read it.
-        console.log(`[otp] code for ${email ? 'email' : 'phone'} ${target}: ${code} (delivery: ${email ? 'no mail provider' : 'sms not wired'})`);
+        if (!emailed) {
+          otpStore.delete(target);
+          return res.status(502).json({ error: 'Could not deliver the verification email. Please try again later.' });
+        }
+      } else if (IS_PROD) {
+        otpStore.delete(target);
+        return res.status(503).json({ error: 'Email delivery is not configured. Please contact support.' });
       }
 
-      // In a non-prod env we also surface the code in the response so the flow
-      // is testable without wiring SMS/email.
-      const devShow = !IS_PROD;
       res.json({
         success: true,
-        message: email
-          ? 'OTP sent to your email.'
-          : 'OTP sent to your phone.',
-        code: devShow ? code : undefined,
-        expiresIn: 600,
+        message: emailed ? 'OTP sent to your email.' : 'Email delivery is simulated in development; use the displayed code.',
+        delivery: emailed ? 'email' : 'development',
+        code: !IS_PROD && !emailed ? code : undefined,
+        expiresIn: OTP_TTL_MS / 1000,
+        resendAfter: OTP_RESEND_MS / 1000,
       });
     } catch (err) {
       console.error('[auth.send-otp]', err);
@@ -396,15 +408,35 @@ module.exports = function AuthRoutes(opts) {
   app.post('/api/auth/verify-otp', async (req, res) => {
     try {
       const { email, phone, otp } = req.body || {};
-      const target = (email || phone || '').toString().trim().toLowerCase();
-      if (!target || !otp) return res.status(400).json({ error: 'email/phone and otp required' });
+      if (email && phone) return res.status(400).json({ error: 'Choose email or phone, not both.' });
+      if (phone) return res.status(501).json({ error: 'SMS sign-in is not available yet. Use email OTP instead.' });
+      const target = String(email || '').trim().toLowerCase();
+      const suppliedCode = String(otp || '').trim();
+      if (!target || !suppliedCode) return res.status(400).json({ error: 'email and otp required' });
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(target) || !/^\d{6}$/.test(suppliedCode)) {
+        return res.status(400).json({ error: 'Valid email and 6-digit code required.' });
+      }
 
       const entry = otpStore.get(target);
       if (!entry) return res.status(400).json({ error: 'No pending OTP for this contact.' });
-      if (entry.code !== String(otp).trim()) return res.status(400).json({ error: 'Incorrect code.' });
-      if (Date.now() > entry.expires) {
+      if (entry.channel !== 'email') return res.status(400).json({ error: 'OTP delivery method does not match.' });
+      if (Date.now() >= entry.expires) {
         otpStore.delete(target);
         return res.status(400).json({ error: 'Code expired.' });
+      }
+      if (entry.attempts >= OTP_MAX_ATTEMPTS) {
+        otpStore.delete(target);
+        return res.status(429).json({ error: 'Too many attempts. Request a new code.' });
+      }
+      const expected = Buffer.from(entry.code);
+      const received = Buffer.from(suppliedCode);
+      if (!crypto.timingSafeEqual(expected, received)) {
+        entry.attempts++;
+        if (entry.attempts >= OTP_MAX_ATTEMPTS) {
+          otpStore.delete(target);
+          return res.status(429).json({ error: 'Too many attempts. Request a new code.' });
+        }
+        return res.status(400).json({ error: 'Incorrect code.', attemptsRemaining: OTP_MAX_ATTEMPTS - entry.attempts });
       }
       otpStore.delete(target);
 
@@ -456,26 +488,41 @@ module.exports = function AuthRoutes(opts) {
   // ---------------------------------------------------------------------------
   //  Magic link — send
   // ---------------------------------------------------------------------------
-  app.post('/api/auth/magic-link/send', (req, res) => {
+  app.post('/api/auth/magic-link/send', async (req, res) => {
     try {
       const { email } = req.body || {};
-      if (!email || !email.includes('@')) {
+      if (typeof email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
         return res.status(400).json({ error: 'valid email required' });
       }
       const normalizedEmail = email.toLowerCase().trim();
-      const token = rand(32);
+      const token = crypto.randomBytes(32).toString('hex');
       const expires = Date.now() + 1000 * 60 * 15; // 15 min
       const store = loadMock();
       store['_magic_' + normalizedEmail] = { token, expires };
       saveMock(store);
 
       const link = `${process.env.FRONTEND_URL || 'http://localhost:' + PORT}/login.html?magic=${token}&email=${encodeURIComponent(normalizedEmail)}`;
-      console.log('[magic] link for', normalizedEmail, ':', link);
+      if (mailer.isConfigured()) {
+        const mail = await mailer.send({
+          to: normalizedEmail,
+          subject: 'KEYCODE Studio — your sign-in link',
+          text: 'Use this link to sign in to KEYCODE Studio:\n' + link + '\n\nThis link expires in 15 minutes. If you did not request it, ignore this email.',
+          html: '<p>Use this link to sign in to KEYCODE Studio:</p><p><a href="' + link + '">Sign in</a></p><p style="color:#888">This link expires in 15 minutes. If you did not request it, ignore this email.</p>',
+        });
+        if (!mail.delivered) {
+          delete store['_magic_' + normalizedEmail];
+          saveMock(store);
+          return res.status(502).json({ error: 'Could not deliver the sign-in email. Please try again later.' });
+        }
+      } else if (IS_PROD) {
+        delete store['_magic_' + normalizedEmail];
+        saveMock(store);
+        return res.status(503).json({ error: 'Email delivery is not configured. Please contact support.' });
+      }
 
       res.json({
         success: true,
-        message: 'Magic link sent — check your inbox.',
-        // In dev we also print the link to the server log so it is usable.
+        message: mailer.isConfigured() ? 'Magic link sent — check your inbox.' : 'Email delivery is simulated in development.',
         _dev_link: !IS_PROD ? link : undefined,
       });
     } catch (err) {

@@ -322,14 +322,14 @@
     <!-- TAB: OTP Login -->
     <div class="tab-content" id="otpTab">
       <h1>Passwordless Login</h1>
-      <p class="subtitle">Get a one-time code via email or SMS</p>
+      <p class="subtitle">Get a one-time code by email</p>
       <div id="otpMessage" class="message"></div>
 
       <!-- Step 1: Send OTP -->
       <div id="otpStep1">
         <div style="display:flex;gap:10px;margin-bottom:18px;">
           <button type="button" class="btn" id="otpEmailBtn" style="flex:1;background:var(--primary);" onclick="otpMethod='email';document.getElementById('otpEmailBtn').style.background='var(--primary)';document.getElementById('otpPhoneBtn').style.background='var(--slate)'"><i class="fas fa-envelope"></i> Email</button>
-          <button type="button" class="btn" id="otpPhoneBtn" style="flex:1;background:var(--slate);" onclick="otpMethod='phone';document.getElementById('otpPhoneBtn').style.background='var(--primary)';document.getElementById('otpEmailBtn').style.background='var(--slate)'"><i class="fas fa-phone"></i> Phone</button>
+          <button type="button" class="btn" id="otpPhoneBtn" style="flex:1;background:var(--slate);opacity:.55;cursor:not-allowed;" disabled title="SMS sign-in is not available yet"><i class="fas fa-phone"></i> Phone (unavailable)</button>
         </div>
 
         <div id="otpEmailInput">
@@ -349,7 +349,7 @@
               <input type="tel" id="otpPhoneField" placeholder="+1 (555) 123-4567">
             </div>
           </div>
-          <p class="sub-note">OTP sent via SMS if carrier detected, otherwise via email.</p>
+          <p class="sub-note">SMS sign-in is not available yet. Please use email.</p>
         </div>
 
         <button type="button" class="btn" id="otpSendBtn" onclick="sendOTP()"><i class="fas fa-paper-plane"></i> Send OTP</button>
@@ -509,7 +509,9 @@
         });
         var d = await r.json();
         if (d.success) {
-          showMessage('loginMessage', 'Magic link sent! Check your email.', 'success');
+          showMessage('loginMessage', d._dev_link
+            ? 'Email delivery is not configured here. Development sign-in link: ' + d._dev_link
+            : (d.message || 'Magic link sent! Check your email.'), 'success');
         } else {
           showMessage('loginMessage', d.error || 'Failed to send', 'error');
         }
@@ -579,7 +581,7 @@
           document.getElementById('otpTargetDisplay').textContent = target;
           document.getElementById('otpStep1').style.display = 'none';
           document.getElementById('otpStep2').style.display = 'block';
-          document.getElementById('otpMessage').className = 'message';
+          showMessage('otpMessage', data.message + (data.code ? ' Development code: ' + data.code : ''), 'success');
           startOTPTimer();
         } else {
           showMessage('otpMessage', data.error || 'Failed to send OTP', 'error');
