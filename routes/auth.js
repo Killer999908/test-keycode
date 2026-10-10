@@ -31,6 +31,7 @@ module.exports = function AuthRoutes(opts) {
   const path = require('path');
   const fs   = require('fs');
   const JWT  = require('jsonwebtoken');
+  const mailer = require('../lib/mailer');
 
   function signSession(user) {
     const payload = {
@@ -346,7 +347,7 @@ module.exports = function AuthRoutes(opts) {
   // ---------------------------------------------------------------------------
   //  Send OTP  (email or phone)
   // ---------------------------------------------------------------------------
-  app.post('/api/auth/send-otp', (req, res) => {
+  app.post('/api/auth/send-otp', async (req, res) => {
     try {
       const { email, phone } = req.body || {};
       const target = (email || phone || '').toString().trim().toLowerCase();
@@ -356,8 +357,21 @@ module.exports = function AuthRoutes(opts) {
       const expires = Date.now() + 1000 * 60 * 10; // 10 min
       otpStore.set(target, { code, expires, channel: email ? 'email' : 'phone' });
 
-      // In production you would call SendGrid / Twilio here.
-      console.log(`[otp] code for ${email ? 'email' : 'phone'} ${target}: ${code}`);
+      // Email OTP is delivered via lib/mailer when a provider is configured.
+      let emailed = false;
+      if (email) {
+        const mail = await mailer.send({
+          to: email,
+          subject: 'KEYCODE Studio — your verification code',
+          text: 'Your verification code is: ' + code + '\n\nIt expires in 10 minutes.',
+          html: '<p>Your KEYCODE Studio verification code is:</p><p style="font-size:28px;letter-spacing:6px"><b>' + code + '</b></p><p style="color:#888">Expires in 10 minutes.</p>',
+        });
+        emailed = mail.delivered;
+      }
+      if (!emailed) {
+        // No email provider configured (or phone target): log so dev can read it.
+        console.log(`[otp] code for ${email ? 'email' : 'phone'} ${target}: ${code} (delivery: ${email ? 'no mail provider' : 'sms not wired'})`);
+      }
 
       // In a non-prod env we also surface the code in the response so the flow
       // is testable without wiring SMS/email.
@@ -667,47 +681,191 @@ module.exports = function AuthRoutes(opts) {
   });
 
   // ---------------------------------------------------------------------------
-  //  Social OAuth entry points
-  //  These are "deep links" that kick off the OAuth dance. In a real deploy
-  //  they redirect to the provider; here they return a clear message when the
-  //  provider is not configured so the UI (`login.html`) can show a friendly
-  //  error banner.
+  //  Social OAuth (Google / GitHub / Discord) — full authorization-code flow.
+  //  Configure per provider:
+  //    GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET
+  //    GITHUB_CLIENT_ID / GITHUB_CLIENT_SECRET
+  //    DISCORD_CLIENT_ID / DISCORD_CLIENT_SECRET
+  //  Redirect URI is derived from APP_URL (default http://localhost:PORT).
   // ---------------------------------------------------------------------------
+  const OAUTH = {
+    google: {
+      authUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
+      tokenUrl: 'https://oauth2.googleapis.com/token',
+      scope: 'openid email profile',
+      fetchUser: async (accessToken) => {
+        const r = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: 'Bearer ' + accessToken } });
+        if (!r.ok) throw new Error('google userinfo HTTP ' + r.status);
+        const j = await r.json();
+        return { id: j.sub, email: j.email, name: j.name || (j.email || '').split('@')[0], avatar: j.picture || '' };
+      },
+    },
+    github: {
+      authUrl: 'https://github.com/login/oauth/authorize',
+      tokenUrl: 'https://github.com/login/oauth/access_token',
+      scope: 'read:user user:email',
+      fetchUser: async (accessToken) => {
+        const r = await fetch('https://api.github.com/user', { headers: { Authorization: 'Bearer ' + accessToken, Accept: 'application/vnd.github+json', 'User-Agent': 'keycode-studio' } });
+        if (!r.ok) throw new Error('github user HTTP ' + r.status);
+        const j = await r.json();
+        let email = j.email || '';
+        if (!email) {
+          const re = await fetch('https://api.github.com/user/emails', { headers: { Authorization: 'Bearer ' + accessToken, Accept: 'application/vnd.github+json', 'User-Agent': 'keycode-studio' } });
+          if (re.ok) { const emails = await re.json(); email = (emails.find(e => e.primary) || emails[0] || {}).email || ''; }
+        }
+        return { id: String(j.id), email: email, name: j.name || j.login, avatar: j.avatar_url || '' };
+      },
+    },
+    discord: {
+      authUrl: 'https://discord.com/oauth2/authorize',
+      tokenUrl: 'https://discord.com/api/oauth2/token',
+      scope: 'identify email',
+      fetchUser: async (accessToken) => {
+        const r = await fetch('https://discord.com/api/users/@me', { headers: { Authorization: 'Bearer ' + accessToken } });
+        if (!r.ok) throw new Error('discord user HTTP ' + r.status);
+        const j = await r.json();
+        return { id: j.id, email: j.email || '', name: j.global_name || j.username, avatar: j.avatar ? `https://cdn.discordapp.com/avatars/${j.id}/${j.avatar}.png` : '' };
+      },
+    },
+  };
+
+  const APP_URL = (process.env.APP_URL || process.env.FRONTEND_URL || ('http://localhost:' + PORT)).replace(/\/$/, '');
+
+  function frontendLogin(params) {
+    return APP_URL + '/login.html?' + new URLSearchParams(params).toString();
+  }
+
+  function oauthConfig(provider) {
+    const P = provider.toUpperCase();
+    return { clientId: process.env[P + '_CLIENT_ID'], clientSecret: process.env[P + '_CLIENT_SECRET'] };
+  }
+
   function oauthRedirect(provider) {
     return (req, res) => {
-      const clientId = process.env[`${provider.toUpperCase()}_CLIENT_ID`];
-      if (!clientId) {
-        const url = `${process.env.FRONTEND_URL || 'http://localhost:' + PORT}/login.html?error=oauth_not_configured&provider=${provider}`;
-        return res.redirect(url);
+      const cfg = OAUTH[provider];
+      const { clientId, clientSecret } = oauthConfig(provider);
+      if (!clientId || !clientSecret) {
+        return res.redirect(frontendLogin({ error: 'oauth_not_configured', provider }));
       }
-      // In production you would redirect to the provider's auth URL here.
-      // For now, redirect back with a clear "not implemented" marker.
-      const url = `${process.env.FRONTEND_URL || 'http://localhost:' + PORT}/login.html?error=oauth_not_implemented&provider=${provider}`;
+      // CSRF guard: random state, checked on the callback (cookie must match).
+      const state = crypto.randomBytes(16).toString('hex');
+      res.cookie('oauth_state', state, { httpOnly: true, sameSite: 'lax', maxAge: 10 * 60 * 1000, secure: IS_PROD });
+      const redirectUri = APP_URL + '/api/auth/' + provider + '/callback';
+      const url = cfg.authUrl + '?' + new URLSearchParams({
+        client_id: clientId,
+        redirect_uri: redirectUri,
+        response_type: 'code',
+        scope: cfg.scope,
+        state,
+        ...(provider === 'google' ? { access_type: 'offline', prompt: 'select_account' } : {}),
+      }).toString();
       res.redirect(url);
     };
+  }
+
+  async function upsertOAuthUser(profile, provider) {
+    // Supabase first (admin create-or-fetch), then local mock.
+    if (SUPABASE_ADMIN) {
+      try {
+        const { data: existing, error: selErr } = await SUPABASE_ADMIN
+          .from('users').select('*').eq('email', profile.email).single();
+        if (!selErr && existing) return normalizeUser(existing);
+        const { data: authUser, error: createErr } = await SUPABASE_ADMIN.auth.admin.createUser({
+          email: profile.email,
+          email_confirm: true,
+          user_metadata: { full_name: profile.name || '', avatar_url: profile.avatar || '', provider },
+        });
+        if (createErr || !authUser || !authUser.user) throw (createErr || new Error('no user'));
+        const u = authUser.user;
+        await SUPABASE_ADMIN.from('users').upsert({
+          id: u.id, email: u.email, full_name: profile.name || '',
+          avatar_url: profile.avatar || '', role: 'user', metadata: { provider },
+        }, { onConflict: 'id' });
+        return normalizeUser({
+          id: u.id, email: u.email, name: profile.name || '', avatar_url: profile.avatar || '',
+          role: 'user', supabase_id: u.id,
+        });
+      } catch (e) {
+        console.warn('[auth.oauth] Supabase upsert failed, using mock:', e && e.message);
+      }
+    }
+    const db = loadMock();
+    let user = db[profile.email];
+    if (!user) {
+      user = normalizeUser({
+        id: rand(16), email: profile.email, name: profile.name || '',
+        avatar_url: profile.avatar || '', role: 'user',
+        created_at: now(), updated_at: now(),
+      });
+      db[profile.email] = user;
+      saveMock(db);
+    } else {
+      user.avatar_url = profile.avatar || user.avatar_url;
+      user.updated_at = now();
+      saveMock(db);
+    }
+    return user;
   }
 
   app.get('/api/auth/google',  oauthRedirect('google'));
   app.get('/api/auth/github',  oauthRedirect('github'));
   app.get('/api/auth/discord', oauthRedirect('discord'));
 
-  // OAuth callbacks — the provider redirects back here. In a real deploy you
-  // would exchange the code for a token and sign the user in. Here we bounce
-  // back to login with a clear message when not wired up.
-  function oauthCallback(provider) {
-    return (req, res) => {
-      const code = req.query.code || (req.body && req.body.code) || null;
-      if (!code) {
-        return res.redirect(`/login.html?error=oauth_no_code&provider=${provider}`);
+  // OAuth callbacks: verify state, exchange code, fetch profile, sign in.
+  async function oauthCallbackHandler(provider, req, res) {
+    try {
+      const cfg = OAUTH[provider];
+      const { clientId, clientSecret } = oauthConfig(provider);
+      const code = req.query.code || null;
+      const state = req.query.state || null;
+      const savedState = (req.headers.cookie || '').split(';').map(s => s.trim()).find(s => s.startsWith('oauth_state='));
+      const cookieState = savedState ? decodeURIComponent(savedState.split('=')[1]) : null;
+
+      if (req.query.error) {
+        return res.redirect(frontendLogin({ error: 'oauth_denied', provider, detail: req.query.error }));
       }
-      // Not wired: surface a friendly error; the frontend already handles the
-      // `oauth_not_configured` query param.
-      res.redirect(`/login.html?error=oauth_not_configured&provider=${provider}`);
-    };
+      if (!code) return res.redirect(frontendLogin({ error: 'oauth_no_code', provider }));
+      if (!cookieState || cookieState !== state) {
+        return res.redirect(frontendLogin({ error: 'oauth_state_mismatch', provider }));
+      }
+      res.clearCookie('oauth_state');
+
+      // Exchange the authorization code for tokens.
+      const tokenRes = await fetch(cfg.tokenUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
+        body: new URLSearchParams({
+          client_id: clientId,
+          client_secret: clientSecret,
+          code,
+          grant_type: 'authorization_code',
+          redirect_uri: APP_URL + '/api/auth/' + provider + '/callback',
+        }).toString(),
+      });
+      const tokenJson = await tokenRes.json().catch(() => ({}));
+      const accessToken = tokenJson.access_token;
+      if (!accessToken) {
+        console.warn('[auth.oauth] ' + provider + ' token exchange failed:', JSON.stringify(tokenJson).slice(0, 200));
+        return res.redirect(frontendLogin({ error: 'oauth_token_failed', provider }));
+      }
+
+      const profile = await cfg.fetchUser(accessToken);
+      if (!profile || !profile.email) {
+        return res.redirect(frontendLogin({ error: 'oauth_no_email', provider }));
+      }
+      const user = await upsertOAuthUser(profile, provider);
+      const token = signSession(user);
+      setSessionCookie(res, token);
+      // Land on the dashboard with the session cookie set.
+      res.redirect(APP_URL + '/dashboard.html?login=oauth&provider=' + provider);
+    } catch (err) {
+      console.error('[auth.oauth.' + provider + ']', err);
+      res.redirect(frontendLogin({ error: 'oauth_failed', provider }));
+    }
   }
-  app.get('/api/auth/google/callback',  oauthCallback('google'));
-  app.get('/api/auth/github/callback',  oauthCallback('github'));
-  app.get('/api/auth/discord/callback', oauthCallback('discord'));
+  app.get('/api/auth/google/callback',  (req, res) => oauthCallbackHandler('google', req, res));
+  app.get('/api/auth/github/callback',  (req, res) => oauthCallbackHandler('github', req, res));
+  app.get('/api/auth/discord/callback', (req, res) => oauthCallbackHandler('discord', req, res));
 
   return {
     // Expose a couple of helpers in case other routes want to mint a token.

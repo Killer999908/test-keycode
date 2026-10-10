@@ -285,11 +285,15 @@ const Coupons = require('./routes/coupons')({
 // ===========================================================================
 const AppData = require('./routes/appdata')({
   app,
+  SUPABASE,
   SUPABASE_ADMIN,
   requireAuth,
   rand,
   now,
+  hash,
+  JWT_SECRET,
   IS_PROD,
+  PORT,
 });
 
 // ===========================================================================

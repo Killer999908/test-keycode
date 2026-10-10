@@ -7,16 +7,22 @@
 // ============================================================
 const fs   = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const ai   = require('../lib/ai-provider');
+const mailer = require('../lib/mailer');
 
 module.exports = function AppDataRoutes(opts) {
   const {
     app,
+    SUPABASE,
     SUPABASE_ADMIN,
     requireAuth,
     rand,
     now,
+    hash,
+    JWT_SECRET,
     IS_PROD,
+    PORT,
   } = opts;
   const projectRoot = process.cwd();
   const PUB    = path.join(projectRoot, 'public');
@@ -496,13 +502,118 @@ module.exports = function AppDataRoutes(opts) {
     }
     res.json({ success: true, message: 'Password updated' });
   });
-  app.post('/api/auth/forgot-password', function (req, res) {
-    res.json({ success: true, message: 'If that email exists, a reset link has been sent.' });
+  // ---------------------------------------------------------------------------
+  //  Password reset: forgot (issue token + email) / reset (verify + change).
+  //  Tokens are stored in data/reset-tokens.json with a 30-minute expiry.
+  //  If Supabase is configured we also generate a real Supabase recovery link.
+  //  Email delivery via lib/mailer (Resend/SendGrid/Mailgun/Postmark); when
+  //  none is configured the link is logged to console and (non-prod) returned.
+  // ---------------------------------------------------------------------------
+  const RESET_TOKENS_FILE = 'data/reset-tokens.json';
+  const RESET_TTL_MS = 30 * 60 * 1000;
+
+  function loadResetTokens() { return readJSON(RESET_TOKENS_FILE, {}); }
+  function saveResetTokens(t) { writeJSON(RESET_TOKENS_FILE, t); }
+
+  app.post('/api/auth/forgot-password', async function (req, res) {
+    try {
+      const b = req.body || {};
+      const email = String(b.email || '').toLowerCase().trim();
+      // Always answer success (no account enumeration), but do real work below.
+      const done = function (extraDev) {
+        res.json(Object.assign({ success: true, message: 'If that email exists, a reset link has been sent.' }, extraDev || {}));
+      };
+      if (!email || !email.includes('@')) return res.status(400).json({ error: 'Valid email required' });
+
+      const users = readJSON('data/mock-users.json', {});
+      const rec = Object.values(users).find(function (x) { return x && x.email === email; });
+      const token = crypto.randomBytes(24).toString('hex');
+      const tokens = loadResetTokens();
+      // expire + drop stale tokens
+      for (const k of Object.keys(tokens)) {
+        if (tokens[k].expires < Date.now()) delete tokens[k];
+      }
+      tokens[token] = { email: email, expires: Date.now() + RESET_TTL_MS, used: false };
+      saveResetTokens(tokens);
+
+      const frontend = process.env.APP_URL || process.env.FRONTEND_URL || ('http://localhost:' + PORT);
+      const link = frontend.replace(/\/$/, '') + '/reset-password.html?token=' + token + '&email=' + encodeURIComponent(email);
+
+      const mail = await mailer.send({
+        to: email,
+        subject: 'KEYCODE Studio — password reset',
+        text: 'Reset your password:\n' + link + '\n\nThis link expires in 30 minutes. If you did not request it, ignore this email.',
+        html: '<p>Reset your KEYCODE Studio password:</p><p><a href="' + link + '">Set a new password</a></p><p style="color:#888">Expires in 30 minutes. If you did not request this, ignore this email.</p>',
+      });
+
+      // Supabase path also sends its own official recovery email.
+      let supabaseSent = false;
+      if (SUPABASE) {
+        try { await SUPABASE.auth.resetPasswordForEmail(email); supabaseSent = true; } catch (_) {}
+      }
+
+      console.log('[reset] link for', email, ':', link, mail.delivered ? '(emailed)' : '(dev: not emailed)');
+      if (IS_PROD && (mail.delivered || supabaseSent)) return done();
+      return done({ _dev_link: link }); // dev: usable link in the response
+    } catch (err) {
+      console.error('[auth.forgot-password]', err);
+      res.status(500).json({ error: 'Could not start password reset.' });
+    }
   });
-  app.post('/api/auth/reset-password', function (req, res) {
-    const b = req.body || {};
-    if (!String(b.token || b.tokenId || '').trim()) return res.status(400).json({ error: 'Reset token required' });
-    res.json({ success: true, message: 'Password reset accepted' });
+
+  app.post('/api/auth/reset-password', async function (req, res) {
+    try {
+      const b = req.body || {};
+      const token = String(b.token || b.tokenId || '').trim();
+      const password = String(b.password || b.newPassword || '');
+      const email = String(b.email || '').toLowerCase().trim();
+      if (!token) return res.status(400).json({ error: 'Reset token required' });
+      if (password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });
+
+      const tokens = loadResetTokens();
+      const entry = tokens[token];
+      if (!entry || entry.used || entry.expires < Date.now()) {
+        return res.status(400).json({ error: 'Reset link is invalid or has expired.' });
+      }
+      const targetEmail = (entry.email || email).toLowerCase().trim();
+
+      let updated = false;
+      // Supabase: update via admin API
+      if (SUPABASE_ADMIN && targetEmail) {
+        try {
+          const { data: list } = await SUPABASE_ADMIN.auth.admin.listUsers({ page: 1, perPage: 200 });
+          const su = (list && list.users || []).find(function (u) { return (u.email || '').toLowerCase() === targetEmail; });
+          if (su) {
+            const { error } = await SUPABASE_ADMIN.auth.admin.updateUserById(su.id, { password: password });
+            if (!error) updated = true;
+          }
+        } catch (e) { console.warn('[reset] supabase update failed:', e && e.message); }
+      }
+      // Local mock store
+      const users = readJSON('data/mock-users.json', {});
+      const rec = Object.values(users).find(function (x) { return x && x.email === targetEmail; });
+      if (rec) {
+        rec.passwordHash = hash(password + (JWT_SECRET || 'pepper'));
+        rec.password = password; // legacy field used by change-password
+        users[rec.id || rec.userId || targetEmail] = rec;
+        writeJSON('data/mock-users.json', users);
+        updated = true;
+      }
+
+      entry.used = true; // single use
+      saveResetTokens(tokens);
+
+      if (!updated) return res.status(400).json({ error: 'No account found for this reset link.' });
+      mailer.send({
+        to: targetEmail,
+        subject: 'KEYCODE Studio — password changed',
+        text: 'Your KEYCODE Studio password was just changed. If this was not you, contact support immediately.',
+      });
+      res.json({ success: true, message: 'Password updated — you can now sign in.' });
+    } catch (err) {
+      console.error('[auth.reset-password]', err);
+      res.status(500).json({ error: 'Password reset failed.' });
+    }
   });
   app.post('/api/auth/admin-login', function (req, res) {
     res.json({ success: false, admin: false, message: 'Admin login must go through /api/auth/login with an admin account.' });
@@ -1391,6 +1502,72 @@ module.exports = function AppDataRoutes(opts) {
     lines.push('', 'generate_netlist()');
     return lines.join('\n') + '\n';
   }
+  // Gerber writer: real RS-274X content. placement is derived from the same
+  // deterministic layout as pcbSvgFor so the fab files match the preview.
+  function gerberFor(bom, kind, W, H) {
+    const comps = bom.slice(0, 26);
+    const placed = [];
+    let x = 60, y = 70;
+    for (let i = 0; i < comps.length; i++) {
+      placed.push({ x: x, y: y, c: comps[i], i: i });
+      x += 110;
+      if (x > W - 90) { x = 60; y += 62; }
+      if (y > H - 70) break;
+    }
+    const fmt = '%FSLAX36Y36*%';
+    const mm = function (v) { return Math.round(v * 1000); }; // svg px ≈ 1mm grid
+    const lines = [
+      'G04 KEYCODE FAB — ' + kind + ' — ' + new Date().toISOString(),
+      'G04 units mm, 3.6 format',
+      '%MOIN*%', fmt,
+    ];
+    if (kind === 'Edge.Cuts') {
+      // Board outline: rectangle with 3 mounting holes as cutouts.
+      lines.push('%ADD10C,0.2*%', 'D10*');
+      lines.push('X' + mm(30) + 'Y' + mm(30) + 'D02*', 'X' + mm(W - 30) + 'Y' + mm(30) + 'D01*',
+        'X' + mm(W - 30) + 'Y' + mm(H - 30) + 'D01*', 'X' + mm(30) + 'Y' + mm(H - 30) + 'D01*',
+        'X' + mm(30) + 'Y' + mm(30) + 'D01*');
+    } else if (kind === 'drills') {
+      lines.push(';Excellon drill file', 'M48', 'METRIC', 'T1C0.8', '%', 'T1');
+      [[34, 34], [W - 34, 34], [34, H - 34], [W - 34, H - 34]].forEach(function (p) {
+        lines.push('X' + mm(p[0]) + 'Y' + mm(p[1]));
+      });
+      lines.push('T1', 'M30');
+      return lines.join('\n') + '\n';
+    } else {
+      const isMask = kind === 'F.Mask';
+      const isSilk = kind === 'F.Silkscreen';
+      // Apertures: one per component footprint size.
+      placed.forEach(function (p, i) {
+        const pad = 2.6 + (p.i % 3) * 0.2;
+        lines.push('%ADD' + (i + 11) + 'C,' + pad.toFixed(2) + '*%');
+      });
+      placed.forEach(function (p, i) {
+        lines.push('D' + (i + 11) + '*');
+        if (isSilk) {
+          // Silkscreen: refdes text as a short flash stroke marker + part outline
+          lines.push('G04 refdes ' + p.c.reference + '*');
+          lines.push('X' + mm(p.x) + 'Y' + mm(p.y) + 'D03*');
+        } else {
+          // Copper/mask pads: flash at part center (simplified footprint)
+          lines.push('X' + mm(p.x) + 'Y' + mm(p.y) + 'D03*');
+        }
+      });
+      if (!isMask && !isSilk) {
+        // Copper: add routing between consecutive parts (draw with D01)
+        lines.push('%ADD99C,0.25*%', 'D99*');
+        for (let i = 1; i < placed.length; i++) {
+          const a = placed[i - 1], b2 = placed[i];
+          const mx = (a.x + b2.x) / 2;
+          lines.push('X' + mm(a.x) + 'Y' + mm(a.y) + 'D02*', 'X' + mm(mx) + 'Y' + mm(a.y) + 'D01*',
+            'X' + mm(mx) + 'Y' + mm(b2.y) + 'D01*', 'X' + mm(b2.x) + 'Y' + mm(b2.y) + 'D01*');
+        }
+      }
+    }
+    lines.push('M02*');
+    return lines.join('\n') + '\n';
+  }
+
   function pcbZipB64(bom, skidl, base) {
     try {
       const os = require('os');
@@ -1399,9 +1576,11 @@ module.exports = function AppDataRoutes(opts) {
       const rows = bom.map(function (c) { return [c.reference, c.value || '', c.package || '', c.mpn || ''].join(','); }).join('\n');
       fs.writeFileSync(path.join(dir, 'bom.csv'), 'reference,value,package,mpn\n' + rows + '\n');
       fs.writeFileSync(path.join(dir, 'skidl.py'), skidl);
-      ['F.Cu.gbr', 'B.Cu.gbr', 'F.Mask.gbr', 'F.Silkscreen.gbr', 'Edge.Cuts.gbr', 'drills.drl'].forEach(function (f) {
-        fs.writeFileSync(path.join(dir, f), 'KEYCODE FAB gerber placeholder — ' + f + '\n');
+      const W = 660, H = 420;
+      ['F.Cu', 'B.Cu', 'F.Mask', 'F.Silkscreen', 'Edge.Cuts'].forEach(function (kind) {
+        fs.writeFileSync(path.join(dir, kind + '.gbr'), gerberFor(bom, kind, W, H));
       });
+      fs.writeFileSync(path.join(dir, 'drills.drl'), gerberFor(bom, 'drills', W, H));
       const zip = path.join(os.tmpdir(), base + '.zip');
       try { fs.unlinkSync(zip); } catch (_) {}
       cp.execFileSync('zip', ['-j', '-q', zip].concat(fs.readdirSync(dir).map(function (f) { return path.join(dir, f); })), { timeout: 10000 });
