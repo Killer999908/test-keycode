@@ -658,9 +658,37 @@ module.exports = function AppDataRoutes(opts) {
     return res.send(stub);
   });
 
-  // agent surfaces (CLI/terminal) — real implementation in routes/agent.js
+  // agent surfaces (CLI/terminal) — router = an LLM provider chain entry
+  const llm = require('../lib/ai-provider');
   app.get('/api/agent/routers', function (req, res) {
-    res.json({ success: true, routers: [{ id: 'web', desc: 'Website builder' }, { id: 'cad', desc: 'CAD / manufacturing' }, { id: 'media', desc: 'Media tools' }] });
+    const probe = req.query.probe === '1';
+    const rows = [];
+    const env = process.env;
+    const keyAliases = [['OPENAI_API_KEY', 'openai'], ['GEMINI_API_KEY', 'gemini'], ['ANTHROPIC_API_KEY', 'anthropic'], ['GROQ_API_KEY', 'groq'], ['OPENROUTER_API_KEY', 'openrouter'], ['DEEPSEEK_API_KEY', 'deepseek']];
+    rows.push({ id: (env.AI_PROVIDER || 'pollinations').toLowerCase() || 'pollinations', label: (env.AI_PROVIDER || 'pollinations') + ' (primary)', kind: 'llm', configured: true });
+    for (const [envName, provider] of keyAliases) {
+      if (env[envName]) rows.push({ id: provider, label: provider, kind: 'llm', configured: true });
+    }
+    for (const e of llm.poolStatus()) rows.push({ id: e.id, label: e.provider + '/' + e.model, kind: 'llm-pool', configured: true, alive: !e.cooling });
+    (async function () {
+      if (probe) {
+        for (const r of rows) {
+          if (!r.configured) continue;
+          const t0 = Date.now();
+          try {
+            const out = await llm.llmComplete('Reply with the single word: PONG', { maxTokens: 20, timeoutMs: 8000, _providerOverride: r.id });
+            r.alive = Boolean(out);
+            r.lastLatencyMs = Date.now() - t0;
+            r.probe = r.alive ? 'ok' : 'fail';
+          } catch (_) {
+            r.alive = false; r.probe = 'fail'; r.lastLatencyMs = Date.now() - t0;
+          }
+        }
+      }
+      const configured = rows.filter(r => r.configured).length;
+      const alive = rows.filter(r => r.alive).length;
+      res.json({ success: true, total: rows.length, configured: configured, alive: alive, routers: rows });
+    })();
   });
   app.get('/api/agent/react', function (req, res) {
     res.json({ success: true, steps: [], note: 'POST reasoning steps here or run autonomous agent via /api/agent/react' });

@@ -6,6 +6,10 @@
 //   · unit checks: extractJson in agent-core, mailer provider detection
 process.env.NODE_ENV = 'test';
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-test-secret-test-secret';
+process.env.AI_PROVIDER = 'disabled'; // force local engine — no network in tests
+process.env.SUPABASE_URL = '';
+process.env.SUPABASE_ANON_KEY = '';
+process.env.SUPABASE_SERVICE_KEY = '';
 
 const request = require('supertest');
 const fs = require('fs');

@@ -11,6 +11,8 @@
 //   POST /api/agent/skills       { name, prompt, notes } teach a skill
 //   POST /api/agent/react        reasoning-step ingest (legacy CLI)
 // ============================================================
+const path = require('path');
+const fs = require('fs');
 const agent = require('../lib/agent-core');
 const tools = require('../lib/agent-tools');
 const ai = require('../lib/ai-provider');
@@ -65,18 +67,38 @@ module.exports = function AgentRoutes(opts) {
 
   function enqueue(res, opts, onEvent, onDone, onError, userIdLabel) {
     if (waiting.length >= QUEUE_LIMIT) {
-      res.status(429).json({ success: false, error: 'Agent queue is full — try again shortly', queued: false });
+      const error = { success: false, error: 'Agent queue is full — try again shortly', queued: false };
+      if (res.headersSent) {
+        res.write('data: ' + JSON.stringify({ type: 'error', error: error.error }) + '\n\n');
+        res.end();
+      } else {
+        res.status(429).json(error);
+      }
       return null;
     }
     const item = { userId: userIdLabel, opts: opts, onEvent: onEvent, onDone: onDone, onError: onError, res: res };
     waiting.push(item);
-    res.setHeader('X-Agent-Queued', String(waiting.length));
+    if (!res.headersSent) res.setHeader('X-Agent-Queued', String(waiting.length));
     pumpQueue();
     return item;
   }
 
   app.get('/api/agent/tools', function (req, res) {
-    res.json({ success: true, tools: tools.manifest() });
+    const manifest = tools.manifest();
+    const byGroup = {};
+    for (const t of manifest) byGroup[t.group || 'other'] = (byGroup[t.group || 'other'] || 0) + 1;
+    res.json({ success: true, total: manifest.length, byGroup: byGroup, tools: manifest });
+  });
+
+  // Runtime panel: MCP connector + sandbox status. Real MCP servers are not
+  // attached yet — report honestly so the OS UI renders real numbers (0).
+  app.get('/api/agent/mcp', function (req, res) {
+    res.json({
+      success: true,
+      mcp: { connected: 0, builtin: tools.manifest().length },
+      sandbox: { activeSandboxes: running.size },
+      pool: ai_poolStatus(),
+    });
   });
 
   app.get('/api/agent/sessions', requireAuth, function (req, res) {
