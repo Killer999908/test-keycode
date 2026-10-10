@@ -427,6 +427,7 @@ button{font-family:var(--sans);cursor:pointer;border:none;background:none;color:
 const $=s=>document.querySelector(s);
 const chat=$('#chat'),promptEl=$('#prompt'),sendBtn=$('#send'),codeEl=$('#code'),gutterEl=$('#gutter'),
       preview=$('#preview'),buildBar=$('#buildBar'),buildText=$('#buildText'),meta=$('#meta');
+const authToken=()=>localStorage.getItem('token')||localStorage.getItem('keycode_token')||localStorage.getItem('authToken')||'';
 
 /* ================= STATE ================= */
 let streaming=false;
@@ -514,10 +515,10 @@ function stopThinking(){
 
 /* ================= AI HEALTH (silent) ================= */
 fetch('/api/ai/providers').then(r=>r.json()).then(j=>{
-  const on=j.online||0,tot=j.total||0,p=$('#livePill');
-  if(tot===0){ p.classList.add('err'); $('#liveText').textContent='engine offline'; return; }
-  p.classList.add(on>0?'ok':'err');
-  $('#liveText').textContent=on>0?'engine ready':'engine offline';
+  const online=(j.providers||[]).some(x=>x.status==='ready');
+  const pill=$('#livePill');
+  pill.classList.add(online?'ok':'err');
+  $('#liveText').textContent=online?'engine ready':'engine offline';
 }).catch(()=>{ $('#livePill').classList.add('err'); $('#liveText').textContent='engine offline'; });
 
 // Only advertise models the server confirms exist: local Ollama installs and
@@ -614,7 +615,12 @@ agentModeBtn.addEventListener('click',()=>{
 });
 
 async function runAgent(text){
-  const token=localStorage.getItem('token')||'';
+  const token=authToken();
+  if(!token){
+    addMsg('Sign in to use Agent mode. <a href="/login.html">Sign in</a> or <a href="/register.html">create an account</a>.','ai');
+    setBuild('bad','Sign in required');
+    return;
+  }
   const trace=document.createElement('div');
   trace.className='react';
   trace.innerHTML='<div class="rhead"><span class="rspin"></span><span>Agent · thinking</span></div>';
@@ -634,13 +640,12 @@ async function runAgent(text){
 
   startThinking('Agent working');
   try{
-    const res=await fetch('/api/agent/react',{
-      method:'POST',
-      headers:{'Content-Type':'application/json',...(token?{'Authorization':'Bearer '+token}:{})},
-      signal:abortCtrl.signal,
-      body:JSON.stringify({task:text,maxSteps:14,preferRouters:preferredRouters===null?[]:[...preferredRouters]})
+    const params=new URLSearchParams({goal:text,maxSteps:'14',token:token});
+    const res=await fetch('/api/agent/stream?'+params.toString(),{
+      headers:{'Accept':'text/event-stream'},
+      signal:abortCtrl.signal
     });
-    if(!res.ok||!res.body){ const j=await res.json().catch(()=>({})); throw new Error(j.error||'Agent error '+res.status); }
+    if(!res.ok||!res.body){ const j=await res.json().catch(()=>({})); throw new Error(res.status===401?'Please sign in again to use Agent mode.':j.error||'Agent error '+res.status); }
 
     const reader=res.body.getReader(),dec=new TextDecoder();
     let buf='',finalAnswer='',usedSteps=0;
@@ -652,11 +657,19 @@ async function runAgent(text){
         if(!part.startsWith('data:')) continue;
         let d; try{ d=JSON.parse(part.slice(5)); }catch(e){ continue; }
 
-        if(d.type==='start'){ head.textContent='Agent · '+d.tools+' tools · ≤'+d.maxSteps+' steps'; }
+        if(d.type==='start'){ head.textContent='Agent · task started'; }
         else if(d.type==='step'){
-          usedSteps=d.step;
-          if(d.kind==='malformed') addStep('step '+d.step,'err','unparseable model turn — retrying');
-          else if(d.thought) addStep('thought '+d.step,'rthought',d.thought);
+          const step=d.step||{};
+          usedSteps=step.n||usedSteps;
+          if(step.thought) addStep('thought '+usedSteps,'rthought',step.thought);
+          if(step.tool) addStep('act '+usedSteps,'',step.tool+' '+JSON.stringify(step.args||{}).slice(0,220));
+          if(step.result) addStep('obs '+usedSteps,step.result.ok===false?'err':'',JSON.stringify(step.result).slice(0,320));
+        }
+        else if(d.type==='plan'&&Array.isArray(d.plan)) addStep('plan','',d.plan.join(' → '));
+        else if(d.type==='final') finalAnswer=d.text||'';
+        else if(d.type==='result'){
+          finalAnswer=d.final||finalAnswer;
+          if(d.status&&d.status!=='done') addStep('status','err','agent ended with status: '+d.status);
         }
         else if(d.type==='todos'){
           // Live plan checklist — latest version replaces the previous one
@@ -689,10 +702,7 @@ async function runAgent(text){
             updateThinking('Step '+d.step+' — '+d.tool);
           }
         }
-        else if(d.type==='done'){
-          finalAnswer=d.answer||'';
-          if(d.exhausted){ addStep('budget','err','step budget reached — partial results kept'); }
-        }
+        else if(d.type==='done'&&d.status!=='done') addStep('status','err','agent ended with status: '+d.status);
         else if(d.type==='error'){ throw new Error(d.message||'agent failed'); }
       }
     }
@@ -709,6 +719,7 @@ async function runAgent(text){
   }catch(e){
     finish(false,'Agent · stopped');
     if(e.name==='AbortError'){ toast('info','Agent stopped'); }
+    else if(e.message.indexOf('Sign in')===0){ addMsg(esc(e.message)+' <a href="/login.html">Sign in</a> or <a href="/register.html">create an account</a>.','ai'); setBuild('bad','Sign in required'); }
     else{ addMsg('Agent error: '+esc(e.message),'ai'); setBuild('bad','Error'); }
   }
   stopThinking();
@@ -840,8 +851,9 @@ async function run(text){
   /* ---- Phase 1: silent understanding (never shown as a workflow) ---- */
   let planCtx='';
   try{
+    const token=authToken();
     const planPromise=fetch('/api/ai/plan',{
-      method:'POST',headers:{'Content-Type':'application/json'},signal:abortCtrl.signal,
+      method:'POST',headers:{'Content-Type':'application/json',...(token?{'Authorization':'Bearer '+token}:{})},signal:abortCtrl.signal,
       body:JSON.stringify({prompt:text,history:chatHistory.slice(-10),images:imgs.map(i=>i.dataUrl)})
     }).then(r=>r.json()).catch(()=>null);
     const timeout=new Promise(res=>setTimeout(()=>res(null),28000));
@@ -896,6 +908,10 @@ async function run(text){
     }
   }catch(e){
     if(e.name==='AbortError'){ toast('info','Stopped'); setBuild('','Stopped'); showWsEmptyIfNothing(); }
+    else if(e.message.indexOf('Sign in')===0){
+      addMsg(esc(e.message)+' <a href="/login.html">Sign in</a> or <a href="/register.html">create an account</a>.','ai');
+      setBuild('bad','Sign in required');
+    }
     else{ addMsg('Something went wrong: '+esc(e.message)+'<br>Try again — I\u2019ll pick up where we left off.','ai'); setBuild('bad','Error'); }
   }
   done();
@@ -920,11 +936,12 @@ async function buildSite(text,planCtx,imgs){
   meta.textContent='Building — the preview updates live';
 
   const promptWithCtx=text+(planCtx?' | '+planCtx:'')+(imgs.length?' | [user attached '+imgs.length+' image(s) — use them as design reference]':'');
+  const token=authToken();
   const res=await fetch('/api/ai/stream-website',{
-    method:'POST',headers:{'Content-Type':'application/json'},signal:abortCtrl.signal,
+    method:'POST',headers:{'Content-Type':'application/json',...(token?{'Authorization':'Bearer '+token}:{})},signal:abortCtrl.signal,
     body:JSON.stringify({description:promptWithCtx,sessionId:sessionId,history:chatHistory.slice(-10),previousCode:lastSavedCode.slice(0,6000),modelPreference:modelPreference,skills:enabledSkills===null?[]:[...enabledSkills],preferRouters:preferredRouters===null?[]:[...preferredRouters]})
   });
-  if(!res.ok||!res.body) throw new Error('Engine error '+res.status);
+  if(!res.ok||!res.body) throw new Error(res.status===401?'Sign in to generate a website.':'Engine error '+res.status);
 
   const reader=res.body.getReader(),dec=new TextDecoder();
   let buf='',lastPreviewLen=0,lastTs=0,finalHtml='',rawLen=0;
@@ -955,6 +972,7 @@ async function buildSite(text,planCtx,imgs){
             setPreviewHtml(finalHtml);
             updateThinking('Writing your code');
           }
+          else if(d.type==='status'&&d.text){ updateThinking(d.text); }
         }else{ setPreviewHtml(finalHtml); lastPreviewLen=finalHtml.length; }
       }
       else if(d.type==='error'){
@@ -1009,7 +1027,7 @@ function addDoneCard(stats,extraButtons=''){
 
 /* ================= PCB — full fab pipeline, felt as pure magic ================= */
 async function runPcb(description,imgs){
-  const token=localStorage.getItem('token')||'';
+  const token=authToken();
   updateThinking('Designing your circuit board');
   const res=await fetch('/api/ai/pcb-stream',{
     method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},

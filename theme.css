@@ -1686,3 +1686,31 @@ body.kc-light-theme .section-card::before,
 body.kc-light-theme .stat-card::before {
   background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.18), transparent);
 }
+
+/* Keep shared controls consistent and usable across legacy pages. */
+:where(button, [role="button"], input[type="button"], input[type="submit"], .btn, .kc-btn) {
+  -webkit-tap-highlight-color: transparent;
+}
+:where(button, [role="button"], input[type="button"], input[type="submit"], .btn, .kc-btn):focus-visible {
+  outline: 2px solid var(--kc-accent, #a5b4fc);
+  outline-offset: 3px;
+}
+:where(button, input[type="button"], input[type="submit"]):disabled,
+:where(button, input[type="button"], input[type="submit"])[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.58;
+  transform: none;
+  box-shadow: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  [data-reveal], .kc3d-auto, .kc-anim {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}

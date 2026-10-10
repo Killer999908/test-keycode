@@ -663,10 +663,7 @@ module.exports = function AppDataRoutes(opts) {
     res.json({ success: true, routers: [{ id: 'web', desc: 'Website builder' }, { id: 'cad', desc: 'CAD / manufacturing' }, { id: 'media', desc: 'Media tools' }] });
   });
   app.get('/api/agent/react', function (req, res) {
-    res.json({ success: true, steps: [], note: 'POST reasoning steps here from the CLI agent' });
-  });
-  app.post('/api/agent/react', requireAuth, function (req, res) {
-    res.json({ success: true, received: true });
+    res.json({ success: true, steps: [], note: 'POST reasoning steps here or run autonomous agent via /api/agent/react' });
   });
 
   // --------------------------------------------------------
@@ -851,6 +848,40 @@ module.exports = function AppDataRoutes(opts) {
     };
     list.push(item); saveProjects(list);
     res.status(201).json({ success: true, plan: plan, fileId: fid, previewUrl: '/api/ai/preview/' + fid, project: item, html: html });
+  });
+
+  app.post('/api/ai/stream-website', requireAuth, async function (req, res) {
+    const b = req.body || {};
+    const prompt = String(b.description || b.prompt || '').slice(0, 2000).trim();
+    if (!prompt) return res.status(400).json({ success: false, error: 'description required' });
+
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-cache, no-transform',
+      'Connection': 'keep-alive',
+      'X-Accel-Buffering': 'no'
+    });
+    const send = (event) => {
+      if (!res.writableEnded) res.write('data: ' + JSON.stringify(event) + '\n\n');
+    };
+    try {
+      const plan = planFromPrompt(prompt);
+      const spec = {
+        name: plan.name || 'My Site',
+        industry: plan.industry,
+        email: req.user.email || undefined
+      };
+      send({ type: 'status', phase: 'planning', text: 'Understanding your request' });
+      send({ type: 'status', phase: 'building', text: 'Building your website' });
+      const html = (await aiSiteHtml(prompt, spec)) || buildSiteHtml(spec);
+      send({ type: 'html', html: html, partial: false });
+      send({ type: 'complete', data: { html: html } });
+      res.end();
+    } catch (e) {
+      console.error('[ai.stream-website] generation failed:', e);
+      send({ type: 'error', message: 'Website generation failed. Please try again.' });
+      res.end();
+    }
   });
 
   // SSE plan streaming (builder UI shows progress)

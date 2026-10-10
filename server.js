@@ -98,6 +98,20 @@ app.use(cors({
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 
+// Tiny cookie parser (no extra dependency): exposes req.cookies so the
+// kc_token session cookie set at login works for API auth.
+app.use((req, _res, next) => {
+  req.cookies = {};
+  const raw = req.headers.cookie;
+  if (raw) {
+    for (const part of raw.split(';')) {
+      const i = part.indexOf('=');
+      if (i > 0) req.cookies[part.slice(0, i).trim()] = decodeURIComponent(part.slice(i + 1).trim());
+    }
+  }
+  next();
+});
+
 // ---- small helpers ---------------------------------------------------------
 const rand = (n = 16) => crypto.randomBytes(n).toString('hex');
 const hash = (s) => crypto.createHash('sha256').update(s).digest('hex');
@@ -338,19 +352,6 @@ const Webhooks = require('./routes/webhooks')({
 //  Static catch-all: serve the frontend for any non-API path.
 //  This makes the SPA feel "real" even though it is a static export.
 // ===========================================================================
-// Tiny cookie parser (no extra dependency): exposes req.cookies so the
-// kc_token session cookie set at login works for API auth.
-app.use((req, _res, next) => {
-  req.cookies = {};
-  const raw = req.headers.cookie;
-  if (raw) {
-    for (const part of raw.split(';')) {
-      const i = part.indexOf('=');
-      if (i > 0) req.cookies[part.slice(0, i).trim()] = decodeURIComponent(part.slice(i + 1).trim());
-    }
-  }
-  next();
-});
 
 // Static assets & real HTML pages (/, /checkout.html, /assets/*, /js/*...).
 // MUST precede the SPA catch-all below, otherwise every non-API path

@@ -372,13 +372,394 @@
     <div class="back-home"><a href="/"><i class="fas fa-arrow-left"></i> Back to Home</a></div>
   </div>
 
+  <script>
+    var currentTab = 'login';
+    var otpMethod = 'email';
+    var otpTarget = '';
+    var otpTimer;
+    var otpCountdown = 60;
+
+    function getRedirectUrl() {
+      var p = new URLSearchParams(window.location.search);
+      var url = p.get('redirect');
+      if (url && (url.startsWith('/') || url.startsWith(window.location.origin))) return url;
+      return '/dashboard';
+    }
+
+    // Parse URL params for tab
+    (function() {
+      var params = new URLSearchParams(window.location.search);
+      var tab = params.get('tab');
+      if (tab === 'register') switchTab('register');
+      else if (tab === 'otp') switchTab('otp');
+
+      var error = params.get('error');
+      if (error) {
+        var msg = document.getElementById('loginMessage');
+        if (error === 'oauth_not_configured') {
+          var provider = params.get('provider') || 'social';
+          msg.textContent = provider.charAt(0).toUpperCase() + provider.slice(1) + ' login is not configured yet. Use email/password or OTP instead.';
+          msg.className = 'message show error';
+        }
+      }
+
+      var token = params.get('token');
+      if (token) {
+        var name = params.get('name') || 'User';
+        var email = params.get('email') || '';
+        var avatar = params.get('avatar') || '';
+        localStorage.setItem('token', token);
+        try { localStorage.setItem('token_at', String(Date.now())); } catch (e) {}
+        localStorage.setItem('keycode_token', token);
+        localStorage.setItem('user', JSON.stringify({ name: decodeURIComponent(name), email: decodeURIComponent(email), avatar: decodeURIComponent(avatar) }));
+        localStorage.setItem('keycode_user', JSON.stringify({ name: decodeURIComponent(name), email: decodeURIComponent(email), avatar: decodeURIComponent(avatar) }));
+        window.location.href = getRedirectUrl();
+      }
+
+      // Magic link auto-login
+      var magicToken = params.get('magic');
+      var magicEmail = params.get('email');
+      if (magicToken && magicEmail) {
+        (async function() {
+          try {
+            var r = await fetch('/api/auth/magic-link/verify', {
+              method:'POST', headers:{'Content-Type':'application/json'},
+              body: JSON.stringify({ email: magicEmail, token: magicToken })
+            });
+            var d = await r.json();
+            if (d.token) {
+              localStorage.setItem('token', d.token);
+              try { localStorage.setItem('token_at', String(Date.now())); } catch (e) {}
+              localStorage.setItem('keycode_token', d.token);
+              if (d.accessToken) localStorage.setItem('accessToken', d.accessToken);
+              if (d.refreshToken) localStorage.setItem('refreshToken', d.refreshToken);
+              localStorage.setItem('user', JSON.stringify(d.user));
+              localStorage.setItem('keycode_user', JSON.stringify(d.user));
+              window.location.href = getRedirectUrl();
+            } else {
+              showMessage('loginMessage', d.error || 'Magic link expired. Please log in normally.', 'error');
+            }
+          } catch(e) {
+            showMessage('loginMessage', 'Magic link verification failed', 'error');
+          }
+        })();
+      }
+    })();
+
+    function switchTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelector('[data-tab="' + tab + 'Tab"]').classList.add('active');
+      document.getElementById(tab + 'Tab').classList.add('active');
+    }
+
+    function showMessage(id, text, type) {
+      var msg = document.getElementById(id);
+      msg.textContent = text;
+      msg.className = 'message show ' + type;
+    }
+
+    // ==================== LOGIN ====================
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      var btn = document.getElementById('loginBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
+      try {
+        var res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: document.getElementById('loginEmail').value, password: document.getElementById('loginPassword').value })
+        });
+        var data = await res.json();
+        if (data.mfaRequired && data.mfaToken) {
+          // MFA step required — trigger passkey authentication
+          await handleMfaChallenge(data.mfaToken, data.user.email);
+          return;
+        }
+        if (data.success || data.token) {
+          localStorage.setItem('token', data.token);
+          try { localStorage.setItem('token_at', String(Date.now())); } catch (e) {}
+          localStorage.setItem('keycode_token', data.token);
+          if (data.accessToken) localStorage.setItem('accessToken', data.accessToken);
+          if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken);
+          localStorage.setItem('user', JSON.stringify(data.user));
+          localStorage.setItem('keycode_user', JSON.stringify(data.user));
+          window.location.href = getRedirectUrl();
+        } else {
+          showMessage('loginMessage', data.error || 'Login failed', 'error');
+        }
+      } catch (err) {
+        showMessage('loginMessage', 'Network error', 'error');
+      }
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-arrow-right"></i> Sign In';
+    });
+
+    async function sendMagicLink() {
+      var email = document.getElementById('loginEmail').value;
+      if (!email || !email.includes('@')) { showMessage('loginMessage', 'Enter a valid email first', 'error'); return; }
+      var btn = document.getElementById('magicLinkBtn');
+      btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+      try {
+        var r = await fetch('/api/auth/magic-link/send', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ email })
+        });
+        var d = await r.json();
+        if (d.success) {
+          showMessage('loginMessage', 'Magic link sent! Check your email.', 'success');
+        } else {
+          showMessage('loginMessage', d.error || 'Failed to send', 'error');
+        }
+      } catch(e) {
+        showMessage('loginMessage', 'Network error', 'error');
+      }
+      btn.disabled = false; btn.innerHTML = '<i class="fas fa-envelope"></i> Send Magic Link';
+    }
+
+    // ==================== REGISTER ====================
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      var btn = document.getElementById('registerBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating account...';
+      try {
+        var res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: document.getElementById('regName').value,
+            email: document.getElementById('regEmail').value,
+            phone: document.getElementById('regPhone').value,
+            password: document.getElementById('regPassword').value
+          })
+        });
+        var data = await res.json();
+        if (data.success) {
+          localStorage.setItem('token', data.token);
+          try { localStorage.setItem('token_at', String(Date.now())); } catch (e) {}
+          localStorage.setItem('keycode_token', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+          localStorage.setItem('keycode_user', JSON.stringify(data.user));
+          window.location.href = getRedirectUrl();
+        } else {
+          showMessage('registerMessage', data.error || 'Registration failed', 'error');
+        }
+      } catch (err) {
+        showMessage('registerMessage', 'Network error', 'error');
+      }
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-user-plus"></i> Create Account';
+    });
+
+    // ==================== OTP ====================
+    function otpToggleInput() {
+      document.getElementById('otpEmailInput').style.display = otpMethod === 'email' ? 'block' : 'none';
+      document.getElementById('otpPhoneInput').style.display = otpMethod === 'phone' ? 'block' : 'none';
+    }
+
+    async function sendOTP() {
+      var target = otpMethod === 'email' ? document.getElementById('otpEmailField').value : document.getElementById('otpPhoneField').value;
+      if (!target) { showMessage('otpMessage', 'Please enter your ' + otpMethod, 'error'); return; }
+      if (otpMethod === 'email' && !target.includes('@')) { showMessage('otpMessage', 'Invalid email', 'error'); return; }
+      if (otpMethod === 'phone' && target.length < 5) { showMessage('otpMessage', 'Invalid phone number', 'error'); return; }
+
+      otpTarget = target;
+      var btn = document.getElementById('otpSendBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+
+      try {
+        var body = otpMethod === 'email' ? JSON.stringify({ email: target }) : JSON.stringify({ phone: target });
+        var res = await fetch('/api/auth/send-otp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body });
+        var data = await res.json();
+        if (data.success) {
+          document.getElementById('otpTargetDisplay').textContent = target;
+          document.getElementById('otpStep1').style.display = 'none';
+          document.getElementById('otpStep2').style.display = 'block';
+          document.getElementById('otpMessage').className = 'message';
+          startOTPTimer();
+        } else {
+          showMessage('otpMessage', data.error || 'Failed to send OTP', 'error');
+        }
+      } catch (err) {
+        showMessage('otpMessage', 'Network error', 'error');
+      }
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send OTP';
+    }
+
+    function startOTPTimer() {
+      otpCountdown = 60;
+      document.getElementById('otpResendBtn').disabled = true;
+      if (otpTimer) clearInterval(otpTimer);
+      otpTimer = setInterval(function() {
+        otpCountdown--;
+        document.getElementById('otpTimer').textContent = 'Resend code in ' + otpCountdown + 's';
+        if (otpCountdown <= 0) {
+          clearInterval(otpTimer);
+          document.getElementById('otpResendBtn').disabled = false;
+          document.getElementById('otpTimer').textContent = 'Code expired? Resend below';
+        }
+      }, 1000);
+    }
+
+    async function verifyOTP() {
+      var otp = document.getElementById('otpCode').value;
+      if (!otp || otp.length !== 6) { showMessage('otpMessage', 'Enter the 6-digit code', 'error'); return; }
+      var btn = document.getElementById('otpVerifyBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
+
+      try {
+        var body = otpMethod === 'email' ? JSON.stringify({ email: otpTarget, otp: otp }) : JSON.stringify({ phone: otpTarget, otp: otp });
+        var res = await fetch('/api/auth/verify-otp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body });
+        var data = await res.json();
+        if (data.success && data.token) {
+          localStorage.setItem('token', data.token);
+          try { localStorage.setItem('token_at', String(Date.now())); } catch (e) {}
+          localStorage.setItem('keycode_token', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+          localStorage.setItem('keycode_user', JSON.stringify(data.user));
+          showMessage('otpMessage', 'Welcome, ' + (data.user.name || 'User') + '! Redirecting...', 'success');
+          setTimeout(function() { window.location.href = getRedirectUrl(); }, 1000);
+        } else {
+          showMessage('otpMessage', data.error || 'Invalid OTP', 'error');
+        }
+      } catch (err) {
+        showMessage('otpMessage', 'Network error', 'error');
+      }
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-check-circle"></i> Verify & Sign In';
+    }
+
+    function otpBack() {
+      document.getElementById('otpStep2').style.display = 'none';
+      document.getElementById('otpStep1').style.display = 'block';
+      document.getElementById('otpMessage').className = 'message';
+      if (otpTimer) clearInterval(otpTimer);
+    }
+
+    // Auto-verify on 6 digits
+    document.getElementById('otpCode').addEventListener('input', function(e) {
+      if (e.target.value.length === 6) verifyOTP();
+    });
+
+    // Video fallback
+    document.querySelector('#video-bg').play().catch(function(){});
+
+    // ===== WEBAUTHN / PASSKEY HELPERS =====
+    function base64urlToBuffer(b) {
+      var s = b.replace(/-/g,'+').replace(/_/g,'/');
+      while(s.length%4) s+='=';
+      return Uint8Array.from(atob(s),c=>c.charCodeAt(0)).buffer;
+    }
+    function bufferToBase64url(buf) {
+      var s=btoa(String.fromCharCode(...new Uint8Array(buf)));
+      return s.replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+    }
+    function mapCredential(c) {
+      return {
+        id: c.id, type: c.type, rawId: bufferToBase64url(c.rawId),
+        response: {
+          clientDataJSON: bufferToBase64url(c.response.clientDataJSON),
+          authenticatorData: bufferToBase64url(c.response.authenticatorData),
+          signature: bufferToBase64url(c.response.signature),
+          userHandle: c.response.userHandle ? bufferToBase64url(c.response.userHandle) : null,
+          transports: c.response.getTransports ? c.response.getTransports() : []
+        }
+      };
+    }
+
+    async function handleMfaChallenge(mfaToken, email) {
+      showMessage('loginMessage', 'Hardware security key required...', 'success');
+      try {
+        var beginRes = await fetch('/api/auth/webauthn/login/begin', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ email })
+        });
+        var opts = await beginRes.json();
+        opts.challenge = base64urlToBuffer(opts.challenge);
+        opts.allowCredentials = (opts.allowCredentials||[]).map(function(c){
+          c.id = base64urlToBuffer(c.id); return c;
+        });
+        var cred = await navigator.credentials.get({ publicKey: opts });
+        var webauthnResponse = mapCredential(cred);
+        var completeRes = await fetch('/api/auth/webauthn/mfa/complete', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ mfaToken, webauthnResponse })
+        });
+        var data = await completeRes.json();
+        if (data.token) {
+          localStorage.setItem('token', data.token);
+          try { localStorage.setItem('token_at', String(Date.now())); } catch (e) {}
+          localStorage.setItem('keycode_token', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+          localStorage.setItem('keycode_user', JSON.stringify(data.user));
+          window.location.href = getRedirectUrl();
+        } else {
+          showMessage('loginMessage', data.error||'MFA verification failed','error');
+          document.getElementById('loginBtn').disabled=false;
+          document.getElementById('loginBtn').innerHTML='<i class="fas fa-arrow-right"></i> Sign In';
+        }
+      } catch(e) {
+        showMessage('loginMessage','MFA failed: '+(e.message||'unknown error'),'error');
+        document.getElementById('loginBtn').disabled=false;
+        document.getElementById('loginBtn').innerHTML='<i class="fas fa-arrow-right"></i> Sign In';
+      }
+    }
+
+    async function passkeyLogin() {
+      var email = document.getElementById('loginEmail').value;
+      var btn = document.getElementById('passkeyLoginBtn');
+      btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Authenticating...';
+      try {
+        var beginRes = await fetch('/api/auth/webauthn/login/begin', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ email: email || undefined })
+        });
+        var opts = await beginRes.json();
+        opts.challenge = base64urlToBuffer(opts.challenge);
+        if (opts.allowCredentials) {
+          opts.allowCredentials = opts.allowCredentials.map(function(c){
+            c.id = base64urlToBuffer(c.id); return c;
+          });
+        }
+        var cred = await navigator.credentials.get({ publicKey: opts });
+        var webauthnResponse = mapCredential(cred);
+        var completeRes = await fetch('/api/auth/webauthn/login/complete', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(Object.assign(webauthnResponse, { email: email || undefined }))
+        });
+        var data = await completeRes.json();
+        if (data.token) {
+          localStorage.setItem('token', data.token);
+          try { localStorage.setItem('token_at', String(Date.now())); } catch (e) {}
+          localStorage.setItem('keycode_token', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+          localStorage.setItem('keycode_user', JSON.stringify(data.user));
+          window.location.href = getRedirectUrl();
+        } else {
+          showMessage('loginMessage', data.error||'Passkey login failed','error');
+        }
+      } catch(e) {
+        showMessage('loginMessage','Passkey error: '+(e.message||'unknown'),'error');
+      }
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-key"></i> Sign in with Passkey';
+    }
+  </script>
+<script>navigator.serviceWorker.register('/sw.js').catch(function(e){console.error('SW registration failed:',e)});</script>
+
   <script src="/js/scroll-3d-animations.js"></script>  <script src="/js/k-scroll.js" defer></script>
 
   <div id="site-footer"></div>
     <script src="/js/loading-screen.js"></script>
 <script src="/js/site.js"></script>
 <script src="/js/install.js" defer></script>
-<script src="/js/footer.js" defer></script>
-<script src="/js/sw-register.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
 </body>
 </html>

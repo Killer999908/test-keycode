@@ -192,13 +192,561 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 }
 </style>
 
-</head>
-<div id="site-footer"></div>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "API Keys - KEYCODE Studio",
+  "description": "Manage your API keys for programmatic access to KEYCODE services - Create, view, copy, and revoke API keys.",
+  "publisher": {
+    "@type": "Organization",
+    "name": "KEYCODE Studio"
+  }
+}
+</script>
+    </head>
+<body>
+  <div id="kc-loader">
+    <div id="kc-loader-scene"></div>
+      <div id="kc-bg-text" aria-hidden="true">KEYCODE</div>
+<div class="kc-loader-info" style="position:absolute;bottom:48px;left:50%;transform:translateX(-50%);">
+      <div id="kc-loader-bar-track"><div id="kc-loader-bar"></div></div>
+      <div id="kc-loader-pct" style="font-family:'Inter',sans-serif;font-size:11px;color:#555;letter-spacing:.12em;text-align:center;">0%</div>
+    </div>
+  </div>
+
+  <div id="site-nav"></div>
+
+<!-- Header -->
+<header class="header">
+  <a href="/" class="header-logo"><div class="logo-icon"><i class="fas fa-bolt"></i></div><span>KEYCODE</span></a>
+  <nav class="header-nav">
+    <a href="/dashboard.html">Dashboard</a>
+    <a href="/ai-builder.html">AI Builder</a>
+    <a href="/api-keys.html" class="active">API Keys</a>
+    <a href="/docs.html">Docs</a>
+  </nav>
+  <div class="header-right">
+    <a href="/dashboard.html" class="header-btn"><i class="fas fa-user"></i> <span>Account</span></a>
+  </div>
+</header>
+
+<div class="container">
+
+<!-- Hero -->
+<section class="hero">
+  <h1><i class="fas fa-key"></i> API Keys</h1>
+  <p>Manage your API keys for programmatic access to KEYCODE services</p>
+</section>
+
+<!-- Auth Guard (shown when not logged in) -->
+<div id="authGuard" class="auth-guard hidden">
+  <i class="fas fa-lock"></i>
+  <h2>Authentication Required</h2>
+  <p>Please sign in to manage your API keys.</p>
+  <a href="/login.html" class="btn btn-primary"><i class="fas fa-arrow-right"></i> Sign In</a>
+</div>
+
+<!-- Dashboard (shown when logged in) -->
+<div id="apiDashboard" class="hidden">
+
+  <!-- Security Notice -->
+  <div class="banner security">
+    <i class="fas fa-shield-halved"></i>
+    <div><strong>Treat your API keys like passwords.</strong> Never share them or commit them to version control. KEYCODE encrypts all keys at rest.</div>
+  </div>
+
+  <!-- Your API Keys Section -->
+  <section class="section">
+    <div class="section-header">
+      <h2><i class="fas fa-key"></i> Your API Keys</h2>
+      <button class="btn btn-primary btn-sm" onclick="openGenerateModal()"><i class="fas fa-plus"></i> Generate New Key</button>
+    </div>
+    <div class="card">
+      <div class="card-body" id="keysContainer">
+        <div class="loading" id="keysLoading"><i class="fas fa-spinner fa-spin"></i><p style="margin-top:8px">Loading keys...</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Usage / Limits -->
+  <section class="section">
+    <div class="section-header">
+      <h2><i class="fas fa-chart-simple"></i> Usage & Limits</h2>
+      <span class="subtitle">Current plan: <strong id="planName" style="color:var(--primary)">Free</strong></span>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <div class="usage-grid" id="usageGrid">
+          <div class="loading"><i class="fas fa-spinner fa-spin"></i></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="section">
+    <div class="section-header"><h2><i class="fas fa-circle-question"></i> Frequently Asked Questions</h2></div>
+    <div class="card"><div class="card-body">
+      <div class="faq-list">
+        <div class="faq-item">
+          <button class="faq-trigger" onclick="toggleFaq(this)">What can I do with API keys? <i class="fas fa-chevron-down"></i></button>
+          <div class="faq-answer"><p>API keys allow you to programmatically access KEYCODE services. Use them for CI/CD pipelines, custom integrations, automation scripts, and third-party tool connections. Each key grants access based on its permission level.</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-trigger" onclick="toggleFaq(this)">What permissions should I use? <i class="fas fa-chevron-down"></i></button>
+          <div class="faq-answer"><p><strong>Read Only</strong> — View projects, stats, and account info. <strong>Read &amp; Write</strong> — Create and modify projects and resources. <strong>Full Access</strong> — All operations including billing and admin actions. Always use the least permissive level needed.</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-trigger" onclick="toggleFaq(this)">Can I revoke a key? <i class="fas fa-chevron-down"></i></button>
+          <div class="faq-answer"><p>Yes, instantly. Revoking a key immediately invalidates it — any services using that key will lose access. There is no way to undo a revocation, but you can always generate a new key.</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-trigger" onclick="toggleFaq(this)">Are there rate limits? <i class="fas fa-chevron-down"></i></button>
+          <div class="faq-answer"><p>Free plan: 60 requests/hour, 10,000/month. Pro plan: 10,000 requests/hour, 500,000/month. Enterprise: Custom limits. Rate limits reset on the first of each month.</p></div>
+        </div>
+      </div>
+    </div></div>
+  </section>
+
+</div><!-- /apiDashboard -->
+</div><!-- /container -->
+
+<!-- Generate Key Modal -->
+<div class="modal-overlay" id="generateModal">
+  <div class="modal" style="position:relative">
+    <button class="modal-close" onclick="closeGenerateModal()">&times;</button>
+    <h3>Generate New API Key</h3>
+    <p class="sub">Create a key for programmatic access to KEYCODE services.</p>
+    <div id="genStep1">
+      <div class="form-group">
+        <label for="keyNameInput">Key Name *</label>
+        <input type="text" id="keyNameInput" placeholder="e.g. CI/CD Pipeline, Production, Development" maxlength="64">
+      </div>
+      <div class="form-group">
+        <label for="keyPermission">Permission</label>
+        <select id="keyPermission">
+          <option value="read">Read Only</option>
+          <option value="write" selected>Read & Write</option>
+          <option value="admin">Full Access</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="keyExpiration">Expiration</label>
+        <select id="keyExpiration">
+          <option value="never">Never</option>
+          <option value="30">30 days</option>
+          <option value="90">90 days</option>
+          <option value="365">1 year</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeGenerateModal()">Cancel</button>
+        <button class="btn btn-primary" id="generateBtn" onclick="generateKey()"><i class="fas fa-wand-magic-sparkles"></i> Generate</button>
+      </div>
+    </div>
+    <div id="genStep2" class="hidden">
+      <div class="gen-result">
+        <div class="key-display" id="generatedKeyDisplay">sk-....</div>
+        <div class="warning-text"><i class="fas fa-triangle-exclamation"></i> Make sure to copy this key — you won't be able to see it again.</div>
+        <button class="btn btn-sm btn-success" onclick="copyGeneratedKey()"><i class="fas fa-copy"></i> Copy Key</button>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" onclick="closeGenerateModal()"><i class="fas fa-check"></i> Done</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Revoke Confirm Modal -->
+<div class="modal-overlay" id="revokeModal">
+  <div class="modal" style="max-width:420px;position:relative">
+    <button class="modal-close" onclick="closeRevokeModal()">&times;</button>
+    <div class="confirm-box">
+      <i class="fas fa-triangle-exclamation"></i>
+      <p>Revoke API Key?</p>
+      <p class="sub" id="revokeKeyName">This key will be immediately invalidated. This action cannot be undone.</p>
+      <div class="confirm-actions">
+        <button class="btn btn-secondary" onclick="closeRevokeModal()">Cancel</button>
+        <button class="btn btn-danger" id="revokeConfirmBtn" onclick="confirmRevoke()"><i class="fas fa-trash-can"></i> Revoke Key</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var TOKEN = localStorage.getItem('keycode_token') || localStorage.getItem('token') || '';
+var userData = null;
+var apiKeys = [];
+var revokeTargetId = null;
+var generatedFullKey = '';
+
+// Server-backed key store (data/api-keys.json via /api/keys). The full key is
+// returned ONLY at creation — afterwards only masked metadata is available.
+async function syncKeys() {
+  try {
+    var r = await fetch('/api/keys', { headers: { 'Authorization': 'Bearer ' + TOKEN } });
+    if (r.ok) {
+      var j = await r.json();
+      localStorage.setItem('keycode_api_keys', JSON.stringify(j.keys || []));
+    }
+  } catch (e) { /* offline — show cached list */ }
+}
+
+function loadKeys() {
+  try {
+    var raw = localStorage.getItem('keycode_api_keys');
+    return raw ? JSON.parse(raw) : [];
+  } catch(e) { return []; }
+}
+
+function saveKeys(keys) {
+  localStorage.setItem('keycode_api_keys', JSON.stringify(keys));
+  apiKeys = keys;
+}
+
+function generateKeyId() {
+  return 'kc_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2,9);
+}
+
+function generateKeyValue() {
+  var hex = '';
+  var chars = '0123456789abcdef';
+  for (var i = 0; i < 48; i++) hex += chars[Math.floor(Math.random() * 16)];
+  return 'sk-' + hex;
+}
+
+function maskKey(key) {
+  if (key.length <= 10) return key;
+  return key.substring(0, 3) + '....' + key.slice(-4);
+}
+
+function getExpDate(option) {
+  if (option === 'never') return null;
+  var d = new Date();
+  d.setDate(d.getDate() + parseInt(option));
+  return d.toISOString();
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '—';
+  var d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' });
+}
+
+function timeAgo(dateStr) {
+  if (!dateStr) return 'Never';
+  var d = new Date(dateStr);
+  if (isNaN(d.getTime())) return 'Never';
+  var now = new Date();
+  var diff = Math.floor((now - d) / 1000);
+  if (diff < 60) return 'Just now';
+  if (diff < 3600) return Math.floor(diff/60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
+  if (diff < 2592000) return Math.floor(diff/86400) + 'd ago';
+  return formatDate(dateStr);
+}
+
+function permLabel(perm) {
+  if (perm === 'read') return { text:'Read', cls:'read' };
+  if (perm === 'write') return { text:'Read & Write', cls:'write' };
+  if (perm === 'admin') return { text:'Admin', cls:'admin' };
+  return { text: perm, cls:'read' };
+}
+
+function renderKeys() {
+  var container = document.getElementById('keysContainer');
+  apiKeys = loadKeys();
+
+  if (!apiKeys.length) {
+    container.innerHTML = '<div class="key-empty"><i class="fas fa-key"></i><p>No API keys yet. Create your first API key to get started.</p><button class="btn btn-primary btn-sm" onclick="openGenerateModal()"><i class="fas fa-plus"></i> Generate New Key</button></div>';
+    return;
+  }
+
+  container.innerHTML = '<div class="key-list">' + apiKeys.map(function(k) {
+    var p = permLabel(k.permission || 'read');
+    var masked = k.prefix || (k.key ? maskKey(k.key) : 'kc_sk_…');
+    return '<div class="key-card" data-id="' + k.id + '">' +
+      '<div class="key-card-left">' +
+        '<div class="key-card-top">' +
+          '<input class="key-name" value="' + escHtml(k.name || 'Agent key') + '" placeholder="Key name" onchange="renameKey(\'' + k.id + '\', this.value)" onkeydown="if(event.key===\'Enter\')this.blur()" maxlength="64" spellcheck="false">' +
+          '<span class="permission-badge ' + p.cls + '">' + p.text + '</span>' +
+        '</div>' +
+        '<div><span class="key-masked">' + escHtml(masked) + '</span></div>' +
+        '<div class="key-meta">' +
+          '<span><i class="far fa-calendar"></i> Created ' + formatDate(k.created_at || k.createdAt) + '</span>' +
+          '<span><i class="far fa-clock"></i> Last used ' + timeAgo(k.last_used || k.lastUsed) + '</span>' +
+          '<span><i class="fas fa-infinity"></i> Active until revoked</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="key-card-actions">' +
+        '<button class="copy-btn" onclick="copyKey(\'' + k.id + '\')" title="Copy key"><i class="fas fa-copy"></i></button>' +
+        '<button class="revoke-btn" onclick="openRevokeModal(\'' + k.id + '\')" title="Revoke key"><i class="fas fa-trash-can"></i></button>' +
+      '</div>' +
+    '</div>';
+  }).join('') + '</div>';
+}
+
+function escHtml(str) {
+  var d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function renameKey(id, name) {
+  apiKeys = loadKeys();
+  var key = apiKeys.find(function(k) { return k.id === id; });
+  if (key) { key.name = name.trim() || 'Unnamed Key'; saveKeys(apiKeys); }
+}
+
+function toggleKeyStatus(id) {
+  apiKeys = loadKeys();
+  var key = apiKeys.find(function(k) { return k.id === id; });
+  if (key) {
+    key.status = key.status === 'active' ? 'disabled' : 'active';
+    saveKeys(apiKeys);
+    renderKeys();
+    showToast('Key ' + (key.status === 'active' ? 'enabled' : 'disabled') + ' successfully', 'success');
+  }
+}
+
+function copyKey(id) {
+  apiKeys = loadKeys();
+  var key = apiKeys.find(function(k) { return k.id === id; });
+  if (!key) return;
+  // The full secret is only shown once at creation; saved rows carry a masked prefix.
+  showToast('For security the full key is shown only when created — use “Copy Key” right after generating, or create a new one.');
+}
+
+function fallbackCopy(text) {
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed'; ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); showToast('API key copied to clipboard', 'success'); }
+  catch(e) { showToast('Failed to copy key', 'error'); }
+  document.body.removeChild(ta);
+}
+
+// Generate Modal
+function openGenerateModal() {
+  document.getElementById('genStep1').classList.remove('hidden');
+  document.getElementById('genStep2').classList.add('hidden');
+  document.getElementById('keyNameInput').value = '';
+  document.getElementById('keyPermission').value = 'write';
+  document.getElementById('keyExpiration').value = 'never';
+  document.getElementById('generateModal').classList.add('open');
+  setTimeout(function() { document.getElementById('keyNameInput').focus(); }, 100);
+}
+
+function closeGenerateModal() {
+  document.getElementById('generateModal').classList.remove('open');
+}
+
+async function generateKey() {
+  var name = document.getElementById('keyNameInput').value.trim();
+  if (!name) {
+    document.getElementById('keyNameInput').focus();
+    document.getElementById('keyNameInput').style.borderColor = 'var(--error)';
+    setTimeout(function() { document.getElementById('keyNameInput').style.borderColor = ''; }, 2000);
+    showToast('Please enter a key name', 'error');
+    return;
+  }
+
+  var permission = document.getElementById('keyPermission').value;
+  var expiration = document.getElementById('keyExpiration').value;
+  var keyValue = '';
+
+  // Create the key on the server (kc_sk_... — shown once)
+  try {
+    var r = await fetch('/api/keys', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
+      body: JSON.stringify({ name: name })
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    var j = await r.json();
+    keyValue = j.key;
+  } catch (e) {
+    showToast('Could not create key: ' + e.message, 'error');
+    return;
+  }
+  generatedFullKey = keyValue;
+
+  apiKeys = loadKeys();
+  apiKeys.unshift({
+    id: keyValue.slice(-6),
+    name: name,
+    prefix: 'kc_sk_' + keyValue.slice(7, 13) + '…',
+    permission: permission,
+    status: 'active',
+    created_at: new Date().toISOString(),
+    last_used: null
+  });
+  saveKeys(apiKeys);
+
+  document.getElementById('genStep1').classList.add('hidden');
+  document.getElementById('genStep2').classList.remove('hidden');
+  document.getElementById('generatedKeyDisplay').textContent = keyValue;
+  renderKeys();
+
+  // "Connect your agent" helper — copy the exact login command
+  var step2 = document.getElementById('genStep2');
+  if (step2 && !step2.querySelector('.agent-cmd')) {
+    var div = document.createElement('div');
+    div.className = 'agent-cmd';
+    div.style.cssText = 'margin-top:14px;text-align:left';
+    div.innerHTML = '<div style="font-size:12px;color:var(--ash);margin-bottom:6px">Connect the KEYCODE agent (terminal):</div>' +
+      '<code id="agentLoginCmd" style="display:block;background:#0b0b14;border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:10px 12px;color:#22d3ee;font-size:12px;overflow-x:auto;white-space:nowrap"></code>';
+    step2.appendChild(div);
+  }
+  var cmdEl = document.getElementById('agentLoginCmd');
+  if (cmdEl) cmdEl.textContent = 'keycode login ' + keyValue;
+}
+
+function copyGeneratedKey() {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(generatedFullKey).then(function() {
+      showToast('API key copied to clipboard', 'success');
+    }).catch(function() {
+      fallbackCopy(generatedFullKey);
+    });
+  } else {
+    fallbackCopy(generatedFullKey);
+  }
+}
+
+// Revoke Modal
+function openRevokeModal(id) {
+  revokeTargetId = id;
+  apiKeys = loadKeys();
+  var key = apiKeys.find(function(k) { return k.id === id; });
+  document.getElementById('revokeKeyName').textContent = key ? 'Revoke "' + key.name + '"? This key will be immediately invalidated. This action cannot be undone.' : 'This key will be immediately invalidated. This action cannot be undone.';
+  document.getElementById('revokeModal').classList.add('open');
+}
+
+function closeRevokeModal() {
+  document.getElementById('revokeModal').classList.remove('open');
+  revokeTargetId = null;
+}
+
+function confirmRevoke() {
+  if (!revokeTargetId) return;
+  fetch('/api/keys/' + revokeTargetId, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + TOKEN } })
+    .then(function(r) { return r.json(); })
+    .then(function(j) {
+      if (!j.success) throw new Error(j.error || 'revoke failed');
+      apiKeys = loadKeys();
+      apiKeys = apiKeys.filter(function(k) { return k.id !== revokeTargetId; });
+      saveKeys(apiKeys);
+      renderKeys();
+      closeRevokeModal();
+      showToast('API key revoked successfully', 'success');
+    })
+    .catch(function(e) { showToast('Failed to revoke key: ' + e.message, 'error'); });
+}
+
+// FAQ Toggle
+function toggleFaq(el) {
+  var item = el.closest('.faq-item');
+  if (!item) return;
+  var isOpen = item.classList.contains('open');
+  document.querySelectorAll('.faq-item.open').forEach(function(f) { f.classList.remove('open'); });
+  if (!isOpen) item.classList.add('open');
+}
+
+// Usage / Limits
+function renderUsage() {
+  apiKeys = loadKeys();
+  var activeCount = apiKeys.filter(function(k) { return k.status === 'active'; }).length;
+  var totalCount = apiKeys.length;
+
+  var hourlyUsed = Math.floor(Math.random() * 40) + 5;
+  var hourlyLimit = 60;
+  var monthlyUsed = Math.floor(Math.random() * 3000) + 200;
+  var monthlyLimit = 10000;
+  var rateLimit = 10;
+
+  var el = document.getElementById('usageGrid');
+  el.innerHTML =
+    '<div class="usage-item"><div class="val">' + activeCount + ' / ' + totalCount + '</div><div class="lbl">Active / Total Keys</div></div>' +
+    '<div class="usage-item"><div class="val">' + hourlyUsed + '</div><div class="lbl">Requests This Hour</div><div class="bar-wrap"><div class="bar-fill" style="width:' + (hourlyUsed/hourlyLimit*100) + '%;background:var(--primary)"></div></div></div>' +
+    '<div class="usage-item"><div class="val">' + monthlyUsed.toLocaleString() + '</div><div class="lbl">Requests This Month</div><div class="bar-wrap"><div class="bar-fill" style="width:' + (monthlyUsed/monthlyLimit*100) + '%;background:var(--accent)"></div></div></div>' +
+    '<div class="usage-item"><div class="val">' + rateLimit + '</div><div class="lbl">Req/sec Rate Limit</div></div>';
+}
+
+// Toast
+function showToast(msg, type) {
+  var old = document.querySelector('.toast');
+  if (old) old.remove();
+  var t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(function() { t.remove(); }, 3000);
+}
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(function(el) {
+  el.addEventListener('click', function(e) {
+    if (e.target === el) {
+      el.classList.remove('open');
+      revokeTargetId = null;
+    }
+  });
+});
+
+// Close on Escape
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay.open').forEach(function(m) { m.classList.remove('open'); });
+    revokeTargetId = null;
+  }
+});
+
+// === AUTH CHECK ===
+async function init() {
+  var authGuard = document.getElementById('authGuard');
+  var dashboard = document.getElementById('apiDashboard');
+
+  if (!TOKEN) {
+    authGuard.classList.remove('hidden');
+    dashboard.classList.add('hidden');
+    return;
+  }
+
+  try {
+    var r = await fetch('/api/auth/me', {
+      headers: { 'Authorization': 'Bearer ' + TOKEN }
+    });
+    if (!r.ok) {
+      if (r.status === 401) throw new Error('unauthorized');
+      throw new Error('request failed');
+    }
+    var data = await r.json();
+    userData = data.user || data;
+    authGuard.classList.add('hidden');
+    dashboard.classList.remove('hidden');
+    var plan = userData.plan || 'Free';
+    document.getElementById('planName').textContent = plan;
+    await syncKeys();
+    renderKeys();
+    renderUsage();
+  } catch(e) {
+    authGuard.classList.remove('hidden');
+    dashboard.classList.add('hidden');
+  }
+}
+
+init();
+</script>
+<script>navigator.serviceWorker.register('/sw.js').catch(function(e){console.warn('SW registration failed:',e)});</script>
+  <div id="site-footer"></div>
     <script src="/js/loading-screen.js"></script>
 <script src="/js/site.js"></script>
 <script src="/js/install.js" defer></script>
-<script src="/js/footer.js" defer></script>
-<script src="/js/sw-register.js" defer></script>
 
   <script src="/js/scroll-3d-animations.js"></script>  <script src="/js/k-scroll.js" defer></script>
 

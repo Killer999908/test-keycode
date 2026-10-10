@@ -14,15 +14,785 @@
   <link rel="icon" type="image/svg+xml" href="/assets/favicon-dRp91c1F.svg">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-Avb2QiuDEEvB4bZJYdft2mNjVShBftLdPG8FJ0V7irTLQ8Uo0qcPxh4Plq7G5tGm0rU+1SPhVotteLpBERwTkw==" crossorigin="anonymous">
-  </head>
+  <script src="https://js.stripe.com/v3/"></script>
+  <style>
+    :root {
+      --void: #030305;
+      --obsidian: #0a0a0f;
+      --graphite: #12121a;
+      --slate: #1a1a24;
+      --primary: #ffffff;
+      --primary-glow: #818cf8;
+      --secondary: #ec4899;
+      --accent: #22d3ee;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --white: #ffffff;
+      --pearl: #e2e8f0;
+      --ash: #d1d5db;
+      --gradient-1: linear-gradient(135deg, #ffffff 0%, #a3a3a3 50%, #ec4899 100%);
+      --font-display: 'Syne', sans-serif;
+      --font-body: 'Inter', sans-serif;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: var(--font-body);
+      background: var(--void);
+      color: var(--white);
+      min-height: 100vh;
+    }
+    .checkout-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+    .checkout-header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .checkout-header h1 {
+      font-family: var(--font-display);
+      font-size: 36px;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+    .checkout-header p { color: var(--ash); font-size: 16px; }
+    .checkout-grid {
+      display: grid;
+      grid-template-columns: 1fr 400px;
+      gap: 40px;
+    }
+    @media (max-width: 900px) {
+      .checkout-grid { grid-template-columns: 1fr; }
+    }
+    .checkout-section {
+      background: var(--graphite);
+      border: 1px solid rgba(99,102,241,0.1);
+      border-radius: 20px;
+      padding: 32px;
+      margin-bottom: 24px;
+    }
+    .section-title {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .section-title i { color: var(--primary); }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 600px) {
+      .form-grid { grid-template-columns: 1fr; }
+    }
+    .form-group { margin-bottom: 20px; }
+    .form-group.full { grid-column: span 2; }
+    @media (max-width: 600px) { .form-group.full { grid-column: span 1; } }
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--pearl);
+      margin-bottom: 8px;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 14px 16px;
+      background: var(--slate);
+      border: 1px solid rgba(99,102,241,0.2);
+      border-radius: 12px;
+      color: var(--white);
+      font-family: var(--font-body);
+      font-size: 15px;
+      transition: all 0.3s;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 20px rgba(99,102,241,0.2);
+    }
+    textarea { resize: vertical; min-height: 100px; }
+    .order-summary {
+      position: sticky;
+      top: 20px;
+    }
+    .summary-card {
+      background: var(--graphite);
+      border: 1px solid rgba(99,102,241,0.1);
+      border-radius: 20px;
+      padding: 32px;
+    }
+    .summary-title {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 24px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .service-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 16px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .service-info { flex: 1; }
+    .service-name { font-weight: 600; margin-bottom: 4px; }
+    .service-price { color: var(--primary-glow); font-weight: 600; font-size: 18px; }
+    .addons-list { margin-top: 12px; }
+    .addon-item {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      color: var(--ash);
+      padding: 6px 0;
+    }
+    .coupon-section {
+      margin: 20px 0;
+      padding: 20px;
+      background: rgba(99,102,241,0.05);
+      border-radius: 12px;
+    }
+    .coupon-input {
+      display: flex;
+      gap: 12px;
+    }
+    .coupon-input input { flex: 1; }
+    .btn-apply {
+      padding: 12px 24px;
+      background: var(--primary);
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .coupon-applied {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--success);
+    }
+    .totals {
+      padding: 20px 0;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      margin-top: 16px;
+    }
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      color: var(--ash);
+    }
+    .total-row.discount { color: var(--success); }
+    .total-row.grand-total {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--white);
+      padding-top: 16px;
+      margin-top: 8px;
+      border-top: 2px solid var(--primary);
+    }
+    .deposit-info {
+      background: rgba(99,102,241,0.1);
+      border: 1px solid rgba(99,102,241,0.2);
+      border-radius: 12px;
+      padding: 16px;
+      margin: 20px 0;
+    }
+    .deposit-info h4 {
+      color: var(--primary-glow);
+      margin-bottom: 8px;
+    }
+    .deposit-info p { font-size: 14px; color: var(--ash); }
+    .payment-methods {
+      margin: 24px 0;
+    }
+    .payment-option {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px;
+      background: var(--slate);
+      border: 2px solid transparent;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .payment-option:hover, .payment-option.selected {
+      border-color: var(--primary);
+    }
+    .payment-option input { width: auto; accent-color: var(--primary); }
+    .payment-icon { font-size: 24px; width: 40px; text-align: center; }
+    .payment-label { flex: 1; }
+    .payment-label strong { display: block; margin-bottom: 4px; }
+    .payment-label span { font-size: 13px; color: var(--ash); }
+    .btn-checkout {
+      width: 100%;
+      padding: 18px;
+      background: var(--gradient-1);
+      border: none;
+      border-radius: 14px;
+      color: white;
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+    .btn-checkout:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 50px rgba(99,102,241,0.4);
+    }
+    .btn-checkout:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+    .security-badge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 16px;
+      color: var(--ash);
+      font-size: 13px;
+    }
+    .security-badge i { color: var(--success); }
+    .error-message {
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.3);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 20px;
+      color: var(--danger);
+      display: none;
+    }
+    .error-message.show { display: block; }
+    .success-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(3,3,5,0.95);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .success-overlay.show { display: flex; }
+    .success-content {
+      text-align: center;
+      padding: 48px;
+    }
+    .success-icon {
+      font-size: 80px;
+      color: var(--success);
+      margin-bottom: 24px;
+      animation: bounceIn 0.6s ease;
+    }
+    @keyframes bounceIn {
+      0% { transform: scale(0); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+    .success-content h2 {
+      font-family: var(--font-display);
+      font-size: 32px;
+      margin-bottom: 12px;
+    }
+    .success-content p { color: var(--ash); margin-bottom: 24px; }
+    .order-id {
+      background: var(--graphite);
+      padding: 16px 32px;
+      border-radius: 12px;
+      display: inline-block;
+      font-family: var(--font-mono, monospace);
+      font-size: 18px;
+      color: var(--primary-glow);
+      margin-bottom: 32px;
+    }
+    .btn-view-orders {
+      padding: 16px 40px;
+      background: var(--gradient-1);
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .discount-code {
+      background: rgba(245,158,11,0.1);
+      border: 1px solid rgba(245,158,11,0.3);
+      color: var(--warning);
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--primary);
+      text-decoration: none;
+      margin-bottom: 24px;
+      font-weight: 500;
+    }
+    .back-link:hover { color: var(--ash); }
+  </style>
+    </head>
+<body>
+  <div id="kc-loader">
+    <div id="kc-loader-scene"></div>
+      <div id="kc-bg-text" aria-hidden="true">KEYCODE</div>
+<div class="kc-loader-info" style="position:absolute;bottom:48px;left:50%;transform:translateX(-50%);">
+      <div id="kc-loader-bar-track"><div id="kc-loader-bar"></div></div>
+      <div id="kc-loader-pct" style="font-family:'Inter',sans-serif;font-size:11px;color:#555;letter-spacing:.12em;text-align:center;">0%</div>
+    </div>
+  </div>
+
+  <div class="checkout-container">
+    <a href="index.html" class="back-link">
+      <i class="fas fa-arrow-left"></i> Back to Services
+    </a>
+    
+    <div class="checkout-header">
+      <h1>Complete Your Order</h1>
+      <p>Fill in your details to place your order</p>
+    </div>
+
+    <div class="error-message" id="errorMessage"></div>
+
+    <form id="checkoutForm" class="checkout-grid">
+      <div class="checkout-main">
+        <div class="checkout-section">
+          <h2 class="section-title">
+            <i class="fas fa-user"></i> Contact Information
+          </h2>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="name">Full Name *</label>
+              <input type="text" id="name" placeholder="John Doe" required>
+            </div>
+            <div class="form-group">
+              <label for="email">Email Address *</label>
+              <input type="email" id="email" placeholder="john@example.com" required>
+            </div>
+            <div class="form-group">
+              <label for="phone">Phone Number</label>
+              <input type="tel" id="phone" placeholder="+1 234 567 8900">
+            </div>
+            <div class="form-group">
+              <label for="company">Company Name</label>
+              <input type="text" id="company" placeholder="Your Company">
+            </div>
+          </div>
+        </div>
+
+        <div class="checkout-section">
+          <h2 class="section-title">
+            <i class="fas fa-briefcase"></i> Project Details
+          </h2>
+          <div class="form-group full">
+            <label for="projectName">Project Name *</label>
+            <input type="text" id="projectName" placeholder="My Awesome Project" required>
+          </div>
+          <div class="form-group full">
+            <label for="projectDescription">Project Description *</label>
+            <textarea id="projectDescription" placeholder="Tell us about your project requirements, features you need, and any specific details..." required></textarea>
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="budget">Budget Range</label>
+              <select id="budget">
+                <option value="">Select budget</option>
+                <option value="500-1000">$500 - $1,000</option>
+                <option value="1000-2500">$1,000 - $2,500</option>
+                <option value="2500-5000">$2,500 - $5,000</option>
+                <option value="5000-10000">$5,000 - $10,000</option>
+                <option value="10000+">$10,000+</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="timeline">Expected Timeline</label>
+              <select id="timeline">
+                <option value="">Select timeline</option>
+                <option value="1-2weeks">1-2 Weeks</option>
+                <option value="1month">1 Month</option>
+                <option value="2months">2 Months</option>
+                <option value="3months">3+ Months</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="checkout-section">
+          <h2 class="section-title">
+            <i class="fas fa-credit-card"></i> Payment Method
+          </h2>
+          <div class="payment-methods">
+            <label class="payment-option selected">
+              <input type="radio" name="paymentMethod" value="card" checked>
+              <span class="payment-icon"><i class="fas fa-credit-card"></i></span>
+              <span class="payment-label">
+                <strong>Credit / Debit Card</strong>
+                <span>Pay securely with Stripe</span>
+              </span>
+            </label>
+            <label class="payment-option">
+              <input type="radio" name="paymentMethod" value="bank">
+              <span class="payment-icon"><i class="fas fa-university"></i></span>
+              <span class="payment-label">
+                <strong>Bank Transfer</strong>
+                <span>Wire transfer to our account</span>
+              </span>
+            </label>
+          </div>
+          <div id="cardPaymentSection">
+            <div class="form-group">
+              <label for="cardName">Name on Card</label>
+              <input type="text" id="cardName" placeholder="John Doe">
+            </div>
+            <div class="form-group">
+              <label for="cardNumber">Card Number</label>
+              <input type="text" id="cardNumber" placeholder="4242 4242 4242 4242" maxlength="19">
+            </div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="cardExpiry">Expiry Date</label>
+                <input type="text" id="cardExpiry" placeholder="MM/YY" maxlength="5">
+              </div>
+              <div class="form-group">
+                <label for="cardCvc">CVC</label>
+                <input type="text" id="cardCvc" placeholder="123" maxlength="3">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="checkout-sidebar">
+        <div class="order-summary">
+          <div class="summary-card">
+            <h3 class="summary-title">Order Summary</h3>
+            
+            <div class="service-item">
+              <div class="service-info">
+                <div class="service-name" id="selectedServiceName">Professional Website</div>
+              </div>
+              <div class="service-price" id="selectedServicePrice">$499</div>
+            </div>
+            <div class="addons-list" id="selectedAddons"></div>
+
+            <div class="coupon-section">
+              <label style="display:block;margin-bottom:8px;font-size:14px;">Have a coupon?</label>
+              <div class="coupon-input">
+                <input type="text" id="couponCode" placeholder="Enter code">
+                <button type="button" class="btn-apply" onclick="applyCoupon()">Apply</button>
+              </div>
+              <div id="couponResult" style="margin-top:8px;font-size:13px;"></div>
+            </div>
+
+            <div style="font-size:12px;color:var(--ash);margin-bottom:12px">✓ You already saw your live preview — pay only for work you love.</div>
+
+            <div class="totals">
+              <div class="total-row">
+                <span>Subtotal</span>
+                <span id="subtotal">$499</span>
+              </div>
+              <div class="total-row discount" id="discountRow" style="display:none;">
+                <span>Discount</span>
+                <span id="discountAmount">-$0</span>
+              </div>
+              <div class="total-row">
+                <span>VAT (0%)</span>
+                <span id="vatAmount">$0</span>
+              </div>
+              <div class="total-row grand-total">
+                <span>Total</span>
+                <span id="totalAmount">$499</span>
+              </div>
+            </div>
+
+            <div class="deposit-info">
+              <h4><i class="fas fa-info-circle"></i> Payment Plan</h4>
+              <p>Pay only <strong>25% deposit ($124.75)</strong> to start your project. Remaining balance due upon completion.</p>
+            </div>
+
+            <button type="submit" class="btn-checkout" id="submitBtn">
+              <i class="fas fa-lock"></i> Pay Deposit Now
+            </button>
+
+            <div class="security-badge">
+              <i class="fas fa-shield-alt"></i>
+              <span>Secured by Stripe - SSL Encrypted</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div class="success-overlay" id="successOverlay">
+    <div class="success-content">
+      <div class="success-icon"><i class="fas fa-check-circle"></i></div>
+      <h2>Order Placed Successfully!</h2>
+      <p>Thank you for your order. We'll start working on your project soon.</p>
+      <div class="order-id" id="orderId">KC-XXXXX-XXXX</div>
+      <p>A confirmation email has been sent to your inbox.</p>
+      <button class="btn-view-orders" onclick="window.location.href='control-panel.html'">
+        View My Orders
+      </button>
+    </div>
+  </div>
+
+  <script>
+    let orderData = JSON.parse(sessionStorage.getItem('checkoutOrder') || '{}');
+    let appliedCoupon = null;
+    let total = orderData.price || 499;
+
+    // URL params win: /checkout.html?plan=Starter&price=49&service=starter
+    // This is how pricing cards, quotes and builder CTAs hand off context.
+    (function readParams() {
+      try {
+        const q = new URLSearchParams(location.search);
+        const plan = q.get('plan');
+        const price = parseFloat(q.get('price'));
+        const service = q.get('service');
+        if (plan) orderData.name = plan;
+        if (!isNaN(price) && price >= 0) orderData.price = price;
+        if (service) orderData.id = service;
+        if (plan || !isNaN(price)) sessionStorage.setItem('checkoutOrder', JSON.stringify(orderData));
+      } catch (e) {}
+    })();
+
+    if (orderData.name) {
+      document.getElementById('selectedServiceName').textContent = orderData.name;
+      document.getElementById('selectedServicePrice').textContent = '$' + orderData.price;
+      document.getElementById('subtotal').textContent = '$' + orderData.price;
+      document.getElementById('totalAmount').textContent = '$' + orderData.price;
+      total = orderData.price;
+    }
+
+    // Minimal toast used when a payment gateway needs user attention
+    // (e.g. Stripe keys not configured). Auto-dismisses after 6s.
+    function showToast(message, type) {
+      let t = document.getElementById('kc-toast');
+      if (!t) {
+        t = document.createElement('div');
+        t.id = 'kc-toast';
+        t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);max-width:90%;z-index:10001;padding:14px 22px;border-radius:10px;font-size:13px;font-weight:500;color:#fff;box-shadow:0 8px 30px rgba(0,0,0,.4);white-space:pre-line;text-align:center;';
+        document.body.appendChild(t);
+      }
+      t.style.background = type === 'error'
+        ? 'linear-gradient(135deg,#ef4444,#dc2626)'
+        : 'linear-gradient(135deg,#10b981,#059669)';
+      t.textContent = message;
+      t.style.display = 'block';
+      clearTimeout(t._kcToastTimer);
+      t._kcToastTimer = setTimeout(() => { t.style.display = 'none'; }, 6000);
+    }
+
+    async function applyCoupon() {
+      const code = document.getElementById('couponCode').value;
+      const result = document.getElementById('couponResult');
+      if (!code.trim()) {
+        result.innerHTML = '<span style="color:var(--danger);">Enter a coupon code</span>';
+        return;
+      }
+
+      // Validate against the backend so admin-created coupons,
+      // usage limits, expiry and minimums are all honored.
+      const baseTotal = Number(orderData.price || 499);
+      try {
+        const res = await fetch('/api/coupons/validate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code, subtotal: baseTotal })
+        });
+        const d = await res.json();
+
+        if (!d.valid) {
+          appliedCoupon = null;
+          total = baseTotal;
+          document.getElementById('discountRow').style.display = 'none';
+          document.getElementById('totalAmount').textContent = '$' + baseTotal.toFixed(2);
+          result.innerHTML = '<span style="color:var(--danger);">' + (d.message || 'Invalid coupon code') + '</span>';
+          return;
+        }
+
+        const discount = Number(d.discount_amount || 0);
+        total = Math.max(0, baseTotal - discount);
+        appliedCoupon = { code: d.code, discount };
+
+        document.getElementById('discountRow').style.display = 'flex';
+        document.getElementById('discountAmount').textContent = '-$' + discount.toFixed(2);
+        document.getElementById('totalAmount').textContent = '$' + total.toFixed(2);
+        result.innerHTML = '<span class="coupon-applied"><i class="fas fa-check"></i> ' + (d.message || 'Coupon applied') + '</span>';
+        result.querySelector('.coupon-applied').innerHTML += '<span class="discount-code">' + d.code + '</span>';
+      } catch (e) {
+        result.innerHTML = '<span style="color:var(--danger);">Could not validate coupon — try again</span>';
+      }
+    }
+
+    document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('selected'));
+        e.target.closest('.payment-option').classList.add('selected');
+        
+        const cardSection = document.getElementById('cardPaymentSection');
+        cardSection.style.display = e.target.value === 'card' ? 'block' : 'none';
+      });
+    });
+
+    document.getElementById('cardNumber').addEventListener('input', (e) => {
+      let value = e.target.value.replace(/\s/g, '').replace(/\D/g, '');
+      value = value.match(/.{1,4}/g)?.join(' ') || value;
+      e.target.value = value;
+    });
+
+    document.getElementById('cardExpiry').addEventListener('input', (e) => {
+      let value = e.target.value.replace(/\D/g, '');
+      if (value.length >= 2) {
+        value = value.substring(0,2) + '/' + value.substring(2,4);
+      }
+      e.target.value = value;
+    });
+
+    document.getElementById('checkoutForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const submitBtn = document.getElementById('submitBtn');
+      const errorMsg = document.getElementById('errorMessage');
+      errorMsg.classList.remove('show');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+      try {
+        const token = localStorage.getItem('token');
+        const payload = {
+          service: orderData.id || 'custom',
+          serviceName: orderData.name || 'Custom Project',
+          customerName: document.getElementById('name').value,
+          customerEmail: document.getElementById('email').value,
+          customerPhone: document.getElementById('phone').value,
+          company: document.getElementById('company').value,
+          project: {
+            name: document.getElementById('projectName').value,
+            description: document.getElementById('projectDescription').value,
+            budget: document.getElementById('budget').value,
+            timeline: document.getElementById('timeline').value
+          },
+          subtotal: orderData.price,
+          discount: appliedCoupon?.discount || 0,
+          discountCode: appliedCoupon?.code || '',
+          total: total,
+          paymentMethod: document.querySelector('input[name="paymentMethod"]:checked').value,
+          paymentStatus: 'pending'
+        };
+
+        if (token) {
+          payload.userId = JSON.parse(atob(token.split('.')[1])).userId;
+        }
+
+        const response = await fetch('/api/website-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': 'Bearer ' + token } : {}) },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) throw new Error(result.error || 'Order failed');
+
+        const orderId = result.order?._id || result.order?.orderNumber;
+        const method = payload.paymentMethod;
+
+        // ---- Payment step (only for real money orders) ----
+        if (total > 0 && method !== 'bank' && orderId) {
+          const authHeaders = token ? { 'Authorization': 'Bearer ' + token } : {};
+          const piRes = await fetch('/api/payment/create-intent', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...authHeaders },
+            body: JSON.stringify({ orderId, amount: total, type: 'website_order', method: method === 'card' ? (payload.userId ? 'auto' : 'upi_qr') : method })
+          });
+          const pi = await piRes.json();
+
+          if (pi.gateway === 'stripe' && pi.paymentIntentId) {
+            // Real Stripe: confirm with the card form fields
+            const confirmRes = await fetch('/api/payment/confirm', {
+              method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders },
+              body: JSON.stringify({ paymentIntentId: pi.paymentIntentId, orderId, gateway: 'stripe' })
+            });
+            const conf = await confirmRes.json();
+            if (!conf.success) throw new Error(conf.error || 'Card payment failed');
+          } else if (pi.gateway === 'stripe_simulated') {
+            // Stripe not configured — surface it honestly instead of faking success
+            showToast(pi.message || 'Card payments need Stripe keys — order saved, choose UPI or bank to pay.', 'error');
+          } else if (pi.gateway === 'upi_qr' && pi.qrUrl) {
+            window.open(pi.qrUrl, '_blank');
+            await fetch('/api/payment/confirm', {
+              method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders },
+              body: JSON.stringify({ gateway: 'upi_qr', orderId, amount: total })
+            });
+          } else if (pi.gateway === 'razorpay' && pi.orderId) {
+            // Razorpay checkout via script
+            await new Promise((resolve, reject) => {
+              const s = document.createElement('script');
+              s.src = 'https://checkout.razorpay.com/v1/checkout.js';
+              s.onload = resolve; s.onerror = reject;
+              document.head.appendChild(s);
+            });
+            await new Promise((resolve, reject) => {
+              const rzp = new window.Razorpay({
+                key: pi.keyId, amount: Math.round(pi.amount * 100), currency: 'INR',
+                name: 'KEYCODE Studio', order_id: pi.orderId,
+                handler: async (r) => {
+                  const c = await fetch('/api/payment/confirm', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders },
+                    body: JSON.stringify({ gateway: 'razorpay', orderId, amount: total, razorpayPaymentId: r.razorpay_payment_id, razorpaySignature: r.razorpay_signature, razorpay_order_id: r.razorpay_order_id, paymentIntentId: pi.orderId })
+                  });
+                  const cj = await c.json();
+                  cj.success ? resolve() : reject(new Error(cj.error || 'verification failed'));
+                },
+                modal: { ondismiss: () => reject(new Error('Payment cancelled')) }
+              });
+              rzp.open();
+            });
+          }
+        }
+
+        sessionStorage.removeItem('checkoutOrder');
+        document.getElementById('orderId').textContent = result.order?.orderNumber || 'KC-' + Date.now().toString(36).toUpperCase();
+        document.getElementById('successOverlay').classList.add('show');
+
+      } catch (err) {
+        errorMsg.textContent = err.message;
+        errorMsg.classList.add('show');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-lock"></i> Pay Deposit Now';
+      }
+    });
+  </script>
+<script>navigator.serviceWorker.register('/sw.js').catch(function(e){console.error('SW registration failed:',e)});</script>
+
   <script src="/js/scroll-3d-animations.js"></script>  <script src="/js/k-scroll.js" defer></script>
 
   <div id="site-footer"></div>
     <script src="/js/loading-screen.js"></script>
 <script src="/js/site.js"></script>
 <script src="/js/install.js" defer></script>
-<script src="/js/footer.js" defer></script>
-<script src="/js/sw-register.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
 </body>

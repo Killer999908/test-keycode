@@ -10,7 +10,7 @@
   <link rel="icon" type="image/svg+xml" href="/assets/favicon-dRp91c1F.svg">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-Avb2QiuDEEvB4bZJYdft2mNjVShBftLdPG8FJ0V7irTLQ8Uo0qcPxh4Plq7G5tGm0rU+1SPhVotteLpBERwTkw==" crossorigin="anonymous">
-  <!-- Chart.js lazy-loaded after page is interactive (only needed for admin dashboard overview) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" integrity="sha384-e6nUZLBkQ86NJ6TVVKAeSaK8jWa3NhkYWZFomE39AvDbQWeie9PlQqM3pmYW5d1g" crossorigin="anonymous"></script>
   <style>
     :root {
       --void: #030305;
@@ -189,18 +189,6 @@
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--slate); border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
-
-    .chart-skeleton {
-      position: absolute; inset: 0;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: 8px; background: var(--graphite); border-radius: 14px;
-      opacity: 0; transition: opacity 0.3s; pointer-events: none;
-    }
-    .chart-skeleton.show { opacity: 1; }
-    .chart-skeleton .bar { width: 60%; height: 8px; background: rgba(255,255,255,0.06); border-radius: 4px; }
-    .chart-skeleton .bar:nth-child(2) { width: 80%; }
-    .chart-skeleton .bar:nth-child(3) { width: 40%; }
-    .chart-box { position: relative; }
   </style>
     </head>
   <body>
@@ -336,16 +324,8 @@
           <div class="stat-card"><div class="stat-icon"><i class="fas fa-bell"></i></div><div class="stat-value" id="statSubscribers">-</div><div class="stat-label">Subscribers</div></div>
         </div>
         <div class="charts-grid">
-          <div class="chart-box">
-            <h3><i class="fas fa-chart-line"></i> Revenue Overview</h3>
-            <div class="chart-skeleton show" id="revenueChartSkeleton"><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
-            <canvas id="revenueChart" height="200" style="display:none;"></canvas>
-          </div>
-          <div class="chart-box">
-            <h3><i class="fas fa-chart-bar"></i> Order Status</h3>
-            <div class="chart-skeleton show" id="ordersChartSkeleton"><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
-            <canvas id="ordersChart" height="200" style="display:none;"></canvas>
-          </div>
+          <div class="chart-box"><h3><i class="fas fa-chart-line"></i> Revenue Overview</h3><canvas id="revenueChart" height="200"></canvas></div>
+          <div class="chart-box"><h3><i class="fas fa-chart-bar"></i> Order Status</h3><canvas id="ordersChart" height="200"></canvas></div>
         </div>
         <div class="section-card">
           <div class="section-header"><h2 class="section-title">Recent Orders</h2></div>
@@ -1072,15 +1052,1644 @@
 
   <div class="toast" id="toast"></div>
 
+  <script>
+    const API = '/api';
+    let token = null, admin = null, chart1 = null, chart2 = null;
 
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    async function api(endpoint, opts = {}) {
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch(`${API}${endpoint}`, { ...opts, headers: { ...headers, ...opts.headers } }).catch(function(err) { console.error('[Fetch Error]', err); return null; });
+      if (res.status === 401) { showToast('Session expired', 'error'); setTimeout(logout, 1500); return null; }
+      return res.json();
+    }
+
+    function showToast(msg, type = 'info') {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.className = 'toast show ' + type;
+      setTimeout(() => t.classList.remove('show'), 4000);
+    }
+
+    function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+    function openModal(id) { document.getElementById(id).classList.add('show'); }
+
+    document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('adminLoginBtn');
+      btn.disabled = true; btn.textContent = 'Authenticating...';
+      const email = document.getElementById('adminEmailInput').value;
+      const password = document.getElementById('adminPassword').value;
+      const err = document.getElementById('loginError');
+      err.style.display = 'none';
+
+      const res = await api('/auth/admin-login', { method: 'POST', body: JSON.stringify({ email, password, adminCode: 'admin' }) });
+      const data = await (res?.json ? res.json() : res);
+      
+      if (data?.token) {
+        token = data.token; admin = data.user;
+        sessionStorage.setItem('adminToken', token);
+        sessionStorage.setItem('adminUser', JSON.stringify(admin));
+        document.getElementById('loginPrompt').style.display = 'none';
+        document.getElementById('dashboardContent').style.display = 'block';
+        document.getElementById('adminName').textContent = admin.name;
+        document.getElementById('adminEmail').textContent = admin.email;
+        initDashboard();
+      } else {
+        // Try regular login
+        const r2 = await api('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
+        if (r2?.token && r2?.user?.role === 'admin') {
+          token = r2.token; admin = r2.user;
+          sessionStorage.setItem('adminToken', token);
+          sessionStorage.setItem('adminUser', JSON.stringify(admin));
+          document.getElementById('loginPrompt').style.display = 'none';
+          document.getElementById('dashboardContent').style.display = 'block';
+          document.getElementById('adminName').textContent = admin.name;
+          document.getElementById('adminEmail').textContent = admin.email;
+          initDashboard();
+        } else {
+          err.textContent = r2?.error || 'Invalid admin credentials';
+          err.style.display = 'block';
+        }
+      }
+      btn.disabled = false; btn.textContent = 'Authenticate';
+    });
+
+    function logout() {
+      sessionStorage.removeItem('adminToken');
+      sessionStorage.removeItem('adminUser');
+      token = null; admin = null;
+      document.getElementById('dashboardContent').style.display = 'none';
+      document.getElementById('loginPrompt').style.display = 'flex';
+    }
+
+    async function initDashboard() {
+      loadOverview(); loadOrders(); loadPendingReviews(); loadTransactions();
+      loadProjectsAdmin(); loadCMS(); loadBlog(); loadNotifications();
+      loadAnnouncements(); loadUsers(); loadActiveUsers(); loadIPBlock();
+      loadConfig(); loadFeatures(); loadBackups(); loadLogs(); loadTasks();
+      loadEmailTemplates(); loadTickets(); loadInquiries(); loadAIUsage();
+      loadAIModels(); loadAITokens(); loadAIPrompts(); loadDatabase(); loadDBQueries();
+      loadStorage(); loadUserStorage(); loadPaymentConfig(); loadPaymentLogs();
+      loadInvoices(); loadThirdParty(); loadWebhooks(); loadSystemMonitor();
+      loadProcesses(); loadAlerts(); loadEndpoints();
+      loadAuditLogs(); loadActivity(); loadPartners(); loadGDPR();
+      loadServices(); loadReviews(); loadSubscriptions();
+      loadDiscounts(); loadMaintenance(); loadSystem();
+    }
+
+    async function loadOverview() {
+      const data = await api('/admin/analytics');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      document.getElementById('statUsers').textContent = data.overview?.totalUsers || '-';
+      document.getElementById('statOrders').textContent = data.overview?.totalOrders || '-';
+      document.getElementById('statRevenue').textContent = '₹' + (data.overview?.totalRevenue || 0);
+
+      // Reviews
+      const revs = await api('/reviews');
+      document.getElementById('statReviews').textContent = revs?.length || '-';
+
+      // Inquiries
+      let inqs = [];
+      try {
+        const i = await fetch(API + '/admin/inquiries', { headers: { Authorization: 'Bearer ' + token } });
+        if (i.ok) { const j = await i.json(); inqs = j.inquiries || j || []; }
+      } catch(e) {}
+      document.getElementById('statInquiries').textContent = inqs.length || '-';
+
+      // Subscribers
+      const subs = await api('/admin/subscriptions');
+      document.getElementById('statSubscribers').textContent = subs?.active || '-';
+
+      // Recent orders
+      const recent = data.recentOrders || [];
+      document.getElementById('recentOrdersList').innerHTML = recent.slice(0, 6).map(o => `
+        <tr><td>#${escapeHtml((o._id||'').slice(-8).toUpperCase())}</td>
+        <td>${escapeHtml(o.user?.name || o.billingAddress?.name || 'N/A')}</td>
+        <td>${escapeHtml(o.items?.[0]?.name || o.serviceType || 'Custom')}</td>
+        <td>₹${escapeHtml(o.total || 0)}</td>
+        <td><span class="badge ${statusBadge(o.status)}">${escapeHtml((o.status||'pending').replace('_',' '))}</span></td>
+        <td>${escapeHtml(new Date(o.createdAt).toLocaleDateString())}</td></tr>
+      `).join('') || '<tr><td colspan="6" class="empty-state"><i class="fas fa-inbox" style="font-size:24px;margin-bottom:8px;"></i><h3>No orders yet</h3><p>Orders will appear here when customers make purchases on the main site.</p></td></tr>';
+
+      // Charts
+      if (chart1) chart1.destroy();
+      if (chart2) chart2.destroy();
+      const mRev = data.monthlyRevenue || [];
+      chart1 = new Chart(document.getElementById('revenueChart'), {
+        type: 'line', data: {
+          labels: mRev.map(r => r._id?.month ? new Date(r._id.year, r._id.month - 1).toLocaleString('default', { month: 'short' }) : ''),
+          datasets: [{ label: 'Revenue', data: mRev.map(r => r.revenue), borderColor: '#ffffff', backgroundColor: 'rgba(99,102,241,0.1)', fill: true, tension: 0.4 }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#888' } }, y: { ticks: { color: '#888' } } } }
+      });
+      const oStatus = data.ordersByStatus || {};
+      chart2 = new Chart(document.getElementById('ordersChart'), {
+        type: 'doughnut', data: {
+          labels: Object.keys(oStatus), datasets: [{ data: Object.values(oStatus), backgroundColor: ['#f59e0b','#ffffff','#ec4899','#10b981','#ef4444'] }]
+        },
+        options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: '#888' } } } }
+      });
+    }
+
+    async function loadOrders() {
+      const data = await api('/admin/orders');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      const orders = data.orders || data || [];
+      window._allOrders = orders;
+      renderOrders(orders);
+    }
+
+    function renderOrders(orders) {
+      let typeLabel = { website:'🌐 Website', pcb:'🔌 PCB', cad:'🔧 CAD', mcu:'🤖 Firmware', circuit:'⚡ Circuit', general:'💬 Project' };
+      document.getElementById('ordersList').innerHTML = orders.map(o => {
+        let projectType = escapeHtml(typeLabel[o.projectType] || o.items?.[0]?.name || o.serviceType || 'Custom');
+        let accessHtml = '';
+        if (o.deployment && o.deployment.liveUrl) {
+          accessHtml = '<a href="' + escapeHtml(o.deployment.liveUrl) + '" target="_blank" class="btn-sm btn-primary" style="font-size:11px;padding:3px 8px;text-decoration:none"><i class="fas fa-external-link-alt"></i> View</a>';
+        } else if (o.paymentStatus === 'paid' && (o.projectType === 'website' || o.projectType === 'mcu')) {
+          accessHtml = '<button class="btn-sm btn-success" style="font-size:11px;padding:3px 8px" onclick="adminDeploy(\'' + escapeHtml(o._id) + '\')"><i class="fas fa-rocket"></i> Deploy</button>';
+        } else if (o.paymentStatus === 'paid' && o.needsAdminReview) {
+          accessHtml = '<span style="font-size:11px;color:var(--warning)">⏳ Review</span>';
+        } else if (o.paymentStatus === 'paid') {
+          accessHtml = '<span style="font-size:11px;color:var(--success)">✅ Ready</span>';
+        } else {
+          accessHtml = '<span style="font-size:11px;color:var(--ash)">-</span>';
+        }
+        return '<tr>' +
+          '<td>#' + escapeHtml((o._id||'').slice(-8).toUpperCase()) + '</td>' +
+          '<td>' + escapeHtml(o.user?.name || o.billingAddress?.name || 'N/A') + '</td>' +
+          '<td>' + escapeHtml(o.user?.email || o.billingAddress?.email || 'N/A') + '</td>' +
+          '<td>' + projectType + '</td>' +
+          '<td>₹' + escapeHtml(o.total || 0) + '</td>' +
+          '<td><span class="badge ' + (o.paymentStatus === 'paid' ? 'badge-green' : 'badge-yellow') + '">' + escapeHtml(o.paymentStatus || 'pending') + '</span></td>' +
+          '<td><span class="badge ' + statusBadge(o.status) + '">' + escapeHtml((o.status||'pending').replace('_',' ')) + '</span></td>' +
+          '<td>' + accessHtml + '</td>' +
+          '<td>' + escapeHtml(new Date(o.createdAt).toLocaleDateString()) + '</td>' +
+          '<td><select onchange="updateOrderStatus(\'' + escapeHtml(o._id) + '\', this.value)" style="padding:4px 8px;background:var(--slate);border:1px solid rgba(99,102,241,0.2);border-radius:6px;color:var(--white);font-size:12px;">' +
+            '<option value="pending"' + (o.status==='pending'?' selected':'') + '>Pending</option>' +
+            '<option value="confirmed"' + (o.status==='confirmed'?' selected':'') + '>Confirmed</option>' +
+            '<option value="in_progress"' + (o.status==='in_progress'?' selected':'') + '>In Progress</option>' +
+            '<option value="review"' + (o.status==='review'?' selected':'') + '>Review</option>' +
+            '<option value="completed"' + (o.status==='completed'?' selected':'') + '>Completed</option>' +
+            '<option value="cancelled"' + (o.status==='cancelled'?' selected':'') + '>Cancelled</option>' +
+          '</select></td>' +
+        '</tr>';
+}).join('') || '<tr><td colspan="10" class="empty-state"><i class="fas fa-shopping-bag" style="font-size:24px;margin-bottom:8px;"></i><h3>No orders yet</h3><p>Orders will appear here when customers make purchases on the main site. Try checking the Overview tab for recent activity.</p></td></tr>';
+    }
+
+    function filterByStatus(s) {
+      const orders = window._allOrders || [];
+      renderOrders(s === 'all' ? orders : orders.filter(o => o.status === s));
+    }
+
+    function filterOrders() {
+      const q = document.getElementById('ordersSearch').value.toLowerCase();
+      const orders = (window._allOrders || []).filter(o => 
+        (o._id||'').toLowerCase().includes(q) || (o.user?.name||'').toLowerCase().includes(q) || (o.user?.email||'').toLowerCase().includes(q)
+      );
+      renderOrders(orders);
+    }
+
+    async function updateOrderStatus(id, status) {
+      const res = await api(`/admin/orders/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) });
+      if (res) showToast('Order updated', 'success');
+      loadOrders();
+    }
+
+    async function loadPendingReviews() {
+      const data = await api('/admin/pending-reviews');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      const orders = Array.isArray(data) ? data : [];
+      let typeLabel = { website:'🌐 Website', pcb:'🔌 PCB', cad:'🔧 CAD', mcu:'🤖 Firmware', circuit:'⚡ Circuit', general:'💬 Project' };
+      document.getElementById('pendingReviewsList').innerHTML = orders.map(function(o) {
+        let projectType = escapeHtml(typeLabel[o.projectType] || '💬 Project');
+        let fileCount = (o.deliveryFiles||[]).length;
+        return '<tr>' +
+          '<td>#' + escapeHtml((o._id||'').slice(-8).toUpperCase()) + '</td>' +
+          '<td>' + escapeHtml(o.user?.name || o.billingAddress?.name || 'N/A') + '</td>' +
+          '<td>' + projectType + '</td>' +
+          '<td>₹' + escapeHtml(o.total || 0) + '</td>' +
+          '<td>' + escapeHtml(fileCount) + ' files <button class="btn-sm btn-primary" style="font-size:10px;padding:2px 8px" onclick="document.getElementById(\'fileInput_' + escapeHtml(o._id) + '\').click()"><i class="fas fa-upload"></i></button>' +
+            '<input type="file" id="fileInput_' + escapeHtml(o._id) + '" style="display:none" onchange="uploadDeliveryFile(\'' + escapeHtml(o._id) + '\', this)">' +
+          '</td>' +
+          '<td><span class="badge badge-yellow">Awaiting Review</span></td>' +
+          '<td>' +
+            '<button class="btn-sm btn-success" onclick="approvePhysical(\'' + escapeHtml(o._id) + '\')" style="margin-right:4px"><i class="fas fa-check"></i> Approve</button>' +
+            '<button class="btn-sm btn-primary" onclick="showToast(\'Upload files before approving\',\'info\')" style="font-size:10px"><i class="fas fa-file"></i> Upload</button>' +
+          '</td>' +
+        '</tr>';
+      }).join('') || '<tr><td colspan="7" class="empty-state">No pending reviews — all caught up!</td></tr>';
+    }
+
+    async function adminDeploy(orderId) {
+      if (!confirm('Deploy this digital project?')) return;
+      let btn = event.target;
+      btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+      let res = await api('/admin/orders/' + orderId + '/deploy', { method: 'POST' });
+      if (res && res.success) {
+        showToast('Project deployed! URL: ' + res.deployUrl, 'success');
+      } else {
+        showToast('Deploy failed: ' + (res?.error || 'Unknown error'), 'error');
+      }
+      loadOrders();
+    }
+
+    async function approvePhysical(orderId) {
+      if (!confirm('Approve and release this physical project to the client?')) return;
+      let res = await api('/admin/orders/' + orderId + '/approve-physical', { method: 'POST' });
+      if (res && res.success) {
+        showToast('Project released to client', 'success');
+      } else {
+        showToast('Failed: ' + (res?.error || 'Unknown error'), 'error');
+      }
+      loadPendingReviews();
+      loadOrders();
+    }
+
+    async function uploadDeliveryFile(orderId, input) {
+      let file = input.files[0];
+      if (!file) return;
+      let formData = new FormData();
+      formData.append('file', file);
+      try {
+        let res = await fetch(API + '/admin/orders/' + orderId + '/upload', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token },
+          body: formData
+        });
+        let data = await res.json();
+        if (data.success) {
+          showToast('File uploaded: ' + data.file.filename, 'success');
+        } else {
+          showToast('Upload failed: ' + (data.error || 'Error'), 'error');
+        }
+      } catch(e) {
+        showToast('Upload error: ' + e.message, 'error');
+      }
+      input.value = '';
+      loadPendingReviews();
+    }
+
+    async function loadUsers() {
+      const data = await api('/admin/users');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      const users = data.users || data || [];
+      document.getElementById('usersList').innerHTML = users.map(u => `
+        <tr>
+          <td><strong>${escapeHtml(u.name)}</strong></td>
+          <td>${escapeHtml(u.email)}</td>
+          <td><span class="badge ${u.role === 'admin' ? 'badge-green' : 'badge-blue'}">${escapeHtml(u.role)}</span></td>
+          <td><span class="badge ${u.isActive ? 'badge-green' : 'badge-red'}">${u.isActive ? 'Active' : 'Disabled'}</span></td>
+          <td>${escapeHtml(u.orderCount || '-')}</td>
+          <td>${escapeHtml(new Date(u.createdAt).toLocaleDateString())}</td>
+          <td>
+            <button class="btn-sm ${u.isActive ? 'btn-danger' : 'btn-success'}" onclick="toggleUser('${escapeHtml(u._id)}', ${!u.isActive})">
+              ${u.isActive ? 'Disable' : 'Enable'}
+            </button>
+          </td>
+        </tr>
+      `).join('') || '<tr><td colspan="7" class="empty-state"><i class="fas fa-users" style="font-size:24px;margin-bottom:8px;"></i><h3>No users registered yet</h3><p>Users will appear here when they sign up on the main site. Check Active Users for real-time activity.</p></td></tr>';
+    }
+
+    async function toggleUser(id, active) {
+      if (!confirm(`Are you sure you want to ${active ? 'enable' : 'disable'} this user?`)) return;
+      const res = await api(`/admin/users/${id}`, { method: 'PUT', body: JSON.stringify({ isActive: active }) });
+      if (res) showToast(`User ${active ? 'enabled' : 'disabled'}`, 'success');
+      loadUsers();
+    }
+
+    async function loadActiveUsers() {
+      const data = await api('/admin/active-users');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      document.getElementById('activeUsersList').innerHTML = data.map(u => `
+        <tr>
+          <td><code style="font-size:11px;color:var(--primary-glow);">${escapeHtml((u._id||'').slice(-8).toUpperCase())}</code></td>
+          <td><strong>${escapeHtml(u.name)}</strong></td>
+          <td>${escapeHtml(u.email)}</td>
+          <td>${escapeHtml(u.phone || '-')}</td>
+          <td><span class="badge ${u.role === 'admin' ? 'badge-green' : u.role === 'client' ? 'badge-blue' : 'badge-gray'}">${escapeHtml(u.role)}</span></td>
+          <td>${escapeHtml((u.orderCount||0) + (u.websiteOrderCount||0))}</td>
+          <td>${u.subscription ? `<span class="badge ${u.subscription.isActive ? 'badge-green' : 'badge-gray'}">${u.subscription.isActive ? 'Active' : 'Inactive'}</span>` : '<span class="badge badge-gray">None</span>'}</td>
+          <td style="font-size:12px;">${u.lastLogin ? escapeHtml(new Date(u.lastLogin).toLocaleString()) : 'Never'}</td>
+          <td><span class="badge ${u.isActive ? 'badge-green' : 'badge-red'}">${u.isActive ? 'Active' : 'Disabled'}</span></td>
+          <td><button class="btn-sm btn-primary" onclick="showUserDetail('${escapeHtml(u._id)}')"><i class="fas fa-eye"></i></button></td>
+        </tr>
+      `).join('') || '<tr><td colspan="10" class="empty-state">No active users in the last 24 hours</td></tr>';
+    }
+
+    function showUserDetail(id) {
+      const card = document.getElementById('activeUserDetail');
+      const content = document.getElementById('activeUserDetailContent');
+      card.style.display = 'block';
+      content.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Loading...</p>';
+      api('/admin/active-users').then(users => {
+        const u = users.find(x => x._id === id);
+        if (!u) { content.innerHTML = '<p class="empty-state">User not found</p>'; return; }
+        const sub = u.subscription;
+        content.innerHTML = `
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div style="background:var(--slate);padding:16px;border-radius:10px;">
+              <h4 style="margin-bottom:12px;color:var(--primary-glow);"><i class="fas fa-user-circle"></i> Account Info</h4>
+              <div style="display:grid;gap:8px;font-size:14px;">
+                <div><strong>ID:</strong> <code style="color:var(--primary-glow);">${escapeHtml(u._id)}</code></div>
+                <div><strong>Name:</strong> ${escapeHtml(u.name)}</div>
+                <div><strong>Email:</strong> ${escapeHtml(u.email)}</div>
+                <div><strong>Phone:</strong> ${escapeHtml(u.phone || 'Not set')}</div>
+                <div><strong>Role:</strong> <span class="badge ${u.role === 'admin' ? 'badge-green' : 'badge-blue'}">${escapeHtml(u.role)}</span></div>
+                <div><strong>Admin No:</strong> ${escapeHtml(u.adminNo || 'N/A')}</div>
+                <div><strong>Status:</strong> <span class="badge ${u.isActive ? 'badge-green' : 'badge-red'}">${u.isActive ? 'Active' : 'Disabled'}</span></div>
+                <div><strong>Email Verified:</strong> <span class="badge ${u.emailVerified ? 'badge-green' : 'badge-yellow'}">${u.emailVerified ? 'Yes' : 'No'}</span></div>
+              </div>
+            </div>
+            <div style="background:var(--slate);padding:16px;border-radius:10px;">
+              <h4 style="margin-bottom:12px;color:var(--success);"><i class="fas fa-chart-line"></i> Activity</h4>
+              <div style="display:grid;gap:8px;font-size:14px;">
+                <div><strong>Orders:</strong> ${escapeHtml(u.orderCount || 0)}</div>
+                <div><strong>Website Projects:</strong> ${escapeHtml(u.websiteOrderCount || 0)}</div>
+                <div><strong>Total Orders:</strong> ${escapeHtml((u.orderCount||0) + (u.websiteOrderCount||0))}</div>
+                <div><strong>Last Login:</strong> ${u.lastLogin ? escapeHtml(new Date(u.lastLogin).toLocaleString()) : 'Never'}</div>
+                <div><strong>Registered:</strong> ${u.createdAt ? escapeHtml(new Date(u.createdAt).toLocaleDateString()) : '-'}</div>
+                <div><strong>Failed Logins:</strong> <span class="badge ${(u.failedLoginAttempts||0) > 3 ? 'badge-red' : 'badge-gray'}">${escapeHtml(u.failedLoginAttempts || 0)}</span></div>
+                <div><strong>2FA:</strong> <span class="badge ${u.twoFactorEnabled ? 'badge-green' : 'badge-gray'}">${u.twoFactorEnabled ? 'Enabled' : 'Disabled'}</span></div>
+                <div><strong>Trusted Devices:</strong> ${escapeHtml((u.trustedDevices||[]).length)}</div>
+              </div>
+            </div>
+          </div>
+          ${sub ? `
+          <div style="background:var(--slate);padding:16px;border-radius:10px;margin-top:16px;">
+            <h4 style="margin-bottom:12px;color:var(--warning);"><i class="fas fa-bell"></i> Subscription</h4>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:14px;">
+              <div><strong>Status:</strong> <span class="badge ${sub.isActive ? 'badge-green' : 'badge-gray'}">${sub.isActive ? 'Active' : 'Inactive'}</span></div>
+              <div><strong>Subscribed:</strong> ${escapeHtml(new Date(sub.subscribedAt).toLocaleDateString())}</div>
+              <div><strong>Source:</strong> ${escapeHtml(sub.source)}</div>
+              <div><strong>Newsletter:</strong> ${sub.preferences?.newsletter ? '✓' : '✗'}</div>
+              <div><strong>Promotions:</strong> ${sub.preferences?.promotions ? '✓' : '✗'}</div>
+              <div><strong>Updates:</strong> ${sub.preferences?.productUpdates ? '✓' : '✗'}</div>
+            </div>
+          </div>` : ''}
+          <div style="margin-top:16px;">
+            <button class="btn-sm btn-danger" onclick="document.getElementById('activeUserDetail').style.display='none'"><i class="fas fa-times"></i> Close</button>
+          </div>
+        `;
+      });
+    }
+
+    async function loadServices() {
+      const data = await api('/admin/services');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      const svcs = data.services || data || [];
+      document.getElementById('servicesList').innerHTML = svcs.map(s => `
+        <tr>
+          <td><strong>${escapeHtml(s.name)}</strong></td>
+          <td><span class="badge badge-blue">${escapeHtml(s.category)}</span></td>
+          <td>$${escapeHtml(s.basePrice || s.price || 0)}</td>
+          <td><span class="badge ${s.featured ? 'badge-green' : 'badge-gray'}">${s.featured ? 'Featured' : 'Standard'}</span></td>
+          <td>-</td>
+          <td>
+            <button class="btn-sm btn-primary" onclick="editService('${escapeHtml(s._id)}')"><i class="fas fa-edit"></i></button>
+            <button class="btn-sm btn-danger" onclick="deleteService('${escapeHtml(s._id)}')"><i class="fas fa-trash"></i></button>
+          </td>
+        </tr>
+      `).join('') || '<tr><td colspan="6" class="empty-state"><i class="fas fa-briefcase" style="font-size:24px;margin-bottom:8px;"></i><h3>No services yet</h3><p>Add your first service by clicking "Add Service" above. Services are displayed on the main site pricing page.</p></td></tr>';
+    }
+
+    async function showAddService() {
+      document.getElementById('serviceModalTitle').textContent = 'Add Service';
+      document.getElementById('serviceId').value = '';
+      document.getElementById('svcName').value = '';
+      document.getElementById('svcCategory').value = 'Web Development';
+      document.getElementById('svcPrice').value = '';
+      document.getElementById('svcDesc').value = '';
+      document.getElementById('svcFeatures').value = '';
+      openModal('serviceModal');
+    }
+
+    async function editService(id) {
+      const data = await api('/admin/services');
+      const svc = (data.services || data).find(s => s._id === id);
+      if (!svc) return;
+      document.getElementById('serviceModalTitle').textContent = 'Edit Service';
+      document.getElementById('serviceId').value = id;
+      document.getElementById('svcName').value = svc.name;
+      document.getElementById('svcCategory').value = svc.category;
+      document.getElementById('svcPrice').value = svc.basePrice || svc.price || '';
+      document.getElementById('svcDesc').value = svc.description || '';
+      document.getElementById('svcFeatures').value = (svc.features || []).join(', ');
+      openModal('serviceModal');
+    }
+
+    async function saveService() {
+      const id = document.getElementById('serviceId').value;
+      const body = {
+        name: document.getElementById('svcName').value,
+        category: document.getElementById('svcCategory').value,
+        basePrice: parseFloat(document.getElementById('svcPrice').value),
+        description: document.getElementById('svcDesc').value,
+        features: document.getElementById('svcFeatures').value.split(',').map(f => f.trim()).filter(Boolean)
+      };
+      if (!body.name || !body.basePrice) { showToast('Name and price required', 'error'); return; }
+      const method = id ? 'PUT' : 'POST';
+      const endpoint = id ? `/admin/services/${id}` : '/admin/services';
+      const res = await api(endpoint, { method, body: JSON.stringify(body) });
+      if (res) { showToast(id ? 'Service updated' : 'Service created', 'success'); closeModal('serviceModal'); loadServices(); }
+    }
+
+    async function deleteService(id) {
+      if (!confirm('Delete this service?')) return;
+      const res = await api(`/admin/services/${id}`, { method: 'DELETE' });
+      if (res) { showToast('Service deleted', 'success'); loadServices(); }
+    }
+
+    async function loadReviews() {
+      const data = await api('/reviews');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      const revs = Array.isArray(data) ? data : data.reviews || [];
+      document.getElementById('reviewsList').innerHTML = revs.map(r => `
+        <tr>
+          <td>${escapeHtml(r.name)}</td>
+          <td>${escapeHtml(r.company || '-')}</td>
+          <td>${escapeHtml('★'.repeat(r.rating))}${escapeHtml('☆'.repeat(5 - (r.rating || 0)))}</td>
+          <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(r.text || '-')}</td>
+          <td><span class="badge ${r.approved ? 'badge-green' : 'badge-yellow'}">${r.approved ? 'Approved' : 'Pending'}</span></td>
+          <td>
+            ${!r.approved ? `<button class="btn-sm btn-success" onclick="approveReview('${escapeHtml(r._id)}')">Approve</button>` : ''}
+          </td>
+        </tr>
+      `).join('') || '<tr><td colspan="6" class="empty-state"><i class="fas fa-star" style="font-size:24px;margin-bottom:8px;"></i><h3>No reviews yet</h3><p>Customer reviews will appear here once clients submit feedback on completed projects.</p></td></tr>';
+    }
+
+    async function approveReview(id) {
+      const res = await api(`/admin/reviews/${id}`, { method: 'PUT', body: JSON.stringify({ approved: true }) });
+      if (res) { showToast('Review approved!', 'success'); loadReviews(); }
+    }
+
+    async function loadInquiries() {
+      try {
+        const res = await fetch(API + '/admin/inquiries', { headers: { Authorization: 'Bearer ' + token } });
+        if (!res.ok) {
+          // Try regular inquiries endpoint
+          const data = await api('/inquiries');
+          if (!data) { document.getElementById('inquiriesList').innerHTML = '<tr><td colspan="6" class="empty-state">No inquiries endpoint available</td></tr>'; return; }
+          renderInquiries(data.inquiries || data || []);
+          return;
+        }
+        const data = await res.json();
+        renderInquiries(data.inquiries || data || []);
+      } catch(e) {
+        document.getElementById('inquiriesList').innerHTML = '<tr><td colspan="6" class="empty-state">Unable to load inquiries</td></tr>';
+      }
+    }
+
+    function renderInquiries(items) {
+      document.getElementById('inquiriesList').innerHTML = items.map(i => `
+        <tr>
+          <td>${escapeHtml(i.name)}</td>
+          <td>${escapeHtml(i.email)}</td>
+          <td><span class="badge badge-blue">${escapeHtml(i.projectType || 'General')}</span></td>
+          <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(i.message || '-')}</td>
+          <td>${escapeHtml(new Date(i.createdAt).toLocaleDateString())}</td>
+          <td><span class="badge ${i.status === 'new' ? 'badge-yellow' : 'badge-green'}">${escapeHtml(i.status || 'new')}</span></td>
+        </tr>
+      `).join('') || '<tr><td colspan="6" class="empty-state">No inquiries</td></tr>';
+    }
+
+    async function loadSubscriptions() {
+      const data = await api('/admin/subscriptions');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      const subs = data.subscriptions || [];
+      document.getElementById('subsList').innerHTML = subs.map(s => `
+        <tr>
+          <td>${escapeHtml(s.email)}</td>
+          <td>${escapeHtml(s.name || '-')}</td>
+          <td><span class="badge ${s.isActive ? 'badge-green' : 'badge-gray'}">${s.isActive ? 'Active' : 'Unsubscribed'}</span></td>
+          <td>${escapeHtml(s.source || 'Website')}</td>
+          <td>${escapeHtml(new Date(s.subscribedAt).toLocaleDateString())}</td>
+        </tr>
+      `).join('') || '<tr><td colspan="5" class="empty-state">No subscribers</td></tr>';
+    }
+
+    async function loadDiscounts() {
+      const data = await api('/discount/codes');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      const codes = data.codes || data || [];
+      document.getElementById('discountsList').innerHTML = codes.map(c => `
+        <tr>
+          <td><strong style="font-family:monospace;">${escapeHtml(c.code)}</strong></td>
+          <td><span class="badge badge-blue">${escapeHtml(c.type)}</span></td>
+          <td>${escapeHtml(c.type === 'percentage' ? c.value + '%' : '$' + c.value)}</td>
+          <td>${escapeHtml(c.usedCount || 0)}</td>
+          <td>${escapeHtml(c.maxUses || '∞')}</td>
+          <td><span class="badge ${c.isActive ? 'badge-green' : 'badge-gray'}">${c.isActive ? 'Active' : 'Expired'}</span></td>
+          <td><button class="btn-sm btn-danger" onclick="deleteDiscount('${escapeHtml(c._id)}')"><i class="fas fa-trash"></i></button></td>
+        </tr>
+      `).join('') || '<tr><td colspan="7" class="empty-state">No discount codes</td></tr>';
+    }
+
+    function showAddDiscount() { openModal('discountModal'); }
+
+    async function loadAuditLogs(q = '') {
+      const data = await api(`/audit-logs${q ? '?action=' + q : ''}`);
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      const logs = data.logs || [];
+      document.getElementById('auditList').innerHTML = logs.map(l => `
+        <tr>
+          <td><code style="color:var(--primary-glow);">${escapeHtml(l.action)}</code></td>
+          <td>${escapeHtml(l.resource)}</td>
+          <td>${escapeHtml(l.user?.name || l.user?.email || 'System')}</td>
+          <td style="font-family:monospace;font-size:12px;">${escapeHtml(l.ip || '-')}</td>
+          <td><span class="badge ${l.status === 'success' ? 'badge-green' : 'badge-red'}">${escapeHtml(l.status)}</span></td>
+          <td style="font-size:12px;">${escapeHtml(new Date(l.createdAt).toLocaleString())}</td>
+        </tr>
+      `).join('') || '<tr><td colspan="6" class="empty-state">No audit logs</td></tr>';
+    }
+
+    async function loadSystem() {
+      const data = await api('/system/health');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      document.getElementById('sysStatus').textContent = data.status || '-';
+      document.getElementById('sysUptime').textContent = data.uptimeFormatted || '-';
+      document.getElementById('sysMemory').textContent = data.memory?.heapUsed || '-';
+      document.getElementById('sysMongo').textContent = data.mongodb || '-';
+      document.getElementById('envInfo').innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div style="background:var(--slate);padding:12px;border-radius:8px;"><small style="color:var(--ash);">Node</small><br>${escapeHtml(data.node || '-')}</div>
+          <div style="background:var(--slate);padding:12px;border-radius:8px;"><small style="color:var(--ash);">Platform</small><br>${escapeHtml(data.platform || '-')}</div>
+          <div style="background:var(--slate);padding:12px;border-radius:8px;"><small style="color:var(--ash);">Heap Total</small><br>${escapeHtml(data.memory?.heapTotal || '-')}</div>
+          <div style="background:var(--slate);padding:12px;border-radius:8px;"><small style="color:var(--ash);">RSS</small><br>${escapeHtml(data.memory?.rss || '-')}</div>
+        </div>
+      `;
+    }
+
+    // === TRANSACTIONS ===
+    async function loadTransactions() {
+      let data = await api('/admin/transactions');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      document.getElementById('transactionsList').innerHTML = data.map(function(t) {
+        return '<tr><td>#' + escapeHtml((t.orderId||'').slice(-8).toUpperCase()) + '</td><td>' + escapeHtml(t.customer||'N/A') + '</td><td>₹' + escapeHtml(t.amount||0) + '</td><td>' + escapeHtml(t.method||'razorpay') + '</td><td><span class="badge ' + (t.paymentStatus==='paid'?'badge-green':'badge-yellow') + '">' + escapeHtml(t.paymentStatus) + '</span></td><td>' + escapeHtml(new Date(t.createdAt).toLocaleDateString()) + '</td><td>' +
+          (t.paymentStatus === 'paid' ? '<button class="btn-sm btn-danger" onclick="refundOrder(\'' + escapeHtml(t.orderId) + '\')"><i class="fas fa-undo"></i> Refund</button>' : '-') +
+        '</td></tr>';
+      }).join('') || '<tr><td colspan="7" class="empty-state">No transactions</td></tr>';
+    }
+    async function refundOrder(id) {
+      if (!confirm('Refund this transaction?')) return;
+      let r = await api('/admin/transactions/' + id + '/refund', { method: 'POST' });
+      if (r && r.success) showToast('Transaction refunded', 'success');
+      loadTransactions();
+    }
+
+    // === PROJECTS ===
+    async function loadProjectsAdmin() {
+      let data = await api('/admin/projects');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      let typeLabel = { website:'🌐 Website', pcb:'🔌 PCB', cad:'🔧 CAD', mcu:'🤖 Firmware', circuit:'⚡ Circuit', general:'💬 Project' };
+      document.getElementById('projectsList').innerHTML = data.map(function(p) {
+        return '<tr><td>#' + escapeHtml((p.orderId||'').slice(-8).toUpperCase()) + '</td><td>' + escapeHtml(p.customer||'N/A') + '</td><td>' + escapeHtml(typeLabel[p.projectType]||'💬') + '</td><td><span class="badge badge-blue">' + escapeHtml(p.pricingTier||'basic') + '</span></td><td><span class="badge ' + statusBadge(p.status) + '">' + escapeHtml(p.status||'pending') + '</span></td><td><span class="badge ' + (p.paymentStatus==='paid'?'badge-green':'badge-yellow') + '">' + escapeHtml(p.paymentStatus||'pending') + '</span></td><td>' + (p.hasDeployment ? '<a href="' + escapeHtml(p.liveUrl) + '" target="_blank" style="color:var(--success)">Live</a>' : '<span style="color:var(--ash)">No</span>') + '</td><td>' + (p.hasFiles ? '<span style="color:var(--success)">✓</span>' : '<span style="color:var(--ash)">-</span>') + '</td><td><button class="btn-sm btn-danger" onclick="deleteProject(\'' + escapeHtml(p.orderId) + '\')"><i class="fas fa-trash"></i></button></td></tr>';
+      }).join('') || '<tr><td colspan="9" class="empty-state"><i class="fas fa-folder-open" style="font-size:24px;margin-bottom:8px;"></i><h3>No projects yet</h3><p>Projects are created automatically when customers place orders. Completed or paid orders will generate a project entry here.</p></td></tr>';
+    }
+    async function deleteProject(id) {
+      if (!confirm('Delete this project permanently?')) return;
+      let r = await api('/admin/projects/' + id, { method: 'DELETE' });
+      if (r && r.success) showToast('Project deleted', 'success');
+      loadProjectsAdmin();
+    }
+
+    // === CMS ===
+    async function loadCMS() {
+      let data = await api('/admin/cms');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      let html = '';
+      Object.keys(data).forEach(function(section) {
+        let val = typeof data[section] === 'object' ? JSON.stringify(data[section], null, 2) : data[section];
+        html += '<div style="margin-bottom:16px;padding:16px;background:var(--slate);border-radius:8px;">';
+        html += '<label style="display:block;font-size:13px;color:var(--ash);margin-bottom:6px;text-transform:capitalize;">' + section + '</label>';
+        html += '<textarea id="cms_' + section + '" rows="3" style="width:100%;padding:10px;background:var(--obsidian);border:1px solid rgba(99,102,241,0.2);border-radius:8px;color:var(--white);font-family:monospace;font-size:12px;">' + val + '</textarea>';
+        html += '<button class="btn-sm btn-primary" style="margin-top:8px" onclick="saveCMSSection(\'' + section + '\')"><i class="fas fa-save"></i> Save</button>';
+        html += '</div>';
+      });
+      document.getElementById('cmsEditor').innerHTML = html;
+    }
+    async function saveCMSSection(section) {
+      let val = document.getElementById('cms_' + section).value;
+      try { val = JSON.parse(val); } catch(e) {}
+      let r = await api('/admin/cms/' + section, { method: 'PUT', body: JSON.stringify(typeof val === 'object' ? val : { value: val }) });
+      if (r && r.success) showToast(section + ' saved', 'success');
+    }
+
+    // === BLOG ===
+    async function loadBlog() {
+      let data = await api('/admin/blog');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      document.getElementById('blogList').innerHTML = data.map(function(p) {
+        return '<tr><td><strong>' + escapeHtml(p.title||'Untitled') + '</strong></td><td style="font-family:monospace;font-size:12px">' + escapeHtml(p.slug||'-') + '</td><td><span class="badge ' + (p.status==='published'?'badge-green':'badge-yellow') + '">' + escapeHtml(p.status||'draft') + '</span></td><td>' + escapeHtml(p.author||'Admin') + '</td><td>' + escapeHtml(p.views||0) + '</td><td>' + escapeHtml(new Date(p.createdAt).toLocaleDateString()) + '</td><td><button class="btn-sm btn-danger" onclick="deleteBlog(\'' + escapeHtml(p._id) + '\')"><i class="fas fa-trash"></i></button></td></tr>';
+      }).join('') || '<tr><td colspan="7" class="empty-state">No blog posts</td></tr>';
+    }
+    async function deleteBlog(id) {
+      if (!confirm('Delete this post?')) return;
+      let r = await api('/admin/blog/' + id, { method: 'DELETE' });
+      if (r && r.success) showToast('Post deleted', 'success');
+      loadBlog();
+    }
+
+    // === NOTIFICATIONS ===
+    async function loadNotifications() {
+      let data = await api('/admin/notifications');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      document.getElementById('notificationsList').innerHTML = data.map(function(n) {
+        return '<tr><td><strong>' + escapeHtml(n.title||'') + '</strong></td><td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeHtml(n.message||'') + '</td><td><span class="badge ' + (n.type==='warning'?'badge-yellow':n.type==='error'?'badge-red':'badge-blue') + '">' + escapeHtml(n.type||'info') + '</span></td><td>' + escapeHtml(n.sentBy||'-') + '</td><td>' + escapeHtml(new Date(n.createdAt).toLocaleDateString()) + '</td><td><button class="btn-sm btn-danger" onclick="deleteNotification(\'' + escapeHtml(n._id) + '\')"><i class="fas fa-trash"></i></button></td></tr>';
+      }).join('') || '<tr><td colspan="6" class="empty-state">No notifications</td></tr>';
+    }
+    async function deleteNotification(id) {
+      if (!confirm('Delete this notification? This cannot be undone.')) return;
+      let r = await api('/admin/notifications/' + id, { method: 'DELETE' });
+      if (r && r.success) { showToast('Notification deleted', 'success'); loadNotifications(); }
+    }
+    function showAddNotification() {
+      let title = prompt('Notification title:');
+      if (!title) return;
+      let msg = prompt('Notification message:');
+      if (!msg) return;
+      let type = prompt('Type (info/warning/error):') || 'info';
+      api('/admin/notifications', { method: 'POST', body: JSON.stringify({ title, message: msg, type }) }).then(function(r) {
+        if (r && r.success) { showToast('Notification sent', 'success'); loadNotifications(); }
+      });
+    }
+
+    // === ANNOUNCEMENTS ===
+    async function loadAnnouncements() {
+      let data = await api('/admin/announcements');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      document.getElementById('announcementsList').innerHTML = data.map(function(a) {
+        return '<tr><td><strong>' + escapeHtml(a.title||'') + '</strong></td><td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeHtml(a.content||'') + '</td><td><span class="badge ' + (a.active?'badge-green':'badge-gray') + '">' + (a.active?'Active':'Inactive') + '</span></td><td>' + escapeHtml(new Date(a.createdAt).toLocaleDateString()) + '</td><td><button class="btn-sm btn-primary" onclick="toggleAnnouncement(\'' + escapeHtml(a._id) + '\')"><i class="fas fa-toggle-on"></i></button> <button class="btn-sm btn-danger" onclick="deleteAnnouncement(\'' + escapeHtml(a._id) + '\')"><i class="fas fa-trash"></i></button></td></tr>';
+      }).join('') || '<tr><td colspan="5" class="empty-state">No announcements</td></tr>';
+    }
+    function showAddAnnouncement() {
+      let title = prompt('Announcement title:');
+      if (!title) return;
+      let content = prompt('Announcement content:');
+      if (!content) return;
+      api('/admin/announcements', { method: 'POST', body: JSON.stringify({ title, content }) }).then(function(r) {
+        if (r && r.success) { showToast('Announcement created', 'success'); loadAnnouncements(); }
+      });
+    }
+    async function toggleAnnouncement(id) {
+      let r = await api('/admin/announcements/' + id, { method: 'PUT', body: JSON.stringify({ active: true }) });
+      if (r && r.success) { showToast('Updated', 'success'); loadAnnouncements(); }
+    }
+    async function deleteAnnouncement(id) {
+      if (!confirm('Delete this announcement? This cannot be undone.')) return;
+      let r = await api('/admin/announcements/' + id, { method: 'DELETE' });
+      if (r && r.success) { showToast('Deleted', 'success'); loadAnnouncements(); }
+    }
+
+    // === SECURITY ===
+    async function loadIPBlock() {
+      let data = await api('/admin/security/ip-block');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      document.getElementById('ipBlockList').innerHTML = data.map(function(b) {
+        return '<tr><td style="font-family:monospace">' + escapeHtml(b.ip||'') + '</td><td>' + escapeHtml(b.reason||'-') + '</td><td>' + escapeHtml(new Date(b.blockedAt).toLocaleString()) + '</td><td><button class="btn-sm btn-success" onclick="unblockIp(\'' + escapeHtml(b.ip) + '\')"><i class="fas fa-unlock"></i> Unblock</button></td></tr>';
+      }).join('') || '<tr><td colspan="4" class="empty-state">No IPs blocked</td></tr>';
+    }
+    async function blockIp() {
+      if (!confirm('Block this IP address? This may prevent legitimate users from accessing the site.')) return;
+      let ip = document.getElementById('blockIpInput').value.trim();
+      let reason = document.getElementById('blockIpReason').value.trim();
+      if (!ip) { showToast('Enter an IP address', 'error'); return; }
+      let r = await api('/admin/security/ip-block', { method: 'POST', body: JSON.stringify({ ip, reason }) });
+      if (r && r.success) { showToast('IP blocked: ' + ip, 'success'); loadIPBlock(); document.getElementById('blockIpInput').value = ''; document.getElementById('blockIpReason').value = ''; }
+    }
+    async function unblockIp(ip) {
+      let r = await api('/admin/security/ip-block/' + encodeURIComponent(ip), { method: 'DELETE' });
+      if (r && r.success) { showToast('IP unblocked', 'success'); loadIPBlock(); }
+    }
+
+    // === SECURITY OVERVIEW ===
+    async function loadSecurityOverview() {
+      let r = await api('/admin/security/overview');
+      if (!r) return;
+      document.getElementById('securityOverview').innerHTML =
+        '<div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">' +
+        '<div class="stat-card"><div class="stat-value" style="color:'+(r.securityScore>80?'var(--success)':'var(--danger)')+'">'+r.securityScore+'%</div><div class="stat-label">Security Score</div></div>' +
+        '<div class="stat-card"><div class="stat-value">'+r.threatsBlocked24h+'</div><div class="stat-label">Threats Blocked (24h)</div></div>' +
+        '<div class="stat-card"><div class="stat-value">'+(r.mfaEnabled?'✅':'❌')+'</div><div class="stat-label">MFA Enabled</div></div>' +
+        '<div class="stat-card"><div class="stat-value">'+(r.encryptionAtRest?'✅':'❌')+'</div><div class="stat-label">Encryption at Rest</div></div>' +
+        '<div class="stat-card"><div class="stat-value">'+(r.rateLimited?'✅':'❌')+'</div><div class="stat-label">Rate Limited</div></div>' +
+        '</div>';
+    }
+
+    // === JIT ELEVATION ===
+    async function loadElevationStatus() {
+      let r = await api('/admin/elevate');
+      if (!r) return;
+      let icon = document.getElementById('elevationIcon');
+      let levelDisp = document.getElementById('elevationLevelDisplay');
+      let expiry = document.getElementById('elevationExpiry');
+      icon.style.color = r.elevated ? 'var(--warning)' : 'var(--ash)';
+      icon.innerHTML = '<i class="fas '+(r.elevated?'fa-crown':'fa-user')+'"></i>';
+      levelDisp.textContent = r.elevated ? r.levelName.toUpperCase() : 'Viewer (Read Only)';
+      levelDisp.style.color = r.elevated ? 'var(--warning)' : 'var(--ash)';
+      expiry.textContent = r.elevated ? 'Expires in ' + Math.ceil(r.remainingMs/60000) + ' min' : 'Not elevated';
+    }
+    async function elevateTo(level) {
+      let r = await api('/admin/elevate', { method: 'POST', body: JSON.stringify({ level: level, reason: 'Manual elevation from admin panel' }) });
+      if (r && r.success) { showToast('Elevated to ' + level, 'success'); loadElevationStatus(); }
+    }
+    async function delegatePrivileges() {
+      let r = await api('/admin/delegate', { method: 'POST' });
+      if (r && r.success) { showToast('Privileges delegated to Viewer', 'info'); loadElevationStatus(); }
+    }
+
+    // === PASSKEY MANAGEMENT ===
+    async function loadPasskeyStatus() {
+      let r = await api('/admin/security/passkey-status');
+      if (!r) return;
+      let html = '';
+      if (r.registered) {
+        html += '<div style="margin-bottom:12px;padding:12px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.2);border-radius:8px;">';
+        html += '<span style="color:var(--success);font-weight:600;">✅ '+r.count+' passkey'+(r.count>1?'s':'')+' registered</span>';
+        if (r.hardwareBacked) html += ' &middot; <span style="color:var(--primary);font-size:13px;">Hardware-backed</span>';
+        html += '</div>';
+        html += '<div style="overflow-x:auto;"><table><thead><tr><th>Device</th><th>Hardware</th><th>Created</th><th>Last Used</th></tr></thead><tbody>';
+        r.credentials.forEach(function(c) {
+          html += '<tr><td>'+(c.deviceName||'Unknown')+'</td><td>'+(c.isHardwareBacked?'✅':'❌')+'</td><td>'+new Date(c.createdAt).toLocaleDateString()+'</td><td>'+(c.lastUsed?new Date(c.lastUsed).toLocaleString():'Never')+'</td></tr>';
+        });
+        html += '</tbody></table></div>';
+      } else {
+        html = '<div style="padding:20px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.2);border-radius:8px;text-align:center;">';
+        html += '<p style="color:var(--warning);font-weight:600;margin-bottom:8px;">⚠️ No passkey registered</p>';
+        html += '<p style="color:var(--ash);font-size:13px;">Admin write operations require a hardware passkey. Register one now.</p></div>';
+      }
+      document.getElementById('passkeyStatus').innerHTML = html;
+    }
+    async function registerPasskey() {
+      try {
+        if (!window.PublicKeyCredential) { showToast('WebAuthn not supported by this browser', 'error'); return; }
+        let beginRes = await fetch(API + '/auth/webauthn/register/begin', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } });
+        let opts = await beginRes.json();
+        if (opts.error) { showToast(opts.error, 'error'); return; }
+        opts.challenge = Uint8Array.from(atob(opts.challenge), function(c) { return c.charCodeAt(0); });
+        opts.user.id = Uint8Array.from(atob(opts.user.id), function(c) { return c.charCodeAt(0); });
+        if (opts.excludeCredentials) opts.excludeCredentials.forEach(function(c) { c.id = Uint8Array.from(atob(c.id), function(x) { return x.charCodeAt(0); }); });
+        let cred = await navigator.credentials.create({ publicKey: opts });
+        if (!cred) { showToast('Passkey creation cancelled', 'warning'); return; }
+        let credResp = { id: cred.id, rawId: btoa(String.fromCharCode.apply(null, new Uint8Array(cred.rawId))), type: cred.type, response: { clientDataJSON: btoa(String.fromCharCode.apply(null, new Uint8Array(cred.response.clientDataJSON))), attestationObject: btoa(String.fromCharCode.apply(null, new Uint8Array(cred.response.attestationObject))), transports: cred.response.getTransports ? cred.response.getTransports() : [] } };
+        let completeRes = await fetch(API + '/auth/webauthn/register/complete', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify(credResp) });
+        let result = await completeRes.json();
+        if (result.verified) { showToast('Passkey registered successfully!', 'success'); loadPasskeyStatus(); }
+        else { showToast('Passkey registration failed', 'error'); }
+      } catch(e) { showToast('Error: ' + e.message, 'error'); }
+    }
+    async function refreshPasskeyStatus() { loadPasskeyStatus(); }
+
+    // === FAIL2BAN ===
+    async function loadFail2ban() {
+      let r = await api('/admin/security/fail2ban');
+      if (!r) return;
+      document.getElementById('fail2banConfig').innerHTML =
+        '<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--ash);">' +
+        '<span>Max attempts: <strong style="color:var(--white)">'+r.config.maxAttempts+'</strong></span>' +
+        '<span>Window: <strong style="color:var(--white)">'+r.config.windowMinutes+' min</strong></span>' +
+        '<span>Ban duration: <strong style="color:var(--white)">'+r.config.banDurationMinutes+' min</strong></span>' +
+        '<span>Currently banned: <strong style="color:'+(r.entries.filter(function(e){return e.banned}).length?'var(--danger)':'var(--success)')+'">'+r.entries.filter(function(e){return e.banned}).length+'</strong></span></div>';
+      document.getElementById('fail2banList').innerHTML = r.entries.map(function(e) {
+        return '<tr>' +
+          '<td style="font-family:monospace;font-size:12px;">'+e.ip+'</td>' +
+          '<td><span class="badge '+(e.attempts>3?'badge-red':'badge-yellow')+'">'+e.attempts+'</span></td>' +
+          '<td style="font-size:12px;">'+new Date(e.firstAttempt).toLocaleString()+'</td>' +
+          '<td>'+(e.banned?'<span class="badge badge-red">Banned</span>':'<span class="badge badge-green">OK</span>')+'</td>' +
+          '<td style="font-size:12px;">'+(e.remainingBan||'-')+'</td>' +
+          '<td><button class="btn-sm btn-danger btn-xs" onclick="unbanIp(\''+e.ip+'\')"><i class="fas fa-undo"></i></button></td>' +
+        '</tr>';
+      }).join('') || '<tr><td colspan="6" class="empty-state">No entries</td></tr>';
+    }
+    async function unbanIp(ip) {
+      let r = await api('/admin/security/fail2ban/'+encodeURIComponent(ip), { method: 'DELETE' });
+      if (r && r.success) { showToast('IP unbanned', 'success'); loadFail2ban(); }
+    }
+
+    // === AUDIT LOG ===
+    let auditPage = 1;
+    async function loadAuditLog() {
+      let search = document.getElementById('auditSearch').value.trim();
+      let url = '/admin/audit-log?page='+auditPage+'&limit=30';
+      if (search) url += '&action='+encodeURIComponent(search);
+      let r = await api(url);
+      if (!r) return;
+      document.getElementById('auditLogList').innerHTML = r.logs.map(function(l) {
+        return '<tr>' +
+          '<td style="font-size:11px;">'+new Date(l.createdAt).toLocaleString()+'</td>' +
+          '<td style="font-size:12px;">'+(l.user?l.user.name:'System')+'</td>' +
+          '<td><code style="font-size:11px;color:var(--primary-glow);">'+l.action+'</code></td>' +
+          '<td style="font-size:12px;">'+l.resource+'</td>' +
+          '<td><span class="badge '+(l.status==='success'?'badge-green':'badge-red')+'">'+l.status+'</span></td>' +
+          '<td style="font-size:11px;font-family:monospace;">'+l.ip+'</td>' +
+        '</tr>';
+      }).join('') || '<tr><td colspan="6" class="empty-state">No audit logs found</td></tr>';
+      if (r.page && r.pages) document.getElementById('pageInfo').textContent = 'Page ' + r.page + ' of ' + r.pages;
+      let pagination = document.getElementById('auditPagination');
+      pagination.innerHTML = '';
+      if (r.pages > 1) {
+        if (r.page > 1) pagination.innerHTML += '<button class="btn-xs btn-primary" onclick="auditPage='+(r.page-1)+';loadAuditLog()"><i class="fas fa-chevron-left"></i></button>';
+        if (r.page < r.pages) pagination.innerHTML += '<button class="btn-xs btn-primary" onclick="auditPage='+(r.page+1)+';loadAuditLog()"><i class="fas fa-chevron-right"></i></button>';
+      }
+    }
+
+    // === ADMIN ACCOUNTS ===
+    async function createAdmin() {
+      let name = document.getElementById('newAdminName').value.trim();
+      let email = document.getElementById('newAdminEmail').value.trim();
+      let pass = document.getElementById('newAdminPass').value.trim();
+      if (!name || !email || !pass) { showToast('All fields required', 'error'); return; }
+      if (pass.length < 12) { showToast('Password must be 12+ characters', 'error'); return; }
+      let r = await api('/admin/users/create-admin', { method: 'POST', body: JSON.stringify({ name: name, email: email, password: pass }) });
+      let resultDiv = document.getElementById('adminCreateResult');
+      if (r && r.success) {
+        resultDiv.innerHTML = '<div style="padding:12px;background:rgba(16,185,129,0.1);border-radius:8px;border:1px solid rgba(16,185,129,0.2);"><span style="color:var(--success);font-weight:600;">✅ Admin created!</span> <span style="color:var(--ash);font-size:13px;">Admin code: <code style="color:var(--primary-glow);">'+r.user.adminCode+'</code></span></div>';
+        document.getElementById('newAdminName').value = '';
+        document.getElementById('newAdminEmail').value = '';
+        document.getElementById('newAdminPass').value = '';
+      } else {
+        resultDiv.innerHTML = '<div style="padding:12px;background:rgba(239,68,68,0.1);border-radius:8px;border:1px solid rgba(239,68,68,0.2);color:var(--danger);">❌ '+(r&&r.error?r.error:'Failed to create admin')+'</div>';
+      }
+    }
+
+    // === CONFIG ===
+    async function loadConfig() {
+      let data = await api('/admin/config');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      let html = '';
+      Object.keys(data).forEach(function(k) {
+        let v = data[k];
+        html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;padding:10px;background:var(--slate);border-radius:8px;">';
+        html += '<label style="min-width:180px;font-size:13px;color:var(--ash);text-transform:capitalize;">' + k.replace(/([A-Z])/g,' $1') + '</label>';
+        if (typeof v === 'boolean') {
+          html += '<select id="cfg_' + k + '" style="flex:1;padding:8px;background:var(--obsidian);border:1px solid rgba(99,102,241,0.2);border-radius:6px;color:var(--white);"><option value="true"' + (v?' selected':'') + '>Enabled</option><option value="false"' + (!v?' selected':'') + '>Disabled</option></select>';
+        } else {
+          html += '<input type="text" id="cfg_' + k + '" value="' + v + '" style="flex:1;padding:8px;background:var(--obsidian);border:1px solid rgba(99,102,241,0.2);border-radius:6px;color:var(--white);">';
+        }
+        html += '</div>';
+      });
+      document.getElementById('configEditor').innerHTML = html;
+    }
+    async function saveConfig() {
+      let data = await api('/admin/config');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      let updates = {};
+      Object.keys(data).forEach(function(k) {
+        let el = document.getElementById('cfg_' + k);
+        if (el) updates[k] = el.type === 'select-one' ? el.value === 'true' : el.value;
+      });
+      let r = await api('/admin/config', { method: 'PUT', body: JSON.stringify(updates) });
+      if (r && r.success) showToast('Configuration saved', 'success');
+    }
+
+    // === FEATURES ===
+    async function loadFeatures() {
+      let data = await api('/admin/features');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      document.getElementById('featuresList').innerHTML = data.map(function(f) {
+        return '<tr><td><strong style="font-family:monospace">' + f.key + '</strong></td><td style="color:var(--ash)">' + (f.description||'') + '</td><td><span class="badge ' + (f.enabled?'badge-green':'badge-gray') + '">' + (f.enabled?'Enabled':'Disabled') + '</span></td><td><button class="btn-sm ' + (f.enabled?'btn-warning':'btn-success') + '" onclick="toggleFeature(\'' + f.key + '\', ' + (!f.enabled) + ')">' + (f.enabled?'Disable':'Enable') + '</button></td></tr>';
+      }).join('') || '<tr><td colspan="4" class="empty-state">No features</td></tr>';
+    }
+    async function toggleFeature(key, enabled) {
+      let r = await api('/admin/features/' + key, { method: 'PUT', body: JSON.stringify({ enabled: !!enabled }) });
+      if (r && r.success) { showToast(key + ' ' + (enabled?'enabled':'disabled'), 'success'); loadFeatures(); }
+    }
+
+    // === BACKUPS ===
+    async function loadBackups() {
+      let data = await api('/admin/backups');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      document.getElementById('backupsList').innerHTML = data.map(function(b) {
+        return '<tr><td><strong>' + (b.name||'') + '</strong></td><td>' + (b.size||'-') + '</td><td><span class="badge ' + (b.status==='completed'?'badge-green':'badge-yellow') + '">' + (b.status||'') + '</span></td><td>' + new Date(b.createdAt).toLocaleDateString() + '</td><td><button class="btn-sm btn-warning" onclick="restoreBackup(\'' + b._id + '\')"><i class="fas fa-undo"></i> Restore</button> <button class="btn-sm btn-danger" onclick="deleteBackup(\'' + b._id + '\')"><i class="fas fa-trash"></i></button></td></tr>';
+      }).join('') || '<tr><td colspan="5" class="empty-state">No backups</td></tr>';
+    }
+    async function createBackup() {
+      let r = await api('/admin/backups', { method: 'POST' });
+      if (r && r.success) { showToast('Backup created', 'success'); loadBackups(); }
+    }
+    async function restoreBackup(id) {
+      if (!confirm('Restore this backup? Current data may be overwritten.')) return;
+      let r = await api('/admin/backups/' + id + '/restore', { method: 'POST' });
+      if (r && r.success) showToast(r.message || 'Restore initiated', 'success');
+    }
+    async function deleteBackup(id) {
+      if (!confirm('Delete this backup?')) return;
+      let r = await api('/admin/backups/' + id, { method: 'DELETE' });
+      if (r && r.success) { showToast('Backup deleted', 'success'); loadBackups(); }
+    }
+
+    // === LOGS ===
+    async function loadLogs() {
+      let data = await api('/admin/logs');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      document.getElementById('logsContainer').innerHTML = '<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;"><button class="btn-sm" style="background:rgba(99,102,241,0.2);color:var(--primary-glow)" onclick="filterLogs(\'all\')">All</button><button class="btn-sm" style="background:rgba(16,185,129,0.2);color:var(--success)" onclick="filterLogs(\'info\')">Info</button><button class="btn-sm" style="background:rgba(245,158,11,0.2);color:var(--warning)" onclick="filterLogs(\'warn\')">Warn</button><button class="btn-sm" style="background:rgba(239,68,68,0.2);color:var(--danger)" onclick="filterLogs(\'error\')">Error</button></div><div id="logEntries">' +
+        data.map(function(l) {
+          let color = l.level === 'error' ? '#ef4444' : l.level === 'warn' ? '#f59e0b' : '#10b981';
+          return '<div style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.03);display:flex;gap:12px;"><span style="color:' + color + ';font-weight:600;min-width:40px">[' + l.level.toUpperCase() + ']</span><span style="color:var(--ash);min-width:80px">' + (l.module||'') + '</span><span style="color:#d1d5db">' + (l.message||'') + '</span><span style="margin-left:auto;color:var(--ash);font-size:11px">' + new Date(l.timestamp).toLocaleTimeString() + '</span></div>';
+        }).join('') +
+      '</div>';
+    }
+    let _allLogs = [];
+    function filterLogs(level) {
+      let entries = document.getElementById('logEntries');
+      if (!entries) return;
+      let items = entries.querySelectorAll('div');
+      items.forEach(function(item) {
+        item.style.display = (level === 'all' || item.textContent.includes('[' + level.toUpperCase() + ']')) ? 'flex' : 'none';
+      });
+    }
+
+    // === TASKS ===
+    async function loadTasks() {
+      let data = await api('/admin/tasks');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      document.getElementById('tasksList').innerHTML = data.map(function(t) {
+        return '<tr><td><strong>' + (t.name||'') + '</strong></td><td>' + (t.interval||'') + '</td><td>' + (t.lastRun ? new Date(t.lastRun).toLocaleString() : '-') + '</td><td><span class="badge ' + (t.status==='success'?'badge-green':'badge-red') + '">' + (t.status||'-') + '</span></td><td>' + (t.nextRun ? new Date(t.nextRun).toLocaleString() : '-') + '</td><td><button class="btn-sm btn-primary" onclick="runTask(\'' + encodeURIComponent(t.name) + '\')"><i class="fas fa-play"></i> Run</button></td></tr>';
+      }).join('') || '<tr><td colspan="6" class="empty-state">No tasks</td></tr>';
+    }
+    async function runTask(name) {
+      let r = await api('/admin/tasks/' + name + '/run', { method: 'POST' });
+      if (r && r.success) showToast(r.message || 'Task triggered', 'success');
+    }
+
+    // === EMAIL TEMPLATES ===
+    async function loadEmailTemplates() {
+      let data = await api('/admin/email-templates');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      document.getElementById('emailTemplatesList').innerHTML = data.map(function(t) {
+        let preview = typeof t.content === 'object' ? (t.content.subject || t.content.html || JSON.stringify(t.content)).slice(0, 80) : String(t.content).slice(0, 80);
+        return '<tr><td><strong>' + (t.name||'') + '</strong></td><td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--ash);">' + preview + '...</td><td><button class="btn-sm btn-primary" onclick="testEmailTemplate(\'' + t.name + '\')"><i class="fas fa-paper-plane"></i> Test</button></td></tr>';
+      }).join('') || '<tr><td colspan="3" class="empty-state">No templates</td></tr>';
+    }
+    async function testEmailTemplate(name) {
+      let email = prompt('Send test to email:');
+      if (!email) return;
+      let r = await api('/admin/email-templates/test', { method: 'POST', body: JSON.stringify({ template: name, email }) });
+      if (r && r.success) showToast('Test email sent to ' + email, 'success');
+    }
+
+    // === TICKETS ===
+    async function loadTickets() {
+      let data = await api('/admin/tickets');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      document.getElementById('ticketsList').innerHTML = (data.length ? data : []).map(function(t) {
+        return '<tr><td>#' + (t._id||'').slice(-6).toUpperCase() + '</td><td>' + (t.subject||'No subject') + '</td><td>' + (t.from||t.email||'N/A') + '</td><td><span class="badge ' + (t.status==='open'?'badge-yellow':t.status==='replied'?'badge-blue':'badge-green') + '">' + (t.status||'open') + '</span></td><td><span class="badge ' + (t.priority==='high'?'badge-red':'badge-blue') + '">' + (t.priority||'normal') + '</span></td><td>' + new Date(t.createdAt).toLocaleDateString() + '</td><td><button class="btn-sm btn-primary" onclick="replyTicket(\'' + t._id + '\')"><i class="fas fa-reply"></i></button></td></tr>';
+      }).join('') || '<tr><td colspan="7" class="empty-state">No support tickets</td></tr>';
+    }
+    function replyTicket(id) {
+      let msg = prompt('Reply message:');
+      if (!msg) return;
+      api('/admin/tickets/' + id + '/reply', { method: 'POST', body: JSON.stringify({ message: msg }) }).then(function(r) {
+        if (r && r.success) { showToast('Reply sent', 'success'); loadTickets(); }
+      });
+    }
+
+    // === AI USAGE ===
+    async function loadAIUsage() {
+      let data = await api('/admin/ai-usage');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      document.getElementById('aiTotal').textContent = data.totalGenerations || 0;
+      document.getElementById('aiToday').textContent = data.todayGenerations || 0;
+      document.getElementById('aiAvgTime').textContent = data.avgResponseTime || '-';
+      document.getElementById('aiCostToday').textContent = data.costToday || '₹0';
+      let models = data.activeModels || [];
+      document.getElementById('aiModels').innerHTML = models.map(function(m) {
+        return '<span style="padding:6px 14px;background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.2);border-radius:20px;font-size:12px;">' + m + '</span>';
+      }).join('') || '<p class="empty-state">No models</p>';
+      let byType = data.usageByType || {};
+      let typeLabel = { website:'🌐 Website', pcb:'🔌 PCB', cad:'🔧 CAD', mcu:'🤖 Firmware', circuit:'⚡ Circuit', general:'💬 General' };
+      document.getElementById('aiUsageByType').innerHTML = Object.keys(byType).map(function(k) {
+        return '<tr><td>' + (typeLabel[k]||k) + '</td><td><strong>' + byType[k] + '</strong></td></tr>';
+      }).join('');
+    }
+
+    // === ACTIVITY ===
+    async function loadActivity() {
+      let data = await api('/admin/activity');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      document.getElementById('activityList').innerHTML = data.map(function(a) {
+        return '<tr><td><code style="color:var(--primary-glow)">' + (a.action||'') + '</code></td><td>' + (a.resource||'') + '</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ash)">' + (a.details||'') + '</td><td>' + (a.by||'-') + '</td><td style="font-size:12px">' + new Date(a.createdAt).toLocaleString() + '</td></tr>';
+      }).join('') || '<tr><td colspan="5" class="empty-state">No recent activity</td></tr>';
+    }
+
+    // === PARTNERS ===
+    async function loadPartners() {
+      let data = await api('/admin/partners');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      document.getElementById('partnerTotal').textContent = data.totalPartners || 0;
+      document.getElementById('partnerActive').textContent = data.activePartners || 0;
+      document.getElementById('partnerCommission').textContent = data.totalCommission || '₹0';
+      document.getElementById('partnerPayouts').textContent = data.pendingPayouts || '₹0';
+    }
+
+    // === GDPR ===
+    async function loadGDPR() {
+      let data = await api('/admin/gdpr-requests');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      document.getElementById('gdprList').innerHTML = data.map(function(g) {
+        return '<tr><td>' + (g.email||'') + '</td><td><span class="badge badge-blue">' + (g.type||'') + '</span></td><td><span class="badge ' + (g.status==='pending'?'badge-yellow':'badge-green') + '">' + (g.status||'') + '</span></td><td>' + new Date(g.requestedAt).toLocaleDateString() + '</td><td><button class="btn-sm btn-success" onclick="processGDPR(\'' + g._id + '\')"><i class="fas fa-check"></i> Process</button></td></tr>';
+      }).join('') || '<tr><td colspan="5" class="empty-state">No GDPR requests</td></tr>';
+    }
+    async function processGDPR(id) {
+      if (!confirm('Process this GDPR request?')) return;
+      let r = await api('/admin/gdpr-requests/' + id + '/process', { method: 'POST' });
+      if (r && r.success) { showToast('GDPR request processed', 'success'); loadGDPR(); }
+    }
+
+    // === IMPORT/EXPORT ===
+    async function exportData(type) {
+      let data = await api('/admin/export/' + type);
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      let blob = new Blob([JSON.stringify(data.data, null, 2)], { type: 'application/json' });
+      let url = URL.createObjectURL(blob);
+      let a = document.createElement('a');
+      a.href = url; a.download = type + '_export_' + Date.now() + '.json';
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast(type + ' exported (' + data.count + ' records)', 'success');
+    }
+    async function importData() {
+      let file = document.getElementById('importFile').files[0];
+      if (!file) { showToast('Select a file first', 'error'); return; }
+      let reader = new FileReader();
+      reader.onload = function(e) {
+        try { let data = JSON.parse(e.target.result); } catch(err) { showToast('Invalid JSON', 'error'); return; }
+        api('/admin/import/generic', { method: 'POST', body: JSON.stringify({ data, count: Array.isArray(data) ? data.length : 1 }) }).then(function(r) {
+          if (r && r.success) {
+            document.getElementById('importResult').style.display = 'block';
+            document.getElementById('importResult').innerHTML = r.message || 'Import successful';
+            showToast('Import completed', 'success');
+          }
+        });
+      };
+      reader.readAsText(file);
+    }
+
+    // === MAINTENANCE ===
+    async function loadMaintenance() {
+      let data = await api('/admin/maintenance');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      let enabled = data.enabled;
+      document.getElementById('maintenanceStatus').textContent = enabled ? 'Enabled' : 'Disabled';
+      document.getElementById('maintenanceStatus').className = 'badge ' + (enabled ? 'badge-red' : 'badge-green');
+      document.getElementById('maintenanceToggleBtn').innerHTML = enabled ? '<i class="fas fa-power-off"></i> Disable' : '<i class="fas fa-power-off"></i> Enable';
+      document.getElementById('maintenanceToggleBtn').className = enabled ? 'btn-sm btn-success' : 'btn-sm btn-danger';
+      if (data.message) document.getElementById('maintenanceMessage').value = data.message;
+    }
+    async function toggleMaintenance() {
+      let msg = document.getElementById('maintenanceMessage').value;
+      let r = await api('/admin/maintenance', { method: 'POST', body: JSON.stringify({ message: msg }) });
+      if (r && r.success) { showToast('Maintenance ' + (r.maintenance.enabled ? 'enabled' : 'disabled'), 'success'); loadMaintenance(); }
+    }
+
+    // === CACHE ===
+    async function clearCache(type) {
+      if (!confirm('Clear ' + (type === 'all' ? 'ALL' : type) + ' cache? This may temporarily affect performance.')) return;
+      let r = await api('/admin/cache/' + type, { method: 'POST' });
+      if (r && r.success) {
+        document.getElementById('cacheResult').style.display = 'block';
+        document.getElementById('cacheResult').innerHTML = '✅ ' + type.charAt(0).toUpperCase() + type.slice(1) + ' cache cleared at ' + new Date(r.timestamp).toLocaleTimeString();
+        showToast(type + ' cache cleared', 'success');
+        setTimeout(function() { document.getElementById('cacheResult').style.display = 'none'; }, 5000);
+      }
+    }
+
+    // === AI MODELS ===
+    async function loadAIModels() {
+      let data = await api('/admin/ai/models');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      document.getElementById('aiActiveReqs').textContent = data.activeRequests || 0;
+      document.getElementById('aiQueueDepth').textContent = data.queueDepth || 0;
+      document.getElementById('aiAvgLatency').textContent = data.avgLatency || '-';
+      let providers = data.providers || {};
+      let online = Object.values(providers).filter(function(p) { return p.status === 'active'; }).length;
+      document.getElementById('aiModelsOnline').textContent = online + '/' + Object.keys(providers).length;
+      document.getElementById('aiProvidersList').innerHTML = Object.keys(providers).map(function(k) {
+        let p = providers[k];
+        return '<tr><td><strong>' + p.name + '</strong></td><td><span class="badge ' + (p.status==='active'?'badge-green':'badge-gray') + '">' + p.status + '</span></td><td>$' + (p.balance||0).toFixed(2) + '</td><td>' + (p.totalTokens||0).toLocaleString() + '</td><td>' + (p.usedTokens||0).toLocaleString() + '</td><td>' + (p.remainingTokens||0).toLocaleString() + '</td><td>$' + (p.totalCost||0).toFixed(2) + '</td><td><button class="btn-sm ' + (p.status==='active'?'btn-warning':'btn-success') + '" onclick="toggleProvider(\'' + k + '\')">' + (p.status==='active'?'Disable':'Enable') + '</button></td></tr>';
+      }).join('');
+      let configs = data.configs || [];
+      document.getElementById('aiModelConfigsList').innerHTML = configs.map(function(m) {
+        return '<tr><td>' + m.name + '</td><td>' + m.provider + '</td><td>' + (m.maxTokens||0) + '</td><td>' + (m.temperature||0) + '</td><td>' + (m.contextWindow||0) + '</td><td>' + (m.priority||'-') + '</td><td><span class="badge ' + (m.enabled?'badge-green':'badge-gray') + '">' + (m.enabled?'Enabled':'Disabled') + '</span></td><td><button class="btn-sm ' + (m.enabled?'btn-warning':'btn-success') + '" onclick="toggleModel(\'' + m.name + '\')">Toggle</button> <button class="btn-sm btn-primary" onclick="testModel(\'' + m.name + '\')">Test</button></td></tr>';
+      }).join('');
+    }
+    async function toggleProvider(name) {
+      let r = await api('/admin/ai/provider/' + name + '/toggle', { method: 'POST' });
+      if (r && r.success) { showToast(name + ' ' + r.status, 'success'); loadAIModels(); }
+    }
+    async function toggleModel(name) {
+      let r = await api('/admin/ai/models/' + encodeURIComponent(name), { method: 'PUT', body: JSON.stringify({ enabled: null }) });
+      if (r && r.success) { showToast('Toggled', 'success'); loadAIModels(); }
+    }
+    async function testModel(name) {
+      showToast('Testing ' + name + '...', 'info');
+      let r = await api('/admin/ai/models/' + encodeURIComponent(name) + '/test', { method: 'POST' });
+      if (r && r.success) showToast(name + ' responded in ' + r.latency, 'success');
+    }
+    async function applyFailover() {
+      let r = await api('/admin/ai/failover', { method: 'POST' });
+      if (r && r.success) showToast('Failover order: ' + r.order.join(' → '), 'success');
+    }
+
+    // === AI TOKENS ===
+    async function loadAITokens() {
+      let data = await api('/admin/ai/tokens');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      document.getElementById('tokTotal').textContent = (data.total||0).toLocaleString();
+      document.getElementById('tokUsed').textContent = (data.used||0).toLocaleString();
+      document.getElementById('tokRemaining').textContent = (data.remaining||0).toLocaleString();
+      document.getElementById('tokPercent').textContent = data.usagePercent + '%';
+      let providers = data.providers || {};
+      document.getElementById('tokenProvidersList').innerHTML = Object.keys(providers).map(function(k) {
+        let p = providers[k];
+        if (p.totalTokens === 0) return '';
+        let pct = ((p.usedTokens / p.totalTokens) * 100).toFixed(1);
+        return '<tr><td><strong>' + p.name + '</strong></td><td>' + p.totalTokens.toLocaleString() + '</td><td>' + p.usedTokens.toLocaleString() + '</td><td>' + p.remainingTokens.toLocaleString() + '</td><td><div style="background:var(--slate);border-radius:4px;height:8px;width:100px;display:inline-block;overflow:hidden"><div style="height:100%;width:' + pct + '%;background:' + (pct > 80 ? '#ef4444' : pct > 50 ? '#f59e0b' : '#10b981') + ';border-radius:4px"></div></div> ' + pct + '%</td><td>$' + p.totalCost.toFixed(2) + '</td></tr>';
+      }).filter(Boolean).join('');
+      let history = data.history || [];
+      let histHtml = '<div style="display:flex;flex-direction:column;gap:4px;">';
+      history.forEach(function(h) {
+        let barWidth = Math.min(100, (h.tokens / 200000) * 100);
+        histHtml += '<div style="display:flex;align-items:center;gap:8px;font-size:12px;"><span style="min-width:90px;color:var(--ash)">' + h.date + '</span><span style="font-family:monospace;color:var(--primary-glow);min-width:80px;">' + h.model + '</span><div style="flex:1;background:var(--slate);border-radius:4px;height:6px;overflow:hidden"><div style="height:100%;width:' + barWidth + '%;background:var(--primary);border-radius:4px"></div></div><span style="min-width:60px;text-align:right">' + h.tokens.toLocaleString() + '</span></div>';
+      });
+      histHtml += '</div>';
+      document.getElementById('tokenHistory').innerHTML = histHtml || '<p class="empty-state">No data</p>';
+    }
+
+    // === AI PROMPTS ===
+    async function loadAIPrompts() {
+      let data = await api('/admin/ai/prompts');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      document.getElementById('aiPromptsList').innerHTML = data.map(function(p) {
+        return '<tr><td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (p.prompt||'') + '</td><td><span class="badge badge-blue">' + (p.model||'') + '</span></td><td>' + (p.tokens||0) + '</td><td>' + (p.latency||'') + '</td><td><span class="badge ' + (p.status==='success'?'badge-green':'badge-red') + '">' + (p.status||'') + '</span></td><td style="font-size:12px">' + new Date(p.createdAt).toLocaleString() + '</td></tr>';
+      }).join('') || '<tr><td colspan="6" class="empty-state">No prompts logged</td></tr>';
+    }
+
+    // === DATABASE ===
+    async function loadDatabase() {
+      let data = await api('/admin/database/stats');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      document.getElementById('dbCollections').textContent = data.totalCollections || 0;
+      document.getElementById('dbDocuments').textContent = (data.totalDocuments||0).toLocaleString();
+      document.getElementById('dbSize').textContent = data.dbSize || '-';
+      document.getElementById('dbIndexSize').textContent = data.indexSize || '-';
+      let cols = data.collections || [];
+      document.getElementById('dbCollectionsList').innerHTML = cols.map(function(c) {
+        return '<tr><td><strong>' + c.name + '</strong></td><td>' + c.documents.toLocaleString() + '</td><td>' + c.avgSize + '</td><td>' + c.indexCount + '</td><td><span class="badge ' + (c.status==='ok'?'badge-green':'badge-gray') + '">' + c.status + '</span></td></tr>';
+      }).join('') || '<tr><td colspan="5" class="empty-state">No collections</td></tr>';
+    }
+    async function loadDBQueries() {
+      let data = await api('/admin/database/queries');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      document.getElementById('dbQueriesList').innerHTML = data.map(function(q) {
+        return '<tr><td>' + q.collection + '</td><td><code style="color:var(--primary-glow)">' + q.operation + '</code></td><td><span class="badge ' + (parseInt(q.duration) > 100 ? 'badge-red' : 'badge-yellow') + '">' + q.duration + '</span></td><td>' + q.docsExamined + '</td><td><span class="badge ' + (q.indexUsed?'badge-green':'badge-gray') + '">' + (q.indexUsed?'Yes':'No') + '</span></td><td style="font-size:12px">' + new Date(q.timestamp).toLocaleString() + '</td></tr>';
+      }).join('') || '<tr><td colspan="6" class="empty-state">No queries</td></tr>';
+    }
+    async function createIndex() {
+      let collection = document.getElementById('idxCollection').value.trim();
+      let fields = document.getElementById('idxFields').value.trim();
+      if (!collection || !fields) { showToast('Collection and fields required', 'error'); return; }
+      let r = await api('/admin/database/indexes', { method: 'POST', body: JSON.stringify({ collection, fields }) });
+      if (r && r.success) showToast(r.message, 'success');
+    }
+    async function validateDatabase() {
+      showToast('Validating all collections...', 'info');
+      let r = await api('/admin/database/validate', { method: 'POST' });
+      if (r && r.success) showToast('All collections passed validation', 'success');
+    }
+
+    // === STORAGE ===
+    async function loadStorage() {
+      let data = await api('/admin/storage');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      document.getElementById('stoTotal').textContent = data.totalSize || '-';
+      document.getElementById('stoUsed').textContent = data.used || '-';
+      document.getElementById('stoFree').textContent = data.free || '-';
+      document.getElementById('stoPercent').textContent = data.usagePercent + '%' || '-';
+      let byType = data.byType || {};
+      let typeLabels = { images:'🖼️ Images', documents:'📄 Documents', archives:'📦 Archives', code:'💻 Code', other:'📁 Other' };
+      let totalFiles = Object.values(byType).reduce(function(s, v) { return s + v; }, 0);
+      document.getElementById('fileTypeDist').innerHTML = Object.keys(byType).map(function(k) {
+        let pct = totalFiles > 0 ? ((byType[k]/totalFiles)*100).toFixed(0) : 0;
+        return '<div style="flex:1;min-width:120px;padding:12px;background:var(--slate);border-radius:8px;text-align:center;"><div style="font-size:24px;margin-bottom:4px">' + (typeLabels[k]||k) + '</div><div style="font-size:18px;font-weight:700">' + byType[k].toLocaleString() + '</div><div style="font-size:12px;color:var(--ash)">' + pct + '%</div></div>';
+      }).join('');
+      let largest = data.largestFiles || [];
+      document.getElementById('largestFilesList').innerHTML = largest.map(function(f) {
+        return '<tr><td>' + f.name + '</td><td><strong>' + f.size + ' MB</strong></td></tr>';
+      }).join('');
+    }
+    async function loadUserStorage() {
+      let data = await api('/admin/storage/users');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      document.getElementById('userStorageList').innerHTML = data.map(function(u) {
+        return '<tr><td>' + u.name + '<br><span style="font-size:11px;color:var(--ash)">' + u.email + '</span></td><td>' + u.files + '</td><td>' + u.size + '</td><td>' + (u.quota||'1GB') + '</td><td><div style="background:var(--slate);border-radius:4px;height:6px;width:80px;display:inline-block;overflow:hidden"><div style="height:100%;width:' + u.usagePercent + '%;background:' + (parseInt(u.usagePercent)>80?'#ef4444':parseInt(u.usagePercent)>50?'#f59e0b':'#10b981') + ';border-radius:4px"></div></div></td><td><button class="btn-sm btn-primary" onclick="showToast(\'Quota editor coming\',\'info\')">Edit</button></td></tr>';
+      }).join('') || '<tr><td colspan="6" class="empty-state">No data</td></tr>';
+    }
+    async function cleanupStorage() {
+      if (!confirm('Run storage cleanup? This will remove orphaned files.')) return;
+      let r = await api('/admin/storage/cleanup', { method: 'POST' });
+      if (r && r.success) showToast('Cleaned: ' + r.freed + ', ' + r.filesRemoved + ' files removed in ' + r.duration, 'success');
+    }
+
+    // === USER SESSIONS ===
+    async function loadUserSessions() {
+      let uid = document.getElementById('sessUserId').value.trim();
+      if (!uid) { showToast('Enter a User ID', 'error'); return; }
+      let data = await api('/admin/users/' + uid + '/sessions');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      document.getElementById('sessionsList').innerHTML = data.map(function(s) {
+        return '<tr><td><span class="badge badge-blue">' + (s.device||'Unknown') + '</span></td><td style="font-family:monospace;font-size:12px">' + (s.ip||'-') + '</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:var(--ash)">' + (s.userAgent||'') + '</td><td style="font-size:12px">' + new Date(s.lastActive).toLocaleString() + '</td><td style="font-size:12px">' + new Date(s.createdAt).toLocaleDateString() + '</td></tr>';
+      }).join('') || '<tr><td colspan="5" class="empty-state">No sessions found</td></tr>';
+    }
+    async function logoutAllSessions() {
+      let uid = document.getElementById('sessUserId').value.trim();
+      if (!uid) { showToast('Enter a User ID first', 'error'); return; }
+      if (!confirm('Logout all sessions for user ' + uid + '?')) return;
+      let r = await api('/admin/users/' + uid + '/logout-all', { method: 'POST' });
+      if (r && r.success) showToast(r.message, 'success');
+    }
+
+    // === USER ACTIVITY ===
+    async function loadUserActivity() {
+      let uid = document.getElementById('activityUserId').value.trim();
+      if (!uid) { showToast('Enter a User ID', 'error'); return; }
+      let data = await api('/admin/users/' + uid + '/activity');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      document.getElementById('userActivityList').innerHTML = data.map(function(a) {
+        return '<tr><td><code style="color:var(--primary-glow)">' + (a.action||'') + '</code></td><td style="color:var(--ash)">' + (a.details||'') + '</td><td style="font-family:monospace;font-size:12px">' + (a.ip||'-') + '</td><td style="font-size:12px">' + new Date(a.timestamp).toLocaleString() + '</td></tr>';
+      }).join('') || '<tr><td colspan="4" class="empty-state">No activity found</td></tr>';
+    }
+
+    // === IMPERSONATE ===
+    async function impersonateUser() {
+      let uid = document.getElementById('impersonateUserId').value.trim();
+      if (!uid) { showToast('Enter a User ID', 'error'); return; }
+      if (!confirm('Impersonate user ' + uid + '? All actions will be logged.')) return;
+      let r = await api('/admin/users/' + uid + '/impersonate', { method: 'POST' });
+      let el = document.getElementById('impersonateResult');
+      el.style.display = 'block';
+      if (r && r.success) {
+        el.innerHTML = '<p style="color:var(--warning);font-weight:600">✅ Impersonation token generated for ' + r.user.name + ' (' + r.user.email + ')</p>' +
+          '<div style="margin-top:12px;padding:12px;background:var(--obsidian);border-radius:6px;word-break:break-all;font-family:monospace;font-size:12px;">Token: ' + r.token.slice(0, 50) + '...</div>' +
+          '<button class="btn-sm btn-warning" style="margin-top:12px" onclick="copyImpersonationToken()">Copy Token</button>';
+        window._impersonationToken = r.token;
+        showToast('Impersonation ready', 'success');
+      } else {
+        el.innerHTML = '<p style="color:var(--danger)">❌ ' + (r?.error || 'Failed') + '</p>';
+      }
+    }
+
+    // === PAYMENT CONFIG ===
+    async function loadPaymentConfig() {
+      let data = await api('/admin/payments/config');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      let html = '';
+      Object.keys(data).forEach(function(k) {
+        let v = data[k];
+        if (k === 'availableGateways') return;
+        html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;padding:10px;background:var(--slate);border-radius:8px;">';
+        html += '<label style="min-width:150px;font-size:13px;color:var(--ash);text-transform:capitalize;">' + k.replace(/([A-Z])/g,' $1') + '</label>';
+        if (typeof v === 'boolean') {
+          html += '<select id="paycfg_' + k + '" style="flex:1;padding:8px;background:var(--obsidian);border:1px solid rgba(99,102,241,0.2);border-radius:6px;color:var(--white);"><option value="true"' + (v?' selected':'') + '>Enabled</option><option value="false"' + (!v?' selected':'') + '>Disabled</option></select>';
+        } else {
+          let isGateway = k === 'activeGateway';
+          html += isGateway
+            ? '<select id="paycfg_' + k + '" style="flex:1;padding:8px;background:var(--obsidian);border:1px solid rgba(99,102,241,0.2);border-radius:6px;color:var(--white);">' + data.availableGateways.map(function(g) { return '<option value="' + g + '"' + (g===v?' selected':'') + '>' + g + '</option>'; }).join('') + '</select>'
+            : '<input type="text" id="paycfg_' + k + '" value="' + v + '" style="flex:1;padding:8px;background:var(--obsidian);border:1px solid rgba(99,102,241,0.2);border-radius:6px;color:var(--white);">';
+        }
+        html += '</div>';
+      });
+      document.getElementById('paymentConfigEditor').innerHTML = html;
+    }
+    async function savePaymentConfig() {
+      let data = await api('/admin/payments/config');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      let updates = {};
+      Object.keys(data).forEach(function(k) {
+        if (k === 'availableGateways') return;
+        let el = document.getElementById('paycfg_' + k);
+        if (el) updates[k] = el.type === 'select-one' ? el.value : el.value;
+      });
+      let r = await api('/admin/payments/config', { method: 'PUT', body: JSON.stringify(updates) });
+      if (r && r.success) showToast('Payment config saved', 'success');
+    }
+
+    // === PAYMENT LOGS ===
+    async function loadPaymentLogs() {
+      let data = await api('/admin/payments/logs');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      document.getElementById('paymentLogsList').innerHTML = data.map(function(l) {
+        return '<tr><td>' + (l.orderId||'') + '</td><td>₹' + (l.amount||0) + '</td><td><span class="badge badge-blue">' + (l.gateway||'') + '</span></td><td><span class="badge ' + (l.status==='success'?'badge-green':l.status==='failed'?'badge-red':'badge-yellow') + '">' + l.status + '</span></td><td style="color:var(--ash);font-size:12px">' + (l.error||'-') + '</td><td style="font-size:12px">' + new Date(l.timestamp).toLocaleString() + '</td></tr>';
+      }).join('') || '<tr><td colspan="6" class="empty-state">No payment logs</td></tr>';
+    }
+
+    // === INVOICES ===
+    async function loadInvoices() {
+      let data = await api('/admin/payments/invoices');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      document.getElementById('invoicesList').innerHTML = data.map(function(i) {
+        let total = (i.amount||0) + (i.tax||0);
+        return '<tr><td><strong>' + (i.number||'') + '</strong></td><td>' + (i.customer||'') + '</td><td>₹' + (i.amount||0) + '</td><td>₹' + (i.tax||0) + '</td><td><strong>₹' + total + '</strong></td><td><span class="badge ' + (i.status==='paid'?'badge-green':i.status==='pending'?'badge-yellow':'badge-red') + '">' + (i.status||'') + '</span></td><td>' + new Date(i.generatedAt).toLocaleDateString() + '</td></tr>';
+      }).join('') || '<tr><td colspan="7" class="empty-state">No invoices</td></tr>';
+    }
+
+    // === THIRD-PARTY SERVICES ===
+    async function loadThirdParty() {
+      let data = await api('/admin/services/third-party');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      let svcs = data.services || {};
+      document.getElementById('tpStatus').textContent = 'Operational: ' + (data.operational||0) + '/' + (data.total||0) + ' | Overall: ' + (data.overallStatus || 'unknown');
+      document.getElementById('thirdPartyList').innerHTML = Object.keys(svcs).map(function(k) {
+        let s = svcs[k];
+        return '<tr><td><strong>' + s.name + '</strong></td><td><span class="badge ' + (s.status==='operational'?'badge-green':'badge-gray') + '">' + s.status + '</span></td><td>' + (s.uptime||'-') + '</td><td>' + (s.avgLatency||'-') + '</td><td>' + (s.requestsToday||0).toLocaleString() + '</td><td>' + (s.errorRate||'-') + '</td><td>' + (s.plan||'-') + '</td><td><button class="btn-sm btn-primary" onclick="testService(\'' + k + '\')"><i class="fas fa-plug"></i> Test</button> <button class="btn-sm ' + (s.status==='operational'?'btn-warning':'btn-success') + '" onclick="toggleService(\'' + k + '\')">' + (s.status==='operational'?'Disable':'Enable') + '</button></td></tr>';
+      }).join('');
+    }
+    async function testService(name) {
+      let r = await api('/admin/services/third-party/' + name + '/test', { method: 'POST' });
+      if (r && r.success) showToast(name + ': ' + r.status + ' (' + r.latency + ')', 'success');
+    }
+    async function toggleService(name) {
+      let r = await api('/admin/services/third-party/' + name + '/toggle', { method: 'POST' });
+      if (r && r.success) showToast(name + ' ' + r.status, 'success');
+    }
+
+    // === WEBHOOKS ===
+    async function loadWebhooks() {
+      let data = await api('/admin/services/webhooks');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      document.getElementById('webhooksList').innerHTML = data.map(function(w) {
+        return '<tr><td><strong>' + w.name + '</strong></td><td style="font-family:monospace;font-size:12px;color:var(--ash)">' + (w.url||'') + '</td><td>' + (w.events||0) + ' events</td><td style="font-size:12px">' + (w.lastTriggered ? new Date(w.lastTriggered).toLocaleString() : '-') + '</td><td><span class="badge ' + (w.status==='active'?'badge-green':'badge-yellow') + '">' + (w.status||'') + '</span></td></tr>';
+      }).join('') || '<tr><td colspan="5" class="empty-state">No webhooks configured</td></tr>';
+    }
+
+    // === SYSTEM MONITOR ===
+    async function loadSystemMonitor() {
+      let data = await api('/admin/system/realtime');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      document.getElementById('monCpu').textContent = data.cpu.cores + ' cores';
+      document.getElementById('monMem').textContent = data.memory.used + ' / ' + data.memory.total;
+      document.getElementById('monDisk').textContent = data.disk.free;
+      document.getElementById('monUptime').textContent = data.network.uptime;
+      document.getElementById('monitorDetails').innerHTML =
+        '<div style="background:var(--slate);padding:16px;border-radius:10px;"><h4 style="margin-bottom:12px;color:var(--primary-glow)"><i class="fas fa-microchip"></i> CPU</h4><div style="display:grid;gap:6px;font-size:13px;"><div><strong>Cores:</strong> ' + escapeHtml(data.cpu.cores) + '</div><div><strong>Load:</strong> ' + escapeHtml(data.cpu.avgLoad.join(', ')) + '</div></div></div>' +
+        '<div style="background:var(--slate);padding:16px;border-radius:10px;"><h4 style="margin-bottom:12px;color:var(--success)"><i class="fas fa-memory"></i> Memory</h4><div style="display:grid;gap:6px;font-size:13px;"><div><strong>Total:</strong> ' + escapeHtml(data.memory.total) + '</div><div><strong>Used:</strong> ' + escapeHtml(data.memory.used) + '</div><div><strong>Free:</strong> ' + escapeHtml(data.memory.free) + '</div><div><strong>Heap:</strong> ' + escapeHtml(data.memory.heapUsed) + ' / ' + escapeHtml(data.memory.heapTotal) + '</div></div></div>' +
+        '<div style="background:var(--slate);padding:16px;border-radius:10px;"><h4 style="margin-bottom:12px;color:var(--warning)"><i class="fas fa-hdd"></i> Disk</h4><div style="display:grid;gap:6px;font-size:13px;"><div><strong>Total:</strong> ' + escapeHtml(data.disk.total) + '</div><div><strong>Used:</strong> ' + escapeHtml(data.disk.used) + '</div><div><strong>Free:</strong> ' + escapeHtml(data.disk.free) + '</div><div><strong>Usage:</strong> ' + escapeHtml(data.disk.usagePercent) + '</div></div></div>' +
+        '<div style="background:var(--slate);padding:16px;border-radius:10px;"><h4 style="margin-bottom:12px;color:var(--accent)"><i class="fas fa-server"></i> Node</h4><div style="display:grid;gap:6px;font-size:13px;"><div><strong>Version:</strong> ' + escapeHtml(data.node.version) + '</div><div><strong>Uptime:</strong> ' + escapeHtml(data.node.uptime) + '</div><div><strong>Platform:</strong> ' + escapeHtml(data.network.platform) + '</div></div></div>';
+    }
+
+    // === PROCESSES ===
+    async function loadProcesses() {
+      let data = await api('/admin/system/processes');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      document.getElementById('processesList').innerHTML = data.map(function(p) {
+        return '<tr><td style="font-family:monospace">' + p.pid + '</td><td><strong>' + p.name + '</strong></td><td>' + p.cpu + '</td><td>' + p.memory + '</td><td><span class="badge ' + (p.status==='running'?'badge-green':'badge-gray') + '">' + p.status + '</span></td><td style="font-size:12px">' + new Date(p.started).toLocaleDateString() + '</td></tr>';
+      }).join('') || '<tr><td colspan="6" class="empty-state">No process data</td></tr>';
+    }
+
+    // === ALERTS ===
+    async function loadAlerts() {
+      let data = await api('/admin/system/alerts');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      document.getElementById('alertsList').innerHTML = data.map(function(a) {
+        let typeIcon = a.type === 'critical' ? '🔴' : a.type === 'error' ? '🔶' : a.type === 'warning' ? '🟡' : '🔵';
+        let typeClass = a.type === 'critical' ? 'badge-red' : a.type === 'error' ? 'badge-yellow' : a.type === 'warning' ? 'badge-yellow' : 'badge-blue';
+        return '<tr><td><span class="badge ' + typeClass + '">' + typeIcon + ' ' + a.type + '</span></td><td>' + (a.message||'') + '</td><td>' + (a.source||'') + '</td><td><span class="badge ' + (a.acknowledged?'badge-green':'badge-gray') + '">' + (a.acknowledged?'Yes':'No') + '</span></td><td style="font-size:12px">' + new Date(a.timestamp).toLocaleString() + '</td><td>' + (!a.acknowledged ? '<button class="btn-sm btn-primary" onclick="acknowledgeAlert(\'' + a._id + '\')">Acknowledge</button>' : '-') + '</td></tr>';
+      }).join('') || '<tr><td colspan="6" class="empty-state">No alerts</td></tr>';
+    }
+    async function acknowledgeAlert(id) {
+      let r = await api('/admin/system/alerts/' + id + '/acknowledge', { method: 'POST' });
+      if (r && r.success) { showToast('Alert acknowledged', 'success'); loadAlerts(); }
+    }
+
+    // === EMAIL BROADCAST ===
+    async function sendBroadcast() {
+      let subject = document.getElementById('broadcastSubject').value.trim();
+      let content = document.getElementById('broadcastContent').value.trim();
+      if (!subject || !content) { showToast('Subject and content required', 'error'); return; }
+      if (!confirm('Send this email to ALL subscribers? This cannot be undone.')) return;
+      let r = await api('/admin/email/broadcast', { method: 'POST', body: JSON.stringify({ subject, content }) });
+      if (r && r.success) { showToast('Broadcast sent to ' + r.recipients + ' subscribers', 'success'); }
+    }
+    async function sendManualEmail() {
+      let to = document.getElementById('manualEmail').value.trim();
+      let subject = document.getElementById('manualSubject').value.trim();
+      let content = document.getElementById('manualContent').value.trim();
+      if (!to || !subject || !content) { showToast('All fields required', 'error'); return; }
+      let r = await api('/admin/email/send', { method: 'POST', body: JSON.stringify({ to, subject, content }) });
+      if (r && r.success) { showToast('Email sent to ' + to, 'success'); }
+    }
+
+    // === API ENDPOINTS ===
+    async function loadEndpoints() {
+      let data = await api('/admin/system/endpoints');
+      if (!data) { showToast('Failed to load data', 'error'); return; }
+      document.getElementById('epTotal').textContent = data.total || 0;
+      document.getElementById('epGet').textContent = data.byMethod?.GET || 0;
+      document.getElementById('epPost').textContent = data.byMethod?.POST || 0;
+      document.getElementById('epPut').textContent = data.byMethod?.PUT || 0;
+      let tops = data.topEndpoints || [];
+      document.getElementById('topEndpointsList').innerHTML = tops.map(function(ep) {
+        return '<div style="padding:6px 10px;background:var(--slate);border-radius:6px;margin-bottom:4px;font-family:monospace;font-size:12px;color:var(--primary-glow)">' + ep + '</div>';
+      }).join('') || '<p class="empty-state">No data</p>';
+    }
+
+    // === UPDATE NAV CLICK HANDLER ===
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', () => {
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        item.classList.add('active');
+        document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active'));
+        document.getElementById(item.dataset.page).classList.add('active');
+        switch(item.dataset.page) {
+          case 'overview': loadOverview(); break;
+          case 'monetization': loadMonetization(); break;
+          case 'orders': loadOrders(); break;
+          case 'pending-reviews': loadPendingReviews(); break;
+          case 'transactions': loadTransactions(); break;
+          case 'discounts': loadDiscounts(); break;
+          case 'projects': loadProjectsAdmin(); break;
+          case 'cms': loadCMS(); break;
+          case 'blog': loadBlog(); break;
+          case 'notifications': loadNotifications(); break;
+          case 'announcements': loadAnnouncements(); break;
+          case 'users': loadUsers(); break;
+          case 'active-users': loadActiveUsers(); break;
+          case 'security': loadIPBlock(); loadSecurityOverview(); break;
+          case 'jit-elevation': loadElevationStatus(); break;
+          case 'passkey-mgmt': loadPasskeyStatus(); break;
+          case 'fail2ban': loadFail2ban(); break;
+          case 'audit-log': loadAuditLog(); break;
+          case 'admin-users': break;
+          case 'config': loadConfig(); break;
+          case 'features': loadFeatures(); break;
+          case 'backups': loadBackups(); break;
+          case 'logs': loadLogs(); break;
+          case 'tasks': loadTasks(); break;
+          case 'email': /* nothing special */ break;
+          case 'email-templates': loadEmailTemplates(); break;
+          case 'tickets': loadTickets(); break;
+          case 'inquiries': loadInquiries(); break;
+          case 'ai-usage': loadAIUsage(); break;
+          case 'ai-models': loadAIModels(); break;
+          case 'ai-tokens': loadAITokens(); break;
+          case 'ai-prompts': loadAIPrompts(); break;
+          case 'database': loadDatabase(); loadDBQueries(); break;
+          case 'storage': loadStorage(); loadUserStorage(); break;
+          case 'user-sessions': /* search-based */ sessionsList.innerHTML = '<tr><td colspan="5" class="empty-state">Enter a User ID and click Search</td></tr>'; break;
+          case 'user-activity': /* search-based */ userActivityList.innerHTML = '<tr><td colspan="4" class="empty-state">Enter a User ID and click Load Activity</td></tr>'; break;
+          case 'user-impersonate': /* static form */ break;
+          case 'payment-config': loadPaymentConfig(); break;
+          case 'payment-logs': loadPaymentLogs(); break;
+          case 'invoices': loadInvoices(); break;
+          case 'third-party': loadThirdParty(); break;
+          case 'webhooks': loadWebhooks(); break;
+          case 'system-monitor': loadSystemMonitor(); break;
+          case 'processes': loadProcesses(); break;
+          case 'alerts': loadAlerts(); break;
+          case 'endpoints': loadEndpoints(); break;
+          case 'audit': loadAuditLogs(); break;
+          case 'activity': loadActivity(); break;
+          case 'partners': loadPartners(); break;
+          case 'gdpr': loadGDPR(); break;
+          case 'import-export': /* static */ break;
+          case 'services': loadServices(); break;
+          case 'reviews': loadReviews(); break;
+          case 'subscriptions': loadSubscriptions(); break;
+          case 'maintenance': loadMaintenance(); break;
+          case 'cache': /* static */ break;
+          case 'system': loadSystem(); break;
+        }
+      });
+    });
+
+    function statusBadge(s) {
+      const map = { pending: 'badge-yellow', confirmed: 'badge-blue', in_progress: 'badge-blue', processing: 'badge-blue', review: 'badge-yellow', completed: 'badge-green', cancelled: 'badge-red' };
+      return map[s] || 'badge-gray';
+    }
+
+    // ==================== MONETIZATION ====================
+    async function loadMonetization() {
+      const m = await api('/admin/monetization');
+      if (!m) return;
+      document.getElementById('monoEnabled').checked = !!m.enabled;
+      document.getElementById('monoAdNetwork').value = m.ads?.network || 'none';
+      document.getElementById('monoAdClientId').value = m.ads?.networkClientId || '';
+      document.getElementById('monoAdHeader').checked = !!m.ads?.headerEnabled;
+      document.getElementById('monoAdFooter').checked = !!m.ads?.footerEnabled;
+      document.getElementById('monoAdInFeed').checked = !!m.ads?.inFeedEnabled;
+      document.getElementById('monoAdsEnabled').checked = !!m.ads?.enabled;
+      document.getElementById('donKofi').value = m.donations?.kofi || '';
+      document.getElementById('donBmac').value = m.donations?.buymeacoffee || '';
+      document.getElementById('donPaypal').value = m.donations?.paypal || '';
+      document.getElementById('donUpi').value = m.donations?.upiId || '';
+      document.getElementById('donEnabled').checked = !!m.donations?.enabled;
+      document.getElementById('preMonthly').value = m.premium?.monthlyPriceINR ?? 199;
+      document.getElementById('preYearly').value = m.premium?.yearlyPriceINR ?? 1499;
+      document.getElementById('preEnabled').checked = !!m.premium?.enabled;
+      renderAffiliates(m.affiliate?.items || []);
+      loadRevenue();
+    }
+
+    function renderAffiliates(items) {
+      const el = document.getElementById('affList');
+      el.innerHTML = items.length ? items.map(i =>
+        `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+          <span style="flex:1;">${(i.title || '').replace(/</g,'&lt;')} <small style="color:var(--ash);">${(i.url||'').replace(/</g,'&lt;')}</small></span>
+          <button class="btn-sm btn-danger" onclick="delAffiliate('${i._id}')">✕</button>
+        </div>`).join('') : '<p class="empty-state">No affiliate products yet — add Amazon/other links above.</p>';
+    }
+
+    async function addAffiliate() {
+      const title = document.getElementById('affTitle').value.trim();
+      const url = document.getElementById('affUrl').value.trim();
+      const image = document.getElementById('affImage').value.trim();
+      if (!title || !url) return showToast('Title and URL required', 'error');
+      const r = await api('/admin/monetization/affiliate', { method: 'POST', body: JSON.stringify({ title, url, image }) });
+      if (r?.success) { showToast('Affiliate product added', 'success'); document.getElementById('affTitle').value = ''; document.getElementById('affUrl').value = ''; document.getElementById('affImage').value = ''; loadMonetization(); }
+      else showToast('Failed to add', 'error');
+    }
+
+    async function delAffiliate(id) {
+      const r = await api(`/admin/monetization/affiliate/${id}`, { method: 'DELETE' });
+      if (r?.success) { showToast('Removed', 'success'); loadMonetization(); }
+    }
+
+    async function loadRevenue() {
+      const r = await api('/admin/monetization/revenue');
+      if (!r) return;
+      document.getElementById('revenueTotals').innerHTML = `<b>Total earnings recorded:</b> ₹${r.totals.sum} <small style="color:var(--ash);">(${r.totals.count} entries)</small>`;
+      document.getElementById('revenueList').innerHTML = r.entries.length ? r.entries.map(e =>
+        `<tr><td>${new Date(e.at).toLocaleString()}</td><td>${(e.source||'').replace(/</g,'&lt;')}</td><td><b>₹${e.amount}</b></td><td>${(e.note||'').replace(/</g,'&lt;')}</td></tr>`).join('')
+        : '<tr><td colspan="4" class="empty-state">No earnings recorded yet. Click “+ Record Earning” when you receive money from ads/affiliate.</td></tr>';
+    }
+
+    async function addRevenue() {
+      const source = prompt('Where did the money come from? (AdSense / Affiliate / Premium / Donation)');
+      if (!source) return;
+      const amount = parseFloat(prompt('Amount in ₹ (e.g. 250)'));
+      if (isNaN(amount)) return showToast('Invalid amount', 'error');
+      const r = await api('/admin/monetization/revenue', { method: 'POST', body: JSON.stringify({ source, amount, note: '' }) });
+      if (r?.success) { showToast('Earning recorded 💰', 'success'); loadRevenue(); }
+    }
+
+    async function saveMonetization() {
+      const body = {
+        enabled: document.getElementById('monoEnabled').checked,
+        ads: {
+          enabled: document.getElementById('monoAdsEnabled').checked,
+          network: document.getElementById('monoAdNetwork').value,
+          networkClientId: document.getElementById('monoAdClientId').value.trim(),
+          headerEnabled: document.getElementById('monoAdHeader').checked,
+          footerEnabled: document.getElementById('monoAdFooter').checked,
+          inFeedEnabled: document.getElementById('monoAdInFeed').checked
+        },
+        donations: {
+          enabled: document.getElementById('donEnabled').checked,
+          kofi: document.getElementById('donKofi').value.trim(),
+          buymeacoffee: document.getElementById('donBmac').value.trim(),
+          paypal: document.getElementById('donPaypal').value.trim(),
+          upiId: document.getElementById('donUpi').value.trim()
+        },
+        premium: {
+          enabled: document.getElementById('preEnabled').checked,
+          monthlyPriceINR: parseInt(document.getElementById('preMonthly').value) || 199,
+          yearlyPriceINR: parseInt(document.getElementById('preYearly').value) || 1499
+        }
+      };
+      const r = await api('/admin/monetization', { method: 'PUT', body: JSON.stringify(body) });
+      if (r?.success) showToast('Monetization saved — live on site instantly ✅', 'success');
+      else showToast('Save failed', 'error');
+    }
+
+    // Check for existing session
+    (async () => {
+      const savedToken = sessionStorage.getItem('adminToken');
+      const savedUser = sessionStorage.getItem('adminUser');
+      if (savedToken && savedUser) {
+        token = savedToken; admin = JSON.parse(savedUser);
+        const health = await api('/system/health');
+        if (health) {
+          document.getElementById('loginPrompt').style.display = 'none';
+          document.getElementById('dashboardContent').style.display = 'block';
+          document.getElementById('adminName').textContent = admin.name;
+          document.getElementById('adminEmail').textContent = admin.email;
+          initDashboard();
+        }
+      }
+    })();
+  </script>
+<script>navigator.serviceWorker.register('/sw.js').catch(function(e){console.error('SW registration failed:',e)});</script>
   <div id="site-footer"></div>
-  <script src="/js/loading-screen.js" defer></script>
-  <script src="/js/site.js" defer></script>
+    <script src="/js/loading-screen.js"></script>
+<script src="/js/site.js"></script>
 <script src="/js/install.js" defer></script>
-<script src="/js/footer.js" defer></script>
-<script src="/js/sw-register.js" defer></script>
 
-  <script src="/js/scroll-3d-animations.js" defer></script>  <script src="/js/k-scroll.js" defer></script>
+  <script src="/js/scroll-3d-animations.js"></script>  <script src="/js/k-scroll.js" defer></script>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>

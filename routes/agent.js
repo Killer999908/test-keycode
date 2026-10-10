@@ -196,8 +196,114 @@ module.exports = function AgentRoutes(opts) {
     });
   });
 
-  // legacy CLI ingest
-  app.post('/api/agent/react', requireAuth, function (req, res) {
-    res.json({ success: true, received: true });
+  // SSE streaming endpoint for AI builder and interactive agent clients
+  app.post('/api/agent/react', function (req, res) {
+    const b = req.body || {};
+    const goal = String(b.task || b.goal || '').trim();
+    if (!goal) return res.status(400).json({ success: false, error: 'task or goal required' });
+
+    let userId = (req.user && req.user.userId) || null;
+    if (!userId) {
+      const auth = req.headers.authorization || '';
+      const token = auth.replace(/^Bearer\s+/i, '') || (req.cookies && req.cookies.kc_token);
+      if (token) {
+        try { userId = require('jsonwebtoken').verify(token, process.env.JWT_SECRET || 'dev-secret').userId; } catch (_) { }
+      }
+    }
+    if (!userId) userId = 'guest_' + Date.now().toString(36);
+
+    const workspaceId = String(b.workspaceId || 'default');
+    if (!agent.isValidWorkspaceId(workspaceId)) return res.status(400).json({ success: false, error: 'invalid workspaceId' });
+
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-cache, no-transform',
+      'Connection': 'keep-alive',
+      'X-Accel-Buffering': 'no',
+    });
+    const send = (obj) => { try { res.write('data: ' + JSON.stringify(obj) + '\n\n'); } catch (_) { } };
+
+    const manifest = tools.manifest();
+    const maxSteps = Number(b.maxSteps) || 14;
+    send({ type: 'start', tools: manifest.length, maxSteps: maxSteps, goal: goal });
+
+    let finalAnswer = '';
+    enqueue(res, {
+      goal: goal,
+      userId: userId,
+      workspaceId: workspaceId,
+      maxSteps: maxSteps,
+      allowedTools: Array.isArray(b.allowedTools) ? b.allowedTools : undefined,
+    },
+    function (evt) {
+      if (evt.type === 'plan' && Array.isArray(evt.plan)) {
+        send({ type: 'todos', todos: evt.plan.map(p => ({ task: typeof p === 'string' ? p : (p.task || String(p)), completed: false })) });
+      } else if (evt.type === 'step' && evt.step) {
+        const s = evt.step;
+        if (s.kind === 'malformed') {
+          send({ type: 'step', step: s.step, kind: 'malformed' });
+        } else if (s.thought) {
+          send({ type: 'step', step: s.step, thought: s.thought });
+        }
+        if (s.tool) {
+          send({ type: 'tool', step: s.step, tool: s.tool, args: s.args || {} });
+        }
+        if (s.result !== undefined) {
+          send({ type: 'observation', step: s.step, tool: s.tool, ok: Boolean(s.ok), result: s.result });
+        }
+      } else if (evt.type === 'final') {
+        finalAnswer = evt.text || '';
+      }
+    },
+    function (session) {
+      // Check for any zip or generated artifacts in the workspace
+      try {
+        const wsFiles = agent.listWorkspaceFiles(userId, workspaceId);
+        const zips = wsFiles.filter(f => f.path && f.path.endsWith('.zip'));
+        if (zips.length) {
+          send({ type: 'artifact', artifact: zips[zips.length - 1].path });
+        }
+      } catch (_) { }
+
+      send({
+        type: 'done',
+        sessionId: session.id,
+        answer: session.final || finalAnswer,
+        status: session.status,
+        exhausted: session.status !== 'done'
+      });
+      try { res.end(); } catch (_) { }
+    },
+    function (e) {
+      send({ type: 'error', message: String(e && e.message || e) });
+      try { res.end(); } catch (_) { }
+    },
+    userId);
+  });
+
+  // Direct artifact download for agent builds
+  app.get('/api/agent/artifacts/:filename', function (req, res) {
+    const filename = path.basename(req.params.filename);
+    let userId = (req.user && req.user.userId) || null;
+    if (!userId) {
+      const auth = req.headers.authorization || '';
+      const token = auth.replace(/^Bearer\s+/i, '') || (req.cookies && req.cookies.kc_token);
+      if (token) {
+        try { userId = require('jsonwebtoken').verify(token, process.env.JWT_SECRET || 'dev-secret').userId; } catch (_) { }
+      }
+    }
+
+    // Try user workspace first, then default workspace, then public artifacts
+    const candidates = [];
+    if (userId) {
+      try { candidates.push(agent.workspaceFilePath(userId, 'default', filename)); } catch (_) { }
+    }
+    const fs = require('fs');
+    for (const c of candidates) {
+      if (fs.existsSync(c)) {
+        return res.download(c, filename);
+      }
+    }
+    res.status(404).json({ success: false, error: 'artifact not found' });
   });
 };

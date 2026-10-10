@@ -66,6 +66,13 @@ describe('auth', () => {
     expect(res.status).toBe(200);
     expect(res.body.payments).toEqual(expect.any(Array));
   });
+
+  test('accepts session via kc_token cookie', async () => {
+    const token = jwt.sign({ userId: 'user-1', email: 'a@b.c', role: 'user' }, process.env.JWT_SECRET);
+    const res = await request(app).get('/api/payment/list').set('Cookie', `kc_token=${token}`);
+    expect(res.status).toBe(200);
+    expect(res.body.payments).toEqual(expect.any(Array));
+  });
 });
 
 describe('payments', () => {
@@ -204,5 +211,57 @@ describe('agent workspaces and account isolation', () => {
     fs.symlinkSync('/etc/passwd', path.join(dir, 'outside-link'));
     expect(() => agent.workspaceFilePath(agentUserA, workspaceId, 'outside-link')).toThrow(/symbolic links/);
     expect(agent.listWorkspaceFiles(agentUserA, workspaceId).some(function (file) { return file.path === 'outside-link'; })).toBe(false);
+  });
+
+  test('POST /api/agent/react streams start event and artifacts endpoint serves saved file', async () => {
+    const previousProvider = process.env.AI_PROVIDER;
+    process.env.AI_PROVIDER = 'disabled'; // force local engine — no network in tests
+    try {
+    const reactRes = await request(app).post('/api/agent/react')
+      .set('Authorization', 'Bearer ' + tokenA)
+      .send({ task: 'ping', maxSteps: 1, workspaceId: workspaceId });
+    expect(reactRes.status).toBe(200);
+    expect(reactRes.text).toContain('data: {"type":"start"');
+
+    // Artifacts route serves files from user default workspace
+    const defDir = agent.getWorkspaceDir(agentUserA, 'default');
+    fs.writeFileSync(path.join(defDir, 'sample-build.zip'), 'zipbytes');
+    const dlZip = await request(app).get('/api/agent/artifacts/sample-build.zip')
+      .set('Authorization', 'Bearer ' + tokenA);
+    expect(dlZip.status).toBe(200);
+    expect(dlZip.text).toBe('zipbytes');
+    } finally {
+      if (previousProvider === undefined) delete process.env.AI_PROVIDER;
+      else process.env.AI_PROVIDER = previousProvider;
+    }
+  });
+});
+
+describe('AI Builder website stream', () => {
+  const userId = 'builder-test-' + Date.now();
+  const token = jwt.sign({ userId: userId, email: 'builder@test.local', role: 'user' }, process.env.JWT_SECRET);
+
+  test('streams generated HTML from the POST endpoint used by the builder', async () => {
+    const previousProvider = process.env.AI_PROVIDER;
+    process.env.AI_PROVIDER = 'disabled';
+    try {
+      const unauthenticated = await request(app).post('/api/ai/stream-website').send({ description: 'a bakery website' });
+      expect(unauthenticated.status).toBe(401);
+
+      const empty = await request(app).post('/api/ai/stream-website')
+        .set('Authorization', 'Bearer ' + token).send({ description: ' ' });
+      expect(empty.status).toBe(400);
+
+      const response = await request(app).post('/api/ai/stream-website')
+        .set('Authorization', 'Bearer ' + token).send({ description: 'a bakery website' });
+      expect(response.status).toBe(200);
+      expect(response.headers['content-type']).toContain('text/event-stream');
+      expect(response.text).toContain('"type":"html"');
+      expect(response.text).toContain('"type":"complete"');
+      expect(response.text).toContain('<!DOCTYPE html>');
+    } finally {
+      if (previousProvider === undefined) delete process.env.AI_PROVIDER;
+      else process.env.AI_PROVIDER = previousProvider;
+    }
   });
 });

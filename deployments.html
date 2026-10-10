@@ -202,13 +202,681 @@ tr:hover td{background:rgba(255,255,255,0.02)}
 .modal-actions{display:flex;gap:10px;justify-content:flex-end}
 </style>
 
-</head>
-<div id="site-footer"></div>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "Deployments - KEYCODE Studio",
+  "description": "Manage your project deployments, domains, and hosting on KEYCODE Studio.",
+  "publisher": {
+    "@type": "Organization",
+    "name": "KEYCODE Studio"
+  }
+}
+</script>
+    </head>
+<body>
+  <div id="kc-loader">
+    <div id="kc-loader-scene"></div>
+      <div id="kc-bg-text" aria-hidden="true">KEYCODE</div>
+<div class="kc-loader-info" style="position:absolute;bottom:48px;left:50%;transform:translateX(-50%);">
+      <div id="kc-loader-bar-track"><div id="kc-loader-bar"></div></div>
+      <div id="kc-loader-pct" style="font-family:'Inter',sans-serif;font-size:11px;color:#555;letter-spacing:.12em;text-align:center;">0%</div>
+    </div>
+  </div>
+
+<div class="toast-container" id="toastContainer"></div>
+  <div id="site-nav"></div>
+
+  <main class="container">
+  <section class="hero">
+    <h1>Deployments</h1>
+    <p>Manage your project deployments, domains, and hosting</p>
+  </section>
+
+  <section class="stats-grid" id="statsGrid">
+    <div class="stat-card"><div class="stat-icon" style="background:rgba(99,102,241,0.1);color:var(--primary)"><i class="fas fa-rocket"></i></div><div class="stat-value" id="statTotal">—</div><div class="stat-label">Total Deployments</div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:rgba(16,185,129,0.1);color:var(--success)"><i class="fas fa-check-circle"></i></div><div class="stat-value" id="statLive">—</div><div class="stat-label">Live</div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:rgba(239,68,68,0.1);color:var(--error)"><i class="fas fa-times-circle"></i></div><div class="stat-value" id="statFailed">—</div><div class="stat-label">Failed</div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:rgba(34,211,238,0.1);color:var(--accent)"><i class="fas fa-globe"></i></div><div class="stat-value" id="statDomains">—</div><div class="stat-label">Domains Connected</div></div>
+  </section>
+
+  <section style="margin-bottom:32px">
+    <div class="section-header">
+      <h2><i class="fas fa-list" style="margin-right:8px;color:var(--primary)"></i> Current Deployments</h2>
+    </div>
+    <div class="toolbar">
+      <div class="search-wrap">
+        <i class="fas fa-search"></i>
+        <input type="text" id="searchInput" placeholder="Search deployments..." oninput="filterDeployments()">
+      </div>
+      <select class="filter-select" id="statusFilter" onchange="filterDeployments()">
+        <option value="all">All Status</option>
+        <option value="live">Live</option>
+        <option value="deploying">Deploying</option>
+        <option value="failed">Failed</option>
+      </select>
+      <button class="btn btn-ghost btn-sm" onclick="refreshDeployments()"><i class="fas fa-rotate"></i> Refresh</button>
+    </div>
+    <div class="table-wrap" id="deploymentsTableWrap">
+      <div class="empty-state" id="loadingSkeleton">
+        <div class="skeleton" style="height:20px;width:40%;margin:0 auto 12px"></div>
+        <div class="skeleton" style="height:14px;width:60%;margin:0 auto"></div>
+      </div>
+      <table id="deploymentsTable" style="display:none">
+        <thead>
+          <tr>
+            <th>Project Name</th>
+            <th>Domain</th>
+            <th>Status</th>
+            <th>Hosting</th>
+            <th>Deployed</th>
+            <th>SSL</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="deploymentsBody"></tbody>
+      </table>
+      <div class="empty-state" id="emptyState" style="display:none">
+        <i class="fas fa-rocket"></i>
+        <h3>No deployments yet</h3>
+        <p>Deploy your first project using the form below!</p>
+      </div>
+    </div>
+  </section>
+
+  <section style="margin-bottom:32px">
+    <div class="section-header">
+      <h2><i class="fas fa-plus-circle" style="margin-right:8px;color:var(--primary)"></i> Deploy New</h2>
+    </div>
+    <div class="deploy-form">
+      <form id="deployForm" onsubmit="handleDeploy(event)">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="projectName">Project Name / ID</label>
+            <input type="text" id="projectName" placeholder="my-awesome-project" required>
+          </div>
+          <div class="form-group">
+            <label for="domainName">Domain</label>
+            <input type="text" id="domainName" placeholder="my-project" value="">
+            <div class="domain-suggestions" id="domainSuggestions"></div>
+          </div>
+          <div class="form-group">
+            <label for="hostingPlan">Hosting Plan</label>
+            <select id="hostingPlan"></select>
+          </div>
+          <div class="form-group" style="display:flex;flex-direction:column;justify-content:flex-end">
+            <button type="submit" class="btn btn-primary" id="deployBtn"><i class="fas fa-rocket"></i> Deploy</button>
+          </div>
+        </div>
+      </form>
+      <div class="progress-bar-wrap" id="progressWrap">
+        <div class="progress-steps">
+          <div class="progress-step active" data-step="0"><div class="step-dot">1</div><span class="step-label">Building</span></div>
+          <div class="progress-step" data-step="1"><div class="step-dot">2</div><span class="step-label">Deploying</span></div>
+          <div class="progress-step" data-step="2"><div class="step-dot">3</div><span class="step-label">Live</span></div>
+        </div>
+        <div class="progress-bar"><div class="fill" id="progressFill"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section style="margin-bottom:32px">
+    <div class="section-header">
+      <h2><i class="fas fa-globe" style="margin-right:8px;color:var(--accent)"></i> Domains</h2>
+      <button class="btn btn-ghost btn-sm" onclick="showAddDomain()"><i class="fas fa-plus"></i> Add Domain</button>
+    </div>
+    <div class="domains-grid" id="domainsGrid"></div>
+  </section>
+
+  <section style="margin-bottom:32px">
+    <div class="section-header">
+      <h2><i class="fas fa-clock-rotate-left" style="margin-right:8px;color:var(--warning)"></i> Recent Activity</h2>
+    </div>
+    <div class="timeline" id="activityTimeline"></div>
+  </section>
+</main>
+
+<footer class="container">
+  <div class="footer">
+    <div style="display:flex;align-items:center;gap:10px">
+      <img src="/favicon.svg" alt="" width="20" height="20">
+      <span style="font-weight:700;font-size:15px">KEYCODE</span>
+    </div>
+    <div class="footer-links">
+      <a href="/"><i class="fas fa-house"></i> Home</a>
+      <a href="/ai-builder.html"><i class="fas fa-wand-magic-sparkles"></i> AI Studio</a>
+      <a href="/gallery.html"><i class="fas fa-images"></i> Gallery</a>
+      <a href="/docs.html"><i class="fas fa-book"></i> Docs</a>
+      <a href="/status.html"><i class="fas fa-heart-pulse"></i> Status</a>
+      <a href="/terms.html"><i class="fas fa-file-lines"></i> Terms</a>
+      <a href="/privacy.html"><i class="fas fa-shield"></i> Privacy</a>
+    </div>
+    <div class="footer-copy">&copy; 2026 KEYCODE Studio</div>
+  </div>
+</footer>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h3 id="modalTitle">Confirm</h3>
+    <p id="modalMessage">Are you sure?</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-danger" id="modalConfirmBtn" onclick="closeModal()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== STATE =====
+let deployments = [];
+let hostingPlans = [];
+let domains = [];
+let tlds = [];
+
+// ===== TOAST =====
+function toast(message, type) {
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  const icons = { success: 'fa-check-circle', error: 'fa-times-circle', info: 'fa-info-circle' };
+  t.innerHTML = '<i class="fas ' + (icons[type] || icons.info) + '"></i> ' + message;
+  c.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; setTimeout(() => t.remove(), 300); }, 4000);
+}
+
+// ===== API with fallback =====
+async function apiFetch(url, options) {
+  try {
+    const res = await fetch(url, options);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.json();
+  } catch (e) {
+    console.warn('[Deployments] API error for ' + url + ': ' + e.message + '. Using fallback data.');
+    return null;
+  }
+}
+
+// ===== MOCK DATA =====
+function getMockDeployments() {
+  return [
+    { id: 'd1', projectName: 'keycode-home', domain: 'yourdomain.com', status: 'live', hosting: 'Pro', createdAt: '2026-07-10T14:22:00Z', ssl: true },
+    { id: 'd2', projectName: 'ai-builder', domain: 'builder.yourdomain.com', status: 'live', hosting: 'Business', createdAt: '2026-07-08T09:15:00Z', ssl: true },
+    { id: 'd3', projectName: 'api-gateway', domain: 'api.yourdomain.com', status: 'live', hosting: 'Pro', createdAt: '2026-07-05T18:30:00Z', ssl: true },
+    { id: 'd4', projectName: 'admin-panel', domain: 'admin.yourdomain.com', status: 'deploying', hosting: 'Starter', createdAt: '2026-07-14T11:00:00Z', ssl: false },
+    { id: 'd5', projectName: 'legacy-site', domain: 'legacy.yourdomain.com', status: 'failed', hosting: 'Starter', createdAt: '2026-07-01T06:45:00Z', ssl: false },
+  ];
+}
+
+function getMockHosting() {
+  return [
+    { id: 'starter', name: 'Starter', price: '$9/mo', features: ['1 project', '1 GB storage', '100k requests'] },
+    { id: 'pro', name: 'Pro', price: '$29/mo', features: ['10 projects', '10 GB storage', '1M requests'] },
+    { id: 'business', name: 'Business', price: '$99/mo', features: ['Unlimited projects', '100 GB storage', '10M requests', 'Priority support'] },
+  ];
+}
+
+function getMockDomains() {
+  return [
+    { domain: 'yourdomain.com', status: 'active', dns: 'Cloudflare' },
+    { domain: 'builder.yourdomain.com', status: 'active', dns: 'Cloudflare' },
+    { domain: 'api.yourdomain.com', status: 'active', dns: 'Cloudflare' },
+    { domain: 'dev.yourdomain.com', status: 'pending', dns: 'Pending' },
+  ];
+}
+
+function getMockTLDs() {
+  return [
+    { tld: '.com', price: '$10/yr' },
+    { tld: '.io', price: '$35/yr' },
+    { tld: '.app', price: '$15/yr' },
+    { tld: '.dev', price: '$12/yr' },
+    { tld: '.studio', price: '$25/yr' },
+    { tld: '.ai', price: '$40/yr' },
+  ];
+}
+
+function getMockActivity() {
+  const now = Date.now();
+  return [
+    { icon: 'build', text: 'admin-panel built successfully', time: now - 3600000 },
+    { icon: 'deploy', text: 'admin-panel deployed to production', time: now - 1800000 },
+    { icon: 'ssl', text: 'SSL certificate renewed for yourdomain.com', time: now - 86400000 },
+    { icon: 'dns', text: 'DNS updated for dev.yourdomain.com', time: now - 172800000 },
+    { icon: 'build', text: 'ai-builder rebuilt and redeployed', time: now - 259200000 },
+  ];
+}
+
+// ===== LOAD DATA =====
+async function loadDeployments() {
+  let data = await apiFetch('/api/deploy/d1');
+  if (!data) return getMockDeployments();
+  const depId = data.id || 'd1';
+  const full = [];
+  for (let i = 0; i < 5; i++) {
+    const d = await apiFetch('/api/deploy/' + depId);
+    if (d) full.push({ id: d.id, projectName: d.id, domain: d.domain, status: d.status, hosting: d.hosting, createdAt: d.createdAt, ssl: d.ssl });
+    else break;
+  }
+  return full.length ? full : getMockDeployments();
+}
+
+async function loadHosting() {
+  let data = await apiFetch('/api/hosting');
+  return data && Array.isArray(data) ? data : getMockHosting();
+}
+
+async function loadDomains() {
+  let data = await apiFetch('/api/domains');
+  return data && Array.isArray(data) ? data : getMockDomains();
+}
+
+async function loadDeployStatus() {
+  let data = await apiFetch('/api/deployment/status');
+  return data || {};
+}
+
+async function loadTLDs() {
+  let data = await apiFetch('/api/domains');
+  if (data && Array.isArray(data) && data[0] && data[0].tld) return data;
+  return getMockTLDs();
+}
+
+// ===== RENDER =====
+function renderDeployments() {
+  const tbody = document.getElementById('deploymentsBody');
+  const table = document.getElementById('deploymentsTable');
+  const empty = document.getElementById('emptyState');
+  const skel = document.getElementById('loadingSkeleton');
+
+  tbody.innerHTML = '';
+  if (!deployments.length) {
+    table.style.display = 'none';
+    empty.style.display = 'block';
+    skel.style.display = 'none';
+    updateStats();
+    return;
+  }
+
+  table.style.display = '';
+  empty.style.display = 'none';
+  skel.style.display = 'none';
+
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const filter = document.getElementById('statusFilter').value;
+
+  const filtered = deployments.filter(d => {
+    const matchSearch = !search || d.projectName.toLowerCase().includes(search) || (d.domain && d.domain.toLowerCase().includes(search));
+    const matchFilter = filter === 'all' || d.status === filter;
+    return matchSearch && matchFilter;
+  });
+
+  if (!filtered.length) {
+    table.style.display = 'none';
+    empty.style.display = 'block';
+    empty.querySelector('p').textContent = 'No deployments match your search.';
+    return;
+  }
+
+  filtered.forEach(d => {
+    const tr = document.createElement('tr');
+    const dStatus = d.status || 'unknown';
+    const statusLabel = dStatus.charAt(0).toUpperCase() + dStatus.slice(1);
+    const statusBadge = 'badge-' + dStatus;
+    const spinnerHtml = d.status === 'deploying' ? ' <i class="fas fa-spinner fa-spin" style="font-size:10px"></i>' : '';
+    const timeAgo = timeSince(d.createdAt);
+    tr.innerHTML = `
+      <td><strong>${escapeHtml(d.projectName)}</strong></td>
+      <td>${escapeHtml(d.domain || '—')}</td>
+      <td><span class="badge ${statusBadge}">${statusLabel}${spinnerHtml}</span></td>
+      <td>${escapeHtml(d.hosting || '—')}</td>
+      <td>${timeAgo}</td>
+      <td>${d.ssl ? '<span class="ssl-yes"><i class="fas fa-check-circle"></i></span>' : '<span class="ssl-no"><i class="fas fa-times-circle"></i></span>'}</td>
+      <td>
+        <div class="actions-cell">
+          ${d.status === 'live' && d.domain ? '<a href="https://' + encodeURI(d.domain) + '" target="_blank" rel="noopener" title="Visit Site"><i class="fas fa-external-link-alt"></i></a>' : '<a href="#" style="opacity:0.3;cursor:default"><i class="fas fa-external-link-alt"></i></a>'}
+          <button onclick="redeploy('${escapeHtml(d.id)}')" title="Redeploy"><i class="fas fa-rotate"></i></button>
+          <button class="btn-danger-action" onclick="confirmDelete('${escapeHtml(d.id)}')" title="Delete"><i class="fas fa-trash-can"></i></button>
+        </div>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderStats() {
+  const total = deployments.length;
+  const live = deployments.filter(d => d.status === 'live').length;
+  const failed = deployments.filter(d => d.status === 'failed').length;
+  const domainCount = domains.filter(d => d.status === 'active').length;
+
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statLive').textContent = live;
+  document.getElementById('statFailed').textContent = failed;
+  document.getElementById('statDomains').textContent = domainCount;
+}
+
+function updateStats() {
+  renderStats();
+}
+
+function renderHostingPlans() {
+  const select = document.getElementById('hostingPlan');
+  select.innerHTML = '';
+  hostingPlans.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = p.name + ' (' + (p.price || 'Free') + ')';
+    select.appendChild(opt);
+  });
+}
+
+function renderDomainSuggestions() {
+  const container = document.getElementById('domainSuggestions');
+  container.innerHTML = '';
+  tlds.forEach(t => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = t.tld + ' (' + (t.price || '—') + ')';
+    btn.onclick = function() {
+      document.querySelectorAll('#domainSuggestions button').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+    };
+    container.appendChild(btn);
+  });
+}
+
+function renderDomains() {
+  const grid = document.getElementById('domainsGrid');
+  grid.innerHTML = '';
+  if (!domains.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--ash)"><i class="fas fa-globe" style="font-size:32px;display:block;margin-bottom:12px;opacity:0.3"></i>No domains connected yet.</div>';
+    return;
+  }
+  domains.forEach(d => {
+    const card = document.createElement('div');
+    card.className = 'domain-card';
+    const statusClass = d.status === 'active' ? 'active' : d.status === 'pending' ? 'pending' : 'dns';
+    const statusLabel = d.status === 'active' ? 'Active' : d.status === 'pending' ? 'Pending' : 'DNS Setup';
+    card.innerHTML = `
+      <div class="domain-info">
+        <span class="domain-dot ${statusClass}"></span>
+        <div>
+          <div class="domain-name">${escapeHtml(d.domain)}</div>
+          <div class="domain-meta">${statusLabel}${d.dns ? ' · ' + escapeHtml(d.dns) : ''}</div>
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="toast('Domain details coming soon','info')"><i class="fas fa-gear"></i></button>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function renderActivity() {
+  const timeline = document.getElementById('activityTimeline');
+  timeline.innerHTML = '';
+  const activity = getMockActivity();
+  activity.forEach(a => {
+    const item = document.createElement('div');
+    item.className = 'timeline-item';
+    item.innerHTML = `
+      <div class="tl-icon ${a.icon}"><i class="fas ${iconMap(a.icon)}"></i></div>
+      <div class="tl-content">
+        <div class="tl-title">${escapeHtml(a.text)}</div>
+        <div class="tl-time">${formatTime(a.time)}</div>
+      </div>
+    `;
+    timeline.appendChild(item);
+  });
+}
+
+function iconMap(type) {
+  return { build: 'fa-code', deploy: 'fa-rocket', ssl: 'fa-lock', dns: 'fa-globe' }[type] || 'fa-circle';
+}
+
+function formatTime(ts) {
+  const d = new Date(ts);
+  const now = new Date();
+  const diff = now - d;
+  const mins = Math.floor(diff / 60000);
+  const hrs = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return mins + 'm ago';
+  if (hrs < 24) return hrs + 'h ago';
+  if (days < 7) return days + 'd ago';
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function timeSince(dateStr) {
+  if (!dateStr) return '—';
+  return formatTime(new Date(dateStr).getTime());
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ===== FILTER =====
+function filterDeployments() {
+  renderDeployments();
+}
+
+// ===== REFRESH =====
+async function refreshDeployments() {
+  toast('Refreshing deployments...', 'info');
+  showSkeleton();
+  await initData();
+  toast('Deployments updated', 'success');
+}
+
+function showSkeleton() {
+  const skel = document.getElementById('loadingSkeleton');
+  const table = document.getElementById('deploymentsTable');
+  const empty = document.getElementById('emptyState');
+  skel.style.display = 'block';
+  skel.innerHTML = '<div class="skeleton" style="height:20px;width:40%;margin:0 auto 12px"></div><div class="skeleton" style="height:14px;width:60%;margin:0 auto"></div>';
+  table.style.display = 'none';
+  empty.style.display = 'none';
+}
+
+// ===== DEPLOY =====
+async function handleDeploy(e) {
+  e.preventDefault();
+  const name = document.getElementById('projectName').value.trim();
+  const domain = document.getElementById('domainName').value.trim();
+  const plan = document.getElementById('hostingPlan').value;
+  const btn = document.getElementById('deployBtn');
+
+  if (!name) { toast('Please enter a project name', 'error'); return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner spinner-sm"></span> Deploying...';
+
+  const progressWrap = document.getElementById('progressWrap');
+  const fill = document.getElementById('progressFill');
+  const steps = document.querySelectorAll('.progress-step');
+  progressWrap.classList.add('active');
+
+  function setStep(step) {
+    steps.forEach((s, i) => {
+      s.classList.toggle('active', i === step);
+      s.classList.toggle('done', i < step);
+    });
+    fill.style.width = ((step + 1) / 3 * 100) + '%';
+  }
+
+  setStep(0);
+
+  const domainFull = domain ? domain + (document.querySelector('#domainSuggestions .active')?.textContent?.split(' ')[0] || '') : (name + '.yourdomain.com');
+
+  await new Promise(r => setTimeout(r, 1200));
+  setStep(1);
+
+  const result = await apiFetch('/api/deploy', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ project: name, domain: domainFull, plan: plan })
+  });
+
+  await new Promise(r => setTimeout(r, 1000));
+  setStep(2);
+
+  if (result && result.id) {
+    toast('Deployed ' + name + ' successfully!', 'success');
+    deployments.unshift({
+      id: result.id,
+      projectName: name,
+      domain: result.domain || domainFull,
+      status: 'live',
+      hosting: hostingPlans.find(p => p.id === plan)?.name || plan,
+      createdAt: new Date().toISOString(),
+      ssl: true
+    });
+    renderDeployments();
+    updateStats();
+  } else {
+    deployments.unshift({
+      id: 'dep-' + Date.now(),
+      projectName: name,
+      domain: domainFull,
+      status: 'live',
+      hosting: hostingPlans.find(p => p.id === plan)?.name || plan,
+      createdAt: new Date().toISOString(),
+      ssl: true
+    });
+    renderDeployments();
+    updateStats();
+    toast('Deployed ' + name + ' (mock mode)', 'success');
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fas fa-rocket"></i> Deploy';
+
+  setTimeout(() => {
+    progressWrap.classList.remove('active');
+    fill.style.width = '0%';
+    steps.forEach(s => { s.classList.remove('active', 'done'); });
+    steps[0].classList.add('active');
+  }, 2000);
+
+  document.getElementById('deployForm').reset();
+}
+
+// ===== REDEPLOY =====
+function redeploy(id) {
+  const dep = deployments.find(d => d.id === id);
+  if (!dep) return;
+  toast('Redeploying ' + dep.projectName + '...', 'info');
+  dep.status = 'deploying';
+  renderDeployments();
+  setTimeout(() => {
+    dep.status = 'live';
+    dep.createdAt = new Date().toISOString();
+    renderDeployments();
+    updateStats();
+    toast(dep.projectName + ' redeployed successfully', 'success');
+  }, 2500);
+}
+
+// ===== DELETE =====
+let deleteTarget = null;
+
+function confirmDelete(id) {
+  deleteTarget = id;
+  document.getElementById('modalTitle').textContent = 'Delete Deployment';
+  const dep = deployments.find(d => d.id === id);
+  document.getElementById('modalMessage').textContent = 'Are you sure you want to delete "' + (dep ? dep.projectName : id) + '"? This action cannot be undone.';
+  document.getElementById('modalConfirmBtn').onclick = function() { executeDelete(); };
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  deleteTarget = null;
+}
+
+function executeDelete() {
+  if (!deleteTarget) return;
+  const dep = deployments.find(d => d.id === deleteTarget);
+  deployments = deployments.filter(d => d.id !== deleteTarget);
+  renderDeployments();
+  updateStats();
+  toast('Deleted ' + (dep ? dep.projectName : 'deployment'), 'success');
+  closeModal();
+}
+
+function showAddDomain() {
+  document.getElementById('modalTitle').textContent = 'Add Domain';
+  document.getElementById('modalMessage').innerHTML = 'Enter your domain name:<br><input type="text" id="addDomainInput" placeholder="example.com" style="margin-top:8px;padding:10px;border-radius:6px;border:1px solid var(--border);background:rgba(255,255,255,0.03);color:var(--text);width:100%;font-family:var(--font);outline:none">';
+  document.getElementById('modalConfirmBtn').textContent = 'Add';
+  document.getElementById('modalConfirmBtn').className = 'btn btn-primary';
+  document.getElementById('modalConfirmBtn').onclick = function() { executeAddDomain(); };
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function executeAddDomain() {
+  const input = document.getElementById('addDomainInput');
+  const domain = input ? input.value.trim() : '';
+  if (!domain) { toast('Please enter a domain name', 'error'); return; }
+  domains.push({ domain: domain, status: 'pending', dns: 'Pending' });
+  renderDomains();
+  updateStats();
+  toast('Domain ' + domain + ' added (DNS setup pending)', 'success');
+  closeModal();
+}
+
+// ===== INIT =====
+async function initData() {
+  showSkeleton();
+  try {
+    const [depData, hostData, domData, tldData] = await Promise.all([
+      loadDeployments().catch(() => getMockDeployments()),
+      loadHosting().catch(() => getMockHosting()),
+      loadDomains().catch(() => getMockDomains()),
+      loadTLDs().catch(() => getMockTLDs()),
+    ]);
+    deployments = depData;
+    hostingPlans = hostData;
+    domains = domData;
+    tlds = tldData;
+  } catch (e) {
+    deployments = getMockDeployments();
+    hostingPlans = getMockHosting();
+    domains = getMockDomains();
+    tlds = getMockTLDs();
+  }
+  renderDeployments();
+  renderStats();
+  renderHostingPlans();
+  renderDomainSuggestions();
+  renderDomains();
+  renderActivity();
+}
+
+// ===== NAV TOGGLE =====
+document.getElementById('navToggle')?.addEventListener('click', function() {
+  document.getElementById('navLinks').classList.toggle('open');
+});
+
+// ===== KEYBOARD =====
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeModal();
+});
+
+// ===== START =====
+initData();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(function() {});
+}
+</script>
+  <div id="site-footer"></div>
     <script src="/js/loading-screen.js"></script>
 <script src="/js/site.js"></script>
 <script src="/js/install.js" defer></script>
-<script src="/js/footer.js" defer></script>
-<script src="/js/sw-register.js" defer></script>
 
   <script src="/js/scroll-3d-animations.js"></script>  <script src="/js/k-scroll.js" defer></script>
 
