@@ -4,6 +4,12 @@
 //   and the Stripe webhook (dev trust-mode path).
 process.env.NODE_ENV = 'test';
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-test-secret-test-secret';
+process.env.AI_PROVIDER = 'disabled';
+process.env.SUPABASE_URL = '';
+process.env.SUPABASE_ANON_KEY = '';
+process.env.SUPABASE_SERVICE_KEY = '';
+process.env.STRIPE_SECRET_KEY = '';
+process.env.STRIPE_WEBHOOK_SECRET = '';
 
 const request = require('supertest');
 const jwt = require('jsonwebtoken');
@@ -231,8 +237,7 @@ describe('agent workspaces and account isolation', () => {
       fs.writeFileSync(path.join(defDir, 'sample-build.zip'), 'zipbytes');
       const dlZip = await request(app).get('/api/agent/artifacts/sample-build.zip')
         .set('Authorization', 'Bearer ' + tokenA);
-      expect(dlZip.status).toBe(200);
-      expect(dlZip.text).toBe('zipbytes');
+      expect({ status: dlZip.status, body: dlZip.text }).toEqual({ status: 200, body: 'zipbytes' });
     } finally {
       runTask.mockRestore();
     }
