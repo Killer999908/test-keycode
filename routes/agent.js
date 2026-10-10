@@ -15,7 +15,6 @@ const agent = require('../lib/agent-core');
 const tools = require('../lib/agent-tools');
 const ai = require('../lib/ai-provider');
 const ai_poolStatus = () => ai.poolStatus();
-const { Readable } = require('stream');
 
 module.exports = function AgentRoutes(opts) {
   const { app, requireAuth, now } = opts;
@@ -35,14 +34,23 @@ module.exports = function AgentRoutes(opts) {
     for (const r of running) { if (r.userId === userId) n++; }
     return n;
   }
+  function workspaceIsRunning(userId, workspaceId) {
+    for (const r of running) {
+      if (r.userId === userId && r.workspaceId === workspaceId) return true;
+    }
+    return false;
+  }
   function pumpQueue() {
     while (running.size < MAX_CONCURRENT && waiting.length) {
-      // fair share: prefer the user with fewest active runs
-      let best = 0, bestCount = Infinity;
+      // Fair-share users while serializing work that targets the same workspace.
+      let best = -1, bestCount = Infinity;
       for (let i = 0; i < waiting.length; i++) {
-        const c = activeCountFor(waiting[i].userId);
+        const candidate = waiting[i];
+        const c = activeCountFor(candidate.userId);
+        if (c >= MAX_PER_USER || workspaceIsRunning(candidate.userId, candidate.workspaceId)) continue;
         if (c < bestCount) { bestCount = c; best = i; if (c === 0) break; }
       }
+      if (best === -1) break;
       const item = waiting.splice(best, 1)[0];
       startRun(item);
     }
@@ -72,31 +80,51 @@ module.exports = function AgentRoutes(opts) {
   });
 
   app.get('/api/agent/sessions', requireAuth, function (req, res) {
-    res.json({ success: true, sessions: agent.listSessions() });
+    res.json({ success: true, sessions: agent.listSessions(req.user.userId) });
   });
 
   app.get('/api/agent/sessions/:id', requireAuth, function (req, res) {
-    const s = agent.getSession(req.params.id);
+    const s = agent.getSession(req.params.id, req.user.userId);
     if (!s) return res.status(404).json({ success: false, error: 'session not found' });
     res.json({ success: true, session: s });
   });
 
   app.get('/api/agent/memory', requireAuth, function (req, res) {
-    const m = agent.loadMemory();
+    const m = agent.loadMemory(req.user.userId);
     res.json({ success: true, facts: m.facts, skills: m.skills });
   });
 
   app.post('/api/agent/memory/fact', requireAuth, function (req, res) {
     const text = String((req.body || {}).text || '').trim();
     if (!text) return res.status(400).json({ success: false, error: 'text required' });
-    res.json({ success: true, stored: agent.rememberFact(text) });
+    res.json({ success: true, stored: agent.rememberFact(text, req.user.userId) });
   });
 
   app.post('/api/agent/skills', requireAuth, function (req, res) {
     const b = req.body || {};
     if (!b.name || !b.prompt) return res.status(400).json({ success: false, error: 'name and prompt required' });
-    const skill = agent.learnSkill(b.name, b.prompt, b.notes);
+    const skill = agent.learnSkill(b.name, b.prompt, b.notes, req.user.userId);
     res.status(201).json({ success: true, skill: skill });
+  });
+
+  app.get('/api/agent/workspaces/:workspaceId/files', requireAuth, function (req, res) {
+    if (!agent.isValidWorkspaceId(req.params.workspaceId)) return res.status(400).json({ success: false, error: 'invalid workspaceId' });
+    try {
+      const files = agent.listWorkspaceFiles(req.user.userId, req.params.workspaceId);
+      res.json({ success: true, workspaceId: req.params.workspaceId, files: files });
+    } catch (e) {
+      res.status(500).json({ success: false, error: String(e && e.message || e) });
+    }
+  });
+
+  app.get('/api/agent/workspaces/:workspaceId/file', requireAuth, function (req, res) {
+    if (!agent.isValidWorkspaceId(req.params.workspaceId)) return res.status(400).json({ success: false, error: 'invalid workspaceId' });
+    let file;
+    try { file = agent.workspaceFilePath(req.user.userId, req.params.workspaceId, String(req.query.path || '')); }
+    catch (e) { return res.status(404).json({ success: false, error: String(e && e.message || e) }); }
+    res.download(file, function (e) {
+      if (e && !res.headersSent) res.status(e.statusCode === 404 ? 404 : 500).json({ success: false, error: 'could not download artifact' });
+    });
   });
 
   // blocking run — queued fairly, never rejected unless the queue is full
@@ -104,10 +132,13 @@ module.exports = function AgentRoutes(opts) {
     const b = req.body || {};
     const goal = String(b.goal || '').trim();
     if (!goal) return res.status(400).json({ success: false, error: 'goal required' });
+    const workspaceId = b.workspaceId || 'default';
+    if (!agent.isValidWorkspaceId(workspaceId)) return res.status(400).json({ success: false, error: 'invalid workspaceId' });
     const uid = req.user && req.user.userId;
     enqueue(res, {
       goal: goal,
       userId: uid,
+      workspaceId: workspaceId,
       maxSteps: b.maxSteps,
       allowedTools: Array.isArray(b.allowedTools) ? b.allowedTools : undefined,
     }, function () { },
@@ -119,11 +150,13 @@ module.exports = function AgentRoutes(opts) {
   // SSE live run — token in query for EventSource
   app.get('/api/agent/stream', async function (req, res) {
     const token = String(req.query.token || '').replace(/^Bearer\s+/i, '');
-    let ok = false;
-    try { ok = !!require('jsonwebtoken').verify(token, process.env.JWT_SECRET || 'dev-secret'); } catch (_) { }
-    if (!ok) return res.status(401).json({ success: false, error: 'invalid token' });
+    let userId;
+    try { userId = require('jsonwebtoken').verify(token, process.env.JWT_SECRET || 'dev-secret').userId; } catch (_) { }
+    if (!userId) return res.status(401).json({ success: false, error: 'invalid token' });
     const goal = String(req.query.goal || '').trim();
     if (!goal) return res.status(400).json({ success: false, error: 'goal required' });
+    const workspaceId = String(req.query.workspaceId || 'default');
+    if (!agent.isValidWorkspaceId(workspaceId)) return res.status(400).json({ success: false, error: 'invalid workspaceId' });
 
     res.writeHead(200, {
       'Content-Type': 'text/event-stream; charset=utf-8',
@@ -135,7 +168,8 @@ module.exports = function AgentRoutes(opts) {
     send({ type: 'start', goal: goal });
     enqueue(res, {
       goal: goal,
-      userId: req.user && req.user.userId,
+      userId: userId,
+      workspaceId: workspaceId,
       maxSteps: Number(req.query.maxSteps) || undefined,
     },
     function (evt) { send(evt); },
@@ -147,7 +181,7 @@ module.exports = function AgentRoutes(opts) {
       send({ type: 'error', error: String(e && e.message || e) });
       try { res.end(); } catch (_) { }
     },
-    req.user && req.user.userId);
+    userId);
   });
 
   app.get('/api/agent/status', function (req, res) {

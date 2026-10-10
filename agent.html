@@ -48,7 +48,7 @@ a{color:var(--accent)}
 <body>
 <div class="wrap">
   <h1>KEYCODE <span>Agent</span></h1>
-  <p class="sub">Autonomous ReAct agent — 18 built-in tools (filesystem, shell, web search, HTTP GET/POST, headless-browser visit &amp; extract, git clone, LLM, tests, report &amp; data skills, website builder) plus self-taught skills exposed as <code>skill_*</code> tools. Sign in first — the console uses your existing token.</p>
+  <p class="sub">Autonomous AI agent with 22 built-in tools, per-account memory and skills, and persistent workspaces. Sign in first — the console uses your existing token.</p>
   <div class="goal-box">
     <input id="goal" placeholder="Describe a task, e.g. 'research top 3 static site generators and write a comparison to notes.md'">
     <button id="runBtn" onclick="run()">Run</button>
@@ -69,7 +69,11 @@ a{color:var(--accent)}
     </div>
   </div>
   <div id="log">Idle. Enter a goal and press Run.</div>
-  <p class="small">API: <code>POST /api/agent/run</code> · <code>GET /api/agent/stream?goal=...</code> · CLI: <code>node keycode-agent.js "goal"</code></p>
+  <div class="panel" style="margin-top:18px">
+    <h3>Workspace artifacts <button onclick="loadArtifacts()" style="float:right;background:none;border:0;color:var(--accent);cursor:pointer">Refresh</button></h3>
+    <div id="artifactList" class="chip-list"><span class="muted">Sign in to view saved workspace files.</span></div>
+  </div>
+  <p class="small">Artifacts persist in your default workspace. API: <code>POST /api/agent/run</code> · <code>GET /api/agent/stream?goal=...</code> · CLI: <code>node keycode-agent.js "goal"</code></p>
 </div>
 <div id="site-footer"></div>
 <script src="/js/loading-screen.js"></script>
@@ -101,6 +105,34 @@ function loadPanels(){
     });
   }).catch(function(){});
 }
+function loadArtifacts(){
+  var el=document.getElementById('artifactList');
+  if(!TOKEN){ el.textContent='Sign in to view saved workspace files.'; return; }
+  fetch('/api/agent/workspaces/default/files',{headers:{'Authorization':'Bearer '+TOKEN}})
+    .then(function(r){ if(!r.ok) throw new Error('Could not load artifacts'); return r.json(); })
+    .then(function(j){
+      el.textContent='';
+      var files=(j.files||[]).filter(function(f){return !f.dir;});
+      if(!files.length){ el.textContent='No files saved in this workspace yet.'; return; }
+      files.forEach(function(f){
+        var button=document.createElement('button');
+        button.className='chip';
+        button.type='button';
+        button.textContent=f.path+' ('+f.bytes+' bytes)';
+        button.title='Download '+f.path;
+        button.onclick=function(){ downloadArtifact(f.path); };
+        el.appendChild(button);
+      });
+    }).catch(function(e){ el.textContent=e.message; });
+}
+function downloadArtifact(file){
+  fetch('/api/agent/workspaces/default/file?path='+encodeURIComponent(file),{headers:{'Authorization':'Bearer '+TOKEN}})
+    .then(function(r){ if(!r.ok) throw new Error('Could not download artifact'); return r.blob(); })
+    .then(function(blob){
+      var a=document.createElement('a'), url=URL.createObjectURL(blob);
+      a.href=url; a.download=file.split('/').pop(); a.click(); URL.revokeObjectURL(url);
+    }).catch(function(e){ line('✖ '+esc(e.message),'err'); });
+}
 function teach(){
   if(!TOKEN){ window.location.href='/login.html'; return; }
   var name=document.getElementById('teachName').value.trim();
@@ -110,6 +142,7 @@ function teach(){
     .then(r=>r.json()).then(function(){ document.getElementById('teachName').value=''; document.getElementById('teachPrompt').value=''; loadPanels(); });
 }
 loadPanels();
+loadArtifacts();
 function run(){
   if(!TOKEN){ window.location.href='/login.html'; return; }
   var goal=document.getElementById('goal').value.trim();
@@ -128,7 +161,7 @@ function run(){
     }
     else if(m.type==='final'){ line('✔ '+esc(m.text),'final'); }
     else if(m.type==='error'){ line('✖ '+esc(m.error),'err'); }
-    else if(m.type==='result'||m.type==='done'){ line('— '+esc(m.status||'done')+' —','final'); es.close(); document.getElementById('runBtn').disabled=false; }
+    else if(m.type==='result'||m.type==='done'){ line('— '+esc(m.status||'done')+' —','final'); es.close(); document.getElementById('runBtn').disabled=false; loadArtifacts(); }
   };
   es.onerror=function(){ document.getElementById('runBtn').disabled=false; };
 }
