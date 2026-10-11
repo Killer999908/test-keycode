@@ -156,3 +156,20 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
+
+  # ---------------------------------------------------------------------------
+  #  Sign-up → key → CLI login system test: boots the real server in-process
+  #  and drives the real keycode-cli.js subprocess (sandboxed HOME).
+  # ---------------------------------------------------------------------------
+  cli-system-test:
+    name: system test — signup → key → CLI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Run the signup → key → CLI system suite
+        run: npx jest test/signup-key-cli-system.test.js --runInBand
