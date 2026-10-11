@@ -296,6 +296,25 @@ const Coupons = require('./routes/coupons')({
 });
 
 // ===========================================================================
+//  MONETIZATION (admin ad settings + public ad configuration)
+// ===========================================================================
+require('./routes/monetization')({
+  app,
+  requireAuth,
+  projectRoot,
+});
+
+// ===========================================================================
+//  ADMIN CONSOLE (authenticated platform overview and safe management APIs)
+// ===========================================================================
+require('./routes/admin')({
+  app,
+  requireAuth,
+  projectRoot,
+  SUPABASE_ADMIN,
+});
+
+// ===========================================================================
 //  APP DATA + LOCAL AI ENGINE  (dashboard /api/user/*, builder /api/ai/*)
 // ===========================================================================
 const AppData = require('./routes/appdata')({
@@ -357,6 +376,7 @@ const Webhooks = require('./routes/webhooks')({
 // Static assets & real HTML pages (/, /checkout.html, /assets/*, /js/*...).
 // MUST precede the SPA catch-all below, otherwise every non-API path
 // (e.g. /checkout.html) would wrongly return index.html.
+app.use('/data', (_req, res) => res.sendStatus(404));
 app.use(express.static(projectRoot, { extensions: ['html'], index: 'index.html' }));
 
 const serveIndex = (req, res, next) => {

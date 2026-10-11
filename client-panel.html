@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <link rel="manifest" href="/manifest.json">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
   <meta name="description" content="KEYCODE Studio - AI-powered development platform">
   <title>Client Portal - KEYCODE Studio</title>
   <link rel="icon" type="image/svg+xml" href="/assets/favicon-dRp91c1F.svg">
@@ -305,6 +306,7 @@
       const orders = await api('/orders');
       if (!orders) return;
       const arr = Array.isArray(orders) ? orders : [];
+      window._kcProjects = arr;
       document.getElementById('projectsList').innerHTML = arr.map(o => `
         <tr>
           <td><strong>${o.project?.name || 'Project #' + (o._id||'').slice(-8).toUpperCase()}</strong></td>
@@ -312,10 +314,28 @@
           <td><span class="badge ${o.status === 'completed' ? 'badge-green' : o.status === 'in_progress' ? 'badge-blue' : 'badge-yellow'}">${(o.status||'pending').replace('_',' ')}</span></td>
           <td>₹${o.total || 0}</td>
           <td>${new Date(o.createdAt).toLocaleDateString()}</td>
-          <td><button class="btn-sm btn-primary" onclick="showToast('Project details coming soon','info')">View</button></td>
+          <td><button class="btn-sm btn-primary" onclick="viewProject('${(o._id||'').replace(/'/g,"")}')">View</button></td>
         </tr>
       `).join('') || '<tr><td colspan="6" class="empty-state">No projects yet</td></tr>';
     }
+    function viewProject(id) {
+      const o = (window._kcProjects || []).find(p => (p._id || '') === id);
+      if (!o) { showToast('Project not found', 'error'); return; }
+      const items = (o.items || []).map(i => `<li>${i.name}${i.qty ? ' ×' + i.qty : ''} — ₹${i.price || 0}</li>`).join('') || '<li>' + (o.serviceType || 'Custom service') + '</li>';
+      showToast(`Project: ${o.project?.name || 'Order'} — status: ${(o.status || 'pending').replace('_', ' ')}, total: ₹${o.total || 0}`, 'info');
+      const modal = document.createElement('div');
+      modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;padding:24px;';
+      modal.innerHTML = `<div style="max-width:480px;width:100%;background:var(--slate,#12121a);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:28px;color:#fff;">
+        <h3 style="margin-bottom:8px;">${o.project?.name || 'Project #' + (o._id || '').slice(-8).toUpperCase()}</h3>
+        <p style="opacity:.7;font-size:13px;margin-bottom:14px;">Status: ${(o.status || 'pending').replace('_', ' ')} · Placed ${new Date(o.createdAt || Date.now()).toLocaleDateString()}</p>
+        <ul style="margin:0 0 14px 18px;font-size:14px;line-height:1.8;">${items}</ul>
+        <p style="font-weight:600;margin-bottom:16px;">Total: ₹${o.total || 0}</p>
+        <button style="width:100%;padding:10px;background:#fff;color:#000;border:none;border-radius:8px;font-weight:600;cursor:pointer;" onclick="this.closest('div[style*=fixed]').remove()">Close</button>
+      </div>`;
+      modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+      document.body.appendChild(modal);
+    }
+    window.viewProject = viewProject;
 
     var _payingOrderId = null;
 

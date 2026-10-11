@@ -71,6 +71,28 @@ module.exports = function NotificationsRoutes(opts) {
     return result;
   }
 
+  app.get('/api/admin/notifications', requireAuth, async (req, res) => {
+    const role = req.user && req.user.role;
+    if (role !== 'admin' && role !== 'super_admin') return res.status(403).json({ error: 'Admins only.' });
+    try {
+      let notifications = loadAll().notifications || [];
+      if (SUPABASE_ADMIN) {
+        const { data, error } = await SUPABASE_ADMIN
+          .from('notifications')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(500);
+        if (error) throw error;
+        if (data) notifications = data;
+      }
+      notifications.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+      res.json({ notifications: notifications.slice(0, 500) });
+    } catch (err) {
+      console.error('[notifications.admin.list]', err);
+      res.status(500).json({ error: 'Could not list notifications.' });
+    }
+  });
+
   // ---------------------------------------------------------------------------
   //  List MY notifications
   // ---------------------------------------------------------------------------

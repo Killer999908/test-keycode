@@ -21,8 +21,15 @@ const agent = require('../lib/agent-core');
 const { app } = require('../server');
 
 const DATA_DIR = path.join(__dirname, '..', 'data');
+const staticDataTestFile = path.join(DATA_DIR, 'static-private-test-' + Date.now() + '.json');
+const staticDataTestBackup = fs.existsSync(staticDataTestFile) ? fs.readFileSync(staticDataTestFile, 'utf8') : null;
 const PAYMENTS_FILE = path.join(DATA_DIR, 'mock-payments.json');
 const backup = fs.existsSync(PAYMENTS_FILE) ? fs.readFileSync(PAYMENTS_FILE, 'utf8') : null;
+const monetizationFile = path.join(DATA_DIR, 'monetization.json');
+const monetizationBackup = fs.existsSync(monetizationFile) ? fs.readFileSync(monetizationFile, 'utf8') : null;
+const revenueFile = path.join(DATA_DIR, 'monetization-revenue.json');
+const revenueBackup = fs.existsSync(revenueFile) ? fs.readFileSync(revenueFile, 'utf8') : null;
+const adminToken = jwt.sign({ userId: 'monetization-admin-test', role: 'admin' }, process.env.JWT_SECRET);
 const agentTestId = 'agent-test-' + Date.now();
 const agentUserA = agentTestId + '-a';
 const agentUserB = agentTestId + '-b';
@@ -35,8 +42,14 @@ const memoryFiles = [agentUserA, agentUserB].map(function (id) {
 const memoryBackups = memoryFiles.map(function (file) { return fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null; });
 
 afterAll(() => {
+  if (staticDataTestBackup === null) fs.rmSync(staticDataTestFile, { force: true });
+  else fs.writeFileSync(staticDataTestFile, staticDataTestBackup);
   if (backup === null) fs.rmSync(PAYMENTS_FILE, { force: true });
   else fs.writeFileSync(PAYMENTS_FILE, backup);
+  if (monetizationBackup === null) fs.rmSync(monetizationFile, { force: true });
+  else fs.writeFileSync(monetizationFile, monetizationBackup);
+  if (revenueBackup === null) fs.rmSync(revenueFile, { force: true });
+  else fs.writeFileSync(revenueFile, revenueBackup);
   if (sessionBackup === null) fs.rmSync(sessionFile, { force: true });
   else fs.writeFileSync(sessionFile, sessionBackup);
   memoryFiles.forEach(function (file, i) {
@@ -107,6 +120,138 @@ describe('KEYCODE CLI installation', () => {
     expect(res.status).toBe(200);
     expect(res.text).toContain("require('https')");
     expect(res.text).toContain("keycode login");
+  });
+});
+
+describe('Public website quality', () => {
+  test('keeps public SEO indexing enabled with a usable sitemap', async () => {
+    const [robots, sitemap, home] = await Promise.all([
+      request(app).get('/robots.txt'),
+      request(app).get('/sitemap.xml'),
+      request(app).get('/'),
+    ]);
+    expect(robots.status).toBe(200);
+    expect(robots.text).toContain('Allow: /');
+    expect(robots.text).toContain('Disallow: /api/');
+    expect(robots.text).toContain('Sitemap: https://keycode.studio/sitemap.xml');
+    expect(robots.text.split(/\r?\n/)).not.toContain('Disallow: /');
+    expect(sitemap.status).toBe(200);
+    expect(sitemap.text).toContain('<loc>https://keycode.studio/</loc>');
+    expect(sitemap.text).toContain('https://keycode.studio/ai-builder.html');
+    expect(sitemap.text).not.toContain('/dashboard.html');
+    const publicPaths = Array.from(sitemap.text.matchAll(/<loc>https:\/\/keycode\.studio([^<]*)<\/loc>/g), match => match[1]);
+    for (const page of publicPaths) expect((await request(app).get(page)).status).toBe(200);
+    expect(robots.text).toContain('Disallow: /data/');
+    expect(home.text).toContain('<link rel="canonical" href="https://keycode.studio/">');
+    expect(home.text).toContain('<meta property="og:image" content="https://keycode.studio/og-image.png">');
+    expect(home.text).toContain('<main class="snap-container" id="main">');
+    expect(home.text).toContain("savedChoice === 'granted'");
+  });
+
+  test('uses truthful platform details instead of invented client results or metrics', async () => {
+    const home = await request(app).get('/');
+    expect(home.status).toBe(200);
+    expect(home.text).toContain('A workspace you can inspect');
+    expect(home.text).toContain('Delivery time depends on your project scope.');
+    expect(home.text).not.toContain('Maya Krishnan');
+    expect(home.text).not.toContain('99.9');
+    expect(home.text).not.toContain('34%');
+  });
+
+  test('does not publish account and admin screens to search indexes', async () => {
+    for (const page of ['/login.html', '/dashboard.html', '/api-keys.html', '/admin-panel.html']) {
+      const response = await request(app).get(page);
+      expect(response.status).toBe(200);
+      expect(response.text).toContain('<meta name="robots" content="noindex, nofollow">');
+    }
+  });
+
+  test('never serves private JSON files from the application data directory', async () => {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+    fs.writeFileSync(staticDataTestFile, JSON.stringify({ private: true }));
+    const response = await request(app).get('/data/' + path.basename(staticDataTestFile));
+    expect(response.status).toBe(404);
+    expect(response.text).not.toContain('"private":true');
+  });
+
+  test('game page social preview metadata is valid and canonical', async () => {
+    const response = await request(app).get('/game.html');
+    expect(response.status).toBe(200);
+    expect(response.text).toContain('content="https://keycode.studio/game.html"');
+    expect(response.text).not.toContain('<meta property="og:description" content="KEYCODE Studio - AI Game Engine <title>');
+  });
+
+  test('status page reports only measured health and configuration, not fabricated uptime', async () => {
+    const response = await request(app).get('/status.html');
+    expect(response.status).toBe(200);
+    expect(response.text).toContain('API is responding');
+    expect(response.text).toContain('inference not live-tested');
+    expect(response.text).toContain('does not yet collect incident history');
+    expect(response.text).not.toContain('99.5%');
+    expect(response.text).not.toContain('All Systems Operational');
+    expect(response.text).not.toContain('Subscribe to Updates');
+    expect(response.text).not.toContain('2 days ago');
+  });
+});
+
+describe('Ad monetization configuration', () => {
+  test('shows no ads until an approved AdSense placement is configured', async () => {
+    if (monetizationBackup === null) fs.rmSync(monetizationFile, { force: true });
+    else fs.writeFileSync(monetizationFile, monetizationBackup);
+    const response = await request(app).get('/api/monetization/config');
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      enabled: false,
+      network: 'none',
+      publisherId: '',
+      placements: { header: '', footer: '', inFeed: '' },
+    });
+  });
+
+  test('lets admins configure validated AdSense placements and rejects non-admin changes', async () => {
+    const denied = await request(app).put('/api/admin/monetization').send({ enabled: true });
+    expect(denied.status).toBe(401);
+
+    const invalid = await request(app).put('/api/admin/monetization')
+      .set('Authorization', 'Bearer ' + adminToken)
+      .send({ enabled: true, ads: { enabled: true, network: 'adsense', networkClientId: '<script>' } });
+    expect(invalid.status).toBe(400);
+
+    const saved = await request(app).put('/api/admin/monetization')
+      .set('Authorization', 'Bearer ' + adminToken)
+      .send({
+        enabled: true,
+        ads: {
+          enabled: true,
+          network: 'adsense',
+          networkClientId: 'ca-pub-1234567890123456',
+          headerEnabled: true,
+          headerSlotId: '1234567890',
+          inFeedEnabled: true,
+          inFeedSlotId: '9876543210',
+        },
+      });
+    expect(saved.status).toBe(200);
+    expect(saved.body.success).toBe(true);
+
+    const config = await request(app).get('/api/monetization/config');
+    expect(config.status).toBe(200);
+    expect(config.body).toEqual({
+      enabled: true,
+      network: 'adsense',
+      publisherId: 'ca-pub-1234567890123456',
+      placements: { header: '1234567890', footer: '', inFeed: '9876543210' },
+    });
+  });
+
+  test('homepage has optional ad placements and loads ads only from public configuration', async () => {
+    const response = await request(app).get('/');
+    expect(response.status).toBe(200);
+    expect(response.text).toContain('id="ad-placement-header"');
+    expect(response.text).toContain('id="ad-placement-inFeed"');
+    expect(response.text).toContain('id="ad-placement-footer"');
+    expect(response.text).toContain('/api/monetization/config');
+    expect(response.text).toContain('pagead2.googlesyndication.com/pagead/js/adsbygoogle.js');
   });
 });
 

@@ -28,6 +28,32 @@ module.exports = function TicketsRoutes(opts) {
     fs.writeFileSync(PATH, JSON.stringify(list, null, 2));
   }
 
+  function requireAdmin(req, res, next) {
+    const role = req.user && req.user.role;
+    if (role !== 'admin' && role !== 'super_admin') return res.status(403).json({ error: 'Admins only.' });
+    next();
+  }
+
+  app.get('/api/admin/tickets', requireAuth, requireAdmin, async (_req, res) => {
+    try {
+      let list = load();
+      if (SUPABASE_ADMIN) {
+        const { data, error } = await SUPABASE_ADMIN
+          .from('support_tickets')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(500);
+        if (error) throw error;
+        if (data) list = data;
+      }
+      list.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+      res.json({ tickets: list });
+    } catch (err) {
+      console.error('[tickets.admin.list]', err);
+      res.status(500).json({ error: 'Could not list support tickets.' });
+    }
+  });
+
   // ---------------------------------------------------------------------------
   //  Create ticket
   // ---------------------------------------------------------------------------

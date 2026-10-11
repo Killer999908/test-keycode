@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <link rel="manifest" href="/manifest.json">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
   <title>Dashboard - KEYCODE Studio</title>
   <meta name="description" content="Manage your AI projects, orders, and account settings.">
   <meta property="og:title" content="KEYCODE Dashboard">
@@ -1034,7 +1035,27 @@
 
     document.getElementById('profileForm')?.addEventListener('submit', async (e) => {
       e.preventDefault();
-      alert('Profile update coming soon!');
+      const name = document.getElementById('profileName')?.value.trim();
+      if (!name) { showToast('Please enter a name', 'error'); return; }
+      try {
+        const res = await fetchAPI('/api/auth/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name })
+        });
+        if (res && res.success) {
+          currentUser.name = res.profile.name;
+          const profileNameEls = document.querySelectorAll('.profile-name, [data-profile-name]');
+          profileNameEls.forEach(el => { el.textContent = res.profile.name; });
+          localStorage.setItem('kc_user', JSON.stringify(currentUser));
+          showToast('Profile updated', 'success');
+        } else {
+          showToast((res && res.error) || 'Could not update profile', 'error');
+        }
+      } catch (err) {
+        console.error('[profile.update]', err);
+        showToast('Could not update profile', 'error');
+      }
     });
 
     loadDashboard();

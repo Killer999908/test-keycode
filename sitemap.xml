@@ -1,3 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- private until deploy: intentionally empty -->
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://keycode.studio/</loc></url>
+  <url><loc>https://keycode.studio/ai-builder.html</loc></url>
+  <url><loc>https://keycode.studio/game-builder.html</loc></url>
+  <url><loc>https://keycode.studio/game.html</loc></url>
+  <url><loc>https://keycode.studio/pricing.html</loc></url>
+  <url><loc>https://keycode.studio/docs.html</loc></url>
+  <url><loc>https://keycode.studio/blog.html</loc></url>
+  <url><loc>https://keycode.studio/gallery.html</loc></url>
+  <url><loc>https://keycode.studio/tools.html</loc></url>
+  <url><loc>https://keycode.studio/status.html</loc></url>
+  <url><loc>https://keycode.studio/privacy.html</loc></url>
+  <url><loc>https://keycode.studio/terms.html</loc></url>
+  <url><loc>https://keycode.studio/cookies.html</loc></url>
+</urlset>

@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <link rel="manifest" href="/manifest.json">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+<meta name="robots" content="noindex, nofollow">
 <meta name="description" content="Manage your project deployments, domains, and hosting on KEYCODE Studio.">
 <title>Deployments - KEYCODE Studio</title>
 <meta property="og:title" content="Deployments - KEYCODE Studio">
@@ -453,26 +454,37 @@ function getMockActivity() {
 
 // ===== LOAD DATA =====
 async function loadDeployments() {
-  let data = await apiFetch('/api/deploy/d1');
+  let data = await apiFetch('/api/deployment/status');
   if (!data) return getMockDeployments();
-  const depId = data.id || 'd1';
-  const full = [];
-  for (let i = 0; i < 5; i++) {
-    const d = await apiFetch('/api/deploy/' + depId);
-    if (d) full.push({ id: d.id, projectName: d.id, domain: d.domain, status: d.status, hosting: d.hosting, createdAt: d.createdAt, ssl: d.ssl });
-    else break;
-  }
-  return full.length ? full : getMockDeployments();
+  const deploys = Array.isArray(data.deploys) ? data.deploys : [];
+  if (!deploys.length) return getMockDeployments();
+  return deploys.map(function (d) {
+    return {
+      id: d.id,
+      projectName: String(d.url || '').replace(/^https?:\/\//, '').replace(/\/$/, '') || d.id,
+      domain: d.url || (d.id + '.kc-apps.dev'),
+      status: d.status === 'live' ? 'deployed' : (d.status || 'building'),
+      hosting: d.plan === 'pro' ? 'Pro with backups' : (d.plan === 'node' ? 'Node app hosting' : 'Static hosting'),
+      createdAt: d.createdAt,
+      ssl: d.status === 'live'
+    };
+  });
 }
 
 async function loadHosting() {
   let data = await apiFetch('/api/hosting');
-  return data && Array.isArray(data) ? data : getMockHosting();
+  if (data && data.hosting && data.hosting.plans) {
+    return data.hosting.plans.map(function (p) {
+      return { id: p.id, name: p.name, price: p.price, storage: p.id === 'static' ? '1 GB' : (p.id === 'node' ? '10 GB' : '100 GB'), bandwidth: p.id === 'static' ? '10 GB/mo' : (p.id === 'node' ? 'Unlimited' : 'Unlimited'), ssl: true };
+    });
+  }
+  return Array.isArray(data) ? data : getMockHosting();
 }
 
 async function loadDomains() {
   let data = await apiFetch('/api/domains');
-  return data && Array.isArray(data) ? data : getMockDomains();
+  if (data && data.success && Array.isArray(data.domains)) return data.domains;
+  return Array.isArray(data) ? data : getMockDomains();
 }
 
 async function loadDeployStatus() {

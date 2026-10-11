@@ -1,2 +1,6 @@
 User-agent: *
-Disallow: /
+Allow: /
+Disallow: /api/
+Disallow: /data/
+
+Sitemap: https://keycode.studio/sitemap.xml

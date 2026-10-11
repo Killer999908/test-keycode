@@ -4,22 +4,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>KEYCODE Studio — Architect Worlds</title>
-  <meta name="description" content="KEYCODE Studio — an AI engineering studio. Full-stack apps, 3D worlds, CAD & PCBs engineered end to end. Architect worlds that move hearts and spark hope.">
+  <meta name="description" content="Build and explore AI-assisted websites, apps, games, 3D projects and electronics workflows with KEYCODE Studio. Start with the online builder or install the local agent CLI.">
   <meta name="theme-color" content="#000000">
   <meta name="color-scheme" content="dark">
   <meta name="robots" content="index, follow">
-  <link rel="canonical" href="/">
+  <link rel="canonical" href="https://keycode.studio/">
 
   <meta property="og:type" content="website">
+  <meta property="og:site_name" content="KEYCODE Studio">
   <meta property="og:title" content="KEYCODE Studio">
-  <meta property="og:description" content="Architect worlds that move hearts and spark hope.">
-  <meta property="og:url" content="/">
-  <meta property="og:image" content="/og-image.png">
+  <meta property="og:description" content="Build and explore AI-assisted websites, apps, games, 3D projects and electronics workflows.">
+  <meta property="og:url" content="https://keycode.studio/">
+  <meta property="og:image" content="https://keycode.studio/og-image.png">
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="KEYCODE Studio">
-  <meta name="twitter:description" content="Architect worlds that move hearts and spark hope.">
-  <meta name="twitter:image" content="/og-image.png">
+  <meta name="twitter:description" content="Build and explore AI-assisted websites, apps, games, 3D projects and electronics workflows.">
+  <meta name="twitter:image" content="https://keycode.studio/og-image.png">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -34,7 +35,7 @@
     "@type": "ProfessionalService",
     "name": "KEYCODE Studio",
     "description": "AI engineering studio — full-stack apps, 3D worlds, CAD & PCBs.",
-    "url": "/"
+    "url": "https://keycode.studio/"
   }
   </script>
   <script type="application/ld+json">
@@ -42,11 +43,11 @@
     "@context": "https://schema.org",
     "@type": "FAQPage",
     "mainEntity": [
-      { "@type": "Question", "name": "How fast can you ship?", "acceptedAnswer": { "@type": "Answer", "text": "Most full-stack products ship in 7–14 days because a pod of AI agents builds in parallel around the clock." } },
-      { "@type": "Question", "name": "Who owns the code and IP?", "acceptedAnswer": { "@type": "Answer", "text": "You do — every repository, design file and PCB layout is transferred to you on delivery. No lock-in or licensing." } },
-      { "@type": "Question", "name": "Do I need technical knowledge to start?", "acceptedAnswer": { "@type": "Answer", "text": "No. You describe what you want in plain language; the agents handle architecture, implementation and deployment." } },
-      { "@type": "Question", "name": "What happens after launch?", "acceptedAnswer": { "@type": "Answer", "text": "Every project includes 30 days of free iteration, followed by optional support plans with monitoring, backups and fixes." } },
-      { "@type": "Question", "name": "Can you work with our existing codebase?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Agents can adopt your stack, coding standards and CI pipelines, then extend your product incrementally." } }
+      { "@type": "Question", "name": "How fast can you ship?", "acceptedAnswer": { "@type": "Answer", "text": "Delivery time depends on your project scope. Share a brief through the AI Builder to explore an initial direction; larger or production-ready work needs a separate scope and review." } },
+      { "@type": "Question", "name": "Who owns the code and IP?", "acceptedAnswer": { "@type": "Answer", "text": "Generated files can be downloaded from your account or local workspace. Ownership and licensing terms for commissioned work are agreed in the applicable project terms." } },
+      { "@type": "Question", "name": "Do I need technical knowledge to start?", "acceptedAnswer": { "@type": "Answer", "text": "You can describe an idea in plain language to use the builder. Review generated output before using it in production." } },
+      { "@type": "Question", "name": "What happens after launch?", "acceptedAnswer": { "@type": "Answer", "text": "For account or product help, contact KEYCODE through the Support page. Availability of project support depends on your agreement." } },
+      { "@type": "Question", "name": "Can you work with our existing codebase?", "acceptedAnswer": { "@type": "Answer", "text": "The local agent CLI can work from a local workspace. Review the requested tools and changes before running commands or using generated output." } }
     ]
   }
   </script>
@@ -352,6 +353,20 @@
       transition: background .3s, color .3s, transform .3s; }
     .btn-solid:hover { background: transparent; color: #fff; }
 
+    /* ============ optional, admin-configured ad placements ============ */
+    .ad-placement { display: none; width: min(100% - 2rem, 970px); min-height: 90px; margin: 2rem auto; text-align: center; }
+    .ad-placement.is-active { display: block; }
+    .ad-placement__label { display: block; margin-bottom: .35rem; color: rgba(255,255,255,.35); font: 9px 'JetBrains Mono', monospace; letter-spacing: .12em; text-transform: uppercase; }
+    .ad-placement ins { display: block; min-height: 90px; }
+    .ad-consent { position: fixed; z-index: 10002; inset: auto 1rem 1rem; margin: auto; width: min(100% - 2rem, 680px); padding: 1rem; border: 1px solid rgba(255,255,255,.24); background: #111; box-shadow: 0 12px 48px rgba(0,0,0,.6); color: #fff; }
+    .ad-consent[hidden] { display: none; }
+    .ad-consent p { color: rgba(255,255,255,.7); font-size: 12px; line-height: 1.7; }
+    .ad-consent a { text-decoration: underline; text-underline-offset: 3px; }
+    .ad-consent__actions { display: flex; gap: .65rem; margin-top: .8rem; flex-wrap: wrap; }
+    .ad-consent__actions button { padding: .65rem .9rem; border: 1px solid rgba(255,255,255,.55); font: 10px 'JetBrains Mono', monospace; text-transform: uppercase; letter-spacing: .06em; }
+    .ad-consent__actions button:first-child { background: #fff; color: #000; }
+    .ad-consent__actions button:hover { border-color: #fff; }
+
     /* ============ local CLI installation ============ */
     .cli-install-section { padding: 6rem 2rem; border-top: 1px solid rgba(255,255,255,.08); }
     .cli-install__inner { max-width: 1040px; margin: 0 auto; }
@@ -504,12 +519,12 @@
     <div class="scroll-indicator__line" data-section="about"><span class="scroll-indicator__label">About</span></div>
     <div class="scroll-indicator__line" data-section="services"><span class="scroll-indicator__label">Service</span></div>
     <div class="scroll-indicator__line" data-section="process"><span class="scroll-indicator__label">Process</span></div>
-    <div class="scroll-indicator__line" data-section="testimonials"><span class="scroll-indicator__label">Clients</span></div>
+    <div class="scroll-indicator__line" data-section="testimonials"><span class="scroll-indicator__label">Platform</span></div>
     <div class="scroll-indicator__line" data-section="faq"><span class="scroll-indicator__label">FAQ</span></div>
     <div class="scroll-indicator__line" data-section="cta"><span class="scroll-indicator__label">Start</span></div>
   </div>
 
-  <div class="snap-container" id="main">
+  <main class="snap-container" id="main">
 
     <!-- HERO -->
     <section class="snap-section" id="top">
@@ -521,42 +536,42 @@
       <div class="hero__scroll">scroll</div>
       <div class="marquee" aria-hidden="true">
         <div class="marquee__track" id="marquee-track">
-          <span>Full-Stack Apps<i>✦</i></span><span>3D Worlds<i>✦</i></span><span>CAD &amp; PCB<i>✦</i></span><span>Metaverse<i>✦</i></span><span>AI Agents<i>✦</i></span><span>Sub-Second<i>✦</i></span>
+          <span>Full-Stack Apps<i>✦</i></span><span>3D Worlds<i>✦</i></span><span>CAD &amp; PCB<i>✦</i></span><span>Metaverse<i>✦</i></span><span>AI Agents<i>✦</i></span><span>Rapid Prototyping<i>✦</i></span>
         </div>
       </div>
     </section>
 
-    <!-- WORKS -->
+    <!-- EXAMPLE CAPABILITIES -->
     <section class="snap-section works-section" id="works">
-      <div class="section__label" data-scramble>Works — Selected</div>
-      <h2 class="section__title" data-reveal style="--i:0">Selected Works</h2>
+      <div class="section__label" data-scramble>Examples — Capabilities</div>
+      <h2 class="section__title" data-reveal style="--i:0">Explore what's possible</h2>
       <div class="works-grid">
         <div class="works-item" data-reveal style="--i:1" data-hover>
           <img src="/assets/works-platform.svg" alt="AI Full-Stack Platform" loading="lazy">
-          <div class="works-item__overlay"><div class="works-item__date">2026.01</div><div class="works-item__title">AI Full-Stack Platform</div><div class="works-item__cat"><span>Full-Stack</span><span>AI</span></div></div>
+          <div class="works-item__overlay"><div class="works-item__date">Concept example</div><div class="works-item__title">AI Full-Stack Platform</div><div class="works-item__cat"><span>Full-Stack</span><span>AI</span></div></div>
         </div>
         <div class="works-item" data-reveal style="--i:2" data-hover>
           <img src="/assets/works-game.svg" alt="3D Game Engine" loading="lazy">
-          <div class="works-item__overlay"><div class="works-item__date">2025.11</div><div class="works-item__title">3D Game Engine</div><div class="works-item__cat"><span>WebGL</span><span>Game</span></div></div>
+          <div class="works-item__overlay"><div class="works-item__date">Concept example</div><div class="works-item__title">3D Game Engine</div><div class="works-item__cat"><span>WebGL</span><span>Game</span></div></div>
         </div>
         <div class="works-item" data-reveal style="--i:3" data-hover>
           <img src="/assets/works-pcb.svg" alt="PCB Design Suite" loading="lazy">
-          <div class="works-item__overlay"><div class="works-item__date">2025.09</div><div class="works-item__title">PCB Design Suite</div><div class="works-item__cat"><span>CAD</span><span>Hardware</span></div></div>
+          <div class="works-item__overlay"><div class="works-item__date">Concept example</div><div class="works-item__title">PCB Design Suite</div><div class="works-item__cat"><span>CAD</span><span>Hardware</span></div></div>
         </div>
         <div class="works-item" data-reveal style="--i:4" data-hover>
           <img src="/assets/works-fashion.svg" alt="Virtual Fashion Week" loading="lazy">
-          <div class="works-item__overlay"><div class="works-item__date">2025.07</div><div class="works-item__title">Virtual Fashion Week</div><div class="works-item__cat"><span>Metaverse</span><span>3D</span></div></div>
+          <div class="works-item__overlay"><div class="works-item__date">Concept example</div><div class="works-item__title">Virtual Fashion Week</div><div class="works-item__cat"><span>Metaverse</span><span>3D</span></div></div>
         </div>
         <div class="works-item" data-reveal style="--i:5" data-hover>
           <img src="/assets/works-gallery.svg" alt="Immersive Gallery" loading="lazy">
-          <div class="works-item__overlay"><div class="works-item__date">2025.05</div><div class="works-item__title">Immersive Gallery</div><div class="works-item__cat"><span>WebGL</span><span>Art</span></div></div>
+          <div class="works-item__overlay"><div class="works-item__date">Concept example</div><div class="works-item__title">Immersive Gallery</div><div class="works-item__cat"><span>WebGL</span><span>Art</span></div></div>
         </div>
         <div class="works-item" data-reveal style="--i:6" data-hover>
           <img src="/assets/works-chain.svg" alt="Smart Contracts" loading="lazy">
-          <div class="works-item__overlay"><div class="works-item__date">2025.03</div><div class="works-item__title">Smart Contracts</div><div class="works-item__cat"><span>Blockchain</span><span>Full-Stack</span></div></div>
+          <div class="works-item__overlay"><div class="works-item__date">Concept example</div><div class="works-item__title">Smart Contracts</div><div class="works-item__cat"><span>Blockchain</span><span>Full-Stack</span></div></div>
         </div>
       </div>
-      <a href="/gallery.html" class="btn-outline magnetic" data-reveal style="--i:7" data-hover>View All Works</a>
+      <a href="/gallery.html" class="btn-outline magnetic" data-reveal style="--i:7" data-hover>Explore Gallery</a>
     </section>
 
     <!-- ABOUT -->
@@ -568,12 +583,12 @@
         <span class="reveal-line" style="--i:2"><span>delivered by AI agents.</span></span>
       </h2>
       <p class="mission-text" data-reveal style="--i:1">
-        A pod of AI agents designs, builds and ships full-stack applications, immersive 3D worlds and fab-ready PCBs — at a pace no human team can match.
+        Explore AI-assisted workflows for websites, applications, games, 3D experiences and electronics projects. Prototype in the browser, then review and export your work.
       </p>
       <div class="stats-row" data-reveal style="--i:2">
-        <div class="stat"><div class="stat-num"><span data-count="120">0</span><small>+</small></div><div class="stat-label">Projects Shipped</div></div>
-        <div class="stat"><div class="stat-num"><span data-count="14">0</span><small>days</small></div><div class="stat-label">Avg. Delivery</div></div>
-        <div class="stat"><div class="stat-num"><span data-count="99.9" data-dec="1">0</span><small>%</small></div><div class="stat-label">Uptime</div></div>
+        <div class="stat"><div class="stat-num">01</div><div class="stat-label">Describe an idea</div></div>
+        <div class="stat"><div class="stat-num">02</div><div class="stat-label">Generate a prototype</div></div>
+        <div class="stat"><div class="stat-num">03</div><div class="stat-label">Review and export</div></div>
       </div>
     </section>
 
@@ -619,40 +634,40 @@
         <div class="process-step" data-reveal style="--i:2" data-hover>
           <div class="process-step__num">02</div><div class="process-step__line"></div>
           <h3 class="process-step__title">Architect</h3>
-          <p class="process-step__desc">The pod plans the stack, data model and design system, then agrees on a build plan with you.</p>
+          <p class="process-step__desc">Review the suggested direction and make changes before generating an output.</p>
         </div>
         <div class="process-step" data-reveal style="--i:3" data-hover>
           <div class="process-step__num">03</div><div class="process-step__line"></div>
           <h3 class="process-step__title">Build</h3>
-          <p class="process-step__desc">Agents write, test and review each other's code around the clock — you watch it come alive in preview.</p>
+          <p class="process-step__desc">Generate a starting point, inspect the preview, and iterate on the result.</p>
         </div>
         <div class="process-step" data-reveal style="--i:4" data-hover>
           <div class="process-step__num">04</div><div class="process-step__line"></div>
           <h3 class="process-step__title">Ship</h3>
-          <p class="process-step__desc">Deployed on hardened infrastructure with monitoring, backups and support — usually inside two weeks.</p>
+          <p class="process-step__desc">Download your files or use the local agent workflow. Production deployment and ongoing support require separate review.</p>
         </div>
       </div>
     </section>
 
-    <!-- TESTIMONIALS -->
+    <!-- PLATFORM WORKFLOW -->
     <section class="snap-section" id="testimonials">
-      <div class="section__label" data-scramble>Clients — Words</div>
-      <h2 class="section__title" data-reveal style="--i:0">Trusted by Builders</h2>
+      <div class="section__label" data-scramble>Platform — Workflow</div>
+      <h2 class="section__title" data-reveal style="--i:0">A workspace you can inspect</h2>
       <div class="testimonials-grid">
         <div class="testimonial" data-reveal style="--i:1" data-hover>
-          <div class="testimonial__quote-mark">&ldquo;</div>
-          <p class="testimonial__text">KEYCODE shipped our full booking platform in nine days. Our internal team estimated three months — the quality exceeded what we'd have built ourselves.</p>
-          <div class="testimonial__who"><div class="testimonial__avatar">MK</div><div><div class="testimonial__name">Maya Krishnan</div><div class="testimonial__role">Founder, Loomly</div></div></div>
+          <div class="testimonial__quote-mark">01</div>
+          <p class="testimonial__text">Start with a browser-based builder and shape an idea into a preview you can review before exporting.</p>
+          <div class="testimonial__who"><div class="testimonial__avatar">01</div><div><div class="testimonial__name">Prototype in the browser</div><div class="testimonial__role">AI Builder</div></div></div>
         </div>
         <div class="testimonial" data-reveal style="--i:2" data-hover>
-          <div class="testimonial__quote-mark">&ldquo;</div>
-          <p class="testimonial__text">The 3D configurator they built lifted conversion 34%. It runs flawlessly on mobile, which every other vendor told us was impossible.</p>
-          <div class="testimonial__who"><div class="testimonial__avatar">DR</div><div><div class="testimonial__name">Daniel Reyes</div><div class="testimonial__role">CTO, Form Furniture</div></div></div>
+          <div class="testimonial__quote-mark">02</div>
+          <p class="testimonial__text">Use the command-line agent from a local workspace and keep generated files on your own machine.</p>
+          <div class="testimonial__who"><div class="testimonial__avatar">02</div><div><div class="testimonial__name">Work locally</div><div class="testimonial__role">Agent CLI</div></div></div>
         </div>
         <div class="testimonial" data-reveal style="--i:3" data-hover>
-          <div class="testimonial__quote-mark">&ldquo;</div>
-          <p class="testimonial__text">From schematic to fab-ready PCB in one sprint. Their agents caught two issues our own review missed. Genuinely impressive engineering.</p>
-          <div class="testimonial__who"><div class="testimonial__avatar">AS</div><div><div class="testimonial__name">Anna Sørensen</div><div class="testimonial__role">Head of HW, Nordhelm</div></div></div>
+          <div class="testimonial__quote-mark">03</div>
+          <p class="testimonial__text">Manage projects, generated files and API keys from your account dashboard.</p>
+          <div class="testimonial__who"><div class="testimonial__avatar">03</div><div><div class="testimonial__name">Keep work organized</div><div class="testimonial__role">Account workspace</div></div></div>
         </div>
       </div>
     </section>
@@ -664,23 +679,23 @@
       <div class="faq-list" data-reveal style="--i:1">
         <div class="faq-item">
           <button class="faq-q" aria-expanded="false">How fast can you ship?<span class="faq-q__icon"></span></button>
-          <div class="faq-a"><p class="faq-a__inner">Most full-stack products ship in 7–14 days. Because a pod of agents builds in parallel around the clock, timelines don't scale linearly with scope the way human teams do.</p></div>
+          <div class="faq-a"><p class="faq-a__inner">Delivery time depends on your project scope. Share a brief through the AI Builder to explore an initial direction; larger or production-ready work needs a separate scope and review.</p></div>
         </div>
         <div class="faq-item">
           <button class="faq-q" aria-expanded="false">Who owns the code and IP?<span class="faq-q__icon"></span></button>
-          <div class="faq-a"><p class="faq-a__inner">You do — completely. Every repository, design file and PCB layout is transferred to you on delivery. No lock-in, no licensing, no strings.</p></div>
+          <div class="faq-a"><p class="faq-a__inner">Generated files can be downloaded from your account or local workspace. Ownership and licensing terms for commissioned work are agreed in the applicable project terms.</p></div>
         </div>
         <div class="faq-item">
           <button class="faq-q" aria-expanded="false">Do I need technical knowledge to start?<span class="faq-q__icon"></span></button>
-          <div class="faq-a"><p class="faq-a__inner">No. You describe what you want in plain language. Our agents handle architecture, implementation and deployment — and translate every technical decision back to you.</p></div>
+          <div class="faq-a"><p class="faq-a__inner">You can describe an idea in plain language to use the builder. Review generated output before using it in production.</p></div>
         </div>
         <div class="faq-item">
           <button class="faq-q" aria-expanded="false">What happens after launch?<span class="faq-q__icon"></span></button>
-          <div class="faq-a"><p class="faq-a__inner">Every project includes 30 days of free iteration. After that, support plans cover monitoring, backups, fixes and new features — handled by the same agent pod that built it.</p></div>
+          <div class="faq-a"><p class="faq-a__inner">For account or product help, contact KEYCODE through the Support page. Availability of project support depends on your agreement.</p></div>
         </div>
         <div class="faq-item">
           <button class="faq-q" aria-expanded="false">Can you work with our existing codebase?<span class="faq-q__icon"></span></button>
-          <div class="faq-a"><p class="faq-a__inner">Yes. Agents can adopt your stack, coding standards and CI pipelines, then extend your product incrementally — full rewrite is never required.</p></div>
+          <div class="faq-a"><p class="faq-a__inner">The local agent CLI can work from a local workspace. Review the requested tools and changes before running commands or using generated output.</p></div>
         </div>
       </div>
     </section>
@@ -694,7 +709,16 @@
         <a href="/pricing.html" class="btn-outline magnetic" data-hover>View Pricing</a>
         <a href="#cli-install" class="btn-outline magnetic" data-hover>Install Agent CLI</a>
       </div>
+      <div class="ad-placement" id="ad-placement-inFeed" aria-label="Advertisement">
+        <span class="ad-placement__label">Advertisement</span>
+        <ins class="adsbygoogle" data-placement="inFeed"></ins>
+      </div>
     </section>
+  </main>
+
+  <div class="ad-placement" id="ad-placement-header" aria-label="Advertisement">
+    <span class="ad-placement__label">Advertisement</span>
+    <ins class="adsbygoogle" data-placement="header"></ins>
   </div>
 
   <section class="cli-install-section" id="cli-install" aria-labelledby="cli-install-title">
@@ -738,6 +762,18 @@
     </div>
   </section>
 
+  <div class="ad-placement" id="ad-placement-footer" aria-label="Advertisement">
+    <span class="ad-placement__label">Advertisement</span>
+    <ins class="adsbygoogle" data-placement="footer"></ins>
+  </div>
+  <aside class="ad-consent" id="ad-consent" role="region" aria-label="Advertising preferences" aria-describedby="ad-consent-description" hidden>
+    <p id="ad-consent-description">This site can show Google ads. If you allow them, Google may use cookies or similar technologies to personalize and measure ads. You can reject optional ads or change your choice later. Read our <a href="/cookies.html">Cookie Policy</a> and <a href="/privacy.html">Privacy Policy</a>.</p>
+    <div class="ad-consent__actions">
+      <button type="button" id="ad-consent-allow">Allow ads</button>
+      <button type="button" id="ad-consent-reject">Reject optional ads</button>
+    </div>
+  </aside>
+
   <!-- footer -->
   <footer class="footer">
     <div class="footer__inner">
@@ -745,7 +781,7 @@
       <div class="footer__col"><h4>Build</h4><a href="/ai-builder.html">AI Builder</a><a href="/game-builder.html">Game Builder</a><a href="/pricing.html">Pricing</a><a href="/dashboard.html">Dashboard</a></div>
       <div class="footer__col"><h4>Developer</h4><a href="#cli-install">Install Agent CLI</a><a href="/api-keys.html">API Keys</a></div>
       <div class="footer__col"><h4>Resources</h4><a href="/blog.html">Blog</a><a href="/docs.html">Docs</a><a href="/gallery.html">Gallery</a><a href="/status.html">Status</a></div>
-      <div class="footer__col"><h4>Connect</h4><a href="/support.html">Support</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a></div>
+      <div class="footer__col"><h4>Connect</h4><a href="/support.html">Support</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a><a href="#ad-preferences" id="ad-preferences-link" style="display:none">Ad preferences</a></div>
     </div>
     <div class="footer__bottom">
       <span class="footer__copy">© 2026 KEYCODE STUDIO — engineered by agents</span>
@@ -1182,6 +1218,80 @@
         if (el.getBoundingClientRect().top < innerHeight) scramble(el);
       });
     });
+  </script>
+  <script>
+    (function loadConfiguredAds() {
+      var consentKey = 'keycode-ad-consent';
+      var consentDialog = document.getElementById('ad-consent');
+      var loadAds = function (config) {
+        if (window.__keycodeAdsLoaded) return;
+        window.__keycodeAdsLoaded = true;
+        var script = document.createElement('script');
+        script.async = true;
+        script.crossOrigin = 'anonymous';
+        script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=' + encodeURIComponent(config.publisherId);
+        script.onerror = function () { window.__keycodeAdsLoaded = false; console.error('[keycode] AdSense script failed to load.'); };
+        document.head.appendChild(script);
+        Object.entries(config.placements || {}).forEach(function (entry) {
+          var placement = entry[0];
+          var slotId = entry[1];
+          if (!/^\d{6,20}$/.test(slotId || '')) return;
+          var container = document.getElementById('ad-placement-' + placement);
+          if (!container) return;
+          var ad = container.querySelector('ins.adsbygoogle');
+          if (!ad) return;
+          ad.setAttribute('data-ad-client', config.publisherId);
+          ad.setAttribute('data-ad-slot', slotId);
+          ad.setAttribute('data-ad-format', 'auto');
+          ad.setAttribute('data-full-width-responsive', 'true');
+          container.classList.add('is-active');
+          try { (window.adsbygoogle = window.adsbygoogle || []).push({}); }
+          catch (error) { console.error('[keycode] Could not initialize AdSense placement:', error); }
+        });
+      };
+      var saveConsent = function (allowed, config) {
+        try { localStorage.setItem(consentKey, allowed ? 'granted' : 'denied'); }
+        catch (error) { console.error('[keycode] Could not save ad preference:', error); }
+        consentDialog.hidden = true;
+        if (allowed) loadAds(config);
+      };
+      var readConsent = function () {
+        try { return localStorage.getItem(consentKey); }
+        catch (error) {
+          console.error('[keycode] Could not read ad preference:', error);
+          return null;
+        }
+      };
+      var activeConfig = null;
+      document.getElementById('ad-consent-allow').addEventListener('click', function () {
+        if (activeConfig) saveConsent(true, activeConfig);
+      });
+      document.getElementById('ad-consent-reject').addEventListener('click', function () {
+        if (activeConfig) saveConsent(false, activeConfig);
+      });
+      document.getElementById('ad-preferences-link').addEventListener('click', function (event) {
+        event.preventDefault();
+        consentDialog.hidden = false;
+      });
+      fetch('/api/monetization/config')
+        .then(function (response) {
+          if (!response.ok) throw new Error('Ad configuration request failed with HTTP ' + response.status);
+          return response.json();
+        })
+        .then(function (config) {
+          if (!config.enabled || config.network !== 'adsense' || !/^ca-pub-\d{16}$/.test(config.publisherId || '')) return;
+          var placements = Object.entries(config.placements || {}).filter(function (entry) {
+            return /^\d{6,20}$/.test(entry[1] || '');
+          });
+          if (!placements.length) return;
+          activeConfig = config;
+          document.getElementById('ad-preferences-link').style.display = 'block';
+          var savedChoice = readConsent();
+          if (savedChoice === 'granted') loadAds(config);
+          else if (savedChoice !== 'denied') consentDialog.hidden = false;
+        })
+        .catch(function (error) { console.error('[keycode] Could not load ad configuration:', error); });
+    })();
   </script>
 </body>
 </html>

@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <link rel="manifest" href="/manifest.json">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
   <meta name="description" content="KEYCODE Studio - AI-powered development platform">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://kit.fontawesome.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com; connect-src 'self' http://localhost:5000 http://localhost:5001; img-src 'self' data: https://cdnjs.cloudflare.com https://api.qrserver.com; frame-src 'none'; form-action 'self'; base-uri 'self';">
   <title>Master Admin - KEYCODE Studio</title>
@@ -222,80 +223,18 @@
       <nav>
         <div class="nav-item active" data-page="overview"><i class="fas fa-chart-pie"></i> Overview</div>
         <div class="nav-divider"></div>
-        <div style="font-size:10px;color:var(--ash);padding:4px 14px;text-transform:uppercase;letter-spacing:1px;">Orders & Payments</div>
-        <div class="nav-item" data-page="monetization"><i class="fas fa-money-bill-wave"></i> Monetization 💰</div>
-        <div class="nav-item" data-page="orders"><i class="fas fa-shopping-bag"></i> Orders</div>
-        <div class="nav-item" data-page="pending-reviews"><i class="fas fa-clipboard-check"></i> Pending Reviews</div>
-        <div class="nav-item" data-page="transactions"><i class="fas fa-credit-card"></i> Transactions</div>
-        <div class="nav-item" data-page="discounts"><i class="fas fa-tag"></i> Discounts</div>
-        <div class="nav-divider"></div>
-        <div style="font-size:10px;color:var(--ash);padding:4px 14px;text-transform:uppercase;letter-spacing:1px;">Content & Projects</div>
-        <div class="nav-item" data-page="projects"><i class="fas fa-folder-open"></i> Projects</div>
-        <div class="nav-item" data-page="cms"><i class="fas fa-edit"></i> CMS</div>
-        <div class="nav-item" data-page="blog"><i class="fas fa-newspaper"></i> Blog</div>
-        <div class="nav-item" data-page="notifications"><i class="fas fa-bell"></i> Notifications</div>
-        <div class="nav-item" data-page="announcements"><i class="fas fa-bullhorn"></i> Announcements</div>
-        <div class="nav-divider"></div>
-        <div style="font-size:10px;color:var(--ash);padding:4px 14px;text-transform:uppercase;letter-spacing:1px;">System & Security</div>
+        <div style="font-size:10px;color:var(--ash);padding:4px 14px;text-transform:uppercase;letter-spacing:1px;">Platform</div>
         <div class="nav-item" data-page="users"><i class="fas fa-users"></i> Users</div>
-        <div class="nav-item" data-page="active-users"><i class="fas fa-signal"></i> Active Users</div>
-        <div class="nav-item" data-page="security"><i class="fas fa-shield-alt"></i> Security</div>
-        <div class="nav-item" data-page="jit-elevation"><i class="fas fa-level-up-alt"></i> JIT Elevation</div>
-        <div class="nav-item" data-page="passkey-mgmt"><i class="fas fa-key"></i> Passkeys</div>
-        <div class="nav-item" data-page="fail2ban"><i class="fas fa-ban"></i> Fail2Ban</div>
-        <div class="nav-item" data-page="audit-log"><i class="fas fa-history"></i> Audit Log</div>
-        <div class="nav-item" data-page="admin-users"><i class="fas fa-user-shield"></i> Admin Accounts</div>
-        <div class="nav-item" data-page="config"><i class="fas fa-cogs"></i> Config</div>
-        <div class="nav-item" data-page="features"><i class="fas fa-toggle-on"></i> Features</div>
-        <div class="nav-item" data-page="backups"><i class="fas fa-database"></i> Backups</div>
-        <div class="nav-item" data-page="logs"><i class="fas fa-scroll"></i> Logs</div>
-        <div class="nav-item" data-page="tasks"><i class="fas fa-clock"></i> Tasks</div>
-        <div class="nav-divider"></div>
-        <div style="font-size:10px;color:var(--ash);padding:4px 14px;text-transform:uppercase;letter-spacing:1px;">Communication</div>
-        <div class="nav-item" data-page="email"><i class="fas fa-paper-plane"></i> Email</div>
-        <div class="nav-item" data-page="email-templates"><i class="fas fa-file-code"></i> Templates</div>
+        <div class="nav-item" data-page="orders"><i class="fas fa-shopping-bag"></i> Orders</div>
         <div class="nav-item" data-page="tickets"><i class="fas fa-life-ring"></i> Support</div>
         <div class="nav-item" data-page="inquiries"><i class="fas fa-envelope"></i> Inquiries</div>
+        <div class="nav-item" data-page="discounts"><i class="fas fa-tag"></i> Discounts</div>
+        <div class="nav-item" data-page="notifications"><i class="fas fa-bell"></i> Notifications</div>
+        <div class="nav-item" data-page="monetization"><i class="fas fa-money-bill-wave"></i> Monetization</div>
         <div class="nav-divider"></div>
-        <div style="font-size:10px;color:var(--ash);padding:4px 14px;text-transform:uppercase;letter-spacing:1px;">Analytics & Data</div>
-        <div class="nav-item" data-page="ai-usage"><i class="fas fa-robot"></i> AI Usage</div>
-        <div class="nav-item" data-page="ai-models"><i class="fas fa-cube"></i> AI Models</div>
-        <div class="nav-item" data-page="ai-tokens"><i class="fas fa-coins"></i> Token Tracker</div>
-        <div class="nav-item" data-page="ai-prompts"><i class="fas fa-terminal"></i> Prompt Log</div>
-        <div class="nav-item" data-page="database"><i class="fas fa-database"></i> Database</div>
-        <div class="nav-item" data-page="storage"><i class="fas fa-hdd"></i> Storage</div>
-        <div class="nav-item" data-page="activity"><i class="fas fa-stream"></i> Activity</div>
-        <div class="nav-item" data-page="partners"><i class="fas fa-handshake"></i> Partners</div>
-        <div class="nav-item" data-page="gdpr"><i class="fas fa-user-shield"></i> GDPR</div>
-        <div class="nav-item" data-page="import-export"><i class="fas fa-file-export"></i> Import/Export</div>
-        <div class="nav-divider"></div>
-        <div style="font-size:10px;color:var(--ash);padding:4px 14px;text-transform:uppercase;letter-spacing:1px;">User Controls</div>
-        <div class="nav-item" data-page="user-sessions"><i class="fas fa-history"></i> User Sessions</div>
-        <div class="nav-item" data-page="user-activity"><i class="fas fa-stream"></i> User Activity</div>
-        <div class="nav-item" data-page="user-impersonate"><i class="fas fa-mask"></i> Impersonate</div>
-        <div class="nav-divider"></div>
-        <div style="font-size:10px;color:var(--ash);padding:4px 14px;text-transform:uppercase;letter-spacing:1px;">Payments</div>
-        <div class="nav-item" data-page="payment-config"><i class="fas fa-cog"></i> Gateway Config</div>
-        <div class="nav-item" data-page="payment-logs"><i class="fas fa-list"></i> Payment Logs</div>
-        <div class="nav-item" data-page="invoices"><i class="fas fa-file-invoice"></i> Invoices</div>
-        <div class="nav-divider"></div>
-        <div style="font-size:10px;color:var(--ash);padding:4px 14px;text-transform:uppercase;letter-spacing:1px;">Services & Integrations</div>
-        <div class="nav-item" data-page="third-party"><i class="fas fa-plug"></i> Third-Party</div>
-        <div class="nav-item" data-page="webhooks"><i class="fas fa-exchange-alt"></i> Webhooks</div>
-        <div class="nav-divider"></div>
-        <div style="font-size:10px;color:var(--ash);padding:4px 14px;text-transform:uppercase;letter-spacing:1px;">Monitoring</div>
-        <div class="nav-item" data-page="system-monitor"><i class="fas fa-chart-bar"></i> Real-Time Monitor</div>
-        <div class="nav-item" data-page="processes"><i class="fas fa-microchip"></i> Processes</div>
-        <div class="nav-item" data-page="alerts"><i class="fas fa-exclamation-triangle"></i> Alerts</div>
-        <div class="nav-item" data-page="endpoints"><i class="fas fa-sitemap"></i> API Endpoints</div>
-        <div class="nav-divider"></div>
-        <div style="font-size:10px;color:var(--ash);padding:4px 14px;text-transform:uppercase;letter-spacing:1px;">Management</div>
-        <div class="nav-item" data-page="services"><i class="fas fa-briefcase"></i> Services</div>
-        <div class="nav-item" data-page="reviews"><i class="fas fa-star"></i> Reviews</div>
-        <div class="nav-item" data-page="subscriptions"><i class="fas fa-bell"></i> Subscriptions</div>
-        <div class="nav-item" data-page="maintenance"><i class="fas fa-wrench"></i> Maintenance</div>
-        <div class="nav-item" data-page="cache"><i class="fas fa-broom"></i> Cache</div>
-        <div class="nav-item" data-page="system"><i class="fas fa-server"></i> System</div>
+        <div style="font-size:10px;color:var(--ash);padding:4px 14px;text-transform:uppercase;letter-spacing:1px;">Operations</div>
+        <div class="nav-item" data-page="audit-log"><i class="fas fa-history"></i> Audit Log</div>
+        <div class="nav-item" data-page="system-monitor"><i class="fas fa-server"></i> System Status</div>
       </nav>
       <div style="margin-top:auto;padding-top:16px;border-top:1px solid rgba(255,255,255,0.05);">
         <div style="display:flex;align-items:center;gap:10px;padding:12px;background:rgba(255,255,255,0.1);border-radius:10px;margin-bottom:10px;">
@@ -451,27 +390,30 @@
         <div class="section-card">
           <h3 class="section-title">Master Switch</h3>
           <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
-            <input type="checkbox" id="monoEnabled" style="width:18px;height:18px;"> <span>Enable all earning features site-wide</span>
+            <input type="checkbox" id="monoEnabled" style="width:18px;height:18px;"> <span>Enable configured site-wide ads</span>
           </label>
         </div>
         <div class="section-card">
-          <h3 class="section-title">Ad Network</h3>
+          <h3 class="section-title">Google AdSense</h3>
+          <p style="font-size:12px;color:var(--ash);margin:-6px 0 14px;">Apply for AdSense and add this domain in your AdSense account first. Ads serve only after your site is approved and each enabled placement has its AdSense slot ID. For visitors in regions requiring consent, configure a Google-certified consent management platform before enabling ads.</p>
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
             <label>Network
               <select id="monoAdNetwork" style="width:100%;padding:8px;background:var(--panel);border:1px solid var(--border);border-radius:8px;color:var(--text);">
-                <option value="none">None (placeholder slots)</option>
+                <option value="none">Disabled</option>
                 <option value="adsense">Google AdSense</option>
-                <option value="adsterra">Adsterra</option>
               </select>
             </label>
-            <label>Client / Zone ID
+            <label>Publisher ID
               <input id="monoAdClientId" placeholder="ca-pub-xxxxxxxxxxxxxxxx" style="width:100%;padding:8px;background:var(--panel);border:1px solid var(--border);border-radius:8px;color:var(--text);">
             </label>
           </div>
-          <div style="display:flex;gap:18px;margin-top:12px;flex-wrap:wrap;">
-            <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="monoAdHeader"> Header banner</label>
-            <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="monoAdFooter"> Footer banner</label>
-            <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="monoAdInFeed"> In-feed slots</label>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:12px;">
+            <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="monoAdHeader"> Above install section</label>
+            <label>Top placement slot ID<input id="monoAdHeaderSlot" inputmode="numeric" placeholder="AdSense slot ID" style="width:100%;padding:8px;background:var(--panel);border:1px solid var(--border);border-radius:8px;color:var(--text);"></label>
+            <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="monoAdInFeed"> Between content sections</label>
+            <label>In-content placement slot ID<input id="monoAdInFeedSlot" inputmode="numeric" placeholder="AdSense slot ID" style="width:100%;padding:8px;background:var(--panel);border:1px solid var(--border);border-radius:8px;color:var(--text);"></label>
+            <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="monoAdFooter"> Before footer</label>
+            <label>Footer placement slot ID<input id="monoAdFooterSlot" inputmode="numeric" placeholder="AdSense slot ID" style="width:100%;padding:8px;background:var(--panel);border:1px solid var(--border);border-radius:8px;color:var(--text);"></label>
             <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" id="monoAdsEnabled"> Ads enabled</label>
           </div>
         </div>
@@ -2580,8 +2522,11 @@
       document.getElementById('monoAdNetwork').value = m.ads?.network || 'none';
       document.getElementById('monoAdClientId').value = m.ads?.networkClientId || '';
       document.getElementById('monoAdHeader').checked = !!m.ads?.headerEnabled;
+      document.getElementById('monoAdHeaderSlot').value = m.ads?.headerSlotId || '';
       document.getElementById('monoAdFooter').checked = !!m.ads?.footerEnabled;
+      document.getElementById('monoAdFooterSlot').value = m.ads?.footerSlotId || '';
       document.getElementById('monoAdInFeed').checked = !!m.ads?.inFeedEnabled;
+      document.getElementById('monoAdInFeedSlot').value = m.ads?.inFeedSlotId || '';
       document.getElementById('monoAdsEnabled').checked = !!m.ads?.enabled;
       document.getElementById('donKofi').value = m.donations?.kofi || '';
       document.getElementById('donBmac').value = m.donations?.buymeacoffee || '';
@@ -2645,8 +2590,11 @@
           network: document.getElementById('monoAdNetwork').value,
           networkClientId: document.getElementById('monoAdClientId').value.trim(),
           headerEnabled: document.getElementById('monoAdHeader').checked,
+          headerSlotId: document.getElementById('monoAdHeaderSlot').value.trim(),
           footerEnabled: document.getElementById('monoAdFooter').checked,
-          inFeedEnabled: document.getElementById('monoAdInFeed').checked
+          footerSlotId: document.getElementById('monoAdFooterSlot').value.trim(),
+          inFeedEnabled: document.getElementById('monoAdInFeed').checked,
+          inFeedSlotId: document.getElementById('monoAdInFeedSlot').value.trim()
         },
         donations: {
           enabled: document.getElementById('donEnabled').checked,
@@ -2662,7 +2610,7 @@
         }
       };
       const r = await api('/admin/monetization', { method: 'PUT', body: JSON.stringify(body) });
-      if (r?.success) showToast('Monetization saved — live on site instantly ✅', 'success');
+      if (r?.success) showToast('Ad settings saved — placements update on the next page load ✅', 'success');
       else showToast('Save failed', 'error');
     }
 
