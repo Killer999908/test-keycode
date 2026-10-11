@@ -16,10 +16,10 @@
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 :root {
-  --void: #050508; --obsidian: #0a0a0f; --graphite: #111117; --slate: #1a1a24;
-  --primary: #ffffff; --primary-glow: rgba(99,102,241,0.3); --primary-deep: #4f46e5;
-  --secondary: #a3a3a3; --accent: #06b6d4; --success: #22c55e; --danger: #ef4444;
-  --white: #ffffff; --ivory: #f1f5f9; --pearl: #e2e8f0; --silver: #94a3b8; --ash: #64748b;
+  --void: #050505; --obsidian: #0a0a0a; --graphite: #111111; --slate: #1a1a1a;
+  --primary: #ffffff; --primary-glow: rgba(255,255,255,0.3); --primary-deep: #1a1a1a;
+  --secondary: #a3a3a3; --accent: #ffffff; --success: #e5e5e5; --danger: #ffffff;
+  --white: #ffffff; --ivory: #f1f5f9; --pearl: #e5e5e5; --silver: #a3a3a3; --ash: #737373;
   --font-display: 'Syne', sans-serif; --font-body: 'Inter', sans-serif;
 }
 body { font-family: var(--font-body); background: var(--void); color: var(--white); min-height: 100vh; }
@@ -87,11 +87,11 @@ body { font-family: var(--font-body); background: var(--void); color: var(--whit
   border: 1px solid var(--slate); background: var(--obsidian); color: var(--silver); transition: all 0.2s;
   display: flex; align-items: center; gap: 4px;
 }
-.mfr-btn:hover { border-color: var(--primary); color: var(--white); background: rgba(99,102,241,0.1); }
+.mfr-btn:hover { border-color: var(--primary); color: var(--white); background: rgba(255,255,255,0.1); }
 .mfr-btn i { font-size: 10px; }
 
 .loading-overlay {
-  position: absolute; inset: 0; background: rgba(5,5,8,0.85); display: flex; align-items: center;
+  position: absolute; inset: 0; background: rgba(5,5,5,0.85); display: flex; align-items: center;
   justify-content: center; z-index: 10; flex-direction: column; gap: 12px;
 }
 
@@ -147,7 +147,7 @@ body { font-family: var(--font-body); background: var(--void); color: var(--whit
         <p>Enter a project description below to generate a 3D preview</p>
       </div>
       <iframe id="stlFrame" style="width:100%;height:100%;border:none;display:none;" allowfullscreen></iframe>
-      <pre id="openscadCode" style="display:none;width:100%;height:100%;background:#0a0a0f;color:#e2e8f0;padding:20px;font-size:12px;overflow:auto;white-space:pre-wrap;font-family:monospace;"></pre>
+      <pre id="openscadCode" style="display:none;width:100%;height:100%;background:#0a0a0a;color:#e5e5e5;padding:20px;font-size:12px;overflow:auto;white-space:pre-wrap;font-family:monospace;"></pre>
       <div class="loading-overlay" id="loading3d" style="display:none;">
         <div class="spinner"></div>
         <span style="color:var(--silver);font-size:13px;">Generating 3D model...</span>

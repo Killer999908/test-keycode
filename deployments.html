@@ -23,7 +23,7 @@
 <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"></noscript>
 <style>
-:root{--bg:#0a0a1a;--card:#12122a;--primary:#ffffff;--accent:#22d3ee;--success:#10b981;--error:#ef4444;--warning:#f59e0b;--text:#e2e8f0;--ash:#94a3b8;--border:rgba(255,255,255,0.06);--radius:12px;--radius-lg:16px;--font:'Inter',-apple-system,BlinkMacSystemFont,sans-serif}
+:root{--bg:#0a0a0a;--card:#121212;--primary:#ffffff;--accent:#ffffff;--success:#e5e5e5;--error:#ffffff;--warning:#a3a3a3;--text:#e5e5e5;--ash:#a3a3a3;--border:rgba(255,255,255,0.06);--radius:12px;--radius-lg:16px;--font:'Inter',-apple-system,BlinkMacSystemFont,sans-serif}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{font-size:16px;scroll-behavior:smooth;-webkit-font-smoothing:antialiased}
 body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6;overflow-x:hidden}
@@ -42,7 +42,7 @@ img{max-width:100%;height:auto;display:block}
 .nav-links{display:flex;align-items:center;gap:4px;list-style:none}
 .nav-links a{padding:8px 16px;border-radius:8px;font-size:14px;font-weight:500;color:var(--ash);transition:all .2s;text-decoration:none;white-space:nowrap}
 .nav-links a:hover{color:var(--text);background:rgba(255,255,255,0.04)}
-.nav-links a.active{color:var(--primary);background:rgba(99,102,241,0.1)}
+.nav-links a.active{color:var(--primary);background:rgba(255,255,255,0.1)}
 .nav-actions{display:flex;align-items:center;gap:12px}
 .nav-toggle{display:none;background:none;border:none;color:var(--text);font-size:24px;padding:4px;cursor:pointer}
 @media(max-width:768px){
@@ -54,12 +54,12 @@ img{max-width:100%;height:auto;display:block}
 
 .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border:none;border-radius:8px;font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;text-decoration:none}
 .btn-primary{background:var(--primary);color:#fff}
-.btn-primary:hover{background:#5558e6;transform:translateY(-1px)}
+.btn-primary:hover{background:#ffffff;transform:translateY(-1px)}
 .btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
 .btn-ghost{background:rgba(255,255,255,0.04);color:var(--ash);border:1px solid var(--border)}
 .btn-ghost:hover{background:rgba(255,255,255,0.08);color:var(--text)}
-.btn-danger{background:rgba(239,68,68,0.15);color:var(--error);border:1px solid rgba(239,68,68,0.2)}
-.btn-danger:hover{background:rgba(239,68,68,0.25)}
+.btn-danger{background:rgba(104,104,104,0.15);color:var(--error);border:1px solid rgba(104,104,104,0.2)}
+.btn-danger:hover{background:rgba(104,104,104,0.25)}
 .btn-sm{padding:6px 12px;font-size:12px}
 
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -91,7 +91,7 @@ img{max-width:100%;height:auto;display:block}
 .search-wrap{position:relative;flex:1;min-width:200px;max-width:320px}
 .search-wrap i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ash);font-size:14px}
 .search-wrap input{width:100%;padding:10px 12px 10px 36px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-family:var(--font);font-size:13px;outline:none;transition:all .2s}
-.search-wrap input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(99,102,241,0.15)}
+.search-wrap input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(255,255,255,0.15)}
 .search-wrap input::placeholder{color:var(--ash)}
 .filter-select{padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-family:var(--font);font-size:13px;outline:none;cursor:pointer;min-width:140px}
 
@@ -104,9 +104,9 @@ tr:last-child td{border-bottom:none}
 tr:hover td{background:rgba(255,255,255,0.02)}
 
 .badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600}
-.badge-live{background:rgba(16,185,129,0.12);color:var(--success)}
-.badge-deploying{background:rgba(245,158,11,0.12);color:var(--warning)}
-.badge-failed{background:rgba(239,68,68,0.12);color:var(--error)}
+.badge-live{background:rgba(145,145,145,0.12);color:var(--success)}
+.badge-deploying{background:rgba(166,166,166,0.12);color:var(--warning)}
+.badge-failed{background:rgba(104,104,104,0.12);color:var(--error)}
 
 .ssl-yes{color:var(--success)}
 .ssl-no{color:var(--error)}
@@ -114,7 +114,7 @@ tr:hover td{background:rgba(255,255,255,0.02)}
 .actions-cell{display:flex;align-items:center;gap:6px}
 .actions-cell a,.actions-cell button{width:32px;height:32px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;border:none;background:rgba(255,255,255,0.04);color:var(--ash);cursor:pointer;transition:all .2s;font-size:13px;text-decoration:none}
 .actions-cell a:hover,.actions-cell button:hover{background:rgba(255,255,255,0.1);color:var(--text)}
-.actions-cell .btn-danger-action:hover{background:rgba(239,68,68,0.15);color:var(--error)}
+.actions-cell .btn-danger-action:hover{background:rgba(104,104,104,0.15);color:var(--error)}
 
 .empty-state{padding:60px 20px;text-align:center}
 .empty-state i{font-size:48px;color:rgba(255,255,255,0.08);margin-bottom:16px}
@@ -127,12 +127,12 @@ tr:hover td{background:rgba(255,255,255,0.02)}
 .form-group{display:flex;flex-direction:column;gap:6px}
 .form-group label{font-size:13px;font-weight:600;color:var(--text)}
 .form-group input,.form-group select{padding:12px 14px;border-radius:8px;border:1px solid var(--border);background:rgba(255,255,255,0.03);color:var(--text);font-family:var(--font);font-size:14px;outline:none;transition:all .2s}
-.form-group input:focus,.form-group select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(99,102,241,0.15)}
+.form-group input:focus,.form-group select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(255,255,255,0.15)}
 .form-group input::placeholder{color:var(--ash)}
 .domain-suggestions{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
 .domain-suggestions button{padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:rgba(255,255,255,0.03);color:var(--ash);font-size:12px;cursor:pointer;transition:all .2s;font-family:var(--font)}
 .domain-suggestions button:hover{border-color:var(--primary);color:var(--primary)}
-.domain-suggestions button.active{border-color:var(--primary);background:rgba(99,102,241,0.1);color:var(--primary)}
+.domain-suggestions button.active{border-color:var(--primary);background:rgba(255,255,255,0.1);color:var(--primary)}
 
 .progress-bar-wrap{margin-top:20px;display:none}
 .progress-bar-wrap.active{display:block}
@@ -155,9 +155,9 @@ tr:hover td{background:rgba(255,255,255,0.02)}
 .domain-card .domain-name{font-size:15px;font-weight:600}
 .domain-card .domain-meta{font-size:12px;color:var(--ash);margin-top:2px}
 .domain-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.domain-dot.active{background:var(--success);box-shadow:0 0 6px rgba(16,185,129,0.4)}
-.domain-dot.pending{background:var(--warning);box-shadow:0 0 6px rgba(245,158,11,0.4)}
-.domain-dot.dns{background:var(--primary);box-shadow:0 0 6px rgba(99,102,241,0.4)}
+.domain-dot.active{background:var(--success);box-shadow:0 0 6px rgba(145,145,145,0.4)}
+.domain-dot.pending{background:var(--warning);box-shadow:0 0 6px rgba(166,166,166,0.4)}
+.domain-dot.dns{background:var(--primary);box-shadow:0 0 6px rgba(255,255,255,0.4)}
 
 .timeline{position:relative;padding-left:28px;margin-bottom:32px}
 .timeline::before{content:'';position:absolute;left:10px;top:8px;bottom:8px;width:1px;background:var(--border)}
@@ -166,10 +166,10 @@ tr:hover td{background:rgba(255,255,255,0.02)}
 .timeline-item .tl-content{flex:1}
 .timeline-item .tl-title{font-size:14px;font-weight:500;color:var(--text)}
 .timeline-item .tl-time{font-size:12px;color:var(--ash);margin-top:2px}
-.timeline-item .tl-icon.build{background:rgba(99,102,241,0.1);color:var(--primary)}
-.timeline-item .tl-icon.deploy{background:rgba(16,185,129,0.1);color:var(--success)}
-.timeline-item .tl-icon.ssl{background:rgba(245,158,11,0.1);color:var(--warning)}
-.timeline-item .tl-icon.dns{background:rgba(34,211,238,0.1);color:var(--accent)}
+.timeline-item .tl-icon.build{background:rgba(255,255,255,0.1);color:var(--primary)}
+.timeline-item .tl-icon.deploy{background:rgba(145,145,145,0.1);color:var(--success)}
+.timeline-item .tl-icon.ssl{background:rgba(166,166,166,0.1);color:var(--warning)}
+.timeline-item .tl-icon.dns{background:rgba(175,175,175,0.1);color:var(--accent)}
 
 .toast-container{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:10px}
 .toast{padding:14px 20px;border-radius:10px;background:var(--card);border:1px solid var(--border);box-shadow:0 8px 32px rgba(0,0,0,0.4);display:flex;align-items:center;gap:10px;font-size:13px;font-weight:500;min-width:300px;animation:slideIn .3s ease;backdrop-filter:blur(8px)}
@@ -235,10 +235,10 @@ tr:hover td{background:rgba(255,255,255,0.02)}
   </section>
 
   <section class="stats-grid" id="statsGrid">
-    <div class="stat-card"><div class="stat-icon" style="background:rgba(99,102,241,0.1);color:var(--primary)"><i class="fas fa-rocket"></i></div><div class="stat-value" id="statTotal">—</div><div class="stat-label">Total Deployments</div></div>
-    <div class="stat-card"><div class="stat-icon" style="background:rgba(16,185,129,0.1);color:var(--success)"><i class="fas fa-check-circle"></i></div><div class="stat-value" id="statLive">—</div><div class="stat-label">Live</div></div>
-    <div class="stat-card"><div class="stat-icon" style="background:rgba(239,68,68,0.1);color:var(--error)"><i class="fas fa-times-circle"></i></div><div class="stat-value" id="statFailed">—</div><div class="stat-label">Failed</div></div>
-    <div class="stat-card"><div class="stat-icon" style="background:rgba(34,211,238,0.1);color:var(--accent)"><i class="fas fa-globe"></i></div><div class="stat-value" id="statDomains">—</div><div class="stat-label">Domains Connected</div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:rgba(255,255,255,0.1);color:var(--primary)"><i class="fas fa-rocket"></i></div><div class="stat-value" id="statTotal">—</div><div class="stat-label">Total Deployments</div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:rgba(145,145,145,0.1);color:var(--success)"><i class="fas fa-check-circle"></i></div><div class="stat-value" id="statLive">—</div><div class="stat-label">Live</div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:rgba(104,104,104,0.1);color:var(--error)"><i class="fas fa-times-circle"></i></div><div class="stat-value" id="statFailed">—</div><div class="stat-label">Failed</div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:rgba(175,175,175,0.1);color:var(--accent)"><i class="fas fa-globe"></i></div><div class="stat-value" id="statDomains">—</div><div class="stat-label">Domains Connected</div></div>
   </section>
 
   <section style="margin-bottom:32px">

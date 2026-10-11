@@ -10,14 +10,14 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#08080a; --ink:#fafafa; --dim:#a1a1aa; --faint:#71717a;
+  --bg:#080808; --ink:#fafafa; --dim:#a1a1aa; --faint:#71717a;
   --border:rgba(255,255,255,.07); --border-hi:rgba(255,255,255,.18);
   --font:'Space Grotesk',system-ui,sans-serif; --mono:'JetBrains Mono',monospace;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%}
 body{background:var(--bg);color:var(--ink);font-family:var(--font);display:flex;flex-direction:column;overflow-x:hidden}
-.bg-grad{position:fixed;inset:0;background:radial-gradient(ellipse 80% 55% at 50% -10%,rgba(139,92,246,.16),transparent 60%),radial-gradient(ellipse 60% 45% at 85% 100%,rgba(34,211,238,.08),transparent 60%);pointer-events:none}
+.bg-grad{position:fixed;inset:0;background:radial-gradient(ellipse 80% 55% at 50% -10%,rgba(113,113,113,.16),transparent 60%),radial-gradient(ellipse 60% 45% at 85% 100%,rgba(175,175,175,.08),transparent 60%);pointer-events:none}
 .bg-grid{position:fixed;inset:0;background:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);background-size:64px 64px;mask-image:radial-gradient(ellipse 75% 70% at 50% 30%,#000 20%,transparent 100%);pointer-events:none}
 .stage{flex:1;display:grid;place-items:center;padding:2rem;position:relative;z-index:1}
 .core{text-align:center;max-width:680px}

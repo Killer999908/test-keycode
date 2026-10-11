@@ -8,7 +8,7 @@
     var f = document.createElement('footer');
     f.id = 'kc-standalone-footer';
     var css = [
-      'margin-top:64px', 'border-top:1px solid rgba(255,255,255,0.08)', 'background:#07070c',
+      'margin-top:64px', 'border-top:1px solid rgba(255,255,255,0.08)', 'background:#070707',
       'color:#9ca3af', 'font-family:ui-monospace,SFMono-Regular,Menlo,monospace', 'font-size:13px'
     ].join(';');
     f.setAttribute('style', css);
@@ -43,7 +43,7 @@
       '</div>',
       '<div style="grid-column:1/-1;border-top:1px solid rgba(255,255,255,0.08);margin-top:8px;padding-top:18px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between">',
       '<span>© ' + new Date().getFullYear() + ' KEYCODE — all rights reserved</span>',
-      '<code style="background:#101018;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 12px;color:#22d3ee;font-size:12px">curl -fsSL ' + location.origin + '/install.sh | bash</code>',
+      '<code style="background:#101010;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 12px;color:#ffffff;font-size:12px">curl -fsSL ' + location.origin + '/install.sh | bash</code>',
       '</div>',
       '</div>',
     ].join('');

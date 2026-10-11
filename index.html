@@ -37,6 +37,19 @@
     "url": "/"
   }
   </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      { "@type": "Question", "name": "How fast can you ship?", "acceptedAnswer": { "@type": "Answer", "text": "Most full-stack products ship in 7–14 days because a pod of AI agents builds in parallel around the clock." } },
+      { "@type": "Question", "name": "Who owns the code and IP?", "acceptedAnswer": { "@type": "Answer", "text": "You do — every repository, design file and PCB layout is transferred to you on delivery. No lock-in or licensing." } },
+      { "@type": "Question", "name": "Do I need technical knowledge to start?", "acceptedAnswer": { "@type": "Answer", "text": "No. You describe what you want in plain language; the agents handle architecture, implementation and deployment." } },
+      { "@type": "Question", "name": "What happens after launch?", "acceptedAnswer": { "@type": "Answer", "text": "Every project includes 30 days of free iteration, followed by optional support plans with monitoring, backups and fixes." } },
+      { "@type": "Question", "name": "Can you work with our existing codebase?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Agents can adopt your stack, coding standards and CI pipelines, then extend your product incrementally." } }
+    ]
+  }
+  </script>
 
   <script type="importmap">
   { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
@@ -290,6 +303,95 @@
     .service-item__title { font-size: 21px; font-weight: 600; margin-bottom: .55rem; }
     .service-item__desc { font-size: 13px; line-height: 1.75; color: rgba(255,255,255,.5); }
 
+    /* ============ process ============ */
+    .process-track { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.1rem; max-width: 1040px; width: 100%; margin: 0 auto; }
+    .process-step { position: relative; padding: 1.5rem 1.3rem; border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.015); transition: border-color .4s ease, transform .4s ease; }
+    .process-step:hover { border-color: rgba(255,255,255,.35); transform: translateY(-4px); }
+    .process-step__num { font-family:'JetBrains Mono',monospace; font-size: 11px; letter-spacing: .25em; color: rgba(255,255,255,.4); }
+    .process-step__line { height: 1px; background: rgba(255,255,255,.18); margin: .9rem 0 1rem; position: relative; overflow: hidden; }
+    .process-step__line::after { content: ''; position: absolute; inset: 0; background: #fff; transform: scaleX(0); transform-origin: left; transition: transform .8s cubic-bezier(.22,1,.36,1); }
+    .process-step:hover .process-step__line::after { transform: scaleX(1); }
+    .process-step__title { font-size: 17px; font-weight: 600; margin-bottom: .5rem; }
+    .process-step__desc { font-size: 12.5px; line-height: 1.75; color: rgba(255,255,255,.5); }
+
+    /* ============ testimonials ============ */
+    .testimonials-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.1rem; max-width: 1040px; width: 100%; margin: 0 auto; }
+    .testimonial { padding: 1.7rem 1.5rem; border: 1px solid rgba(255,255,255,.1); display: flex; flex-direction: column; gap: 1.1rem; transition: border-color .4s ease; }
+    .testimonial:hover { border-color: rgba(255,255,255,.35); }
+    .testimonial__quote-mark { font-size: 34px; line-height: .6; font-weight: 900; color: rgba(255,255,255,.22); }
+    .testimonial__text { font-size: 13.5px; line-height: 1.85; color: rgba(255,255,255,.72); flex: 1; }
+    .testimonial__who { display: flex; align-items: center; gap: .8rem; }
+    .testimonial__avatar { width: 34px; height: 34px; border: 1px solid rgba(255,255,255,.25); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family:'JetBrains Mono',monospace; font-size: 11px; letter-spacing: .05em; color: rgba(255,255,255,.75); }
+    .testimonial__name { font-size: 13px; font-weight: 600; }
+    .testimonial__role { font-family:'JetBrains Mono',monospace; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.35); margin-top: .15rem; }
+
+    /* ============ faq ============ */
+    .faq-list { max-width: 760px; width: 100%; margin: 0 auto; border-top: 1px solid rgba(255,255,255,.1); }
+    .faq-item { border-bottom: 1px solid rgba(255,255,255,.1); }
+    .faq-q { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 1.5rem;
+      padding: 1.35rem .2rem; background: none; border: none; color: #fff; cursor: pointer; text-align: left;
+      font-size: 15.5px; font-weight: 500; font-family: 'Inter', sans-serif; transition: color .3s; }
+    .faq-q:hover { color: rgba(255,255,255,.75); }
+    .faq-q__icon { position: relative; width: 14px; height: 14px; flex: none; }
+    .faq-q__icon::before, .faq-q__icon::after { content: ''; position: absolute; background: rgba(255,255,255,.7); transition: transform .35s cubic-bezier(.22,1,.36,1); }
+    .faq-q__icon::before { left: 0; right: 0; top: 6.5px; height: 1px; }
+    .faq-q__icon::after { top: 0; bottom: 0; left: 6.5px; width: 1px; }
+    .faq-item.is-open .faq-q__icon::after { transform: scaleY(0); }
+    .faq-a { max-height: 0; overflow: hidden; transition: max-height .45s cubic-bezier(.22,1,.36,1); }
+    .faq-a__inner { padding: 0 .2rem 1.4rem; font-size: 13.5px; line-height: 1.85; color: rgba(255,255,255,.55); max-width: 640px; }
+
+    /* ============ cta banner ============ */
+    .cta-banner { text-align: center; padding: 7rem 2rem; position: relative; overflow: hidden; }
+    .cta-banner::before { content: ''; position: absolute; inset: 0; pointer-events: none;
+      background: radial-gradient(560px 200px at 50% 60%, rgba(255,255,255,.06), transparent 70%); }
+    .cta-banner__title { font-size: clamp(30px, 5.5vw, 64px); font-weight: 300; letter-spacing: -.02em; line-height: 1.15; }
+    .cta-banner__sub { font-family:'JetBrains Mono',monospace; font-size: 11px; letter-spacing: .3em; text-transform: uppercase; color: rgba(255,255,255,.4); margin-top: 1.2rem; }
+    .cta-banner__actions { display: flex; gap: 1.2rem; justify-content: center; margin-top: 2.4rem; flex-wrap: wrap; }
+    .btn-solid { display: inline-block; padding: 1rem 2.4rem; background: #fff; color: #000; border: 1px solid #fff;
+      font-family:'JetBrains Mono',monospace; font-size: 12px; letter-spacing: .18em; text-transform: uppercase; text-decoration: none;
+      transition: background .3s, color .3s, transform .3s; }
+    .btn-solid:hover { background: transparent; color: #fff; }
+
+    /* ============ local CLI installation ============ */
+    .cli-install-section { padding: 6rem 2rem; border-top: 1px solid rgba(255,255,255,.08); }
+    .cli-install__inner { max-width: 1040px; margin: 0 auto; }
+    .cli-install__eyebrow, .cli-platform__eyebrow {
+      font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: .25em;
+      text-transform: uppercase; color: rgba(255,255,255,.42);
+    }
+    .cli-install__title { font-size: clamp(30px, 4.5vw, 54px); font-weight: 300; margin-top: .8rem; }
+    .cli-install__intro { max-width: 690px; margin-top: .8rem; color: rgba(255,255,255,.56); font-size: 14px; line-height: 1.8; }
+    .cli-platforms { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-top: 2rem; }
+    .cli-platform {
+      min-width: 0; padding: 1.4rem; border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.025); display: flex; flex-direction: column; align-items: flex-start; gap: .8rem;
+    }
+    .cli-platform h3 { font-size: 18px; font-weight: 500; }
+    .cli-platform p { min-height: 3rem; color: rgba(255,255,255,.52); font-size: 12px; line-height: 1.7; }
+    .cli-platform__download {
+      padding: .72rem .9rem; border: 1px solid rgba(255,255,255,.62);
+      font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: .08em;
+      text-transform: uppercase; transition: background .25s, color .25s;
+    }
+    .cli-platform__download:hover { color: #000; background: #fff; }
+    .cli-platform__command {
+      width: 100%; min-height: 4.2rem; padding: .75rem; overflow-wrap: anywhere; white-space: pre-wrap;
+      color: rgba(255,255,255,.74); background: rgba(0,0,0,.45); border: 1px solid rgba(255,255,255,.08);
+      font: 11px/1.7 'JetBrains Mono', monospace;
+    }
+    .cli-copy {
+      padding: .5rem .7rem; border: 1px solid rgba(255,255,255,.18); color: rgba(255,255,255,.72);
+      font: 10px 'JetBrains Mono', monospace; text-transform: uppercase; letter-spacing: .08em;
+    }
+    .cli-copy:hover { color: #fff; border-color: #fff; }
+    .cli-setup {
+      margin-top: 1.4rem; padding: 1.4rem; border-left: 2px solid rgba(255,255,255,.65);
+      background: rgba(255,255,255,.035); color: rgba(255,255,255,.62); font-size: 13px; line-height: 1.9;
+    }
+    .cli-setup strong { color: #fff; }
+    .cli-setup a { text-decoration: underline; text-underline-offset: 3px; }
+    .cli-setup code { color: #fff; font: 12px 'JetBrains Mono', monospace; }
+
     /* ============ footer ============ */
     .footer { padding: 4rem 2rem 2.5rem; border-top: 1px solid rgba(255,255,255,.08); }
     .footer__inner { max-width: 1040px; margin: 0 auto; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 2.5rem; }
@@ -329,11 +431,16 @@
       .hamburger { display: flex; }
       .works-grid { grid-template-columns: repeat(2, 1fr); }
       .services-grid { grid-template-columns: 1fr; }
+      .process-track { grid-template-columns: repeat(2, 1fr); }
+      .testimonials-grid { grid-template-columns: 1fr; }
       .stats-row { gap: 2.5rem; }
+      .cli-platforms { grid-template-columns: 1fr; }
+      .cli-platform p { min-height: 0; }
     }
     @media (max-width: 520px) {
       .works-grid { grid-template-columns: 1fr; }
       .snap-section { padding: 5rem 1.25rem 2rem; }
+      .process-track { grid-template-columns: 1fr; }
       .stats-row { gap: 1.8rem; }
     }
     @media (prefers-reduced-motion: reduce) {
@@ -365,6 +472,8 @@
       <a href="#works" data-scramble data-hover>WORKS</a>
       <a href="#about" data-scramble data-hover>ABOUT</a>
       <a href="#services" data-scramble data-hover>SERVICES</a>
+      <a href="#process" data-scramble data-hover>PROCESS</a>
+      <a href="#faq" data-scramble data-hover>FAQ</a>
     </nav>
     <div class="header__right">
       <a href="/ai-builder.html" class="btn-outline magnetic" data-hover>Start Project</a>
@@ -383,6 +492,9 @@
     <a href="#works" data-menu-link>Works</a>
     <a href="#about" data-menu-link>About</a>
     <a href="#services" data-menu-link>Services</a>
+    <a href="#process" data-menu-link>Process</a>
+    <a href="#faq" data-menu-link>FAQ</a>
+    <a href="#cli-install" data-menu-link>Install CLI</a>
     <a href="/ai-builder.html" data-menu-link>Start Project</a>
   </nav>
 
@@ -391,6 +503,10 @@
     <div class="scroll-indicator__line" data-section="works"><span class="scroll-indicator__label">Works</span></div>
     <div class="scroll-indicator__line" data-section="about"><span class="scroll-indicator__label">About</span></div>
     <div class="scroll-indicator__line" data-section="services"><span class="scroll-indicator__label">Service</span></div>
+    <div class="scroll-indicator__line" data-section="process"><span class="scroll-indicator__label">Process</span></div>
+    <div class="scroll-indicator__line" data-section="testimonials"><span class="scroll-indicator__label">Clients</span></div>
+    <div class="scroll-indicator__line" data-section="faq"><span class="scroll-indicator__label">FAQ</span></div>
+    <div class="scroll-indicator__line" data-section="cta"><span class="scroll-indicator__label">Start</span></div>
   </div>
 
   <div class="snap-container" id="main">
@@ -489,17 +605,150 @@
       </div>
       <a href="/ai-builder.html" class="btn-outline magnetic" data-reveal style="--i:5" data-hover>Start a Project</a>
     </section>
+
+    <!-- PROCESS -->
+    <section class="snap-section" id="process">
+      <div class="section__label" data-scramble>Process — How We Work</div>
+      <h2 class="section__title" data-reveal style="--i:0">From Prompt to Production</h2>
+      <div class="process-track">
+        <div class="process-step" data-reveal style="--i:1" data-hover>
+          <div class="process-step__num">01</div><div class="process-step__line"></div>
+          <h3 class="process-step__title">Describe</h3>
+          <p class="process-step__desc">Tell our agents what you want in plain language — a product brief, a sketch, or a single sentence.</p>
+        </div>
+        <div class="process-step" data-reveal style="--i:2" data-hover>
+          <div class="process-step__num">02</div><div class="process-step__line"></div>
+          <h3 class="process-step__title">Architect</h3>
+          <p class="process-step__desc">The pod plans the stack, data model and design system, then agrees on a build plan with you.</p>
+        </div>
+        <div class="process-step" data-reveal style="--i:3" data-hover>
+          <div class="process-step__num">03</div><div class="process-step__line"></div>
+          <h3 class="process-step__title">Build</h3>
+          <p class="process-step__desc">Agents write, test and review each other's code around the clock — you watch it come alive in preview.</p>
+        </div>
+        <div class="process-step" data-reveal style="--i:4" data-hover>
+          <div class="process-step__num">04</div><div class="process-step__line"></div>
+          <h3 class="process-step__title">Ship</h3>
+          <p class="process-step__desc">Deployed on hardened infrastructure with monitoring, backups and support — usually inside two weeks.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- TESTIMONIALS -->
+    <section class="snap-section" id="testimonials">
+      <div class="section__label" data-scramble>Clients — Words</div>
+      <h2 class="section__title" data-reveal style="--i:0">Trusted by Builders</h2>
+      <div class="testimonials-grid">
+        <div class="testimonial" data-reveal style="--i:1" data-hover>
+          <div class="testimonial__quote-mark">&ldquo;</div>
+          <p class="testimonial__text">KEYCODE shipped our full booking platform in nine days. Our internal team estimated three months — the quality exceeded what we'd have built ourselves.</p>
+          <div class="testimonial__who"><div class="testimonial__avatar">MK</div><div><div class="testimonial__name">Maya Krishnan</div><div class="testimonial__role">Founder, Loomly</div></div></div>
+        </div>
+        <div class="testimonial" data-reveal style="--i:2" data-hover>
+          <div class="testimonial__quote-mark">&ldquo;</div>
+          <p class="testimonial__text">The 3D configurator they built lifted conversion 34%. It runs flawlessly on mobile, which every other vendor told us was impossible.</p>
+          <div class="testimonial__who"><div class="testimonial__avatar">DR</div><div><div class="testimonial__name">Daniel Reyes</div><div class="testimonial__role">CTO, Form Furniture</div></div></div>
+        </div>
+        <div class="testimonial" data-reveal style="--i:3" data-hover>
+          <div class="testimonial__quote-mark">&ldquo;</div>
+          <p class="testimonial__text">From schematic to fab-ready PCB in one sprint. Their agents caught two issues our own review missed. Genuinely impressive engineering.</p>
+          <div class="testimonial__who"><div class="testimonial__avatar">AS</div><div><div class="testimonial__name">Anna Sørensen</div><div class="testimonial__role">Head of HW, Nordhelm</div></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="snap-section" id="faq">
+      <div class="section__label" data-scramble>FAQ — Answers</div>
+      <h2 class="section__title" data-reveal style="--i:0">Questions, Answered</h2>
+      <div class="faq-list" data-reveal style="--i:1">
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false">How fast can you ship?<span class="faq-q__icon"></span></button>
+          <div class="faq-a"><p class="faq-a__inner">Most full-stack products ship in 7–14 days. Because a pod of agents builds in parallel around the clock, timelines don't scale linearly with scope the way human teams do.</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false">Who owns the code and IP?<span class="faq-q__icon"></span></button>
+          <div class="faq-a"><p class="faq-a__inner">You do — completely. Every repository, design file and PCB layout is transferred to you on delivery. No lock-in, no licensing, no strings.</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false">Do I need technical knowledge to start?<span class="faq-q__icon"></span></button>
+          <div class="faq-a"><p class="faq-a__inner">No. You describe what you want in plain language. Our agents handle architecture, implementation and deployment — and translate every technical decision back to you.</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false">What happens after launch?<span class="faq-q__icon"></span></button>
+          <div class="faq-a"><p class="faq-a__inner">Every project includes 30 days of free iteration. After that, support plans cover monitoring, backups, fixes and new features — handled by the same agent pod that built it.</p></div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false">Can you work with our existing codebase?<span class="faq-q__icon"></span></button>
+          <div class="faq-a"><p class="faq-a__inner">Yes. Agents can adopt your stack, coding standards and CI pipelines, then extend your product incrementally — full rewrite is never required.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="snap-section cta-banner" id="cta">
+      <h2 class="cta-banner__title" data-reveal style="--i:0">Let's build<br>something remarkable.</h2>
+      <p class="cta-banner__sub" data-reveal style="--i:1">First prototype in days — not months</p>
+      <div class="cta-banner__actions" data-reveal style="--i:2">
+        <a href="/ai-builder.html" class="btn-solid magnetic" data-hover>Start a Project</a>
+        <a href="/pricing.html" class="btn-outline magnetic" data-hover>View Pricing</a>
+        <a href="#cli-install" class="btn-outline magnetic" data-hover>Install Agent CLI</a>
+      </div>
+    </section>
   </div>
+
+  <section class="cli-install-section" id="cli-install" aria-labelledby="cli-install-title">
+    <div class="cli-install__inner">
+      <p class="cli-install__eyebrow">KEYCODE Agent · Local terminal</p>
+      <h2 class="cli-install__title" id="cli-install-title">Your agent, on your machine.</h2>
+      <p class="cli-install__intro">Install the KEYCODE CLI on Linux, macOS, Windows, or Android with Termux. It needs Node.js 18 or newer, connects securely to this website, and saves generated websites on your computer.</p>
+
+      <div class="cli-platforms">
+        <article class="cli-platform">
+          <span class="cli-platform__eyebrow">Linux · macOS</span>
+          <h3>Install with a shell</h3>
+          <p>Requires Node.js 18+ and curl. Download the installer or run this command in Terminal.</p>
+          <a class="cli-platform__download" href="/install.sh" download="keycode-agent-install.sh">Download .sh installer</a>
+          <code class="cli-platform__command" id="cli-command-unix"></code>
+          <button class="cli-copy" type="button" data-copy="cli-command-unix">Copy install command</button>
+        </article>
+
+        <article class="cli-platform">
+          <span class="cli-platform__eyebrow">Windows 10/11</span>
+          <h3>Install with PowerShell</h3>
+          <p>Requires Node.js 18+. Run the command in PowerShell; the installer adds <code>keycode</code> to your user PATH.</p>
+          <a class="cli-platform__download" href="/install.ps1" download="keycode-agent-install.ps1">Download .ps1 installer</a>
+          <code class="cli-platform__command" id="cli-command-windows"></code>
+          <button class="cli-copy" type="button" data-copy="cli-command-windows">Copy install command</button>
+        </article>
+
+        <article class="cli-platform">
+          <span class="cli-platform__eyebrow">Android · Termux</span>
+          <h3>Run in Termux</h3>
+          <p>Install Termux from <a href="https://f-droid.org/packages/com.termux/" target="_blank" rel="noopener noreferrer">F-Droid</a>, open it, then run the command below.</p>
+          <a class="cli-platform__download" href="/install.sh" download="keycode-agent-install.sh">Download .sh installer</a>
+          <code class="cli-platform__command" id="cli-command-android"></code>
+          <button class="cli-copy" type="button" data-copy="cli-command-android">Copy install command</button>
+        </article>
+      </div>
+
+      <div class="cli-setup">
+        <strong>Connect your account:</strong> Sign in and <a href="/api-keys.html">create an API key</a>, install the CLI, then run <code>keycode login</code> and paste the key when prompted (input is hidden). Start the agent with <code>keycode agent "build me a portfolio website"</code>. Your key is stored locally with owner-only file permissions. Keep it private; revoke it from your account if it is exposed.
+      </div>
+    </div>
+  </section>
 
   <!-- footer -->
   <footer class="footer">
     <div class="footer__inner">
-      <div class="footer__col"><h4>Studio</h4><a href="#top">Top</a><a href="#works">Works</a><a href="#about">About</a></div>
-      <div class="footer__col"><h4>Build</h4><a href="/ai-builder.html">AI Builder</a><a href="/dashboard.html">Start Project</a><a href="/dashboard.html">Dashboard</a></div>
-      <div class="footer__col"><h4>Connect</h4><a href="/" target="_blank" rel="noopener">X / Twitter</a><a href="/" target="_blank" rel="noopener">GitHub</a><a href="/support.html">Support</a></div>
+      <div class="footer__col"><h4>Studio</h4><a href="#top">Top</a><a href="#works">Works</a><a href="#about">About</a><a href="#faq">FAQ</a></div>
+      <div class="footer__col"><h4>Build</h4><a href="/ai-builder.html">AI Builder</a><a href="/game-builder.html">Game Builder</a><a href="/pricing.html">Pricing</a><a href="/dashboard.html">Dashboard</a></div>
+      <div class="footer__col"><h4>Developer</h4><a href="#cli-install">Install Agent CLI</a><a href="/api-keys.html">API Keys</a></div>
+      <div class="footer__col"><h4>Resources</h4><a href="/blog.html">Blog</a><a href="/docs.html">Docs</a><a href="/gallery.html">Gallery</a><a href="/status.html">Status</a></div>
+      <div class="footer__col"><h4>Connect</h4><a href="/support.html">Support</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a></div>
     </div>
     <div class="footer__bottom">
-      <span class="footer__copy">© 2026 KEYCODE STUDIO</span>
+      <span class="footer__copy">© 2026 KEYCODE STUDIO — engineered by agents</span>
       <span class="wordmark" style="font-size:14px;">KEYCODE</span>
     </div>
   </footer>
@@ -523,6 +772,36 @@
       </div>
     </div>
   </div>
+
+  <script>
+    (function () {
+      var base = window.location.origin;
+      var commands = {
+        'cli-command-unix': 'curl -fsSL "' + base + '/install.sh" | KEYCODE_URL="' + base + '" bash',
+        'cli-command-windows': '& { $env:KEYCODE_URL=\'' + base + '\'; irm "$env:KEYCODE_URL/install.ps1" | iex }',
+        'cli-command-android': 'pkg update && pkg install nodejs curl -y && curl -fsSL "' + base + '/install.sh" | KEYCODE_URL="' + base + '" KEYCODE_BIN_DIR="$PREFIX/bin" sh'
+      };
+      Object.keys(commands).forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = commands[id];
+      });
+      document.querySelectorAll('[data-copy]').forEach(function (button) {
+        button.addEventListener('click', async function () {
+          var target = document.getElementById(button.dataset.copy);
+          if (!target) return;
+          try {
+            await navigator.clipboard.writeText(target.textContent);
+            var original = button.textContent;
+            button.textContent = 'Copied';
+            setTimeout(function () { button.textContent = original; }, 1600);
+          } catch (err) {
+            button.textContent = 'Copy unavailable';
+            setTimeout(function () { button.textContent = 'Copy install command'; }, 1600);
+          }
+        });
+      });
+    })();
+  </script>
 
   <script type="module">
     import * as THREE from 'three';
@@ -704,6 +983,18 @@
       });
     });
 
+    /* =============== FAQ ACCORDION =============== */
+    document.querySelectorAll('.faq-item').forEach(item => {
+      const q = item.querySelector('.faq-q');
+      const a = item.querySelector('.faq-a');
+      q.addEventListener('click', () => {
+        const open = item.classList.toggle('is-open');
+        q.setAttribute('aria-expanded', String(open));
+        a.style.maxHeight = open ? a.scrollHeight + 'px' : '0';
+        if (open) blip(740, .04);
+      });
+    });
+
     /* =============== MENU =============== */
     const sideMenu = document.getElementById('side-menu');
     document.getElementById('hamburger').addEventListener('click', () => sideMenu.classList.add('is-open'));
@@ -713,7 +1004,7 @@
 
     /* =============== SCROLL: indicator + progress + outro =============== */
     const container = document.getElementById('main');
-    const sections = ['top', 'works', 'about', 'services'];
+    const sections = ['top', 'works', 'about', 'services', 'process', 'testimonials', 'faq', 'cta'];
     const indicatorLines = document.querySelectorAll('.scroll-indicator__line');
     const progressBar = document.getElementById('progress');
     const outro = document.getElementById('outro');

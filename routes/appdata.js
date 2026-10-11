@@ -658,6 +658,48 @@ module.exports = function AppDataRoutes(opts) {
     return res.send(stub);
   });
 
+  // ---------------------------------------------------------------------------
+  //  Cross-platform installers — served dynamically so the CLI knows which
+  //  server to talk to. The placeholder __KEYCODE_URL__ in the static files is
+  //  replaced with the public origin (APP_URL / FRONTEND_URL, else validated Host).
+  //    curl -fsSL <origin>/install.sh  | sh      (Linux / macOS / Termux)
+  //    irm  <origin>/install.ps1       | iex     (Windows PowerShell)
+  // ---------------------------------------------------------------------------
+  function publicOrigin(req) {
+    const configured = process.env.APP_URL || process.env.FRONTEND_URL || '';
+    if (configured && !configured.includes('localhost')) {
+      try {
+        const url = new URL(configured);
+        if ((url.protocol === 'http:' || url.protocol === 'https:') && !url.username && !url.password) return url.origin;
+      } catch (err) {
+        console.warn('[cli.install] ignoring invalid configured site URL:', err.message);
+      }
+    }
+    const proxyHost = String(req.headers['x-forwarded-host'] || '').split(',')[0].trim();
+    const host = proxyHost || String(req.headers.host || '').trim();
+    const validHost = /^(?:(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)(?:\.(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?))*|\[[A-Fa-f0-9:]+\])(?::\d{1,5})?$/.test(host);
+    const forwardedProto = String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim().toLowerCase();
+    const proto = req.secure || forwardedProto === 'https' ? 'https' : 'http';
+    if (!validHost) return proto + '://localhost:' + PORT;
+    try { return new URL(proto + '://' + host).origin; }
+    catch (_) { return proto + '://localhost:' + PORT; }
+  }
+  function serveInstaller(filePath, contentType, req, res) {
+    fs.readFile(filePath, 'utf8', function (err, text) {
+      if (err) return res.status(404).send('installer missing');
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Cache-Control', 'no-store');
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      return res.send(text.replace(/__KEYCODE_URL__/g, publicOrigin(req)));
+    });
+  }
+  app.get('/install.sh', function (req, res) {
+    serveInstaller(path.join(projectRoot, 'install.sh'), 'text/x-shellscript; charset=utf-8', req, res);
+  });
+  app.get('/install.ps1', function (req, res) {
+    serveInstaller(path.join(projectRoot, 'install.ps1'), 'text/plain; charset=utf-8', req, res);
+  });
+
   // agent surfaces (CLI/terminal) — router = an LLM provider chain entry
   const llm = require('../lib/ai-provider');
   app.get('/api/agent/routers', function (req, res) {
@@ -902,14 +944,15 @@ module.exports = function AppDataRoutes(opts) {
       send({ type: 'status', phase: 'planning', text: 'Understanding your request' });
       send({ type: 'status', phase: 'building', text: 'Building your website' });
       const html = (await aiSiteHtml(prompt, spec)) || buildSiteHtml(spec);
-      send({ type: 'html', html: html, partial: false });
-      send({ type: 'complete', data: { html: html } });
-      // persist the generated site (mirrors the GET handler's save behavior)
       const plist = loadProjects();
       const pfid = 'proj_' + nid();
-      try { fs.mkdirSync(UIL, { recursive: true }); fs.writeFileSync(path.join(UIL, pfid), html); } catch (_) {}
-      const pitem = { fileId: pfid, id: pfid, userId: req.user.userId, name: spec.name || prompt.slice(0,60), prompt: prompt, industry: plan.industry, visibility: 'public', previewUrl: '/api/ai/preview/' + pfid, htmlFile: pfid, createdAt: now(), updatedAt: now() };
+      const previewUrl = '/api/ai/preview/' + pfid;
+      fs.mkdirSync(UIL, { recursive: true });
+      fs.writeFileSync(path.join(UIL, pfid), html);
+      const pitem = { fileId: pfid, id: pfid, userId: req.user.userId, name: spec.name || prompt.slice(0,60), prompt: prompt, industry: plan.industry, visibility: 'public', previewUrl: previewUrl, htmlFile: pfid, createdAt: now(), updatedAt: now() };
       plist.push(pitem); saveProjects(plist);
+      send({ type: 'html', html: html, partial: false });
+      send({ type: 'complete', data: { html: html, fileId: pfid, previewUrl: previewUrl } });
       res.end();
     } catch (e) {
       console.error('[ai.stream-website] generation failed:', e);

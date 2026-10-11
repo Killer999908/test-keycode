@@ -57,6 +57,59 @@ describe('GET /api/health', () => {
   });
 });
 
+describe('server middleware errors', () => {
+  test('returns a JSON client error for disallowed CORS origins', async () => {
+    const res = await request(app)
+      .get('/api/health')
+      .set('Origin', 'https://not-allowed.example');
+    expect(res.status).toBe(403);
+    expect(res.body.error).toContain('CORS blocked');
+  });
+
+  test('returns a JSON client error for malformed request JSON', async () => {
+    const res = await request(app)
+      .post('/api/payment/create-intent')
+      .set('Content-Type', 'application/json')
+      .send('{"amount":');
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBeTruthy();
+  });
+});
+
+describe('KEYCODE CLI installation', () => {
+  test('shows platform downloads and account setup on the homepage', async () => {
+    const res = await request(app).get('/');
+    expect(res.status).toBe(200);
+    expect(res.text).toContain('id="cli-install"');
+    expect(res.text).toContain('href="/install.sh"');
+    expect(res.text).toContain('href="/install.ps1"');
+    expect(res.text).toContain('keycode login');
+    expect(res.text).toContain('api-keys.html');
+  });
+
+  test('serves origin-configured installers without trusting forwarded host headers', async () => {
+    const unix = await request(app).get('/install.sh')
+      .set('X-Forwarded-Host', 'attacker.example;touch /tmp/not-safe')
+      .set('X-Forwarded-Proto', 'https');
+    const windows = await request(app).get('/install.ps1');
+
+    expect(unix.status).toBe(200);
+    expect(unix.text).toContain('/api/cli/download');
+    expect(unix.text).not.toContain('__KEYCODE_URL__');
+    expect(unix.text).not.toContain('attacker.example');
+    expect(windows.status).toBe(200);
+    expect(windows.text).toContain('/api/cli/download');
+    expect(windows.text).not.toContain('__KEYCODE_URL__');
+  });
+
+  test('downloads the functional HTTPS-capable CLI source', async () => {
+    const res = await request(app).get('/api/cli/download');
+    expect(res.status).toBe(200);
+    expect(res.text).toContain("require('https')");
+    expect(res.text).toContain("keycode login");
+  });
+});
+
 describe('auth', () => {
   test('rejects forged (unsigned) JWTs', async () => {
     // Craft a token with a valid-looking payload but no signature.
@@ -266,6 +319,11 @@ describe('AI Builder website stream', () => {
       expect(response.text).toContain('"type":"html"');
       expect(response.text).toContain('"type":"complete"');
       expect(response.text).toContain('<!DOCTYPE html>');
+      const completeEvent = response.text.split('\n').find(line => line.startsWith('data: {"type":"complete"'));
+      expect(completeEvent).toBeDefined();
+      const completedProject = JSON.parse(completeEvent.slice(6)).data;
+      expect(completedProject.fileId).toMatch(/^proj_/);
+      expect(completedProject.previewUrl).toContain(completedProject.fileId);
     } finally {
       if (previousProvider === undefined) delete process.env.AI_PROVIDER;
       else process.env.AI_PROVIDER = previousProvider;

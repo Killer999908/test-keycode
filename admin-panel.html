@@ -13,20 +13,20 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" integrity="sha384-e6nUZLBkQ86NJ6TVVKAeSaK8jWa3NhkYWZFomE39AvDbQWeie9PlQqM3pmYW5d1g" crossorigin="anonymous"></script>
   <style>
     :root {
-      --void: #030305;
-      --obsidian: #0a0a0f;
-      --graphite: #12121a;
-      --slate: #1a1a24;
+      --void: #030303;
+      --obsidian: #0a0a0a;
+      --graphite: #121212;
+      --slate: #1a1a1a;
       --primary: #ffffff;
-      --primary-glow: #818cf8;
-      --secondary: #ec4899;
-      --accent: #22d3ee;
-      --success: #10b981;
-      --warning: #f59e0b;
-      --danger: #ef4444;
+      --primary-glow: #e5e5e5;
+      --secondary: #a3a3a3;
+      --accent: #ffffff;
+      --success: #e5e5e5;
+      --warning: #a3a3a3;
+      --danger: #ffffff;
       --white: #ffffff;
-      --ash: #d1d5db;
-      --gradient-1: linear-gradient(135deg, #ffffff 0%, #a3a3a3 50%, #ec4899 100%);
+      --ash: #d4d4d4;
+      --gradient-1: linear-gradient(135deg, #ffffff 0%, #a3a3a3 50%, #a3a3a3 100%);
       --font-display: 'Syne', sans-serif;
       --font-body: 'Inter', sans-serif;
     }
@@ -41,7 +41,7 @@
       position: fixed; left: 0; top: 0;
       width: 260px; height: 100vh;
       background: var(--obsidian);
-      border-right: 1px solid rgba(99,102,241,0.1);
+      border-right: 1px solid rgba(255,255,255,0.1);
       padding: 20px 12px;
       display: flex; flex-direction: column;
       z-index: 100;
@@ -57,7 +57,7 @@
       font-size: 13px; font-weight: 500;
       cursor: pointer; transition: all 0.3s; margin-bottom: 2px;
     }
-    .nav-item:hover, .nav-item.active { background: rgba(99,102,241,0.15); color: var(--white); }
+    .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.15); color: var(--white); }
     .nav-item i { width: 18px; text-align: center; font-size: 15px; }
     .nav-divider { height: 1px; background: rgba(255,255,255,0.05); margin: 12px 0; }
     .main-content { margin-left: 260px; padding: 28px; min-height: 100vh; }
@@ -65,23 +65,23 @@
     .page-title { font-family: var(--font-display); font-size: 26px; font-weight: 700; }
     .admin-badge {
       display: inline-flex; align-items: center; gap: 6px;
-      background: rgba(99,102,241,0.2); padding: 6px 14px;
+      background: rgba(255,255,255,0.2); padding: 6px 14px;
       border-radius: 20px; font-size: 12px; color: var(--primary-glow);
     }
     .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 16px; margin-bottom: 28px; }
     .stat-card {
-      background: var(--graphite); border: 1px solid rgba(99,102,241,0.1);
+      background: var(--graphite); border: 1px solid rgba(255,255,255,0.1);
       border-radius: 14px; padding: 20px; transition: all 0.3s;
     }
-    .stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(99,102,241,0.12); }
-    .stat-icon { width: 40px; height: 40px; background: rgba(99,102,241,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--primary); margin-bottom: 12px; }
+    .stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(255,255,255,0.12); }
+    .stat-icon { width: 40px; height: 40px; background: rgba(255,255,255,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--primary); margin-bottom: 12px; }
     .stat-value { font-size: 28px; font-weight: 700; margin-bottom: 2px; }
     .stat-label { color: var(--ash); font-size: 13px; }
     .stat-change { font-size: 12px; margin-top: 4px; }
     .stat-change.up { color: var(--success); }
     .stat-change.down { color: var(--danger); }
     .section-card {
-      background: var(--graphite); border: 1px solid rgba(99,102,241,0.1);
+      background: var(--graphite); border: 1px solid rgba(255,255,255,0.1);
       border-radius: 14px; padding: 24px; margin-bottom: 24px;
     }
     .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
@@ -91,22 +91,22 @@
     .search-bar { display: flex; gap: 12px; margin-bottom: 20px; }
     .search-bar input {
       flex: 1; padding: 12px 16px;
-      background: var(--slate); border: 1px solid rgba(99,102,241,0.2);
+      background: var(--slate); border: 1px solid rgba(255,255,255,0.2);
       border-radius: 10px; color: var(--white); font-size: 14px;
     }
     .search-bar input:focus { outline: none; border-color: var(--primary); }
     table { width: 100%; border-collapse: collapse; }
     th, td { padding: 12px 14px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 13px; }
     th { color: var(--ash); font-size: 11px; text-transform: uppercase; font-weight: 600; }
-    tr:hover { background: rgba(99,102,241,0.03); }
+    tr:hover { background: rgba(255,255,255,0.03); }
     .badge {
       display: inline-block; padding: 3px 10px; border-radius: 12px;
       font-size: 11px; font-weight: 500;
     }
-    .badge-green { background: rgba(16,185,129,0.15); color: var(--success); }
-    .badge-yellow { background: rgba(245,158,11,0.15); color: var(--warning); }
-    .badge-red { background: rgba(239,68,68,0.15); color: var(--danger); }
-    .badge-blue { background: rgba(99,102,241,0.15); color: var(--primary-glow); }
+    .badge-green { background: rgba(145,145,145,0.15); color: var(--success); }
+    .badge-yellow { background: rgba(166,166,166,0.15); color: var(--warning); }
+    .badge-red { background: rgba(104,104,104,0.15); color: var(--danger); }
+    .badge-blue { background: rgba(255,255,255,0.15); color: var(--primary-glow); }
     .badge-gray { background: rgba(255,255,255,0.05); color: var(--ash); }
     .btn-sm {
       padding: 6px 14px; border: none; border-radius: 8px;
@@ -115,18 +115,18 @@
     .btn-primary { background: var(--primary); color: white; }
     .btn-primary:hover { background: var(--primary-glow); }
     .btn-success { background: var(--success); color: white; }
-    .btn-danger { background: rgba(239,68,68,0.8); color: white; }
+    .btn-danger { background: rgba(104,104,104,0.8); color: white; }
     .btn-danger:hover { background: var(--danger); }
     .btn-warning { background: var(--warning); color: white; }
     .btn-sm:disabled { opacity: 0.5; cursor: not-allowed; }
     .modal-overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(3,3,5,0.85); display: none;
+      background: rgba(3,3,3,0.85); display: none;
       align-items: center; justify-content: center; z-index: 1000;
     }
     .modal-overlay.show { display: flex; }
     .modal {
-      background: var(--graphite); border: 1px solid rgba(99,102,241,0.2);
+      background: var(--graphite); border: 1px solid rgba(255,255,255,0.2);
       border-radius: 16px; padding: 32px; max-width: 500px; width: 90%;
       max-height: 80vh; overflow-y: auto;
     }
@@ -134,7 +134,7 @@
     .modal label { display: block; font-size: 13px; color: var(--ash); margin-bottom: 6px; }
     .modal input, .modal select, .modal textarea {
       width: 100%; padding: 10px 14px;
-      background: var(--slate); border: 1px solid rgba(99,102,241,0.2);
+      background: var(--slate); border: 1px solid rgba(255,255,255,0.2);
       border-radius: 8px; color: var(--white); font-size: 14px; margin-bottom: 16px;
     }
     .modal input:focus, .modal select:focus { outline: none; border-color: var(--primary); }
@@ -142,7 +142,7 @@
     .modal .btn-row { display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px; }
     .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
     @media (max-width: 900px) { .charts-grid { grid-template-columns: 1fr; } }
-    .chart-box { background: var(--graphite); border: 1px solid rgba(99,102,241,0.1); border-radius: 14px; padding: 20px; }
+    .chart-box { background: var(--graphite); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 20px; }
     .chart-box h3 { font-size: 14px; color: var(--ash); margin-bottom: 16px; font-weight: 500; }
     .login-prompt {
       display: flex; flex-direction: column; align-items: center;
@@ -153,7 +153,7 @@
     .login-prompt p { color: var(--ash); margin-bottom: 24px; }
     .login-prompt input {
       width: 100%; max-width: 360px; padding: 14px 18px;
-      background: var(--slate); border: 1px solid rgba(99,102,241,0.3);
+      background: var(--slate); border: 1px solid rgba(255,255,255,0.3);
       border-radius: 12px; color: var(--white); font-size: 14px; margin-bottom: 12px;
     }
     .login-prompt input:focus { outline: none; border-color: var(--primary); }
@@ -163,7 +163,7 @@
       font-size: 16px; font-weight: 600; cursor: pointer;
       font-family: var(--font-display);
     }
-    .login-prompt button:hover { transform: translateY(-2px); box-shadow: 0 10px 40px rgba(99,102,241,0.4); }
+    .login-prompt button:hover { transform: translateY(-2px); box-shadow: 0 10px 40px rgba(255,255,255,0.4); }
     .error-msg { color: var(--danger); margin-bottom: 12px; font-size: 14px; display: none; }
     .toast {
       position: fixed; bottom: 30px; right: 30px;
@@ -298,14 +298,14 @@
         <div class="nav-item" data-page="system"><i class="fas fa-server"></i> System</div>
       </nav>
       <div style="margin-top:auto;padding-top:16px;border-top:1px solid rgba(255,255,255,0.05);">
-        <div style="display:flex;align-items:center;gap:10px;padding:12px;background:rgba(99,102,241,0.1);border-radius:10px;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:10px;padding:12px;background:rgba(255,255,255,0.1);border-radius:10px;margin-bottom:10px;">
           <div style="width:36px;height:36px;background:var(--gradient-1);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;">A</div>
           <div style="flex:1;">
             <div id="adminName" style="font-size:14px;font-weight:600;">Admin</div>
             <div id="adminEmail" style="font-size:11px;color:var(--ash);">admin@example.com</div>
           </div>
         </div>
-        <button onclick="logout()" style="width:100%;padding:10px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);border-radius:10px;color:var(--danger);cursor:pointer;font-size:13px;"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        <button onclick="logout()" style="width:100%;padding:10px;background:rgba(104,104,104,0.1);border:1px solid rgba(104,104,104,0.2);border-radius:10px;color:var(--danger);cursor:pointer;font-size:13px;"><i class="fas fa-sign-out-alt"></i> Logout</button>
       </div>
     </aside>
 
@@ -338,9 +338,9 @@
         <div class="section-card">
           <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
             <button class="btn-sm btn-primary" onclick="filterByStatus('all')">All</button>
-            <button class="btn-sm" style="background:rgba(245,158,11,0.2);color:var(--warning);" onclick="filterByStatus('pending')">Pending</button>
-            <button class="btn-sm" style="background:rgba(99,102,241,0.2);color:var(--primary-glow);" onclick="filterByStatus('in_progress')">In Progress</button>
-            <button class="btn-sm" style="background:rgba(16,185,129,0.2);color:var(--success);" onclick="filterByStatus('completed')">Completed</button>
+            <button class="btn-sm" style="background:rgba(166,166,166,0.2);color:var(--warning);" onclick="filterByStatus('pending')">Pending</button>
+            <button class="btn-sm" style="background:rgba(255,255,255,0.2);color:var(--primary-glow);" onclick="filterByStatus('in_progress')">In Progress</button>
+            <button class="btn-sm" style="background:rgba(145,145,145,0.2);color:var(--success);" onclick="filterByStatus('completed')">Completed</button>
           </div>
           <div style="overflow-x:auto;"><table><thead><tr><th>ID</th><th>Customer</th><th>Email</th><th>Type</th><th>Total</th><th>Payment</th><th>Status</th><th>Access</th><th>Date</th><th>Action</th></tr></thead><tbody id="ordersList"></tbody></table></div>
         </div>
@@ -410,15 +410,15 @@
         <div class="page-header"><h1 class="page-title">Email</h1></div>
         <div class="section-card">
           <h3 style="margin-bottom:16px;">Send Broadcast to Subscribers</h3>
-          <input type="text" id="broadcastSubject" placeholder="Subject" style="width:100%;padding:12px;background:var(--slate);border:1px solid rgba(99,102,241,0.2);border-radius:10px;color:var(--white);margin-bottom:12px;">
-          <textarea id="broadcastContent" placeholder="Email content (HTML)" rows="8" style="width:100%;padding:12px;background:var(--slate);border:1px solid rgba(99,102,241,0.2);border-radius:10px;color:var(--white);resize:vertical;margin-bottom:12px;font-family:monospace;"></textarea>
+          <input type="text" id="broadcastSubject" placeholder="Subject" style="width:100%;padding:12px;background:var(--slate);border:1px solid rgba(255,255,255,0.2);border-radius:10px;color:var(--white);margin-bottom:12px;">
+          <textarea id="broadcastContent" placeholder="Email content (HTML)" rows="8" style="width:100%;padding:12px;background:var(--slate);border:1px solid rgba(255,255,255,0.2);border-radius:10px;color:var(--white);resize:vertical;margin-bottom:12px;font-family:monospace;"></textarea>
           <button class="btn-sm btn-primary" onclick="sendBroadcast()"><i class="fas fa-paper-plane"></i> Send Broadcast</button>
         </div>
         <div class="section-card">
           <h3 style="margin-bottom:16px;">Send Manual Email</h3>
-          <input type="email" id="manualEmail" placeholder="To" style="width:100%;padding:12px;background:var(--slate);border:1px solid rgba(99,102,241,0.2);border-radius:10px;color:var(--white);margin-bottom:12px;">
-          <input type="text" id="manualSubject" placeholder="Subject" style="width:100%;padding:12px;background:var(--slate);border:1px solid rgba(99,102,241,0.2);border-radius:10px;color:var(--white);margin-bottom:12px;">
-          <textarea id="manualContent" placeholder="Content" rows="6" style="width:100%;padding:12px;background:var(--slate);border:1px solid rgba(99,102,241,0.2);border-radius:10px;color:var(--white);resize:vertical;margin-bottom:12px;"></textarea>
+          <input type="email" id="manualEmail" placeholder="To" style="width:100%;padding:12px;background:var(--slate);border:1px solid rgba(255,255,255,0.2);border-radius:10px;color:var(--white);margin-bottom:12px;">
+          <input type="text" id="manualSubject" placeholder="Subject" style="width:100%;padding:12px;background:var(--slate);border:1px solid rgba(255,255,255,0.2);border-radius:10px;color:var(--white);margin-bottom:12px;">
+          <textarea id="manualContent" placeholder="Content" rows="6" style="width:100%;padding:12px;background:var(--slate);border:1px solid rgba(255,255,255,0.2);border-radius:10px;color:var(--white);resize:vertical;margin-bottom:12px;"></textarea>
           <button class="btn-sm btn-primary" onclick="sendManualEmail()"><i class="fas fa-envelope"></i> Send Email</button>
         </div>
       </div>
@@ -563,8 +563,8 @@
         <div class="section-card">
           <h3 class="section-title">Blocked IPs</h3>
           <div style="display:flex;gap:8px;margin:12px 0">
-            <input type="text" id="blockIpInput" placeholder="Enter IP to block" style="flex:1;padding:10px;background:var(--slate);border:1px solid rgba(99,102,241,0.2);border-radius:8px;color:var(--white);">
-            <input type="text" id="blockIpReason" placeholder="Reason" style="flex:1;padding:10px;background:var(--slate);border:1px solid rgba(99,102,241,0.2);border-radius:8px;color:var(--white);">
+            <input type="text" id="blockIpInput" placeholder="Enter IP to block" style="flex:1;padding:10px;background:var(--slate);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:var(--white);">
+            <input type="text" id="blockIpReason" placeholder="Reason" style="flex:1;padding:10px;background:var(--slate);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:var(--white);">
             <button class="btn-sm btn-danger" onclick="blockIp()">Block</button>
           </div>
           <div style="overflow-x:auto;"><table><thead><tr><th>IP</th><th>Reason</th><th>Blocked At</th><th>Action</th></tr></thead><tbody id="ipBlockList"></tbody></table></div>
@@ -582,7 +582,7 @@
           <p style="color:var(--ash);font-size:14px;margin-bottom:16px;">Elevate your admin privileges for write operations. Elevation expires after 15 minutes.</p>
           <div id="elevationStatus" class="stat-card" style="margin-bottom:16px;">
             <div style="display:flex;align-items:center;gap:12px;">
-              <div id="elevationIcon" style="width:40px;height:40px;background:rgba(99,102,241,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--ash);"><i class="fas fa-user"></i></div>
+              <div id="elevationIcon" style="width:40px;height:40px;background:rgba(255,255,255,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--ash);"><i class="fas fa-user"></i></div>
               <div>
                 <div style="font-size:18px;font-weight:700;" id="elevationLevelDisplay">Viewer</div>
                 <div style="font-size:12px;color:var(--ash);" id="elevationExpiry">Not elevated</div>
@@ -625,7 +625,7 @@
         <div class="page-header"><h1 class="page-title">Centralized Audit Log</h1><button class="btn-sm btn-primary" onclick="loadAuditLog()"><i class="fas fa-sync"></i> Refresh</button></div>
         <div class="section-card">
           <div style="display:flex;gap:8px;margin-bottom:16px;">
-            <input type="text" id="auditSearch" placeholder="Search by action..." style="flex:1;padding:10px;background:var(--slate);border:1px solid rgba(99,102,241,0.2);border-radius:8px;color:var(--white);">
+            <input type="text" id="auditSearch" placeholder="Search by action..." style="flex:1;padding:10px;background:var(--slate);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:var(--white);">
             <button class="btn-sm btn-primary" onclick="loadAuditLog()"><i class="fas fa-search"></i> Search</button>
           </div>
           <div style="overflow-x:auto;"><table><thead><tr><th>Time</th><th>Admin</th><th>Action</th><th>Resource</th><th>Status</th><th>IP</th></tr></thead><tbody id="auditLogList"></tbody></table></div>
@@ -640,9 +640,9 @@
         <div class="section-card">
           <p style="color:var(--ash);font-size:14px;margin-bottom:16px;">Create dedicated admin accounts. Each admin must use unique credentials.</p>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <input type="text" id="newAdminName" placeholder="Full Name" style="flex:1;min-width:150px;padding:10px;background:var(--slate);border:1px solid rgba(99,102,241,0.2);border-radius:8px;color:var(--white);">
-            <input type="email" id="newAdminEmail" placeholder="Email" style="flex:1;min-width:200px;padding:10px;background:var(--slate);border:1px solid rgba(99,102,241,0.2);border-radius:8px;color:var(--white);">
-            <input type="password" id="newAdminPass" placeholder="Password (12+ chars)" style="flex:1;min-width:180px;padding:10px;background:var(--slate);border:1px solid rgba(99,102,241,0.2);border-radius:8px;color:var(--white);">
+            <input type="text" id="newAdminName" placeholder="Full Name" style="flex:1;min-width:150px;padding:10px;background:var(--slate);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:var(--white);">
+            <input type="email" id="newAdminEmail" placeholder="Email" style="flex:1;min-width:200px;padding:10px;background:var(--slate);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:var(--white);">
+            <input type="password" id="newAdminPass" placeholder="Password (12+ chars)" style="flex:1;min-width:180px;padding:10px;background:var(--slate);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:var(--white);">
             <button class="btn-sm btn-success" onclick="createAdmin()"><i class="fas fa-plus"></i> Create Admin</button>
           </div>
           <div id="adminCreateResult" style="margin-top:12px;"></div>
@@ -766,7 +766,7 @@
           <input type="file" id="importFile" style="margin-bottom:12px;">
           <button class="btn-sm btn-success" onclick="importData()"><i class="fas fa-file-import"></i> Import</button>
         </div>
-        <div id="importResult" style="display:none;margin-top:12px;padding:12px;background:rgba(16,185,129,0.1);border-radius:8px;color:var(--success);"></div>
+        <div id="importResult" style="display:none;margin-top:12px;padding:12px;background:rgba(145,145,145,0.1);border-radius:8px;color:var(--success);"></div>
       </div>
 
       <!-- MAINTENANCE -->
@@ -782,7 +782,7 @@
           </div>
           <div style="margin-top:16px;">
             <label style="color:var(--ash);font-size:13px;">Maintenance Message</label>
-            <input type="text" id="maintenanceMessage" value="We're upgrading our platform. Be back shortly!" style="width:100%;padding:10px;background:var(--slate);border:1px solid rgba(99,102,241,0.2);border-radius:8px;color:var(--white);margin-top:4px;">
+            <input type="text" id="maintenanceMessage" value="We're upgrading our platform. Be back shortly!" style="width:100%;padding:10px;background:var(--slate);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:var(--white);margin-top:4px;">
           </div>
         </div>
       </div>
@@ -799,7 +799,7 @@
             <button class="btn-sm btn-primary" onclick="clearCache('orders')"><i class="fas fa-shopping-bag"></i> Orders</button>
             <button class="btn-sm btn-primary" onclick="clearCache('templates')"><i class="fas fa-file-code"></i> Templates</button>
           </div>
-          <div id="cacheResult" style="display:none;margin-top:16px;padding:12px;background:rgba(16,185,129,0.1);border-radius:8px;color:var(--success);"></div>
+          <div id="cacheResult" style="display:none;margin-top:16px;padding:12px;background:rgba(145,145,145,0.1);border-radius:8px;color:var(--success);"></div>
         </div>
       </div>
 
@@ -869,8 +869,8 @@
         <div class="section-card">
           <h3 class="section-title">Manage Indexes</h3>
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
-            <div><label style="font-size:12px;color:var(--ash);display:block;">Collection</label><input type="text" id="idxCollection" placeholder="orders" style="padding:8px;background:var(--slate);border:1px solid rgba(99,102,241,0.2);border-radius:6px;color:var(--white);width:150px;"></div>
-            <div><label style="font-size:12px;color:var(--ash);display:block;">Fields</label><input type="text" id="idxFields" placeholder="{ status: 1 }" style="padding:8px;background:var(--slate);border:1px solid rgba(99,102,241,0.2);border-radius:6px;color:var(--white);width:200px;"></div>
+            <div><label style="font-size:12px;color:var(--ash);display:block;">Collection</label><input type="text" id="idxCollection" placeholder="orders" style="padding:8px;background:var(--slate);border:1px solid rgba(255,255,255,0.2);border-radius:6px;color:var(--white);width:150px;"></div>
+            <div><label style="font-size:12px;color:var(--ash);display:block;">Fields</label><input type="text" id="idxFields" placeholder="{ status: 1 }" style="padding:8px;background:var(--slate);border:1px solid rgba(255,255,255,0.2);border-radius:6px;color:var(--white);width:200px;"></div>
             <button class="btn-sm btn-primary" onclick="createIndex()" style="margin-top:16px">Create Index</button>
           </div>
         </div>
@@ -905,7 +905,7 @@
         <div class="section-card">
           <p style="color:var(--ash);font-size:13px;margin-bottom:12px;">Enter User ID to view active sessions</p>
           <div style="display:flex;gap:8px;">
-            <input type="text" id="sessUserId" placeholder="User ID" style="flex:1;padding:10px;background:var(--slate);border:1px solid rgba(99,102,241,0.2);border-radius:8px;color:var(--white);">
+            <input type="text" id="sessUserId" placeholder="User ID" style="flex:1;padding:10px;background:var(--slate);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:var(--white);">
             <button class="btn-sm btn-primary" onclick="loadUserSessions()">Search</button>
             <button class="btn-sm btn-danger" onclick="logoutAllSessions()">Logout All</button>
           </div>
@@ -918,7 +918,7 @@
         <div class="page-header"><h1 class="page-title">User Activity Timeline</h1></div>
         <div class="section-card">
           <div style="display:flex;gap:8px;margin-bottom:16px;">
-            <input type="text" id="activityUserId" placeholder="User ID" style="flex:1;padding:10px;background:var(--slate);border:1px solid rgba(99,102,241,0.2);border-radius:8px;color:var(--white);">
+            <input type="text" id="activityUserId" placeholder="User ID" style="flex:1;padding:10px;background:var(--slate);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:var(--white);">
             <button class="btn-sm btn-primary" onclick="loadUserActivity()">Load Activity</button>
           </div>
           <div style="overflow-x:auto;"><table><thead><tr><th>Action</th><th>Details</th><th>IP</th><th>Timestamp</th></tr></thead><tbody id="userActivityList"></tbody></table></div>
@@ -932,10 +932,10 @@
           <i class="fas fa-mask" style="font-size:64px;color:var(--warning);margin-bottom:16px;"></i>
           <p style="color:var(--ash);font-size:14px;margin-bottom:16px;">Generate a login token to access the platform as another user. All actions will be logged.</p>
           <div style="display:flex;gap:8px;max-width:500px;margin:0 auto;">
-            <input type="text" id="impersonateUserId" placeholder="Enter User ID to impersonate" style="flex:1;padding:12px;background:var(--slate);border:1px solid rgba(99,102,241,0.2);border-radius:8px;color:var(--white);">
+            <input type="text" id="impersonateUserId" placeholder="Enter User ID to impersonate" style="flex:1;padding:12px;background:var(--slate);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:var(--white);">
             <button class="btn-sm btn-warning" onclick="impersonateUser()" style="padding:10px 24px;"><i class="fas fa-mask"></i> Impersonate</button>
           </div>
-          <div id="impersonateResult" style="display:none;margin-top:20px;padding:16px;background:rgba(245,158,11,0.1);border-radius:8px;text-align:left;"></div>
+          <div id="impersonateResult" style="display:none;margin-top:20px;padding:16px;background:rgba(166,166,166,0.1);border-radius:8px;text-align:left;"></div>
         </div>
       </div>
 
@@ -1183,14 +1183,14 @@
       chart1 = new Chart(document.getElementById('revenueChart'), {
         type: 'line', data: {
           labels: mRev.map(r => r._id?.month ? new Date(r._id.year, r._id.month - 1).toLocaleString('default', { month: 'short' }) : ''),
-          datasets: [{ label: 'Revenue', data: mRev.map(r => r.revenue), borderColor: '#ffffff', backgroundColor: 'rgba(99,102,241,0.1)', fill: true, tension: 0.4 }]
+          datasets: [{ label: 'Revenue', data: mRev.map(r => r.revenue), borderColor: '#ffffff', backgroundColor: 'rgba(255,255,255,0.1)', fill: true, tension: 0.4 }]
         },
         options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#888' } }, y: { ticks: { color: '#888' } } } }
       });
       const oStatus = data.ordersByStatus || {};
       chart2 = new Chart(document.getElementById('ordersChart'), {
         type: 'doughnut', data: {
-          labels: Object.keys(oStatus), datasets: [{ data: Object.values(oStatus), backgroundColor: ['#f59e0b','#ffffff','#ec4899','#10b981','#ef4444'] }]
+          labels: Object.keys(oStatus), datasets: [{ data: Object.values(oStatus), backgroundColor: ['#a3a3a3','#ffffff','#a3a3a3','#e5e5e5','#ffffff'] }]
         },
         options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: '#888' } } } }
       });
@@ -1230,7 +1230,7 @@
           '<td><span class="badge ' + statusBadge(o.status) + '">' + escapeHtml((o.status||'pending').replace('_',' ')) + '</span></td>' +
           '<td>' + accessHtml + '</td>' +
           '<td>' + escapeHtml(new Date(o.createdAt).toLocaleDateString()) + '</td>' +
-          '<td><select onchange="updateOrderStatus(\'' + escapeHtml(o._id) + '\', this.value)" style="padding:4px 8px;background:var(--slate);border:1px solid rgba(99,102,241,0.2);border-radius:6px;color:var(--white);font-size:12px;">' +
+          '<td><select onchange="updateOrderStatus(\'' + escapeHtml(o._id) + '\', this.value)" style="padding:4px 8px;background:var(--slate);border:1px solid rgba(255,255,255,0.2);border-radius:6px;color:var(--white);font-size:12px;">' +
             '<option value="pending"' + (o.status==='pending'?' selected':'') + '>Pending</option>' +
             '<option value="confirmed"' + (o.status==='confirmed'?' selected':'') + '>Confirmed</option>' +
             '<option value="in_progress"' + (o.status==='in_progress'?' selected':'') + '>In Progress</option>' +
@@ -1667,7 +1667,7 @@
         let val = typeof data[section] === 'object' ? JSON.stringify(data[section], null, 2) : data[section];
         html += '<div style="margin-bottom:16px;padding:16px;background:var(--slate);border-radius:8px;">';
         html += '<label style="display:block;font-size:13px;color:var(--ash);margin-bottom:6px;text-transform:capitalize;">' + section + '</label>';
-        html += '<textarea id="cms_' + section + '" rows="3" style="width:100%;padding:10px;background:var(--obsidian);border:1px solid rgba(99,102,241,0.2);border-radius:8px;color:var(--white);font-family:monospace;font-size:12px;">' + val + '</textarea>';
+        html += '<textarea id="cms_' + section + '" rows="3" style="width:100%;padding:10px;background:var(--obsidian);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:var(--white);font-family:monospace;font-size:12px;">' + val + '</textarea>';
         html += '<button class="btn-sm btn-primary" style="margin-top:8px" onclick="saveCMSSection(\'' + section + '\')"><i class="fas fa-save"></i> Save</button>';
         html += '</div>';
       });
@@ -1809,7 +1809,7 @@
       if (!r) return;
       let html = '';
       if (r.registered) {
-        html += '<div style="margin-bottom:12px;padding:12px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.2);border-radius:8px;">';
+        html += '<div style="margin-bottom:12px;padding:12px;background:rgba(145,145,145,0.1);border:1px solid rgba(145,145,145,0.2);border-radius:8px;">';
         html += '<span style="color:var(--success);font-weight:600;">✅ '+r.count+' passkey'+(r.count>1?'s':'')+' registered</span>';
         if (r.hardwareBacked) html += ' &middot; <span style="color:var(--primary);font-size:13px;">Hardware-backed</span>';
         html += '</div>';
@@ -1819,7 +1819,7 @@
         });
         html += '</tbody></table></div>';
       } else {
-        html = '<div style="padding:20px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.2);border-radius:8px;text-align:center;">';
+        html = '<div style="padding:20px;background:rgba(166,166,166,0.1);border:1px solid rgba(166,166,166,0.2);border-radius:8px;text-align:center;">';
         html += '<p style="color:var(--warning);font-weight:600;margin-bottom:8px;">⚠️ No passkey registered</p>';
         html += '<p style="color:var(--ash);font-size:13px;">Admin write operations require a hardware passkey. Register one now.</p></div>';
       }
@@ -1908,12 +1908,12 @@
       let r = await api('/admin/users/create-admin', { method: 'POST', body: JSON.stringify({ name: name, email: email, password: pass }) });
       let resultDiv = document.getElementById('adminCreateResult');
       if (r && r.success) {
-        resultDiv.innerHTML = '<div style="padding:12px;background:rgba(16,185,129,0.1);border-radius:8px;border:1px solid rgba(16,185,129,0.2);"><span style="color:var(--success);font-weight:600;">✅ Admin created!</span> <span style="color:var(--ash);font-size:13px;">Admin code: <code style="color:var(--primary-glow);">'+r.user.adminCode+'</code></span></div>';
+        resultDiv.innerHTML = '<div style="padding:12px;background:rgba(145,145,145,0.1);border-radius:8px;border:1px solid rgba(145,145,145,0.2);"><span style="color:var(--success);font-weight:600;">✅ Admin created!</span> <span style="color:var(--ash);font-size:13px;">Admin code: <code style="color:var(--primary-glow);">'+r.user.adminCode+'</code></span></div>';
         document.getElementById('newAdminName').value = '';
         document.getElementById('newAdminEmail').value = '';
         document.getElementById('newAdminPass').value = '';
       } else {
-        resultDiv.innerHTML = '<div style="padding:12px;background:rgba(239,68,68,0.1);border-radius:8px;border:1px solid rgba(239,68,68,0.2);color:var(--danger);">❌ '+(r&&r.error?r.error:'Failed to create admin')+'</div>';
+        resultDiv.innerHTML = '<div style="padding:12px;background:rgba(104,104,104,0.1);border-radius:8px;border:1px solid rgba(104,104,104,0.2);color:var(--danger);">❌ '+(r&&r.error?r.error:'Failed to create admin')+'</div>';
       }
     }
 
@@ -1927,9 +1927,9 @@
         html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;padding:10px;background:var(--slate);border-radius:8px;">';
         html += '<label style="min-width:180px;font-size:13px;color:var(--ash);text-transform:capitalize;">' + k.replace(/([A-Z])/g,' $1') + '</label>';
         if (typeof v === 'boolean') {
-          html += '<select id="cfg_' + k + '" style="flex:1;padding:8px;background:var(--obsidian);border:1px solid rgba(99,102,241,0.2);border-radius:6px;color:var(--white);"><option value="true"' + (v?' selected':'') + '>Enabled</option><option value="false"' + (!v?' selected':'') + '>Disabled</option></select>';
+          html += '<select id="cfg_' + k + '" style="flex:1;padding:8px;background:var(--obsidian);border:1px solid rgba(255,255,255,0.2);border-radius:6px;color:var(--white);"><option value="true"' + (v?' selected':'') + '>Enabled</option><option value="false"' + (!v?' selected':'') + '>Disabled</option></select>';
         } else {
-          html += '<input type="text" id="cfg_' + k + '" value="' + v + '" style="flex:1;padding:8px;background:var(--obsidian);border:1px solid rgba(99,102,241,0.2);border-radius:6px;color:var(--white);">';
+          html += '<input type="text" id="cfg_' + k + '" value="' + v + '" style="flex:1;padding:8px;background:var(--obsidian);border:1px solid rgba(255,255,255,0.2);border-radius:6px;color:var(--white);">';
         }
         html += '</div>';
       });
@@ -1987,10 +1987,10 @@
     async function loadLogs() {
       let data = await api('/admin/logs');
       if (!data) { showToast('Failed to load data', 'error'); return; }
-      document.getElementById('logsContainer').innerHTML = '<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;"><button class="btn-sm" style="background:rgba(99,102,241,0.2);color:var(--primary-glow)" onclick="filterLogs(\'all\')">All</button><button class="btn-sm" style="background:rgba(16,185,129,0.2);color:var(--success)" onclick="filterLogs(\'info\')">Info</button><button class="btn-sm" style="background:rgba(245,158,11,0.2);color:var(--warning)" onclick="filterLogs(\'warn\')">Warn</button><button class="btn-sm" style="background:rgba(239,68,68,0.2);color:var(--danger)" onclick="filterLogs(\'error\')">Error</button></div><div id="logEntries">' +
+      document.getElementById('logsContainer').innerHTML = '<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;"><button class="btn-sm" style="background:rgba(255,255,255,0.2);color:var(--primary-glow)" onclick="filterLogs(\'all\')">All</button><button class="btn-sm" style="background:rgba(145,145,145,0.2);color:var(--success)" onclick="filterLogs(\'info\')">Info</button><button class="btn-sm" style="background:rgba(166,166,166,0.2);color:var(--warning)" onclick="filterLogs(\'warn\')">Warn</button><button class="btn-sm" style="background:rgba(104,104,104,0.2);color:var(--danger)" onclick="filterLogs(\'error\')">Error</button></div><div id="logEntries">' +
         data.map(function(l) {
-          let color = l.level === 'error' ? '#ef4444' : l.level === 'warn' ? '#f59e0b' : '#10b981';
-          return '<div style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.03);display:flex;gap:12px;"><span style="color:' + color + ';font-weight:600;min-width:40px">[' + l.level.toUpperCase() + ']</span><span style="color:var(--ash);min-width:80px">' + (l.module||'') + '</span><span style="color:#d1d5db">' + (l.message||'') + '</span><span style="margin-left:auto;color:var(--ash);font-size:11px">' + new Date(l.timestamp).toLocaleTimeString() + '</span></div>';
+          let color = l.level === 'error' ? '#ffffff' : l.level === 'warn' ? '#a3a3a3' : '#e5e5e5';
+          return '<div style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.03);display:flex;gap:12px;"><span style="color:' + color + ';font-weight:600;min-width:40px">[' + l.level.toUpperCase() + ']</span><span style="color:var(--ash);min-width:80px">' + (l.module||'') + '</span><span style="color:#d4d4d4">' + (l.message||'') + '</span><span style="margin-left:auto;color:var(--ash);font-size:11px">' + new Date(l.timestamp).toLocaleTimeString() + '</span></div>';
         }).join('') +
       '</div>';
     }
@@ -2059,7 +2059,7 @@
       document.getElementById('aiCostToday').textContent = data.costToday || '₹0';
       let models = data.activeModels || [];
       document.getElementById('aiModels').innerHTML = models.map(function(m) {
-        return '<span style="padding:6px 14px;background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.2);border-radius:20px;font-size:12px;">' + m + '</span>';
+        return '<span style="padding:6px 14px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:20px;font-size:12px;">' + m + '</span>';
       }).join('') || '<p class="empty-state">No models</p>';
       let byType = data.usageByType || {};
       let typeLabel = { website:'🌐 Website', pcb:'🔌 PCB', cad:'🔧 CAD', mcu:'🤖 Firmware', circuit:'⚡ Circuit', general:'💬 General' };
@@ -2209,7 +2209,7 @@
         let p = providers[k];
         if (p.totalTokens === 0) return '';
         let pct = ((p.usedTokens / p.totalTokens) * 100).toFixed(1);
-        return '<tr><td><strong>' + p.name + '</strong></td><td>' + p.totalTokens.toLocaleString() + '</td><td>' + p.usedTokens.toLocaleString() + '</td><td>' + p.remainingTokens.toLocaleString() + '</td><td><div style="background:var(--slate);border-radius:4px;height:8px;width:100px;display:inline-block;overflow:hidden"><div style="height:100%;width:' + pct + '%;background:' + (pct > 80 ? '#ef4444' : pct > 50 ? '#f59e0b' : '#10b981') + ';border-radius:4px"></div></div> ' + pct + '%</td><td>$' + p.totalCost.toFixed(2) + '</td></tr>';
+        return '<tr><td><strong>' + p.name + '</strong></td><td>' + p.totalTokens.toLocaleString() + '</td><td>' + p.usedTokens.toLocaleString() + '</td><td>' + p.remainingTokens.toLocaleString() + '</td><td><div style="background:var(--slate);border-radius:4px;height:8px;width:100px;display:inline-block;overflow:hidden"><div style="height:100%;width:' + pct + '%;background:' + (pct > 80 ? '#ffffff' : pct > 50 ? '#a3a3a3' : '#e5e5e5') + ';border-radius:4px"></div></div> ' + pct + '%</td><td>$' + p.totalCost.toFixed(2) + '</td></tr>';
       }).filter(Boolean).join('');
       let history = data.history || [];
       let histHtml = '<div style="display:flex;flex-direction:column;gap:4px;">';
@@ -2287,7 +2287,7 @@
       let data = await api('/admin/storage/users');
       if (!data) { showToast('Failed to load data', 'error'); return; }
       document.getElementById('userStorageList').innerHTML = data.map(function(u) {
-        return '<tr><td>' + u.name + '<br><span style="font-size:11px;color:var(--ash)">' + u.email + '</span></td><td>' + u.files + '</td><td>' + u.size + '</td><td>' + (u.quota||'1GB') + '</td><td><div style="background:var(--slate);border-radius:4px;height:6px;width:80px;display:inline-block;overflow:hidden"><div style="height:100%;width:' + u.usagePercent + '%;background:' + (parseInt(u.usagePercent)>80?'#ef4444':parseInt(u.usagePercent)>50?'#f59e0b':'#10b981') + ';border-radius:4px"></div></div></td><td><button class="btn-sm btn-primary" onclick="showToast(\'Quota editor coming\',\'info\')">Edit</button></td></tr>';
+        return '<tr><td>' + u.name + '<br><span style="font-size:11px;color:var(--ash)">' + u.email + '</span></td><td>' + u.files + '</td><td>' + u.size + '</td><td>' + (u.quota||'1GB') + '</td><td><div style="background:var(--slate);border-radius:4px;height:6px;width:80px;display:inline-block;overflow:hidden"><div style="height:100%;width:' + u.usagePercent + '%;background:' + (parseInt(u.usagePercent)>80?'#ffffff':parseInt(u.usagePercent)>50?'#a3a3a3':'#e5e5e5') + ';border-radius:4px"></div></div></td><td><button class="btn-sm btn-primary" onclick="showToast(\'Quota editor coming\',\'info\')">Edit</button></td></tr>';
       }).join('') || '<tr><td colspan="6" class="empty-state">No data</td></tr>';
     }
     async function cleanupStorage() {
@@ -2355,12 +2355,12 @@
         html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;padding:10px;background:var(--slate);border-radius:8px;">';
         html += '<label style="min-width:150px;font-size:13px;color:var(--ash);text-transform:capitalize;">' + k.replace(/([A-Z])/g,' $1') + '</label>';
         if (typeof v === 'boolean') {
-          html += '<select id="paycfg_' + k + '" style="flex:1;padding:8px;background:var(--obsidian);border:1px solid rgba(99,102,241,0.2);border-radius:6px;color:var(--white);"><option value="true"' + (v?' selected':'') + '>Enabled</option><option value="false"' + (!v?' selected':'') + '>Disabled</option></select>';
+          html += '<select id="paycfg_' + k + '" style="flex:1;padding:8px;background:var(--obsidian);border:1px solid rgba(255,255,255,0.2);border-radius:6px;color:var(--white);"><option value="true"' + (v?' selected':'') + '>Enabled</option><option value="false"' + (!v?' selected':'') + '>Disabled</option></select>';
         } else {
           let isGateway = k === 'activeGateway';
           html += isGateway
-            ? '<select id="paycfg_' + k + '" style="flex:1;padding:8px;background:var(--obsidian);border:1px solid rgba(99,102,241,0.2);border-radius:6px;color:var(--white);">' + data.availableGateways.map(function(g) { return '<option value="' + g + '"' + (g===v?' selected':'') + '>' + g + '</option>'; }).join('') + '</select>'
-            : '<input type="text" id="paycfg_' + k + '" value="' + v + '" style="flex:1;padding:8px;background:var(--obsidian);border:1px solid rgba(99,102,241,0.2);border-radius:6px;color:var(--white);">';
+            ? '<select id="paycfg_' + k + '" style="flex:1;padding:8px;background:var(--obsidian);border:1px solid rgba(255,255,255,0.2);border-radius:6px;color:var(--white);">' + data.availableGateways.map(function(g) { return '<option value="' + g + '"' + (g===v?' selected':'') + '>' + g + '</option>'; }).join('') + '</select>'
+            : '<input type="text" id="paycfg_' + k + '" value="' + v + '" style="flex:1;padding:8px;background:var(--obsidian);border:1px solid rgba(255,255,255,0.2);border-radius:6px;color:var(--white);">';
         }
         html += '</div>';
       });

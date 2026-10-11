@@ -801,7 +801,7 @@
         var pct = (score / 5) * 100;
         fill.style.width = pct + '%';
         var levels = ['', 'Weak', 'Fair', 'Good', 'Strong', 'Very Strong'];
-        var colors = ['', 'var(--kc-danger)', 'var(--kc-warning)', '#6366f1', 'var(--kc-success)', 'var(--kc-success)'];
+        var colors = ['', 'var(--kc-danger)', 'var(--kc-warning)', '#a3a3a3', 'var(--kc-success)', 'var(--kc-success)'];
         fill.style.background = colors[score] || 'var(--kc-accent)';
         label.textContent = score > 0 ? levels[score] : '';
       });
@@ -1449,7 +1449,7 @@
   // CONFETTI EFFECT
   // ========================================================================
   function fireConfetti() {
-    var colors = ['#6366f1', '#a855f7', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#06b6d4'];
+    var colors = ['#ffffff', '#e5e5e5', '#a3a3a3'];
     for (var i = 0; i < 80; i++) {
       var el = document.createElement('div');
       el.className = 'kc-confetti';
@@ -1766,9 +1766,9 @@
   // ========================================================================
   function applyThemeOverrides() {
     var legacyVars = {
-      '--primary': '#6366f1', '--slate': '#111117', '--obsidian': '#0a0a0f', '--void': '#0a0a0a',
+      '--primary': '#ffffff', '--slate': '#111111', '--obsidian': '#0a0a0a', '--void': '#0a0a0a',
       '--white': '#ffffff', '--ash': 'rgba(255,255,255,0.4)', '--bg': '#0a0a0a',
-      '--glass-border': 'rgba(255,255,255,0.06)', '--success': '#10b981', '--warning': '#f59e0b', '--danger': '#ef4444',
+      '--glass-border': 'rgba(255,255,255,0.06)', '--success': '#e5e5e5', '--warning': '#a3a3a3', '--danger': '#ffffff',
       '--font-body': "'Inter', -apple-system, sans-serif",
     };
     var root = document.documentElement;

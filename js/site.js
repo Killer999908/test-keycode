@@ -186,7 +186,7 @@
       '.kc-reveal.kc-in{opacity:1;transform:none}' +
       '.kc-spotlight{position:fixed;top:0;left:0;width:600px;height:600px;border-radius:50%;pointer-events:none;z-index:1;opacity:0;transition:opacity .5s;' +
       'background:radial-gradient(circle,rgba(139,92,246,.075) 0%,rgba(34,211,238,.04) 35%,transparent 70%);mix-blend-mode:screen}' +
-      '.kc-curtain{position:fixed;inset:0;z-index:200000;background:#08080a;display:grid;place-items:center;' +
+      '.kc-curtain{position:fixed;inset:0;z-index:200000;background:#080808;display:grid;place-items:center;' +
       'transform-origin:50% 0%;transition:transform .5s cubic-bezier(.76,0,.24,1);}' +
       '.kc-curtain-mark{font:700 42px/1 "Space Grotesk",Inter,sans-serif;color:#fff;opacity:.9;animation:kcCurtainPulse 1.1s ease-in-out infinite}' +
       '@keyframes kcCurtainPulse{0%,100%{opacity:.35;transform:scale(.94)}50%{opacity:.95;transform:scale(1)}}' +

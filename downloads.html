@@ -40,17 +40,17 @@
 
   <style>
     :root {
-      --bg: #0a0a1a;
-      --card: #12122a;
-      --card-hover: #1a1a3a;
+      --bg: #0a0a0a;
+      --card: #121212;
+      --card-hover: #1a1a1a;
       --primary: #ffffff;
-      --accent: #22d3ee;
-      --text: #e2e8f0;
-      --ash: #94a3b8;
+      --accent: #ffffff;
+      --text: #e5e5e5;
+      --ash: #a3a3a3;
       --border: rgba(255,255,255,0.06);
-      --success: #10b981;
-      --warning: #f59e0b;
-      --danger: #ef4444;
+      --success: #e5e5e5;
+      --warning: #a3a3a3;
+      --danger: #ffffff;
       --font: 'Inter', sans-serif;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -168,9 +168,9 @@
       font-size: 18px;
       margin-bottom: 12px;
     }
-    .stat-card .stat-icon.files { background: rgba(99,102,241,0.15); color: var(--primary); }
-    .stat-card .stat-icon.size { background: rgba(34,211,238,0.15); color: var(--accent); }
-    .stat-card .stat-icon.latest { background: rgba(16,185,129,0.15); color: var(--success); }
+    .stat-card .stat-icon.files { background: rgba(255,255,255,0.15); color: var(--primary); }
+    .stat-card .stat-icon.size { background: rgba(175,175,175,0.15); color: var(--accent); }
+    .stat-card .stat-icon.latest { background: rgba(145,145,145,0.15); color: var(--success); }
     .stat-card .stat-value {
       font-size: 24px;
       font-weight: 700;
@@ -309,9 +309,9 @@
     }
     .bulk-btn.show { display: inline-flex; align-items: center; gap: 6px; }
     .bulk-btn.download { background: var(--primary); color: #fff; }
-    .bulk-btn.download:hover { background: #5558e6; }
-    .bulk-btn.delete { background: rgba(239,68,68,0.15); color: var(--danger); border: 1px solid rgba(239,68,68,0.25); }
-    .bulk-btn.delete:hover { background: rgba(239,68,68,0.25); }
+    .bulk-btn.download:hover { background: #ffffff; }
+    .bulk-btn.delete { background: rgba(104,104,104,0.15); color: var(--danger); border: 1px solid rgba(104,104,104,0.25); }
+    .bulk-btn.delete:hover { background: rgba(104,104,104,0.25); }
 
     /* File Grid */
     .file-grid {
@@ -385,11 +385,11 @@
       letter-spacing: 0.3px;
       margin-bottom: 10px;
     }
-    .file-tool-badge.web { background: rgba(34,211,238,0.12); color: var(--accent); }
-    .file-tool-badge.pcb { background: rgba(16,185,129,0.12); color: var(--success); }
-    .file-tool-badge.cad { background: rgba(245,158,11,0.12); color: var(--warning); }
-    .file-tool-badge.mcu { background: rgba(239,68,68,0.12); color: var(--danger); }
-    .file-tool-badge.circ { background: rgba(168,85,247,0.12); color: #a855f7; }
+    .file-tool-badge.web { background: rgba(175,175,175,0.12); color: var(--accent); }
+    .file-tool-badge.pcb { background: rgba(145,145,145,0.12); color: var(--success); }
+    .file-tool-badge.cad { background: rgba(166,166,166,0.12); color: var(--warning); }
+    .file-tool-badge.mcu { background: rgba(104,104,104,0.12); color: var(--danger); }
+    .file-tool-badge.circ { background: rgba(114,114,114,0.12); color: #a3a3a3; }
 
     .file-desc {
       font-size: 14px;
@@ -426,7 +426,7 @@
       border-radius: 6px;
       font-size: 12px;
       font-weight: 500;
-      background: rgba(99,102,241,0.1);
+      background: rgba(255,255,255,0.1);
       color: var(--primary);
       transition: .25s;
       display: inline-flex;
@@ -434,7 +434,7 @@
       gap: 4px;
     }
     .file-actions .dl-btn:hover { background: var(--primary); color: #fff; }
-    .file-actions .dl-btn.zip { background: rgba(34,211,238,0.1); color: var(--accent); }
+    .file-actions .dl-btn.zip { background: rgba(175,175,175,0.1); color: var(--accent); }
     .file-actions .dl-btn.zip:hover { background: var(--accent); color: #000; }
 
     /* Skeleton */
@@ -492,7 +492,7 @@
       font-weight: 500;
       transition: .25s;
     }
-    .retry-btn:hover { background: #5558e6; }
+    .retry-btn:hover { background: #ffffff; }
     .retry-btn i { margin-right: 6px; }
 
     /* Modal */
@@ -612,11 +612,11 @@
       transition: .25s;
     }
     .modal-actions .modal-btn.primary { background: var(--primary); color: #fff; }
-    .modal-actions .modal-btn.primary:hover { background: #5558e6; }
+    .modal-actions .modal-btn.primary:hover { background: #ffffff; }
     .modal-actions .modal-btn.secondary { background: rgba(255,255,255,0.06); color: var(--text); }
     .modal-actions .modal-btn.secondary:hover { background: rgba(255,255,255,0.1); }
-    .modal-actions .modal-btn.success { background: rgba(16,185,129,0.15); color: var(--success); border: 1px solid rgba(16,185,129,0.25); }
-    .modal-actions .modal-btn.success:hover { background: rgba(16,185,129,0.25); }
+    .modal-actions .modal-btn.success { background: rgba(145,145,145,0.15); color: var(--success); border: 1px solid rgba(145,145,145,0.25); }
+    .modal-actions .modal-btn.success:hover { background: rgba(145,145,145,0.25); }
 
     /* Confirm dialog */
     .confirm-overlay {
@@ -660,7 +660,7 @@
     .confirm-box .confirm-actions .cancel { background: rgba(255,255,255,0.06); color: var(--text); }
     .confirm-box .confirm-actions .cancel:hover { background: rgba(255,255,255,0.1); }
     .confirm-box .confirm-actions .confirm-del { background: var(--danger); color: #fff; }
-    .confirm-box .confirm-actions .confirm-del:hover { background: #dc2626; }
+    .confirm-box .confirm-actions .confirm-del:hover { background: #ffffff; }
 
     /* Toast */
     .toast-container {
@@ -686,11 +686,11 @@
       animation: toastIn .3s ease, toastOut .3s ease 2.7s forwards;
       box-shadow: 0 8px 24px rgba(0,0,0,0.4);
     }
-    .toast.success { border-color: rgba(16,185,129,0.3); }
+    .toast.success { border-color: rgba(145,145,145,0.3); }
     .toast.success i { color: var(--success); }
-    .toast.error { border-color: rgba(239,68,68,0.3); }
+    .toast.error { border-color: rgba(104,104,104,0.3); }
     .toast.error i { color: var(--danger); }
-    .toast.info { border-color: rgba(99,102,241,0.3); }
+    .toast.info { border-color: rgba(255,255,255,0.3); }
     .toast.info i { color: var(--primary); }
     @keyframes toastIn { from { transform: translateX(100px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
     @keyframes toastOut { from { opacity: 1; } to { opacity: 0; transform: translateY(-10px); } }
@@ -865,11 +865,11 @@
     ];
 
     var toolConfig = {
-      web: { icon: 'fa-globe', color: '#22d3ee', label: 'Website' },
-      pcb: { icon: 'fa-microchip', color: '#10b981', label: 'PCB' },
-      cad: { icon: 'fa-cube', color: '#f59e0b', label: 'CAD' },
-      mcu: { icon: 'fa-code', color: '#ef4444', label: 'Firmware' },
-      circ: { icon: 'fa-bolt', color: '#a855f7', label: 'Circuit' }
+      web: { icon: 'fa-globe', color: '#ffffff', label: 'Website' },
+      pcb: { icon: 'fa-microchip', color: '#e5e5e5', label: 'PCB' },
+      cad: { icon: 'fa-cube', color: '#a3a3a3', label: 'CAD' },
+      mcu: { icon: 'fa-code', color: '#ffffff', label: 'Firmware' },
+      circ: { icon: 'fa-bolt', color: '#a3a3a3', label: 'Circuit' }
     };
 
     // ─── State ──────────────────────────────────────────────────
@@ -917,7 +917,7 @@
 
     function toolLabel(tool) { return (toolConfig[tool] || {}).label || tool; }
     function toolIcon(tool) { return (toolConfig[tool] || {}).icon || 'fa-file'; }
-    function toolColor(tool) { return (toolConfig[tool] || {}).color || '#94a3b8'; }
+    function toolColor(tool) { return (toolConfig[tool] || {}).color || '#a3a3a3'; }
 
     // ─── Toast ──────────────────────────────────────────────────
     function showToast(msg, type) {

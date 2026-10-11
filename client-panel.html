@@ -12,18 +12,18 @@
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <style>
     :root {
-      --void: #030305; --obsidian: #0a0a0f; --graphite: #12121a; --slate: #1a1a24;
-      --primary: #ffffff; --primary-glow: #818cf8; --secondary: #ec4899;
-      --accent: #22d3ee; --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
-      --white: #ffffff; --ash: #d1d5db;
-      --gradient-1: linear-gradient(135deg, #ffffff 0%, #a3a3a3 50%, #ec4899 100%);
+      --void: #030303; --obsidian: #0a0a0a; --graphite: #121212; --slate: #1a1a1a;
+      --primary: #ffffff; --primary-glow: #e5e5e5; --secondary: #a3a3a3;
+      --accent: #ffffff; --success: #e5e5e5; --warning: #a3a3a3; --danger: #ffffff;
+      --white: #ffffff; --ash: #d4d4d4;
+      --gradient-1: linear-gradient(135deg, #ffffff 0%, #a3a3a3 50%, #a3a3a3 100%);
       --font-display: 'Syne', sans-serif; --font-body: 'Inter', sans-serif;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: var(--font-body); background: var(--void); color: var(--white); min-height: 100vh; }
     .sidebar {
       position: fixed; left: 0; top: 0; width: 250px; height: 100vh;
-      background: var(--obsidian); border-right: 1px solid rgba(99,102,241,0.1);
+      background: var(--obsidian); border-right: 1px solid rgba(255,255,255,0.1);
       padding: 20px 14px; display: flex; flex-direction: column; z-index: 100;
     }
     .sidebar-logo { text-align: center; padding: 12px 0 24px; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 20px; }
@@ -33,7 +33,7 @@
       display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 10px;
       color: var(--ash); font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.3s; margin-bottom: 2px;
     }
-    .nav-item:hover, .nav-item.active { background: rgba(99,102,241,0.15); color: var(--white); }
+    .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.15); color: var(--white); }
     .nav-item i { width: 18px; text-align: center; }
     .nav-divider { height: 1px; background: rgba(255,255,255,0.05); margin: 12px 0; }
     .main-content { margin-left: 250px; padding: 28px; min-height: 100vh; }
@@ -41,18 +41,18 @@
     .page-title { font-family: var(--font-display); font-size: 24px; font-weight: 700; }
     .client-badge {
       display: inline-flex; align-items: center; gap: 6px;
-      background: rgba(16,185,129,0.15); padding: 6px 14px; border-radius: 20px; font-size: 12px; color: var(--success);
+      background: rgba(145,145,145,0.15); padding: 6px 14px; border-radius: 20px; font-size: 12px; color: var(--success);
     }
     .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap: 16px; margin-bottom: 28px; }
     .stat-card {
-      background: var(--graphite); border: 1px solid rgba(99,102,241,0.1);
+      background: var(--graphite); border: 1px solid rgba(255,255,255,0.1);
       border-radius: 14px; padding: 20px; transition: all 0.3s;
     }
-    .stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(99,102,241,0.12); }
-    .stat-icon { width: 40px; height: 40px; background: rgba(99,102,241,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--primary); margin-bottom: 12px; }
+    .stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(255,255,255,0.12); }
+    .stat-icon { width: 40px; height: 40px; background: rgba(255,255,255,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--primary); margin-bottom: 12px; }
     .stat-value { font-size: 26px; font-weight: 700; margin-bottom: 2px; }
     .stat-label { color: var(--ash); font-size: 13px; }
-    .section-card { background: var(--graphite); border: 1px solid rgba(99,102,241,0.1); border-radius: 14px; padding: 24px; margin-bottom: 24px; }
+    .section-card { background: var(--graphite); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 24px; margin-bottom: 24px; }
     .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
     .section-title { font-family: var(--font-display); font-size: 16px; font-weight: 600; }
     .page-section { display: none; }
@@ -60,12 +60,12 @@
     table { width: 100%; border-collapse: collapse; }
     th, td { padding: 12px 14px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 13px; }
     th { color: var(--ash); font-size: 11px; text-transform: uppercase; font-weight: 600; }
-    tr:hover { background: rgba(99,102,241,0.03); }
+    tr:hover { background: rgba(255,255,255,0.03); }
     .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 500; }
-    .badge-green { background: rgba(16,185,129,0.15); color: var(--success); }
-    .badge-yellow { background: rgba(245,158,11,0.15); color: var(--warning); }
-    .badge-red { background: rgba(239,68,68,0.15); color: var(--danger); }
-    .badge-blue { background: rgba(99,102,241,0.15); color: var(--primary-glow); }
+    .badge-green { background: rgba(145,145,145,0.15); color: var(--success); }
+    .badge-yellow { background: rgba(166,166,166,0.15); color: var(--warning); }
+    .badge-red { background: rgba(104,104,104,0.15); color: var(--danger); }
+    .badge-blue { background: rgba(255,255,255,0.15); color: var(--primary-glow); }
     .btn-sm { padding: 6px 14px; border: none; border-radius: 8px; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.3s; }
     .btn-primary { background: var(--primary); color: white; }
     .btn-primary:hover { background: var(--primary-glow); }
@@ -87,7 +87,7 @@
     .form-group label { display: block; font-size: 13px; color: var(--ash); margin-bottom: 6px; }
     .form-group input {
       width: 100%; padding: 12px 14px; background: var(--slate);
-      border: 1px solid rgba(99,102,241,0.2); border-radius: 10px; color: var(--white); font-size: 14px;
+      border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; color: var(--white); font-size: 14px;
     }
     .form-group input:focus { outline: none; border-color: var(--primary); }
     .timeline { position: relative; }
@@ -137,11 +137,11 @@
         <div class="nav-item" data-page="profile"><i class="fas fa-user"></i> Profile</div>
       </nav>
       <div style="margin-top:auto;padding-top:16px;border-top:1px solid rgba(255,255,255,0.05);">
-        <div style="display:flex;align-items:center;gap:10px;padding:12px;background:rgba(16,185,129,0.1);border-radius:10px;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:10px;padding:12px;background:rgba(145,145,145,0.1);border-radius:10px;margin-bottom:10px;">
           <div style="width:36px;height:36px;background:var(--gradient-1);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px;" id="userAvatar">C</div>
           <div style="flex:1;"><div id="userName" style="font-size:14px;font-weight:600;">Client</div><div id="userEmail" style="font-size:11px;color:var(--ash);"></div></div>
         </div>
-        <button onclick="logout()" style="width:100%;padding:10px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);border-radius:10px;color:var(--danger);cursor:pointer;font-size:13px;"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        <button onclick="logout()" style="width:100%;padding:10px;background:rgba(104,104,104,0.1);border:1px solid rgba(104,104,104,0.2);border-radius:10px;color:var(--danger);cursor:pointer;font-size:13px;"><i class="fas fa-sign-out-alt"></i> Logout</button>
       </div>
     </aside>
 
@@ -207,7 +207,7 @@
             <button id="payUpiBtn" onclick="payWithUPI()" style="width:100%;padding:12px;background:rgba(255,255,255,0.05);color:var(--ash);border:1px solid var(--glass-border);border-radius:12px;font-size:13px;cursor:pointer"><i class="fas fa-qrcode"></i> Pay with UPI</button>
           </div>
           <div id="paymentStatus" style="display:none;text-align:center;padding:20px">
-            <div class="spinner" style="width:32px;height:32px;border:3px solid rgba(99,102,241,0.2);border-top-color:#ffffff;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px"></div>
+            <div class="spinner" style="width:32px;height:32px;border:3px solid rgba(255,255,255,0.2);border-top-color:#ffffff;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px"></div>
             <p style="color:var(--ash);font-size:13px">Processing payment...</p>
           </div>
         </div>
@@ -331,9 +331,9 @@
           if (o.paymentStatus === 'paid' && o.deployment && o.deployment.liveUrl) {
             accessHtml = '<a href="' + o.deployment.liveUrl + '" target="_blank" class="btn-sm btn-primary" style="font-size:11px;padding:4px 10px;text-decoration:none"><i class="fas fa-external-link-alt"></i> View</a>';
           } else if (o.paymentStatus === 'paid' && o.needsAdminReview) {
-            accessHtml = '<span style="font-size:11px;color:#22d3ee">⏳ Processing</span>';
+            accessHtml = '<span style="font-size:11px;color:#ffffff">⏳ Processing</span>';
           } else if (o.paymentStatus === 'paid') {
-            accessHtml = '<span style="font-size:11px;color:#10b981">✅ Accessible</span>';
+            accessHtml = '<span style="font-size:11px;color:#e5e5e5">✅ Accessible</span>';
           } else {
             accessHtml = '<button onclick="openPayment(\'' + o._id + '\',\'' + (o.projectType||'general') + '\',\'' + (o.pricingTier||'basic') + '\',' + (o.total||0) + ')" class="btn-sm btn-accent" style="font-size:11px;padding:4px 12px;cursor:pointer"><i class="fas fa-credit-card"></i> Pay Now</button>';
           }
@@ -391,7 +391,7 @@
     }
 
     async function confirmPayment(orderId, paymentId, razorpayOrderId, signature, method) {
-      document.getElementById('paymentStatus').innerHTML = '<div class="spinner" style="width:32px;height:32px;border:3px solid rgba(99,102,241,0.2);border-top-color:#ffffff;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px"></div><p style="color:var(--ash);font-size:13px">Verifying payment...</p>';
+      document.getElementById('paymentStatus').innerHTML = '<div class="spinner" style="width:32px;height:32px;border:3px solid rgba(255,255,255,0.2);border-top-color:#ffffff;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px"></div><p style="color:var(--ash);font-size:13px">Verifying payment...</p>';
 
       try {
         var confirmRes = await api('/orders/' + orderId + '/confirm-payment', {
@@ -405,13 +405,13 @@
           })
         });
         if (confirmRes.success) {
-          document.getElementById('paymentStatus').innerHTML = '<div style="text-align:center"><div style="width:48px;height:48px;background:rgba(16,185,129,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:24px;color:#10b981">✓</div><h3 style="margin:0 0 4px">Payment Successful!</h3><p style="color:var(--ash);font-size:13px;margin:0">Your project is now accessible</p></div>';
+          document.getElementById('paymentStatus').innerHTML = '<div style="text-align:center"><div style="width:48px;height:48px;background:rgba(145,145,145,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:24px;color:#e5e5e5">✓</div><h3 style="margin:0 0 4px">Payment Successful!</h3><p style="color:var(--ash);font-size:13px;margin:0">Your project is now accessible</p></div>';
           setTimeout(function() { closePaymentModal(); loadOrders(); loadDashboard(); loadProjects(); }, 2000);
         } else {
           throw new Error(confirmRes.error || 'Verification failed');
         }
       } catch (err) {
-        document.getElementById('paymentStatus').innerHTML = '<p style="color:#ef4444;font-size:13px">❌ ' + err.message + '</p><button onclick="closePaymentModal()" style="margin-top:8px;padding:8px 16px;background:rgba(255,255,255,0.1);border:1px solid var(--glass-border);border-radius:8px;color:var(--ash);cursor:pointer">Close</button>';
+        document.getElementById('paymentStatus').innerHTML = '<p style="color:#ffffff;font-size:13px">❌ ' + err.message + '</p><button onclick="closePaymentModal()" style="margin-top:8px;padding:8px 16px;background:rgba(255,255,255,0.1);border:1px solid var(--glass-border);border-radius:8px;color:var(--ash);cursor:pointer">Close</button>';
       }
     }
 

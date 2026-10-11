@@ -13,21 +13,21 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-Avb2QiuDEEvB4bZJYdft2mNjVShBftLdPG8FJ0V7irTLQ8Uo0qcPxh4Plq7G5tGm0rU+1SPhVotteLpBERwTkw==" crossorigin="anonymous">
   <style>
     :root {
-      --void: #030305;
-      --obsidian: #0a0a0f;
-      --graphite: #12121a;
-      --slate: #1a1a24;
+      --void: #030303;
+      --obsidian: #0a0a0a;
+      --graphite: #121212;
+      --slate: #1a1a1a;
       --primary: #ffffff;
-      --primary-glow: #818cf8;
-      --secondary: #ec4899;
-      --accent: #22d3ee;
-      --success: #10b981;
-      --warning: #f59e0b;
-      --danger: #ef4444;
+      --primary-glow: #e5e5e5;
+      --secondary: #a3a3a3;
+      --accent: #ffffff;
+      --success: #e5e5e5;
+      --warning: #a3a3a3;
+      --danger: #ffffff;
       --white: #ffffff;
-      --pearl: #e2e8f0;
-      --ash: #d1d5db;
-      --gradient-1: linear-gradient(135deg, #ffffff 0%, #a3a3a3 50%, #ec4899 100%);
+      --pearl: #e5e5e5;
+      --ash: #d4d4d4;
+      --gradient-1: linear-gradient(135deg, #ffffff 0%, #a3a3a3 50%, #a3a3a3 100%);
       --font-display: 'Syne', sans-serif;
       --font-body: 'Inter', sans-serif;
     }
@@ -44,7 +44,7 @@
       width: 260px;
       height: 100vh;
       background: var(--obsidian);
-      border-right: 1px solid rgba(99, 102, 241, 0.1);
+      border-right: 1px solid rgba(111,111,111, 0.1);
       padding: 24px 16px;
       display: flex;
       flex-direction: column;
@@ -80,7 +80,7 @@
       margin-bottom: 4px;
     }
     .nav-item:hover, .nav-item.active {
-      background: rgba(99, 102, 241, 0.1);
+      background: rgba(111,111,111, 0.1);
       color: var(--white);
     }
     .nav-item i { width: 20px; text-align: center; }
@@ -98,7 +98,7 @@
       align-items: center;
       gap: 12px;
       padding: 12px;
-      background: rgba(99, 102, 241, 0.1);
+      background: rgba(111,111,111, 0.1);
       border-radius: 12px;
       margin-bottom: 12px;
     }
@@ -118,8 +118,8 @@
     .logout-btn {
       width: 100%;
       padding: 12px;
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(239, 68, 68, 0.2);
+      background: rgba(104,104,104, 0.1);
+      border: 1px solid rgba(104,104,104, 0.2);
       border-radius: 12px;
       color: var(--danger);
       font-family: var(--font-body);
@@ -129,7 +129,7 @@
       transition: all 0.3s;
     }
     .logout-btn:hover {
-      background: rgba(239, 68, 68, 0.2);
+      background: rgba(104,104,104, 0.2);
     }
     .main-content {
       margin-left: 260px;
@@ -151,7 +151,7 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      background: rgba(99, 102, 241, 0.2);
+      background: rgba(111,111,111, 0.2);
       padding: 6px 12px;
       border-radius: 20px;
       font-size: 12px;
@@ -165,18 +165,18 @@
     }
     .stat-card {
       background: var(--graphite);
-      border: 1px solid rgba(99, 102, 241, 0.1);
+      border: 1px solid rgba(111,111,111, 0.1);
       border-radius: 16px;
       padding: 24px;
       transition: transform 0.3s, box-shadow 0.3s;
     }
     .stat-card:hover {
       transform: translateY(-4px);
-      box-shadow: 0 12px 40px rgba(99, 102, 241, 0.15);
+      box-shadow: 0 12px 40px rgba(111,111,111, 0.15);
     }
     .stat-icon {
       width: 48px; height: 48px;
-      background: rgba(99, 102, 241, 0.1);
+      background: rgba(111,111,111, 0.1);
       border-radius: 12px;
       display: flex;
       align-items: center;
@@ -189,7 +189,7 @@
     .stat-label { color: var(--ash); font-size: 14px; }
     .section-card {
       background: var(--graphite);
-      border: 1px solid rgba(99, 102, 241, 0.1);
+      border: 1px solid rgba(111,111,111, 0.1);
       border-radius: 16px;
       padding: 24px;
       margin-bottom: 24px;
@@ -214,7 +214,7 @@
     .tab-btn {
       padding: 10px 20px;
       background: transparent;
-      border: 1px solid rgba(99, 102, 241, 0.2);
+      border: 1px solid rgba(111,111,111, 0.2);
       border-radius: 10px;
       color: var(--ash);
       font-family: var(--font-body);
@@ -259,7 +259,7 @@
       font-weight: 600;
     }
     td { font-size: 14px; }
-    tr:hover { background: rgba(99, 102, 241, 0.05); }
+    tr:hover { background: rgba(111,111,111, 0.05); }
     .status-badge {
       display: inline-block;
       padding: 4px 12px;
@@ -267,13 +267,13 @@
       font-size: 12px;
       font-weight: 500;
     }
-    .status-pending { background: rgba(245,158,11,0.2); color: var(--warning); }
-    .status-progress { background: rgba(99,102,241,0.2); color: var(--primary-glow); }
-    .status-review { background: rgba(236,72,153,0.2); color: var(--secondary); }
-    .status-completed { background: rgba(16,185,129,0.2); color: var(--success); }
+    .status-pending { background: rgba(166,166,166,0.2); color: var(--warning); }
+    .status-progress { background: rgba(255,255,255,0.2); color: var(--primary-glow); }
+    .status-review { background: rgba(113,113,113,0.2); color: var(--secondary); }
+    .status-completed { background: rgba(145,145,145,0.2); color: var(--success); }
     .action-btn {
       padding: 6px 12px;
-      background: rgba(99,102,241,0.1);
+      background: rgba(255,255,255,0.1);
       border: none;
       border-radius: 8px;
       color: var(--primary-glow);
@@ -384,7 +384,7 @@
     <main class="main-content">
       <div id="overview" class="page-section active">
         <!-- Welcome + AI Builder Hero -->
-        <div style="background: linear-gradient(135deg, rgba(99,102,241,0.15) 0%, rgba(236,72,153,0.1) 100%); border: 1px solid rgba(99,102,241,0.2); border-radius: 20px; padding: 32px; margin-bottom: 32px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px;">
+        <div style="background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(113,113,113,0.1) 100%); border: 1px solid rgba(255,255,255,0.2); border-radius: 20px; padding: 32px; margin-bottom: 32px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px;">
           <div>
             <h1 style="font-family: var(--font-display); font-size: 28px; font-weight: 700; margin-bottom: 8px;">Welcome back, <span id="welcomeName">User</span> 👋</h1>
             <p style="color: var(--ash); font-size: 15px; max-width: 500px;">Build your next project with KEYCODE AI. Describe what you want and get a full-stack project in seconds.</p>
@@ -396,7 +396,7 @@
 
         <!-- Active Project Timer (if any) -->
         <div id="activeTimerSection" style="display:none; margin-bottom: 24px;">
-          <div style="background: linear-gradient(135deg, rgba(245,158,11,0.15) 0%, rgba(236,72,153,0.1) 100%); border: 1px solid rgba(245,158,11,0.3); border-radius: 16px; padding: 24px;">
+          <div style="background: linear-gradient(135deg, rgba(166,166,166,0.15) 0%, rgba(113,113,113,0.1) 100%); border: 1px solid rgba(166,166,166,0.3); border-radius: 16px; padding: 24px;">
             <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
               <i class="fas fa-clock" style="font-size: 32px; color: var(--warning);"></i>
               <div style="flex: 1;">
@@ -538,7 +538,7 @@
           <h1 class="page-title"><i class="fas fa-gamepad" style="margin-right:8px"></i> Game Engine</h1>
           <a href="game.html" class="btn-primary" style="text-decoration:none"><i class="fas fa-play"></i> Open Game Engine</a>
         </div>
-        <div style="background:linear-gradient(135deg,rgba(99,102,241,0.12),rgba(34,211,238,0.08));border:1px solid rgba(99,102,241,0.2);border-radius:16px;padding:24px;margin-bottom:24px;display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+        <div style="background:linear-gradient(135deg,rgba(255,255,255,0.12),rgba(175,175,175,0.08));border:1px solid rgba(255,255,255,0.2);border-radius:16px;padding:24px;margin-bottom:24px;display:flex;align-items:center;gap:20px;flex-wrap:wrap">
           <div style="flex:1;min-width:200px">
             <h3 style="font-size:18px;font-weight:600;margin-bottom:6px">Free Phaser.js Game Engine</h3>
             <p style="color:var(--ash);font-size:14px;line-height:1.6">Generate playable HTML5 games with AI — platformers, shooters, puzzles, runners &amp; more. All games run in the browser with the free Phaser.js engine.</p>
@@ -567,11 +567,11 @@
           <form id="profileForm">
             <div class="form-group" style="margin-bottom:16px;">
               <label>Full Name</label>
-              <input type="text" id="profileName" style="width:100%;padding:12px;background:var(--slate);border:1px solid rgba(99,102,241,0.2);border-radius:10px;color:white;font-size:14px;">
+              <input type="text" id="profileName" style="width:100%;padding:12px;background:var(--slate);border:1px solid rgba(255,255,255,0.2);border-radius:10px;color:white;font-size:14px;">
             </div>
             <div class="form-group" style="margin-bottom:16px;">
               <label>Email</label>
-              <input type="email" id="profileEmail" style="width:100%;padding:12px;background:var(--slate);border:1px solid rgba(99,102,241,0.2);border-radius:10px;color:white;font-size:14px;" readonly>
+              <input type="email" id="profileEmail" style="width:100%;padding:12px;background:var(--slate);border:1px solid rgba(255,255,255,0.2);border-radius:10px;color:white;font-size:14px;" readonly>
             </div>
             <button type="submit" class="btn-primary">Save Changes</button>
           </form>
@@ -787,11 +787,11 @@
         html += '<td>';
         html += '<a href="/api/ai/project-demo/' + p.projectId + '" target="_blank" class="action-btn" style="margin-right:4px;"><i class="fas fa-eye"></i> Demo</a>';
         if (p.status === 'released') {
-          html += '<a href="/api/ai/project-download/' + p.projectId + '" class="action-btn" style="background:rgba(16,185,129,0.2);color:var(--success);"><i class="fas fa-download"></i> Download</a>';
+          html += '<a href="/api/ai/project-download/' + p.projectId + '" class="action-btn" style="background:rgba(145,145,145,0.2);color:var(--success);"><i class="fas fa-download"></i> Download</a>';
         } else if (p.status === 'paid') {
-          html += '<span class="action-btn" style="background:rgba(245,158,11,0.2);color:var(--warning);"><i class="fas fa-clock"></i> Releasing...</span>';
+          html += '<span class="action-btn" style="background:rgba(166,166,166,0.2);color:var(--warning);"><i class="fas fa-clock"></i> Releasing...</span>';
         } else {
-          html += '<a href="ai-builder.html?project=' + p.projectId + '" class="action-btn" style="background:rgba(236,72,153,0.2);color:var(--secondary);"><i class="fas fa-unlock"></i> Unlock</a>';
+          html += '<a href="ai-builder.html?project=' + p.projectId + '" class="action-btn" style="background:rgba(113,113,113,0.2);color:var(--secondary);"><i class="fas fa-unlock"></i> Unlock</a>';
         }
         html += '</td>';
         html += '</tr>';
@@ -967,9 +967,9 @@
         html += '<td>';
         html += '<a href="/api/ai/project-demo/' + p.projectId + '" target="_blank" class="action-btn" style="margin-right:4px;"><i class="fas fa-eye"></i> Demo</a>';
         if (p.status === 'released') {
-          html += '<a href="/api/ai/project-download/' + p.projectId + '" class="action-btn" style="background:rgba(16,185,129,0.2);color:var(--success);"><i class="fas fa-download"></i> Download</a>';
+          html += '<a href="/api/ai/project-download/' + p.projectId + '" class="action-btn" style="background:rgba(145,145,145,0.2);color:var(--success);"><i class="fas fa-download"></i> Download</a>';
         } else {
-          html += '<a href="ai-builder.html?project=' + p.projectId + '" class="action-btn" style="background:rgba(236,72,153,0.2);color:var(--secondary);"><i class="fas fa-unlock"></i> Unlock</a>';
+          html += '<a href="ai-builder.html?project=' + p.projectId + '" class="action-btn" style="background:rgba(113,113,113,0.2);color:var(--secondary);"><i class="fas fa-unlock"></i> Unlock</a>';
         }
         html += '</td>';
         html += '</tr>';
@@ -1002,7 +1002,7 @@
 
           html += '<tr>';
           html += '<td><strong>' + title + '</strong></td>';
-          html += '<td><span class="status-badge" style="background:rgba(99,102,241,0.2);color:var(--primary-glow)">' + type + '</span></td>';
+          html += '<td><span class="status-badge" style="background:rgba(255,255,255,0.2);color:var(--primary-glow)">' + type + '</span></td>';
           html += '<td><span class="status-badge status-completed">Ready</span></td>';
           html += '<td>' + created + '</td>';
           html += '<td>';
@@ -1051,7 +1051,7 @@
     document.head.appendChild(style);
     window.showToast = function(m, type) {
       type = type || 'info';
-      var colors = {info:'#ffffff',success:'#10b981',error:'#ef4444',warning:'#f59e0b'};
+      var colors = {info:'#ffffff',success:'#e5e5e5',error:'#ffffff',warning:'#a3a3a3'};
       var icons = {info:'fa-info-circle',success:'fa-check-circle',error:'fa-exclamation-circle',warning:'fa-exclamation-triangle'};
       var t = document.createElement('div');
       t.style.cssText = 'padding:12px 16px;border-radius:10px;background:'+(colors[type]||'#ffffff')+';color:#fff;font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px;box-shadow:0 8px 32px rgba(0,0,0,0.4);animation:kcToastIn .3s ease;cursor:pointer';

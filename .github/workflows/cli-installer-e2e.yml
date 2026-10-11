@@ -1,0 +1,157 @@
+name: CLI installers E2E
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  # ---------------------------------------------------------------------------
+  #  Run the real install.sh installer end-to-end on Linux and macOS, then
+  #  invoke the installed CLI against a live server (guest-mode `agent` build).
+  # ---------------------------------------------------------------------------
+  install-sh:
+    name: install.sh on ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show preinstalled Node
+        run: node --version
+
+      - name: Dry-validate install.sh syntax before anything else
+        run: sh -n install.sh
+
+      - name: Start the KEYCODE server
+        run: |
+          npm ci
+          nohup node server.js > server.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:3000/api/health > /dev/null 2>&1; then
+              echo "server ready"; exit 0
+            fi
+            sleep 1
+          done
+          echo "server did not become healthy"; tail -50 server.log; exit 1
+
+      - name: Verify /install.sh injects the serving origin
+        run: |
+          curl -fsSL http://127.0.0.1:3000/install.sh -o served-install.sh
+          ! grep -q '__KEYCODE_URL__' served-install.sh
+          grep -q 'KEYCODE_URL:-http://127.0.0.1:3000' served-install.sh
+
+      - name: Run install.sh end-to-end in a sandbox HOME
+        run: |
+          export SANDBOX="$PWD/../../keycode-sandbox"
+          mkdir -p "$SANDBOX"
+          HOME="$SANDBOX" sh -c 'curl -fsSL http://127.0.0.1:3000/install.sh | sh'
+          test -x "$SANDBOX/.local/bin/keycode"
+          HOME="$SANDBOX" "$SANDBOX/.local/bin/keycode" --help > cli-help.out
+          head -3 cli-help.out
+
+      # `keycode agent` requires an API key. CI mints one the same way a
+      # signed-in user does: a session cookie via /api/auth/login, then /api/keys.
+      - name: Mint a CI API key (login + /api/keys)
+        run: |
+          set -e
+          REG=$(curl -sS -c /tmp/jar.txt -H 'Content-Type: application/json' \
+            -d '{"name":"ci-agent","email":"ci@keycode.test","password":"ci-pass-12345"}' \
+            http://127.0.0.1:3000/api/auth/register || true)
+          # fall back to login when the CI user already exists (reruns)
+          if ! echo "$REG" | grep -q 'success":true'; then
+            echo "register said: $REG"; echo 'falling back to login…'
+            curl -sS -c /tmp/jar.txt -H 'Content-Type: application/json' \
+              -d '{"email":"ci@keycode.test","password":"ci-pass-12345"}' \
+              http://127.0.0.1:3000/api/auth/login > /dev/null
+          fi
+          KEYS=$(curl -fsSL -b /tmp/jar.txt -H 'Content-Type: application/json' \
+            -d '{"name":"ci"}' http://127.0.0.1:3000/api/keys)
+          echo "api_key=$(node -e 'process.stdout.write(JSON.parse(process.argv[1]).apiKey || "")' "$KEYS")" >> "$GITHUB_ENV"
+        shell: bash
+
+      - name: Exercise the installed CLI against the live server
+        run: |
+          export SANDBOX="$PWD/../../keycode-sandbox"
+          export KEYCODE_URL="http://127.0.0.1:3000"
+          HOME="$SANDBOX" "$SANDBOX/.local/bin/keycode" login "$api_key" > login.out 2>&1 || (cat login.out; exit 1)
+          grep -q 'Logged in' login.out
+          HOME="$SANDBOX" "$SANDBOX/.local/bin/keycode" agent "a tiny landing page" \
+            > build.out 2>&1 || (cat build.out; exit 1)
+          grep -q 'Saved to' build.out
+          # the CLI writes the generated file next to CWD — confirm it exists
+          built="$(grep -oE 'Saved to [^ ]+' build.out | head -1 | awk '{print $3}')"
+          test -f "$built"
+
+  # ---------------------------------------------------------------------------
+  #  Windows: validate install.ps1 (syntax + served payload) with PowerShell.
+  #  A full end-to-end install is exercised via the nearest cross-platform gate.
+  # ---------------------------------------------------------------------------
+  install-ps1:
+    name: install.ps1 on windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate PowerShell syntax
+        shell: pwsh
+        run: |
+          $tokens = $null; $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            (Resolve-Path ./install.ps1), [ref]$tokens, [ref]$errors) | Out-Null
+          if ($errors.Count -gt 0) {
+            $errors | ForEach-Object { Write-Host $_.Message }
+            exit 1
+          }
+          Write-Host 'install.ps1 parses cleanly'
+
+      - name: Install deps and start the server
+        shell: bash
+        run: |
+          npm ci
+          nohup node server.js > server.log 2>&1 &
+          for i in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:3000/api/health > /dev/null 2>&1; then
+              echo "server ready"; exit 0
+            fi
+            sleep 1
+          done
+          echo "server did not become healthy"; tail -50 server.log; exit 1
+
+      - name: Verify /install.ps1 serves the injected payload
+        shell: pwsh
+        run: |
+          $max = 5
+          $ok = $false
+          foreach ($i in 1..$max) {
+            try {
+              $text = Invoke-WebRequest -Uri 'http://127.0.0.1:3000/install.ps1' -UseBasicParsing -TimeoutSec 10 | Select-Object -ExpandProperty Content
+              if ($text -notmatch '__KEYCODE_URL__' -and $text -match 'http://127\.0\.0\.1:3000') { $ok = $true; break }
+            } catch { Start-Sleep -Seconds 2 }
+          }
+          if (-not $ok) { Write-Host 'install.ps1 payload not injected correctly'; exit 1 }
+
+      - name: Fetch CLI via /api/cli/download (same payload the installer uses)
+        shell: pwsh
+        run: |
+          $cli = Invoke-WebRequest -Uri 'http://127.0.0.1:3000/api/cli/download' -UseBasicParsing -TimeoutSec 10 | Select-Object -ExpandProperty Content
+          if (-not $cli.StartsWith('#!/usr/bin/env node')) { Write-Host 'cli payload wrong'; exit 1 }
+
+  # ---------------------------------------------------------------------------
+  #  Full application test suite (installer endpoint tests included).
+  # ---------------------------------------------------------------------------
+  jest-suite:
+    name: jest test suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test

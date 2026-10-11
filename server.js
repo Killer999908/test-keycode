@@ -99,16 +99,9 @@ app.use(cors({
     if (!normalizedOrigin || allowed.some(a => a.toLowerCase() === normalizedOrigin)) {
       return cb(null, true);
     }
-    // Preflight (OPTIONS) requests without a listed origin: respond with a minimal
-    // 204 so same-origin crossorigin resource fetches do not get a 500.
-    if (req.method === 'OPTIONS') {
-      res.header('Access-Control-Allow-Credentials', 'true');
-      res.header('Access-Control-Allow-Methods', 'GET,HEAD,POST,OPTIONS');
-      res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-      res.header('Access-Control-Max-Age', '86400');
-      return res.sendStatus(204);
-    }
-    cb(new Error('CORS blocked: ' + origin));
+    const error = new Error('CORS blocked: ' + origin);
+    error.status = 403;
+    cb(error);
   },
   credentials: true,
 }));
@@ -196,15 +189,6 @@ function optionalAuth(req, res, next) {
   req.user = getSession(req) || null;
   next();
 }
-
-// ---- JSON error catcher ---------------------------------------------------
-app.use((err, req, res, _next) => {
-  console.error('[keycode error]', req.path, err);
-  const status = err.status || err.statusCode || 500;
-  res.status(status).json({
-    error: IS_PROD ? 'Internal error' : err.message || 'Internal error',
-  });
-});
 
 // ===========================================================================
 //  HEALTH
@@ -385,6 +369,15 @@ const serveIndex = (req, res, next) => {
   }
 };
 app.use(serveIndex);
+
+// Error handlers must follow routes and body parsers to handle their failures.
+app.use((err, req, res, _next) => {
+  console.error('[keycode error]', req.path, err);
+  const status = err.status || err.statusCode || 500;
+  res.status(status).json({
+    error: IS_PROD ? 'Internal error' : err.message || 'Internal error',
+  });
+});
 
 // ===========================================================================
 //  Start

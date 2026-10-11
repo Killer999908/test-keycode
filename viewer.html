@@ -16,10 +16,10 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-Avb2QiuDEEvB4bZJYdft2mNjVShBftLdPG8FJ0V7irTLQ8Uo0qcPxh4Plq7G5tGm0rU+1SPhVotteLpBERwTkw==" crossorigin="anonymous">
 <style>
 :root {
-  --bg: #0a0a12;
-  --surface: rgba(26,26,46,0.9);
-  --primary: #ffffff; --secondary: #22d3ee; --accent: #f59e0b;
-  --text: #e2e8f0; --ash: #94a3b8;
+  --bg: #0a0a0a;
+  --surface: rgba(24,24,24,0.9);
+  --primary: #ffffff; --secondary: #ffffff; --accent: #a3a3a3;
+  --text: #e5e5e5; --ash: #a3a3a3;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
@@ -33,9 +33,9 @@ nav {
   position: fixed;
   top: 0; left: 0; right: 0;
   padding: 12px 24px;
-  background: rgba(10,10,18,0.9);
+  background: rgba(11,11,11,0.9);
   backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(99,102,241,0.2);
+  border-bottom: 1px solid rgba(255,255,255,0.2);
   display: flex;
   align-items: center;
   gap: 16px;
@@ -51,7 +51,7 @@ nav a {
   border-radius: 8px;
   transition: all 0.3s;
 }
-nav a:hover { background: rgba(99,102,241,0.2); color: white; }
+nav a:hover { background: rgba(255,255,255,0.2); color: white; }
 #canvas-container {
   width: 100vw;
   height: 100vh;
@@ -63,7 +63,7 @@ nav a:hover { background: rgba(99,102,241,0.2); color: white; }
   left: 50%;
   transform: translateX(-50%);
   background: var(--surface);
-  border: 1px solid rgba(99,102,241,0.3);
+  border: 1px solid rgba(255,255,255,0.3);
   border-radius: 12px;
   padding: 10px 20px;
   font-size: 13px;
@@ -89,7 +89,7 @@ nav a:hover { background: rgba(99,102,241,0.2); color: white; }
 .loading-overlay.hidden { opacity: 0; pointer-events: none; }
 .spinner {
   width: 48px; height: 48px;
-  border: 3px solid rgba(99,102,241,0.2);
+  border: 3px solid rgba(255,255,255,0.2);
   border-top-color: var(--primary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
@@ -99,11 +99,11 @@ nav a:hover { background: rgba(99,102,241,0.2); color: white; }
 .error-msg {
   position: fixed;
   top: 80px; left: 50%; transform: translateX(-50%);
-  background: rgba(239,68,68,0.2);
-  border: 1px solid #ef4444;
+  background: rgba(104,104,104,0.2);
+  border: 1px solid #ffffff;
   border-radius: 12px;
   padding: 12px 24px;
-  color: #ef4444;
+  color: #ffffff;
   font-size: 14px;
   display: none;
   z-index: 100;
