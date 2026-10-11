@@ -34,8 +34,24 @@ GitHub Actions (`.github/workflows/cli-installer-e2e.yml`) runs on every push:
 `gh-pages` is protected:
 
 - All **five** CI job contexts above are **required status checks** — a push whose head commit isn't fully green shows failing checks on GitHub and PR merges into `gh-pages` stay blocked until every job passes.
-- **`enforce_admins: true`** — the gate binds repository admins too; nobody can bypass a red run.
+- **`enforce_admins: true`** — the gate binds repository admins too; nobody can bypass a red run. Verified live: an admin attempt to fast-forward `gh-pages` to a deliberately broken commit was rejected with `GH006: Protected branch update failed — 5 of 5 required status checks are failing`.
 - Force-pushes to `gh-pages` and branch deletion are disabled.
+
+### Landing changes on `gh-pages` (staging flow)
+
+Because direct pushes of *new* commits to `gh-pages` are declined until their checks are green, push changes through a staging branch:
+
+```bash
+# 1. stage the change on an unprotected branch — CI runs there
+git push origin HEAD:refs/heads/staging
+# 2. wait for all 5 jobs to pass:        
+#    https://github.com/Killer999908/test-keycode/actions
+# 3. once green, fast-forward the protected branch — accepted because
+#    the head commit's checks are already green
+git push origin staging:gh-pages
+# 4. tidy up
+git push origin :refs/heads/staging
+```
 
 Red badge usually means a real regression (the first red run caught committed code depending on files that were never committed) — fix the failing job's step in the run log, push, and the badge flips back.
 
