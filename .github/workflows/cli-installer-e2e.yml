@@ -9,7 +9,8 @@ on:
 jobs:
   # ---------------------------------------------------------------------------
   #  Run the real install.sh installer end-to-end on Linux and macOS, then
-  #  invoke the installed CLI against a live server (guest-mode `agent` build).
+  #  invoke the installed CLI against a live server with a freshly minted
+  #  API key — the same flow a real user follows on the website.
   # ---------------------------------------------------------------------------
   install-sh:
     name: install.sh on ${{ matrix.os }}
@@ -81,7 +82,7 @@ jobs:
           HOME="$SANDBOX" "$SANDBOX/.local/bin/keycode" login "$api_key" > login.out 2>&1 || (cat login.out; exit 1)
           grep -q 'Logged in' login.out
           HOME="$SANDBOX" "$SANDBOX/.local/bin/keycode" agent "a tiny landing page" \
-            > build.out 2>&1 || (cat build.out; exit 1)
+            > build.out 2>&1 < /dev/null || (cat build.out; exit 1)
           grep -q 'Saved to' build.out
           # the CLI writes the generated file next to CWD — confirm it exists
           built="$(grep -oE 'Saved to [^ ]+' build.out | head -1 | awk '{print $3}')"
