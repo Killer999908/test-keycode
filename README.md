@@ -44,14 +44,17 @@ Because direct pushes of *new* commits to `gh-pages` are declined until their ch
 ```bash
 # 1. stage the change on an unprotected branch — CI runs there
 git push origin HEAD:refs/heads/staging
-# 2. wait for all 5 jobs to pass:        
+# 2. wait for all 5 jobs to pass:
 #    https://github.com/Killer999908/test-keycode/actions
-# 3. once green, fast-forward the protected branch — accepted because
-#    the head commit's checks are already green
-git push origin staging:gh-pages
+# 3. once green, push the same SHA to the protected branch — accepted
+#    because the checks are already green on it
+git push origin <green-sha>:gh-pages      # or: git push origin staging:gh-pages
 # 4. tidy up
 git push origin :refs/heads/staging
 ```
+
+> Tip: pushing `staging:gh-pages` after the branch is deleted fails with
+> "src refspec does not match" — push the green **SHA** instead, then delete.
 
 Red badge usually means a real regression (the first red run caught committed code depending on files that were never committed) — fix the failing job's step in the run log, push, and the badge flips back.
 
