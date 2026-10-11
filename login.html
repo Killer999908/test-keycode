@@ -398,7 +398,11 @@
         var msg = document.getElementById('loginMessage');
         if (error === 'oauth_not_configured') {
           var provider = params.get('provider') || 'social';
-          msg.textContent = provider.charAt(0).toUpperCase() + provider.slice(1) + ' login is not configured yet. Use email/password or OTP instead.';
+          var providerName = provider.charAt(0).toUpperCase() + provider.slice(1);
+          var callback = window.location.origin + '/api/auth/' + encodeURIComponent(provider) + '/callback';
+          msg.textContent = providerName + ' sign-in is not configured: add ' + provider.toUpperCase()
+            + '_CLIENT_ID and ' + provider.toUpperCase() + '_CLIENT_SECRET to the server .env, and register this redirect URI with '
+            + providerName + ': ' + callback + '. Restart the server after configuring it.';
           msg.className = 'message show error';
         }
       }

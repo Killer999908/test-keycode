@@ -102,6 +102,22 @@ describe('oauth entry points', () => {
     delete process.env.GITHUB_CLIENT_SECRET;
   });
 
+  test('uses the configured provider callback URL in the OAuth redirect', async () => {
+    process.env.GOOGLE_CLIENT_ID = 'google-test-client-id';
+    process.env.GOOGLE_CLIENT_SECRET = 'google-test-secret';
+    process.env.GOOGLE_CALLBACK_URL = 'https://auth.example.com/api/auth/google/callback';
+    try {
+      const res = await request(app).get('/api/auth/google').redirects(0);
+      expect(res.status).toBe(302);
+      const redirect = new URL(res.headers.location);
+      expect(redirect.searchParams.get('redirect_uri')).toBe(process.env.GOOGLE_CALLBACK_URL);
+    } finally {
+      delete process.env.GOOGLE_CLIENT_ID;
+      delete process.env.GOOGLE_CLIENT_SECRET;
+      delete process.env.GOOGLE_CALLBACK_URL;
+    }
+  });
+
   test('callback with mismatched state is rejected', async () => {
     const res = await request(app).get('/api/auth/github/callback?code=x&state=wrong').redirects(0);
     expect(res.status).toBe(302);

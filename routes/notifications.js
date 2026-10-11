@@ -14,6 +14,7 @@ module.exports = function NotificationsRoutes(opts) {
     IS_PROD,
   } = opts;
 
+  const mailer = require('../lib/mailer');
   const fs   = require('fs');
   const path = require('path');
   const projectRoot = process.cwd();
@@ -26,6 +27,48 @@ module.exports = function NotificationsRoutes(opts) {
   function saveAll(obj) {
     fs.mkdirSync(path.dirname(PATH), { recursive: true });
     fs.writeFileSync(PATH, JSON.stringify(obj, null, 2));
+  }
+
+  function escapeHtml(value) {
+    return String(value || '').replace(/[&<>"']/g, ch => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+    })[ch]);
+  }
+
+  async function emailNotifications(notifications) {
+    const configured = mailer.isConfigured();
+    const result = { configured, sent: 0, failed: 0, skipped: 0 };
+    if (!configured) {
+      result.skipped = notifications.length;
+      return result;
+    }
+
+    for (const notif of notifications) {
+      if (!notif.user_email) {
+        result.skipped++;
+        continue;
+      }
+      const title = String(notif.title || '');
+      const body = String(notif.body || '');
+      try {
+        const delivery = await mailer.send({
+          to: notif.user_email,
+          subject: title,
+          text: `${title}\n\n${body}`,
+          html: `<h2>${escapeHtml(title)}</h2><p>${escapeHtml(body).replace(/\r?\n/g, '<br>')}</p>`,
+        });
+        if (delivery && delivery.delivered) result.sent++;
+        else result.failed++;
+      } catch (err) {
+        result.failed++;
+        console.error('[notifications.email] delivery failed:', err);
+      }
+    }
+    return result;
   }
 
   // ---------------------------------------------------------------------------
@@ -226,7 +269,8 @@ module.exports = function NotificationsRoutes(opts) {
       store.notifications.push(notif);
       saveAll(store);
 
-      res.status(201).json({ notification: notif });
+      const email = await emailNotifications([notif]);
+      res.status(201).json({ notification: notif, email });
     } catch (err) {
       console.error('[notifications.create]', err);
       res.status(500).json({ error: 'Could not create notification.' });
@@ -298,7 +342,8 @@ module.exports = function NotificationsRoutes(opts) {
       store.notifications.push(...notifs);
       saveAll(store);
 
-      res.json({ success: true, sent: notifs.length });
+      const email = await emailNotifications(notifs);
+      res.json({ success: true, sent: notifs.length, email });
     } catch (err) {
       console.error('[admin.broadcast]', err);
       res.status(500).json({ error: 'Broadcast failed.' });

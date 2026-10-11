@@ -227,46 +227,42 @@ module.exports = function AuthRoutes(opts) {
             email: normalizedEmail,
             password,
           });
-          if (error || !data.user) {
-            // Supabase gives a generic "Invalid login credentials" — keep it
-            // friendly.
-            return res.status(401).json({ error: 'Invalid email or password.' });
+          if (!error && data && data.user) {
+            let profile = null;
+            if (SUPABASE_ADMIN) {
+              const result = await SUPABASE_ADMIN
+                .from('users')
+                .select('*')
+                .eq('id', data.user.id)
+                .single();
+              if (!result.error) profile = result.data;
+            }
+
+            const user = normalizeUser(
+              {
+                id:          data.user.id,
+                email:       data.user.email,
+                name:        profile?.full_name || '',
+                phone:       profile?.phone || '',
+                avatar_url:  profile?.avatar_url || data.user.user_metadata?.avatar_url || '',
+                role:        profile?.role || 'user',
+                supabase_id: data.user.id,
+              },
+              { created_at: data.user.created_at }
+            );
+
+            // Update last_sign_in
+            if (SUPABASE_ADMIN) {
+              await SUPABASE_ADMIN.from('users').update({ last_sign_in: now() }).eq('id', user.id).single();
+            }
+
+            return issueTokenAndRespond(res, user, {
+              accessToken:  data.session?.access_token || null,
+              refreshToken: data.session?.refresh_token || null,
+            });
           }
-
-          // Refetch the profile row so we have name / role etc.
-          const { data: profile, error: pErr } = await SUPABASE_ADMIN
-            .from('users')
-            .select('*')
-            .eq('id', data.user.id)
-            .single();
-
-          const user = normalizeUser(
-            {
-              id:          data.user.id,
-              email:       data.user.email,
-              name:        profile?.full_name || '',
-              phone:       profile?.phone || '',
-              avatar_url:  profile?.avatar_url || data.user.user_metadata?.avatar_url || '',
-              role:        profile?.role || 'user',
-              supabase_id: data.user.id,
-            },
-            { created_at: data.user.created_at }
-          );
-
-          // Update last_sign_in
-          if (SUPABASE_ADMIN) {
-            await SUPABASE_ADMIN.from('users').update({ last_sign_in: now() }).eq('id', user.id).single();
-          }
-
-          return issueTokenAndRespond(res, user, {
-            accessToken:  data.session?.access_token || null,
-            refreshToken: data.session?.refresh_token || null,
-          });
+          console.warn('[auth] Supabase login did not authenticate; checking local account store.');
         } catch (supErr) {
-          const msg = (supErr && supErr.message) ? supErr.message.toLowerCase() : '';
-          if (msg.includes('invalid') || msg.includes('credentials')) {
-            return res.status(401).json({ error: 'Invalid email or password.' });
-          }
           console.warn('[auth] Supabase login failed, falling back to mock:', supErr && supErr.message);
         }
       }
@@ -778,6 +774,11 @@ module.exports = function AuthRoutes(opts) {
 
   const APP_URL = (process.env.APP_URL || process.env.FRONTEND_URL || ('http://localhost:' + PORT)).replace(/\/$/, '');
 
+  function oauthCallbackUrl(provider) {
+    return process.env[provider.toUpperCase() + '_CALLBACK_URL']
+      || APP_URL + '/api/auth/' + provider + '/callback';
+  }
+
   function frontendLogin(params) {
     return APP_URL + '/login.html?' + new URLSearchParams(params).toString();
   }
@@ -797,7 +798,7 @@ module.exports = function AuthRoutes(opts) {
       // CSRF guard: random state, checked on the callback (cookie must match).
       const state = crypto.randomBytes(16).toString('hex');
       res.cookie('oauth_state', state, { httpOnly: true, sameSite: 'lax', maxAge: 10 * 60 * 1000, secure: IS_PROD });
-      const redirectUri = APP_URL + '/api/auth/' + provider + '/callback';
+      const redirectUri = oauthCallbackUrl(provider);
       const url = cfg.authUrl + '?' + new URLSearchParams({
         client_id: clientId,
         redirect_uri: redirectUri,
@@ -886,7 +887,7 @@ module.exports = function AuthRoutes(opts) {
           client_secret: clientSecret,
           code,
           grant_type: 'authorization_code',
-          redirect_uri: APP_URL + '/api/auth/' + provider + '/callback',
+          redirect_uri: oauthCallbackUrl(provider),
         }).toString(),
       });
       const tokenJson = await tokenRes.json().catch(() => ({}));

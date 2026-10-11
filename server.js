@@ -90,7 +90,24 @@ app.use(cors({
       .split(',')
       .map(s => s.trim())
       .filter(Boolean);
-    if (!origin || allowed.includes(origin)) return cb(null, true);
+    const normalizedOrigin = origin ? origin.split('?')[0].split('#')[0].toLowerCase() : '';
+    // Allow requests with no Origin (same-origin curl, non-browser clients) through.
+    // For requests that carry an Origin (browser crossorigin fetches, including
+    // <link crossorigin> stylesheets and module scripts), allow when the origin
+    // matches an entry in ALLOWED_ORIGINS. Chromium 150+ sends Origin on same-origin
+    // crossorigin resource requests, so localhost:3111 must be in the allowlist.
+    if (!normalizedOrigin || allowed.some(a => a.toLowerCase() === normalizedOrigin)) {
+      return cb(null, true);
+    }
+    // Preflight (OPTIONS) requests without a listed origin: respond with a minimal
+    // 204 so same-origin crossorigin resource fetches do not get a 500.
+    if (req.method === 'OPTIONS') {
+      res.header('Access-Control-Allow-Credentials', 'true');
+      res.header('Access-Control-Allow-Methods', 'GET,HEAD,POST,OPTIONS');
+      res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      res.header('Access-Control-Max-Age', '86400');
+      return res.sendStatus(204);
+    }
     cb(new Error('CORS blocked: ' + origin));
   },
   credentials: true,

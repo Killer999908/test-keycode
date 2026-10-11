@@ -1,7 +1,7 @@
 // Durable page sweeper. Run: QA_TOKEN=<jwt> node .freebuff/qa-browser3.mjs "page1.html,page2.html"
 import { chromium } from 'playwright-core';
 
-const BASE = 'http://localhost:3000';
+const BASE = 'http://localhost:' + (process.env.PORT || '3000');
 const TOKEN = process.env.QA_TOKEN || '';
 const PAGES = (process.argv[2] || '').split(',').filter(Boolean);
 const NOISE = /favicon|google|gstatic|fonts\.|net::ERR_|analytics|adservice|doubleclick|manifest\.json|service[- ]?worker|sentry/i;
