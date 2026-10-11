@@ -4,7 +4,7 @@ Full-stack site + API for [keycode.studio](https://keycode.studio) — an AI pla
 
 ## Badges
 
-[![CLI installers E2E](https://github.com/Killer999908/test-keycode/actions/workflows/CLI%20installers%20E2E/badge.svg?branch=gh-pages)](https://github.com/Killer999908/test-keycode/actions/workflows/CLI%20installers%20E2E/badge.svg?branch=gh-pages)
+[![CLI installers E2E](https://github.com/Killer999908/test-keycode/workflows/CLI%20installers%20E2E/badge.svg?branch=refs%2Fheads%2Fgh-pages)](https://github.com/Killer999908/test-keycode/actions/workflows/CLI%20installers%20E2E?query=branch%3Agh-pages)
 
 > Green = installer E2E passed on ubuntu + macOS (install → signup → API key → CLI login → agent build),
 > Windows PowerShell installer validated, full Jest suite and the signup→key→CLI system test all green.
