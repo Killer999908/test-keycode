@@ -29,7 +29,15 @@ GitHub Actions (`.github/workflows/cli-installer-e2e.yml`) runs on every push:
 | `jest test suite` | all 70+ tests |
 | `system test — signup → key → CLI` | the full signup → API key → CLI login flow against a live in-process server |
 
-Branch protection on `gh-pages` requires all five job contexts (see `Required status checks`).
+### Branch protection on `gh-pages`
+
+`gh-pages` is protected:
+
+- All **five** CI job contexts above are **required status checks** — a push whose head commit isn't fully green shows failing checks on GitHub and PR merges into `gh-pages` stay blocked until every job passes.
+- **`enforce_admins: true`** — the gate binds repository admins too; nobody can bypass a red run.
+- Force-pushes to `gh-pages` and branch deletion are disabled.
+
+Red badge usually means a real regression (the first red run caught committed code depending on files that were never committed) — fix the failing job's step in the run log, push, and the badge flips back.
 
 ## Get the CLI
 
