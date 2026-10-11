@@ -122,9 +122,15 @@ module.exports = function AdminRoutes(opts) {
     try {
       const users = await listUsers();
       const query = String(req.query.q || '').trim().toLowerCase();
-      const filtered = query ? users.filter(function (user) {
+      const orders = readJson('mock-orders.json', []);
+      const filtered = (query ? users.filter(function (user) {
         return user.email.toLowerCase().includes(query) || user.name.toLowerCase().includes(query);
-      }) : users;
+      }) : users).map(function (user) {
+        const orderCount = orders.filter(function (order) {
+          return order.user_id === user.id || String(order.user_email || '').toLowerCase() === user.email.toLowerCase();
+        }).length;
+        return Object.assign({}, user, { orderCount: orderCount });
+      });
       const page = Math.max(1, Number.parseInt(req.query.page, 10) || 1);
       const limit = Math.min(100, Math.max(1, Number.parseInt(req.query.limit, 10) || 50));
       res.json({

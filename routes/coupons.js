@@ -10,6 +10,7 @@ module.exports = function CouponsRoutes(opts) {
     SUPABASE_ADMIN,
     now,
     IS_PROD,
+    requireAuth,
   } = opts;
 
   const fs   = require('fs');
@@ -115,7 +116,7 @@ module.exports = function CouponsRoutes(opts) {
   // ---------------------------------------------------------------------------
   //  Admin: list all coupons
   // ---------------------------------------------------------------------------
-  app.get('/api/admin/coupons', requireAuthAdmin, async (req, res) => {
+  app.get('/api/admin/coupons', requireAuth, requireAuthAdmin, async (req, res) => {
     try {
       let list = [];
       if (SUPABASE) {
@@ -140,7 +141,7 @@ module.exports = function CouponsRoutes(opts) {
   // ---------------------------------------------------------------------------
   //  Admin: create coupon
   // ---------------------------------------------------------------------------
-  app.post('/api/admin/coupons', requireAuthAdmin, async (req, res) => {
+  app.post('/api/admin/coupons', requireAuth, requireAuthAdmin, async (req, res) => {
     try {
       const body = req.body || {};
       if (!body.code) return res.status(400).json({ error: 'code is required' });
@@ -188,7 +189,7 @@ module.exports = function CouponsRoutes(opts) {
   // ---------------------------------------------------------------------------
   //  Admin: update coupon
   // ---------------------------------------------------------------------------
-  app.patch('/api/admin/coupons/:id', requireAuthAdmin, async (req, res) => {
+  app.patch('/api/admin/coupons/:id', requireAuth, requireAuthAdmin, async (req, res) => {
     try {
       const { id } = req.params;
       const body  = req.body || {};
@@ -246,7 +247,7 @@ module.exports = function CouponsRoutes(opts) {
   // ---------------------------------------------------------------------------
   //  Admin: delete coupon
   // ---------------------------------------------------------------------------
-  app.delete('/api/admin/coupons/:id', requireAuthAdmin, async (req, res) => {
+  app.delete('/api/admin/coupons/:id', requireAuth, requireAuthAdmin, async (req, res) => {
     try {
       const { id } = req.params;
       if (SUPABASE) {

@@ -225,6 +225,7 @@ app.get('/api/health', (_req, res) => {
     requireAuth,
     IS_PROD,
     projectRoot,
+    PORT,
   });
 
 // ===========================================================================
@@ -293,6 +294,7 @@ const Coupons = require('./routes/coupons')({
   SUPABASE_ADMIN,
   now,
   IS_PROD,
+  requireAuth,
 });
 
 // ===========================================================================
@@ -312,6 +314,24 @@ require('./routes/admin')({
   requireAuth,
   projectRoot,
   SUPABASE_ADMIN,
+});
+
+// ===========================================================================
+//  SOCIAL STUDIO (AI-assisted drafts, queue, and Meta publishing)
+// ===========================================================================
+require('./routes/social')({
+  app,
+  requireAuth,
+  projectRoot,
+});
+
+// ===========================================================================
+//  BUSINESS AGENT (AI operations advisor with user-confirmed actions)
+// ===========================================================================
+require('./routes/business-agent')({
+  app,
+  requireAuth,
+  projectRoot,
 });
 
 // ===========================================================================

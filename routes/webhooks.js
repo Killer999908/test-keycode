@@ -15,7 +15,7 @@ module.exports = function WebhookRoutes(opts) {
     requireAuth,
   } = opts;
 
-  const store = require('../data/mockStore');
+  const store = require('../lib/mockStore');
   const fs   = require('fs');
   const path = require('path');
   const projectRoot = process.cwd();

@@ -17,8 +17,8 @@ module.exports = function PaymentsRoutes(opts) {
     projectRoot,
   } = opts;
 
-  const PAYMENTS_PATH = require('../data/mockStore').paymentsPath();
-  const store = require('../data/mockStore');
+  const PAYMENTS_PATH = require('../lib/mockStore').paymentsPath();
+  const store = require('../lib/mockStore');
 
   const loadPayments = store.loadPayments;
   const savePayments = (list) => store.write(PAYMENTS_PATH, list);

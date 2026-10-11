@@ -23,6 +23,7 @@ module.exports = function AuthRoutes(opts) {
     requireAuth,
     IS_PROD,
     projectRoot,
+    PORT,
   } = opts;
 
   // ---------------------------------------------------------------------------

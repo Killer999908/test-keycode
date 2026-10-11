@@ -29,6 +29,12 @@ const monetizationFile = path.join(DATA_DIR, 'monetization.json');
 const monetizationBackup = fs.existsSync(monetizationFile) ? fs.readFileSync(monetizationFile, 'utf8') : null;
 const revenueFile = path.join(DATA_DIR, 'monetization-revenue.json');
 const revenueBackup = fs.existsSync(revenueFile) ? fs.readFileSync(revenueFile, 'utf8') : null;
+const couponFile = path.join(DATA_DIR, 'mock-coupons.json');
+const couponBackup = fs.existsSync(couponFile) ? fs.readFileSync(couponFile, 'utf8') : null;
+const inquiriesFile = path.join(DATA_DIR, 'mock-inquiries.json');
+const inquiriesBackup = fs.existsSync(inquiriesFile) ? fs.readFileSync(inquiriesFile, 'utf8') : null;
+const socialPostsFile = path.join(DATA_DIR, 'social-posts.json');
+const socialPostsBackup = fs.existsSync(socialPostsFile) ? fs.readFileSync(socialPostsFile, 'utf8') : null;
 const adminToken = jwt.sign({ userId: 'monetization-admin-test', role: 'admin' }, process.env.JWT_SECRET);
 const agentTestId = 'agent-test-' + Date.now();
 const agentUserA = agentTestId + '-a';
@@ -40,6 +46,7 @@ const memoryFiles = [agentUserA, agentUserB].map(function (id) {
   return path.join(DATA_DIR, 'agent-memories', crypto.createHash('sha256').update(id).digest('hex') + '.json');
 });
 const memoryBackups = memoryFiles.map(function (file) { return fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null; });
+const regularUserToken = jwt.sign({ userId: 'admin-console-user-test', role: 'user' }, process.env.JWT_SECRET);
 
 afterAll(() => {
   if (staticDataTestBackup === null) fs.rmSync(staticDataTestFile, { force: true });
@@ -50,6 +57,12 @@ afterAll(() => {
   else fs.writeFileSync(monetizationFile, monetizationBackup);
   if (revenueBackup === null) fs.rmSync(revenueFile, { force: true });
   else fs.writeFileSync(revenueFile, revenueBackup);
+  if (couponBackup === null) fs.rmSync(couponFile, { force: true });
+  else fs.writeFileSync(couponFile, couponBackup);
+  if (inquiriesBackup === null) fs.rmSync(inquiriesFile, { force: true });
+  else fs.writeFileSync(inquiriesFile, inquiriesBackup);
+  if (socialPostsBackup === null) fs.rmSync(socialPostsFile, { force: true });
+  else fs.writeFileSync(socialPostsFile, socialPostsBackup);
   if (sessionBackup === null) fs.rmSync(sessionFile, { force: true });
   else fs.writeFileSync(sessionFile, sessionBackup);
   memoryFiles.forEach(function (file, i) {
@@ -67,6 +80,212 @@ describe('GET /api/health', () => {
     const res = await request(app).get('/api/health');
     expect(res.status).toBe(200);
     expect(res.body.status).toBe('ok');
+  });
+});
+
+describe('Admin console APIs', () => {
+  test('protects every admin-console read endpoint from anonymous and regular users', async () => {
+    const endpoints = [
+      '/api/admin/overview',
+      '/api/admin/users',
+      '/api/admin/inquiries',
+      '/api/admin/audit',
+      '/api/admin/system',
+      '/api/admin/social/status',
+      '/api/admin/social/posts',
+      '/api/admin/business-agent/status',
+      '/api/admin/tickets',
+      '/api/admin/notifications',
+      '/api/admin/coupons',
+      '/api/admin/monetization',
+    ];
+    for (const endpoint of endpoints) {
+      expect((await request(app).get(endpoint)).status).toBe(401);
+      expect((await request(app).get(endpoint).set('Authorization', 'Bearer ' + regularUserToken)).status).toBe(403);
+    }
+  });
+
+  test('serves real platform overview and only safe user fields to admins', async () => {
+    const [overview, users, system, tickets, notifications, coupons, payments] = await Promise.all([
+      request(app).get('/api/admin/overview').set('Authorization', 'Bearer ' + adminToken),
+      request(app).get('/api/admin/users').set('Authorization', 'Bearer ' + adminToken),
+      request(app).get('/api/admin/system').set('Authorization', 'Bearer ' + adminToken),
+      request(app).get('/api/admin/tickets').set('Authorization', 'Bearer ' + adminToken),
+      request(app).get('/api/admin/notifications').set('Authorization', 'Bearer ' + adminToken),
+      request(app).get('/api/admin/coupons').set('Authorization', 'Bearer ' + adminToken),
+      request(app).get('/api/payment/list').set('Authorization', 'Bearer ' + adminToken),
+    ]);
+    expect(overview.status).toBe(200);
+    expect(overview.body.totals).toEqual(expect.objectContaining({
+      users: expect.any(Number),
+      orders: expect.any(Number),
+      openTickets: expect.any(Number),
+      newInquiries: expect.any(Number),
+    }));
+    expect(users.status).toBe(200);
+    expect(users.body).toEqual(expect.objectContaining({ users: expect.any(Array), total: expect.any(Number) }));
+    for (const user of users.body.users) {
+      expect(user).not.toHaveProperty('password');
+      expect(user).not.toHaveProperty('passwordHash');
+    }
+    expect(system.status).toBe(200);
+    expect(system.body.process).toEqual(expect.objectContaining({ status: 'running', nodeVersion: process.version }));
+    expect(system.body.integrations).not.toHaveProperty('apiKey');
+    expect(tickets.status).toBe(200);
+    expect(tickets.body.tickets).toEqual(expect.any(Array));
+    expect(notifications.status).toBe(200);
+    expect(notifications.body.notifications).toEqual(expect.any(Array));
+    expect(coupons.status).toBe(200);
+    expect(coupons.body.coupons).toEqual(expect.any(Array));
+    expect(payments.status).toBe(200);
+    expect(payments.body.payments).toEqual(expect.any(Array));
+  });
+
+  test('serves audit history and permits only supported inquiry status changes', async () => {
+    const audit = await request(app).get('/api/admin/audit').set('Authorization', 'Bearer ' + adminToken);
+    expect(audit.status).toBe(200);
+    expect(audit.body).toEqual(expect.objectContaining({ logs: expect.any(Array), page: 1, pages: expect.any(Number) }));
+
+    const denied = await request(app)
+      .patch('/api/admin/inquiries/unknown')
+      .set('Authorization', 'Bearer ' + adminToken)
+      .send({ status: 'deleted' });
+    expect(denied.status).toBe(400);
+
+    const inquiryId = 'admin-console-inquiry-test';
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+    fs.writeFileSync(inquiriesFile, JSON.stringify([{ id: inquiryId, status: 'new', createdAt: new Date().toISOString() }]));
+    const changed = await request(app)
+      .patch('/api/admin/inquiries/' + inquiryId)
+      .set('Authorization', 'Bearer ' + adminToken)
+      .send({ status: 'in_progress' });
+    expect(changed.status).toBe(200);
+    expect(changed.body.inquiry.status).toBe('in_progress');
+  });
+
+  test('lets admins create and delete a coupon through the admin API', async () => {
+    const code = 'ADMIN' + Date.now().toString().slice(-8);
+    const created = await request(app)
+      .post('/api/admin/coupons')
+      .set('Authorization', 'Bearer ' + adminToken)
+      .send({ code: code, discount_percent: 15, max_uses: 12 });
+    expect(created.status).toBe(201);
+    expect(created.body.coupon.code).toBe(code);
+
+    const removed = await request(app)
+      .delete('/api/admin/coupons/' + created.body.coupon.id)
+      .set('Authorization', 'Bearer ' + adminToken);
+    expect(removed.status).toBe(200);
+    expect(removed.body.success).toBe(true);
+  });
+
+  test('provides a safe social publishing status and a reviewable draft queue', async () => {
+    const [status, posts] = await Promise.all([
+      request(app).get('/api/admin/social/status').set('Authorization', 'Bearer ' + adminToken),
+      request(app).get('/api/admin/social/posts').set('Authorization', 'Bearer ' + adminToken),
+    ]);
+    expect(status.status).toBe(200);
+    expect(status.body.platforms.instagram).toEqual(expect.objectContaining({
+      configured: expect.any(Boolean),
+      supports: ['image', 'video', 'reel'],
+    }));
+    expect(JSON.stringify(status.body)).not.toContain(process.env.META_ACCESS_TOKEN || 'never-match-empty-token');
+    expect(posts.status).toBe(200);
+    expect(posts.body.posts).toEqual(expect.any(Array));
+
+    const invalidInstagramTextPost = await request(app)
+      .post('/api/admin/social/posts')
+      .set('Authorization', 'Bearer ' + adminToken)
+      .send({ title: 'Text only', caption: 'A caption', mediaType: 'text', platforms: ['instagram'] });
+    expect(invalidInstagramTextPost.status).toBe(400);
+
+    const missingVideoUrl = await request(app)
+      .post('/api/admin/social/posts')
+      .set('Authorization', 'Bearer ' + adminToken)
+      .send({ title: 'A Reel', caption: 'A caption', mediaType: 'reel', platforms: ['instagram'] });
+    expect(missingVideoUrl.status).toBe(400);
+
+    const draft = await request(app)
+      .post('/api/admin/social/posts')
+      .set('Authorization', 'Bearer ' + adminToken)
+      .send({ title: 'Review this post', caption: 'A draft awaiting human review.', mediaType: 'text', platforms: ['facebook'] });
+    expect(draft.status).toBe(201);
+    expect(draft.body.post.status).toBe('draft');
+
+    const queue = await request(app).get('/api/admin/social/posts').set('Authorization', 'Bearer ' + adminToken);
+    expect(queue.body.posts[0].id).toBe(draft.body.post.id);
+    expect(queue.body.posts[0].caption).toBe('A draft awaiting human review.');
+
+    const deleted = await request(app)
+      .delete('/api/admin/social/posts/' + draft.body.post.id)
+      .set('Authorization', 'Bearer ' + adminToken);
+    expect(deleted.status).toBe(200);
+    expect(deleted.body.success).toBe(true);
+  });
+
+  test('requires connected publishing accounts before scheduling and reports unavailable AI', async () => {
+    const schedule = await request(app)
+      .post('/api/admin/social/posts')
+      .set('Authorization', 'Bearer ' + adminToken)
+      .send({
+        title: 'Scheduled draft',
+        caption: 'A scheduled post.',
+        mediaType: 'text',
+        platforms: ['facebook'],
+        scheduledAt: new Date(Date.now() + 5 * 60_000).toISOString(),
+      });
+    if (!process.env.META_ACCESS_TOKEN || !process.env.META_FACEBOOK_PAGE_ID) {
+      expect(schedule.status).toBe(400);
+      expect(schedule.body.error).toContain('Connect every selected platform');
+    } else {
+      expect(schedule.status).toBe(201);
+    }
+
+    const aiDraft = await request(app)
+      .post('/api/admin/social/ai-draft')
+      .set('Authorization', 'Bearer ' + adminToken)
+      .send({ topic: 'Share a product update', mediaType: 'reel' });
+    expect(aiDraft.status).toBe(503);
+    expect(aiDraft.body.error).toContain('AI drafting is unavailable');
+  });
+
+  test('business manager is admin-only, reports disabled AI, and fails explicitly without a provider', async () => {
+    const [status, empty, unavailable] = await Promise.all([
+      request(app).get('/api/admin/business-agent/status').set('Authorization', 'Bearer ' + adminToken),
+      request(app).post('/api/admin/business-agent/chat').set('Authorization', 'Bearer ' + adminToken).send({ message: '   ' }),
+      request(app).post('/api/admin/business-agent/chat').set('Authorization', 'Bearer ' + adminToken)
+        .send({ message: 'Summarize operational priorities.', history: [] }),
+    ]);
+    expect(status.status).toBe(200);
+    expect(status.body).toEqual(expect.objectContaining({
+      aiConfigured: false,
+      allowedActions: ['order_status', 'ticket_status', 'inquiry_status', 'social_draft'],
+      requiresConfirmation: true,
+      automaticExecution: false,
+    }));
+    expect(status.body.skills.map(skill => skill.id)).toEqual([
+      'business_briefing', 'support_triage', 'sales_pipeline', 'social_planning',
+    ]);
+    expect(status.body.tools.map(tool => tool.id)).toEqual(expect.arrayContaining([
+      'business_snapshot', 'open_tickets', 'new_inquiries', 'recent_orders', 'social_queue',
+      'propose_status_updates', 'save_social_draft',
+    ]));
+    expect(empty.status).toBe(400);
+    expect(unavailable.status).toBe(503);
+    expect(unavailable.body.error).toContain('Business AI is unavailable');
+
+    const invalidSkill = await request(app)
+      .post('/api/admin/business-agent/chat')
+      .set('Authorization', 'Bearer ' + adminToken)
+      .send({ message: 'Review priorities.', skill: 'arbitrary-code' });
+    expect(invalidSkill.status).toBe(400);
+    expect(invalidSkill.body.error).toContain('supported business skill');
+
+    const nonAdmin = await request(app)
+      .post('/api/admin/business-agent/chat')
+      .set('Authorization', 'Bearer ' + regularUserToken)
+      .send({ message: 'Show me the business data.' });
+    expect(nonAdmin.status).toBe(403);
   });
 });
 
@@ -322,7 +541,7 @@ describe('webhooks', () => {
   test('handles payment_intent.succeeded in trust mode (no secret configured)', async () => {
     const tx = 'pi_test_' + Date.now();
     // Seed a pending payment directly.
-    const store = require('../data/mockStore');
+    const store = require('../lib/mockStore');
     await store.write(PAYMENTS_FILE, [{
       id: 'seed-1', user_id: 'user-1', order_id: 'order-wh-1',
       amount: 10, currency: 'usd', provider: 'stripe', status: 'pending',
