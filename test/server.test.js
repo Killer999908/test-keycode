@@ -272,18 +272,38 @@ describe('agent workspaces and account isolation', () => {
     expect(agent.listWorkspaceFiles(agentUserA, workspaceId).some(function (file) { return file.path === 'outside-link'; })).toBe(false);
   });
 
+  test('POST /api/agent/react requires authentication', async () => {
+    const runTask = jest.spyOn(agent, 'runTask');
+    try {
+      const response = await request(app).post('/api/agent/react').send({ task: 'ping' });
+      expect(response.status).toBe(401);
+      expect(runTask).not.toHaveBeenCalled();
+    } finally {
+      runTask.mockRestore();
+    }
+  });
+
   test('POST /api/agent/react streams start event and artifacts endpoint serves saved file', async () => {
-    const runTask = jest.spyOn(agent, 'runTask').mockImplementation(async function (_opts, onEvent) {
+    let runOptions;
+    const runTask = jest.spyOn(agent, 'runTask').mockImplementation(async function (opts, onEvent) {
+      runOptions = opts;
       onEvent({ type: 'final', text: 'pong' });
       return { id: 'test-session', status: 'done', final: 'pong', steps: [] };
     });
     try {
       const reactRes = await request(app).post('/api/agent/react')
         .set('Authorization', 'Bearer ' + tokenA)
-        .send({ task: 'ping', maxSteps: 1, workspaceId: workspaceId });
+        .send({ task: 'ping', maxSteps: 1, workspaceId: workspaceId, allowedTools: ['js_eval', 'build_website'] });
       expect(reactRes.status).toBe(200);
       expect(reactRes.text).toContain('data: {"type":"start"');
       expect(reactRes.text).toContain('"type":"done"');
+      expect(runOptions.allowedTools).toEqual(['build_website']);
+
+      const runRes = await request(app).post('/api/agent/run')
+        .set('Authorization', 'Bearer ' + tokenA)
+        .send({ goal: 'ping', allowedTools: ['shell', 'fs_read'] });
+      expect(runRes.status).toBe(200);
+      expect(runOptions.allowedTools).toEqual(['fs_read']);
 
       // Artifacts route serves files from user default workspace
       const defDir = agent.getWorkspaceDir(agentUserA, 'default');

@@ -9,7 +9,7 @@
 //   GET  /api/agent/memory       agent memory (facts + skills)
 //   POST /api/agent/memory/fact  { text } remember a fact
 //   POST /api/agent/skills       { name, prompt, notes } teach a skill
-//   POST /api/agent/react        reasoning-step ingest (legacy CLI)
+//   POST /api/agent/react        authenticated interactive agent run
 // ============================================================
 const path = require('path');
 const fs = require('fs');
@@ -20,6 +20,15 @@ const ai_poolStatus = () => ai.poolStatus();
 
 module.exports = function AgentRoutes(opts) {
   const { app, requireAuth, now } = opts;
+  const SERVER_TOOL_ALLOWLIST = [
+    'fs_write', 'fs_read', 'fs_list', 'web_search', 'llm', 'think',
+    'build_website', 'write_report',
+  ];
+  function serverAllowedTools(requested) {
+    return SERVER_TOOL_ALLOWLIST.filter(function (name) {
+      return !Array.isArray(requested) || requested.indexOf(name) !== -1;
+    });
+  }
 
   // running-task registry + fair per-user queue
   // Instead of rejecting users when busy, runs are queued FIFO with a
@@ -162,7 +171,7 @@ module.exports = function AgentRoutes(opts) {
       userId: uid,
       workspaceId: workspaceId,
       maxSteps: b.maxSteps,
-      allowedTools: Array.isArray(b.allowedTools) ? b.allowedTools : undefined,
+      allowedTools: serverAllowedTools(b.allowedTools),
     }, function () { },
     function (session) { res.json({ success: session.status === 'done', session: session }); },
     function (e) { try { res.status(500).json({ success: false, error: String(e && e.message || e) }); } catch (_) { } },
@@ -193,6 +202,7 @@ module.exports = function AgentRoutes(opts) {
       userId: userId,
       workspaceId: workspaceId,
       maxSteps: Number(req.query.maxSteps) || undefined,
+      allowedTools: serverAllowedTools(),
     },
     function (evt) { send(evt); },
     function (session) {
@@ -218,21 +228,13 @@ module.exports = function AgentRoutes(opts) {
     });
   });
 
-  // SSE streaming endpoint for AI builder and interactive agent clients
-  app.post('/api/agent/react', function (req, res) {
+  // SSE streaming endpoint for authenticated interactive agent clients.
+  app.post('/api/agent/react', requireAuth, function (req, res) {
     const b = req.body || {};
     const goal = String(b.task || b.goal || '').trim();
     if (!goal) return res.status(400).json({ success: false, error: 'task or goal required' });
 
-    let userId = (req.user && req.user.userId) || null;
-    if (!userId) {
-      const auth = req.headers.authorization || '';
-      const token = auth.replace(/^Bearer\s+/i, '') || (req.cookies && req.cookies.kc_token);
-      if (token) {
-        try { userId = require('jsonwebtoken').verify(token, process.env.JWT_SECRET || 'dev-secret').userId; } catch (_) { }
-      }
-    }
-    if (!userId) userId = 'guest_' + Date.now().toString(36);
+    const userId = req.user.userId;
 
     const workspaceId = String(b.workspaceId || 'default');
     if (!agent.isValidWorkspaceId(workspaceId)) return res.status(400).json({ success: false, error: 'invalid workspaceId' });
@@ -255,7 +257,7 @@ module.exports = function AgentRoutes(opts) {
       userId: userId,
       workspaceId: workspaceId,
       maxSteps: maxSteps,
-      allowedTools: Array.isArray(b.allowedTools) ? b.allowedTools : undefined,
+      allowedTools: serverAllowedTools(b.allowedTools),
     },
     function (evt) {
       if (evt.type === 'plan' && Array.isArray(evt.plan)) {
