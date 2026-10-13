@@ -24,10 +24,15 @@ module.exports = function AgentRoutes(opts) {
     'fs_write', 'fs_read', 'fs_list', 'web_search', 'llm', 'think',
     'build_website', 'write_report',
   ];
-  function serverAllowedTools(requested) {
-    return SERVER_TOOL_ALLOWLIST.filter(function (name) {
+  function serverAllowedTools(requested, userId) {
+    const allow = SERVER_TOOL_ALLOWLIST.filter(function (name) {
       return !Array.isArray(requested) || requested.indexOf(name) !== -1;
     });
+    // A caller that lists allowedTools opts into exactly that set. Default runs
+    // also get the caller's learned skills, which are connected to the agent as
+    // tools and only run through the shared LLM provider (lib/ai-provider.js).
+    if (Array.isArray(requested)) return allow;
+    return allow.concat(agent.skillManifest(userId).map(function (t) { return t.name; }));
   }
 
   // running-task registry + fair per-user queue
@@ -91,6 +96,20 @@ module.exports = function AgentRoutes(opts) {
     pumpQueue();
     return item;
   }
+
+  // Connected registry: every built-in tool plus the caller's learned skills,
+  // i.e. the exact surface the agent loop is wired to for that account.
+  app.get('/api/agent/registry', requireAuth, function (req, res) {
+    const manifest = agent.connectedManifest(req.user.userId);
+    const builtin = tools.manifest().length;
+    res.json({
+      success: true,
+      total: manifest.length,
+      builtin: builtin,
+      skills: manifest.length - builtin,
+      tools: manifest,
+    });
+  });
 
   app.get('/api/agent/tools', function (req, res) {
     const manifest = tools.manifest();
@@ -171,7 +190,7 @@ module.exports = function AgentRoutes(opts) {
       userId: uid,
       workspaceId: workspaceId,
       maxSteps: b.maxSteps,
-      allowedTools: serverAllowedTools(b.allowedTools),
+      allowedTools: serverAllowedTools(b.allowedTools, uid),
     }, function () { },
     function (session) { res.json({ success: session.status === 'done', session: session }); },
     function (e) { try { res.status(500).json({ success: false, error: String(e && e.message || e) }); } catch (_) { } },
@@ -202,7 +221,7 @@ module.exports = function AgentRoutes(opts) {
       userId: userId,
       workspaceId: workspaceId,
       maxSteps: Number(req.query.maxSteps) || undefined,
-      allowedTools: serverAllowedTools(),
+      allowedTools: serverAllowedTools(undefined, userId),
     },
     function (evt) { send(evt); },
     function (session) {
@@ -247,7 +266,7 @@ module.exports = function AgentRoutes(opts) {
     });
     const send = (obj) => { try { res.write('data: ' + JSON.stringify(obj) + '\n\n'); } catch (_) { } };
 
-    const manifest = tools.manifest();
+    const manifest = agent.connectedManifest(userId);
     const maxSteps = Number(b.maxSteps) || 14;
     send({ type: 'start', tools: manifest.length, maxSteps: maxSteps, goal: goal });
 
@@ -257,7 +276,7 @@ module.exports = function AgentRoutes(opts) {
       userId: userId,
       workspaceId: workspaceId,
       maxSteps: maxSteps,
-      allowedTools: serverAllowedTools(b.allowedTools),
+      allowedTools: serverAllowedTools(b.allowedTools, userId),
     },
     function (evt) {
       if (evt.type === 'plan' && Array.isArray(evt.plan)) {

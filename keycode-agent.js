@@ -31,9 +31,13 @@ async function main() {
   }
 
   if (args[0] === '--tools') {
-    for (const t of tools.manifest()) {
+    // connected surface of this agent: built-in tools + learned skills
+    const manifest = agent.connectedManifest();
+    const builtin = tools.manifest().length;
+    for (const t of manifest) {
       console.log((t.danger ? '⚠ ' : '  ') + t.name.padEnd(16) + ' [' + t.group + '] ' + t.desc);
     }
+    console.log('\nConnected to this agent: ' + builtin + ' built-in tools + ' + (manifest.length - builtin) + ' learned skill(s).');
     return;
   }
   if (args[0] === '--memory') {

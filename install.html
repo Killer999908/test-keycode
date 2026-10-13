@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0a0a0b">
+  <meta name="description" content="Install KEYCODE Studio as an app on your device or download the KEYCODE Agent command-line installer for Windows, macOS, or Linux.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://keycode.studio/install.html">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <title>Install or Download — KEYCODE Studio</title>
+  <style>
+    :root { color-scheme: dark; font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #0a0a0b; color: #f5f5f5; }
+    * { box-sizing: border-box; }
+    body { min-height: 100vh; margin: 0; background: radial-gradient(ellipse at 50% -15%, #242424 0, #0a0a0b 56%); }
+    a { color: inherit; text-decoration: none; }
+    .site-header { height: 76px; padding: 0 clamp(20px, 5vw, 72px); display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #ffffff15; }
+    .brand { font-weight: 850; letter-spacing: .16em; }
+    .back { color: #c4c4c4; font-size: 14px; }
+    .back:hover { color: #fff; }
+    main { width: min(100% - 40px, 980px); margin: 0 auto; padding: clamp(54px, 9vw, 104px) 0 80px; }
+    .eyebrow { color: #aaa; font: 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .2em; text-transform: uppercase; }
+    h1 { max-width: 720px; margin: 15px 0; font-size: clamp(38px, 7vw, 68px); line-height: 1.02; letter-spacing: -.055em; }
+    .intro { max-width: 650px; color: #aaa; font-size: 16px; line-height: 1.7; }
+    .options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 46px; }
+    .card { min-width: 0; padding: clamp(22px, 4vw, 34px); border: 1px solid #ffffff20; border-radius: 18px; background: #111111d9; }
+    .card-label { margin: 0 0 10px; color: #aaa; font: 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .16em; text-transform: uppercase; }
+    h2 { margin: 0 0 10px; font-size: 24px; letter-spacing: -.03em; }
+    .card p { color: #aaa; font-size: 14px; line-height: 1.65; }
+    .button { min-height: 46px; margin-top: 15px; padding: 12px 18px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #f5f5f5; border-radius: 8px; background: #f5f5f5; color: #101010; font: 700 12px/1.3 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; }
+    .button:hover { background: #ddd; }
+    .button-secondary { border-color: #ffffff40; background: transparent; color: #f5f5f5; }
+    .button-secondary:hover { background: #ffffff12; }
+    .note { margin-top: 14px; color: #888; font-size: 12px; line-height: 1.6; }
+    .platform-list { margin: 18px 0 0; padding-left: 19px; color: #aaa; font-size: 13px; line-height: 1.9; }
+    .downloads { display: grid; gap: 10px; margin-top: 20px; }
+    .download-link { padding: 13px 14px; display: flex; align-items: center; justify-content: space-between; gap: 14px; border: 1px solid #ffffff1c; border-radius: 9px; background: #ffffff08; }
+    .download-link:hover { border-color: #ffffff70; background: #ffffff10; }
+    .download-link strong { font-size: 13px; }
+    .download-link span { color: #999; font-size: 12px; }
+    .footer { margin-top: 34px; color: #777; font-size: 12px; line-height: 1.7; }
+    @media (max-width: 680px) { .options { grid-template-columns: 1fr; } .site-header { height: 64px; } main { padding-top: 58px; } }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; } }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="KEYCODE Studio home">KEYCODE</a>
+    <a class="back" href="/">Back to website</a>
+  </header>
+  <main>
+    <p class="eyebrow">KEYCODE Studio · Get the app</p>
+    <h1>Build from anywhere.</h1>
+    <p class="intro">Install KEYCODE Studio on your device for an app-like window, or download the local Agent installer to work from your terminal.</p>
+
+    <div class="options">
+      <section class="card" aria-labelledby="web-app-title">
+        <p class="card-label">Browser app</p>
+        <h2 id="web-app-title">Install KEYCODE Studio</h2>
+        <p>Add the website to your device as an app. Supported browsers open a native install prompt; on iPhone and iPad, follow the Safari home-screen steps.</p>
+        <button class="button" type="button" data-install-btn hidden aria-haspopup="dialog">Install app</button>
+        <ul class="platform-list">
+          <li>Android, Windows, macOS, Linux, and ChromeOS: use the install button or your browser menu.</li>
+          <li>iPhone and iPad: open this page in Safari, tap Share, then choose “Add to Home Screen”.</li>
+        </ul>
+        <p class="note">App installation is provided by your browser and requires a supported browser. The installed app uses an internet connection for live services.</p>
+      </section>
+
+      <section class="card" aria-labelledby="agent-title">
+        <p class="card-label">Local developer tool</p>
+        <h2 id="agent-title">Download KEYCODE Agent</h2>
+        <p>Install the command-line agent on your computer to use KEYCODE from a local project workspace. Node.js is required.</p>
+        <div class="downloads">
+          <a class="download-link" href="/install.ps1" download="keycode-agent-install.ps1">
+            <strong>Windows PowerShell</strong><span>Download .ps1 ↗</span>
+          </a>
+          <a class="download-link" href="/install.sh" download="keycode-agent-install.sh">
+            <strong>macOS / Linux</strong><span>Download .sh ↗</span>
+          </a>
+        </div>
+        <a class="button button-secondary" href="/docs.html">Read setup guide</a>
+        <p class="note">Review installer contents before running them. Sign in with your KEYCODE account when setup is complete.</p>
+      </section>
+    </div>
+
+    <p class="footer">Need your generated project files instead? Visit <a href="/downloads.html" style="text-decoration:underline">My Downloads</a>.</p>
+  </main>
+  <script src="/js/sw-register.js" defer></script>
+  <script src="/js/install.js" defer></script>
+</body>
+</html>
