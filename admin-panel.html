@@ -231,6 +231,7 @@
         <div class="nav-item" data-page="discounts"><i class="fas fa-tag"></i> Discounts</div>
         <div class="nav-item" data-page="notifications"><i class="fas fa-bell"></i> Notifications</div>
         <div class="nav-item" data-page="monetization"><i class="fas fa-money-bill-wave"></i> Monetization</div>
+        <div class="nav-item" data-page="ai-manager"><i class="fas fa-robot"></i> AI Manager</div>
         <div class="nav-divider"></div>
         <div style="font-size:10px;color:var(--ash);padding:4px 14px;text-transform:uppercase;letter-spacing:1px;">Operations</div>
         <div class="nav-item" data-page="audit-log"><i class="fas fa-history"></i> Audit Log</div>
@@ -642,6 +643,38 @@
         <div class="page-header"><h1 class="page-title">Support Tickets</h1></div>
         <div class="section-card">
           <div style="overflow-x:auto;"><table><thead><tr><th>ID</th><th>Subject</th><th>From</th><th>Status</th><th>Priority</th><th>Date</th><th>Action</th></tr></thead><tbody id="ticketsList"></tbody></table></div>
+        </div>
+      </div>
+
+      <!-- AI MANAGER -->
+      <div id="ai-manager" class="page-section">
+        <div class="page-header"><h1 class="page-title"><i class="fas fa-robot"></i> AI Manager</h1><span style="font-size:13px;color:var(--ash);">Your site runs itself — you only approve and get paid</span></div>
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-icon" style="color:var(--primary)"><i class="fas fa-user-plus"></i></div><div class="stat-value" id="mgrLeads">-</div><div class="stat-label">Leads triaged</div></div>
+          <div class="stat-card"><div class="stat-icon" style="color:var(--success)"><i class="fas fa-globe"></i></div><div class="stat-value" id="mgrPreviews">-</div><div class="stat-label">Previews built</div></div>
+          <div class="stat-card"><div class="stat-icon" style="color:var(--warning)"><i class="fas fa-envelope-open-text"></i></div><div class="stat-value" id="mgrReplies">-</div><div class="stat-label">Replies sent</div></div>
+          <div class="stat-card"><div class="stat-icon" style="color:var(--danger)"><i class="fas fa-shield-halved"></i></div><div class="stat-value" id="mgrSpam">-</div><div class="stat-label">Spam filtered</div></div>
+        </div>
+        <div class="section-card">
+          <h3 class="section-title">Automation settings</h3>
+          <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;">
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;"><input type="checkbox" id="mgrEnabled"> Manager enabled</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;"><input type="checkbox" id="mgrAutoReply"> Auto-send replies (off = drafts only)</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;"><input type="checkbox" id="mgrAutoPreview"> Auto-build free previews</label>
+            <label style="font-size:13px;">Sweep every <input type="number" id="mgrInterval" min="5" max="180" style="width:64px;padding:6px;border-radius:8px;border:1px solid var(--glass-border);background:var(--surface);color:var(--white);"> minutes</label>
+            <button class="btn-sm btn-primary" onclick="saveManagerConfig()"><i class="fas fa-save"></i> Save</button>
+            <button class="btn-sm btn-secondary" onclick="runManagerSweep()"><i class="fas fa-play"></i> Run sweep now</button>
+            <button class="btn-sm btn-secondary" onclick="requestDigest()"><i class="fas fa-chart-line"></i> Daily digest</button>
+          </div>
+          <p style="font-size:12px;color:var(--ash);margin-top:12px;">Sweeps triage every new inquiry, draft the reply, build a free preview site for real leads and flag spam. Replies are <strong>drafts only</strong> until you enable auto-send — the manager never touches money, prices or orders.</p>
+        </div>
+        <div class="section-card">
+          <h3 class="section-title">Triage queue — reply with one click</h3>
+          <div id="mgrQueue" style="display:grid;gap:14px;"><p class="empty-state">Loading…</p></div>
+        </div>
+        <div class="section-card">
+          <h3 class="section-title">Manager activity log</h3>
+          <div style="overflow-x:auto;"><table><thead><tr><th>When</th><th>Type</th><th>What happened</th></tr></thead><tbody id="mgrLog"></tbody></table></div>
         </div>
       </div>
 
@@ -2476,6 +2509,7 @@
           case 'email-templates': loadEmailTemplates(); break;
           case 'tickets': loadTickets(); break;
           case 'inquiries': loadInquiries(); break;
+          case 'ai-manager': loadAiManager(); break;
           case 'ai-usage': loadAIUsage(); break;
           case 'ai-models': loadAIModels(); break;
           case 'ai-tokens': loadAITokens(); break;
@@ -2513,6 +2547,70 @@
       const map = { pending: 'badge-yellow', confirmed: 'badge-blue', in_progress: 'badge-blue', processing: 'badge-blue', review: 'badge-yellow', completed: 'badge-green', cancelled: 'badge-red' };
       return map[s] || 'badge-gray';
     }
+
+    // ==================== AI MANAGER ====================
+    async function loadAiManager() {
+      const r = await api('/admin/manager');
+      if (!r || !r.success) { showToast('Could not load AI Manager', 'error'); return; }
+      document.getElementById('mgrLeads').textContent = r.counts.leads;
+      document.getElementById('mgrPreviews').textContent = r.counts.previews;
+      document.getElementById('mgrReplies').textContent = r.counts.repliesSent;
+      document.getElementById('mgrSpam').textContent = r.counts.spam;
+      document.getElementById('mgrEnabled').checked = r.config.enabled;
+      document.getElementById('mgrAutoReply').checked = r.config.autoReply;
+      document.getElementById('mgrAutoPreview').checked = r.config.autoPreview;
+      document.getElementById('mgrInterval').value = r.config.intervalMinutes;
+      renderMgrQueue(r.inquiries || []);
+      document.getElementById('mgrLog').innerHTML = (r.log || []).map(e => `
+        <tr><td style="white-space:nowrap;">${escapeHtml(new Date(e.at).toLocaleString())}</td>
+        <td><span class="badge ${e.type === 'error' ? 'badge-red' : e.type === 'preview' ? 'badge-green' : 'badge-blue'}">${escapeHtml(e.type)}</span></td>
+        <td style="max-width:520px;">${escapeHtml(e.text)}</td></tr>`).join('') || '<tr><td colspan="3" class="empty-state">No activity yet</td></tr>';
+    }
+    function renderMgrQueue(items) {
+      const box = document.getElementById('mgrQueue');
+      const pending = items.filter(i => !i.replySent);
+      box.innerHTML = pending.length ? pending.map(i => `
+        <div style="border:1px solid var(--glass-border);border-radius:12px;padding:16px;background:var(--surface);">
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px;">
+            <strong style="color:var(--white);">${escapeHtml(i.company || i.name || 'Inquiry')}</strong>
+            <span class="badge ${i.kind === 'lead' ? 'badge-green' : i.kind === 'spam' ? 'badge-red' : 'badge-blue'}">${escapeHtml(i.kind)}</span>
+            <span class="badge badge-yellow">${escapeHtml(i.priority)}</span>
+            <span class="badge badge-blue">${escapeHtml(i.suggestedPackage || '')}</span>
+            ${i.previewFileId ? `<a href="/api/ai/project-demo/${escapeHtml(i.previewFileId)}" target="_blank" class="btn-sm btn-secondary" style="text-decoration:none;"><i class="fas fa-eye"></i> Preview</a>` : ''}
+          </div>
+          <div style="font-size:12px;color:var(--ash);margin-bottom:8px;">${escapeHtml(i.email || '')} · ${escapeHtml(i.source || '')} · ${escapeHtml(new Date(i.createdAt).toLocaleDateString())}</div>
+          <div style="font-size:13px;color:var(--pearl);background:rgba(255,255,255,0.03);border-radius:8px;padding:10px;margin-bottom:10px;white-space:pre-wrap;">${escapeHtml(i.replyDraft || '')}</div>
+          <div style="font-size:12px;color:var(--ash);margin-bottom:10px;">Customer said: “${escapeHtml((i.message || '').slice(0, 200))}”</div>
+          <button class="btn-sm btn-primary" onclick="sendManagerReply('${escapeHtml(i.id)}')"><i class="fas fa-paper-plane"></i> Send reply</button>
+        </div>`).join('') : '<p class="empty-state">Nothing waiting — every inquiry has been handled. 🎉</p>';
+    }
+    async function saveManagerConfig() {
+      const body = {
+        enabled: document.getElementById('mgrEnabled').checked,
+        autoReply: document.getElementById('mgrAutoReply').checked,
+        autoPreview: document.getElementById('mgrAutoPreview').checked,
+        intervalMinutes: Number(document.getElementById('mgrInterval').value) || 20,
+      };
+      const r = await api('/admin/manager', { method: 'PUT', body: JSON.stringify(body) });
+      if (r?.success) showToast('AI Manager settings saved ✅', 'success'); else showToast('Save failed', 'error');
+    }
+    async function runManagerSweep() {
+      showToast('Running manager sweep…', 'info');
+      const r = await api('/admin/manager/sweep', { method: 'POST' });
+      if (r?.success) { showToast(r.handled ? 'Sweep handled ' + r.handled + ' inquiry(ies) ✅' : 'Sweep done — nothing new', 'success'); loadAiManager(); }
+      else showToast('Sweep failed', 'error');
+    }
+    async function requestDigest() {
+      const r = await api('/admin/manager/digest', { method: 'POST' });
+      if (r?.success) { showToast(r.digest, 'success'); loadAiManager(); }
+      else showToast('Digest failed', 'error');
+    }
+    async function sendManagerReply(id) {
+      const r = await api('/admin/manager/reply/' + encodeURIComponent(id), { method: 'POST' });
+      if (r?.success) { showToast(r.delivered ? 'Reply sent ✅' : 'Reply recorded (email provider not configured — check logs)', r.delivered ? 'success' : 'info'); loadAiManager(); }
+      else showToast(r?.error || 'Send failed', 'error');
+    }
+    window.sendManagerReply = sendManagerReply;
 
     // ==================== MONETIZATION ====================
     async function loadMonetization() {

@@ -5,7 +5,7 @@ const pages = [
   '404.html', 'admin-access.html', 'admin-login.html', 'admin-panel.html', 'ai-health.html',
   'api-keys.html', 'blog.html', 'changelog.html', 'checkout.html', 'client-panel.html',
   'control-panel.html', 'cookies.html', 'dashboard.html', 'deployments.html', 'docs.html',
-  'downloads.html', 'gallery.html', 'game-builder.html', 'game.html', 'index.html',
+  'downloads.html', 'gallery.html', 'game-builder.html', 'game.html', 'hire.html', 'index.html',
   'login.html', 'news.html', 'notifications.html', 'offline.html', 'os.html',
   'otp-login.html', 'playground.html', 'preview.html', 'pricing.html', 'privacy.html',
   'profile.html', 'project-preview.html', 'realtime-game-builder.html', 'register.html', 'reset-password.html',

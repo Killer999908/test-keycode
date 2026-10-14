@@ -8,6 +8,7 @@ module.exports = function WebsiteOrderRoutes(opts) {
     app,
     SUPABASE,
     SUPABASE_ADMIN,
+    STRIPE,
     rand,
     now,
     getSession,
@@ -20,6 +21,17 @@ module.exports = function WebsiteOrderRoutes(opts) {
   const path   = require('path');
   const projectRoot = process.cwd();
   const ORDERS_PATH = path.join(projectRoot, 'data', 'mock-orders.json');
+  const pricing = require('../lib/pricing');
+  const paymentConfig = require('../lib/payment-config');
+  const websiteOrders = require('../lib/website-orders');
+  const coupons = require('../lib/coupons');
+
+  function regionPayload(region) {
+    return {
+      key: region.key, label: region.label, country: region.country,
+      currency: region.currency, symbol: region.symbol, regional: region.regional,
+    };
+  }
 
   function loadOrders() {
     if (!fs.existsSync(ORDERS_PATH)) return [];
@@ -37,17 +49,78 @@ module.exports = function WebsiteOrderRoutes(opts) {
   }
 
   // ---------------------------------------------------------------------------
+  //  Quote  —  GET /api/website-order/quote?service=<slug>&region=<CC>
+  //
+  //  The price the page shows and the price that gets charged both come from
+  //  lib/pricing-regions.json, so they cannot drift apart. Public, because the
+  //  checkout page needs a price before anyone signs in. No amount is ever taken
+  //  from the caller.
+  // ---------------------------------------------------------------------------
+  app.get('/api/website-order/quote', function (req, res) {
+    const region = pricing.resolve(req);
+    const quote = websiteOrders.quote((req.query || {}).service, region);
+    const methods = paymentConfig.methodsFor(region, STRIPE, process.env);
+    const priced = Number.isFinite(Number(quote.amount));
+    res.json({
+      success: true,
+      service: {
+        slug: quote.slug,
+        name: quote.name,
+        matched: quote.matched,
+        requested: quote.requested,
+      },
+      amount: priced ? quote.amount : null,
+      currency: region.currency,
+      symbol: region.symbol,
+      unavailableReason: priced
+        ? null
+        : 'This service is not priced for ' + region.label + ' yet, so it cannot be ordered there.',
+      region: regionPayload(region),
+      methods: {
+        card: { available: priced && methods.card.available, reason: methods.card.reason },
+        upi: { available: priced && methods.upi.available, reason: methods.upi.reason },
+      },
+      anyAvailable: priced && paymentConfig.anyAvailable(methods),
+    });
+  });
+
+  // ---------------------------------------------------------------------------
   //  Create website order  (used by checkout.html)
   //  POST /api/website-order
-  //    { service, serviceName, customerName, customerEmail, customerPhone,
+  //    { service, customerName, customerEmail, customerPhone,
   //      company, project:{name,description,budget,timeline},
-  //      subtotal, discount, discountCode, total, paymentMethod, paymentStatus,
-  //      userId? }
+  //      discountCode, paymentMethod, paymentStatus, userId? }
+  //
+  //  subtotal / discount / total from the request are IGNORED: the catalog is
+  //  the price list, so the amount stored on the order is computed here. Custom
+  //  or negotiated work is scoped over email (the Enterprise plan), not priced
+  //  by the browser.
   // ---------------------------------------------------------------------------
   app.post('/api/website-order', requireAuth, async (req, res) => {
     try {
       const body = req.body || {};
       const user  = req.user;
+
+      const region = pricing.resolve(req);
+      const currency = String(region.currency || 'USD').toUpperCase();
+      const quote = websiteOrders.quote(body.service, region);
+      const subtotal = quote.amount;
+      if (!Number.isFinite(Number(subtotal))) {
+        return res.status(503).json({ error: 'This service is not priced for your region yet, so it cannot be ordered there.' });
+      }
+
+      let discount = 0;
+      if (body.discountCode) {
+        const applied = await coupons.evaluate(
+          { code: body.discountCode, subtotal: subtotal, currency: currency },
+          { supabase: SUPABASE, projectRoot: projectRoot }
+        );
+        if (!applied.valid) {
+          return res.status(409).json({ error: applied.message || 'That coupon is not valid.' });
+        }
+        discount = applied.discount_amount;
+      }
+      const total = Math.max(0, Math.round((subtotal - discount) * 100) / 100);
 
       const order = {
         id:             rand(16),
@@ -57,18 +130,19 @@ module.exports = function WebsiteOrderRoutes(opts) {
         user_name:      body.customerName || user.name || '',
         user_phone:     body.customerPhone || (body.phone) || '',
         company:        body.company || '',
-        service:        body.service || body.id || 'custom',
-        service_name:   body.serviceName || body.name || 'Custom Project',
+        service:        quote.slug,
+        service_name:   quote.name,
+        currency:       currency,
         project: {
           name:        body.project?.name || body.projectName || 'Untitled project',
           description: body.project?.description || body.projectDescription || '',
           budget:      body.project?.budget || body.budget || '',
           timeline:    body.project?.timeline || body.timeline || '',
         },
-        subtotal:        Number(body.subtotal || 0),
-        discount:        Number(body.discount || 0),
+        subtotal:        subtotal,
+        discount:        discount,
         discount_code:   (body.discountCode || '').toUpperCase(),
-        total:           Number(body.total || 0),
+        total:           total,
         payment_method:  body.paymentMethod || 'card',
         payment_status:  (body.paymentStatus || 'pending').toLowerCase(),
         status:          'pending',
@@ -87,7 +161,7 @@ module.exports = function WebsiteOrderRoutes(opts) {
             description:    order.project.description,
             status:         order.status,
             amount:         order.total || order.subtotal,
-            currency:       'usd',
+            currency:       String(order.currency || 'usd').toLowerCase(),
             payment_status: order.payment_status,
             due_date:       null,
             notes:          order.notes,
@@ -162,6 +236,7 @@ module.exports = function WebsiteOrderRoutes(opts) {
       service:        o.service,
       service_name:   o.service_name,
       project:        o.project || {},
+      currency:       o.currency || 'USD',
       subtotal:       Number(o.subtotal || 0),
       discount:       Number(o.discount || 0),
       discount_code:  (o.discount_code || '').toUpperCase(),

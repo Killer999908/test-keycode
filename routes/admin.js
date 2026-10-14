@@ -7,6 +7,8 @@ const ai = require('../lib/ai-provider');
 module.exports = function AdminRoutes(opts) {
   const { app, requireAuth, projectRoot, SUPABASE_ADMIN } = opts;
   const dataDir = path.join(projectRoot, 'data');
+  const upiVerification = require('../lib/upi-verification');
+  const paymentConfig = require('../lib/payment-config');
 
   function requireAdmin(req, res, next) {
     const role = req.user && req.user.role;
@@ -104,6 +106,7 @@ module.exports = function AdminRoutes(opts) {
           newInquiries: inquiries.filter(function (inquiry) { return String(inquiry.status || 'new').toLowerCase() === 'new'; }).length,
           projects: projects.length,
           pendingPayments: pendingPayments,
+          upiAwaitingVerification: upiVerification.openCount(),
         },
         orderStatuses: orders.reduce(function (counts, order) {
           const status = String(order.status || 'pending');
@@ -173,6 +176,66 @@ module.exports = function AdminRoutes(opts) {
     } catch (err) {
       console.error('[admin.inquiries.update]', err);
       res.status(500).json({ error: 'Could not update inquiry.' });
+    }
+  });
+
+  // ---------------------------------------------------------------------------
+  //  Manual UPI verification
+  //
+  //  A UPI QR has no provider callback, so only a human checking the bank
+  //  statement can confirm the money arrived. These endpoints are that check:
+  //  `GET` lists what is waiting, `verify` marks the order paid, `reject`
+  //  records that nothing arrived. Confirmations are written to the audit log.
+  // ---------------------------------------------------------------------------
+  app.get('/api/admin/payments/upi', requireAuth, requireAdmin, function (_req, res) {
+    try {
+      const upi = paymentConfig.upiConfig();
+      const result = upiVerification.list();
+      res.json({
+        open: result.open,
+        settled: result.settled,
+        counts: result.counts,
+        // Which account the QR asked for, so the owner checks the right one.
+        payee: upi.configured ? upi.id : null,
+        payeeUnavailableReason: upi.configured ? null : upi.reason,
+      });
+    } catch (err) {
+      console.error('[admin.upi.list]', err);
+      res.status(500).json({ error: 'Could not load UPI payments waiting to be verified.' });
+    }
+  });
+
+  app.post('/api/admin/payments/upi/:id/verify', requireAuth, requireAdmin, async function (req, res) {
+    try {
+      const result = await upiVerification.verify({
+        paymentId: req.params.id,
+        reference: (req.body || {}).reference,
+        actorId: req.user.userId || req.user.id,
+        actorEmail: req.user.email,
+        ip: req.ip,
+      });
+      if (result.error) return res.status(result.status || 400).json({ error: result.error });
+      res.json({ success: true, payment: result.payment, order: result.order });
+    } catch (err) {
+      console.error('[admin.upi.verify]', err);
+      res.status(500).json({ error: 'Could not verify that UPI payment.' });
+    }
+  });
+
+  app.post('/api/admin/payments/upi/:id/reject', requireAuth, requireAdmin, async function (req, res) {
+    try {
+      const result = await upiVerification.reject({
+        paymentId: req.params.id,
+        reason: (req.body || {}).reason,
+        actorId: req.user.userId || req.user.id,
+        actorEmail: req.user.email,
+        ip: req.ip,
+      });
+      if (result.error) return res.status(result.status || 400).json({ error: result.error });
+      res.json({ success: true, payment: result.payment, order: result.order });
+    } catch (err) {
+      console.error('[admin.upi.reject]', err);
+      res.status(500).json({ error: 'Could not reject that UPI payment.' });
     }
   });
 

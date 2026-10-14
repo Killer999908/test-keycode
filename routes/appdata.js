@@ -1515,13 +1515,16 @@ module.exports = function AppDataRoutes(opts) {
     const region = pricing.resolve(req);
     const items = readJSON('data/services.json', []).map(function (item) {
       const slug = String(item.slug || item._id || '').toLowerCase();
-      const base = Number(item.basePrice);
-      const amount = base > 0 ? pricing.priceFor(slug, region, base) : base;
+      // Keep "quoted on request" plans null: Number(null) is 0, which would
+      // silently turn Enterprise into a free plan on the pricing page.
+      const quoted = item.basePrice === null || item.basePrice === undefined || item.basePrice === '';
+      const base = quoted ? null : Number(item.basePrice);
+      const amount = Number.isFinite(base) && base > 0 ? pricing.priceFor(slug, region, base) : base;
       return Object.assign({}, item, {
         basePrice: amount,
         currency: region.currency,
         symbol: region.symbol,
-        priceLabel: amount > 0 ? region.symbol + amount : (base === 0 ? 'Free' : 'Custom'),
+        priceLabel: amount === null ? 'Custom' : (amount > 0 ? region.symbol + amount : 'Free'),
       });
     });
     return {

@@ -53,7 +53,9 @@
       var selected = null;
       var isReturning = params.get('checkout') === 'success' && Boolean(params.get('session_id'));
       button.disabled = true;
-      fetch('/api/services').then(function (response) {
+      // ?region=IN forwards through so regional pricing can be previewed here.
+      var regionParam = params.get('region');
+      fetch('/api/services' + (regionParam ? '?region=' + encodeURIComponent(regionParam) : '')).then(function (response) {
         if (!response.ok) throw new Error('Could not load the current plan catalog.');
         return response.json();
       }).then(function (result) {

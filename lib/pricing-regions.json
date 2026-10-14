@@ -4,26 +4,34 @@
     "exchange rate: each group states the price you actually want to charge there.",
     "Resolution order is region query param -> country header (CF-IPCountry / X-Country) ->",
     "Accept-Language region subtag -> default. Edit freely; every entry is a business decision.",
+    "\"prices\" are the subscription plans; \"websiteOrders\" are the one-off project services",
+    "checkout.html sells (slugs live in lib/website-orders.js). A websiteOrder slug that is",
+    "missing from a group makes that service unavailable there rather than quietly charging",
+    "the default group's number in the wrong currency.",
     "The Free plan is always 0 and comes from data/services.json."
   ],
   "default": {
     "label": "Global",
     "currency": "USD",
     "symbol": "$",
-    "prices": { "starter": 19, "professional": 49 }
+    "prices": { "starter": 19, "professional": 49 },
+    "websiteOrders": { "basic-website": 299, "professional-website": 499, "online-store": 999 }
   },
   "groups": {
     "IN": {
       "label": "India",
       "currency": "INR",
       "symbol": "\u20b9",
-      "prices": { "starter": 499, "professional": 1499 }
+      "prices": { "starter": 499, "professional": 1499 },
+      "websiteOrders": { "basic-website": 7999, "professional-website": 12999, "online-store": 24999 },
+      "countries": ["IN"]
     },
     "LOW": {
       "label": "Regional pricing",
       "currency": "USD",
       "symbol": "$",
       "prices": { "starter": 9, "professional": 29 },
+      "websiteOrders": { "basic-website": 149, "professional-website": 249, "online-store": 499 },
       "countries": ["NG", "KE", "GH", "TZ", "UG", "ZM", "ZW", "MW", "RW", "PK", "BD", "NP", "LK", "VN", "PH", "ID", "EG", "BR"]
     }
   }

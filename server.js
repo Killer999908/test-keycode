@@ -356,6 +356,16 @@ require('./routes/business-agent')({
 });
 
 // ===========================================================================
+//  AI MANAGER  (autonomous business manager: triage leads, draft replies,
+//  build free previews, daily digest — the owner only approves and gets paid)
+// ===========================================================================
+const AiManager = require('./routes/ai-manager')({
+  app,
+  requireAuth,
+  projectRoot,
+});
+
+// ===========================================================================
 //  APP DATA + LOCAL AI ENGINE  (dashboard /api/user/*, builder /api/ai/*)
 // ===========================================================================
 const AppData = require('./routes/appdata')({
@@ -387,6 +397,7 @@ const WebsiteOrders = require('./routes/website-order')({
   app,
   SUPABASE,
   SUPABASE_ADMIN,
+  STRIPE,
   rand,
   now,
   getSession,
@@ -475,11 +486,46 @@ async function boot() {
   // graceful shutdown
   const shutdown = (signal) => {
     console.log(`[keycode] ${signal} — shutting down`);
+    clearInterval(managerTimer);
     server.close(() => process.exit(0));
     setTimeout(() => process.exit(1), 5000).unref();
   };
   process.on('SIGTERM', () => shutdown('SIGTERM'));
   process.on('SIGINT',  () => shutdown('SIGINT'));
+
+  // -----------------------------------------------------------------
+  //  AI MANAGER background runner — the site runs itself while the
+  //  owner studies: periodic lead triage + daily digest. The config
+  //  (enabled / interval) lives in data/ai-manager.json and is editable
+  //  from the admin panel at any time without a restart.
+  // -----------------------------------------------------------------
+  let managerTimer = null;
+  function scheduleManager() {
+    const cfg = AiManager.store.readState().config;
+    const ms = Math.min(180, Math.max(5, Number(cfg.intervalMinutes) || 20)) * 60 * 1000;
+    managerTimer = setTimeout(async function tick() {
+      try {
+        if (AiManager.store.readState().config.enabled) {
+          const r = await AiManager.store.sweep('auto');
+          if (r && r.handled) console.log('[ai-manager] auto sweep handled ' + r.handled + ' inquiry(ies)');
+          const last = AiManager.store.readState().log.find(function (e) { return e.type === 'digest'; });
+          if (!last || Date.now() - new Date(last.at).getTime() > 20 * 3600 * 1000) {
+            console.log('[ai-manager] ' + await AiManager.store.digest());
+          }
+        }
+      } catch (err) {
+        console.warn('[ai-manager] sweep failed:', err && err.message);
+      }
+      scheduleManager();
+    }, ms);
+    managerTimer.unref();
+  }
+  scheduleManager();
+  if (!process.env.NO_FIRST_SWEEP) {
+    AiManager.store.sweep('boot').catch(function (err) {
+      console.warn('[ai-manager] boot sweep failed:', err && err.message);
+    });
+  }
 }
 
 // Export the app for tests (jest + supertest); only listen when run directly.

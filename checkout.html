@@ -562,29 +562,42 @@
   <script>
     let orderData = JSON.parse(sessionStorage.getItem('checkoutOrder') || '{}');
     let appliedCoupon = null;
-    let total = orderData.price || 499;
+    let total = 0;
+    let quote = null;
+    let symbol = '$';
+    let currency = 'USD';
 
-    // URL params win: /checkout.html?plan=Starter&price=49&service=starter
-    // This is how pricing cards, quotes and builder CTAs hand off context.
+    const regionParam = new URLSearchParams(location.search).get('region');
+    const regionQuery = regionParam ? '?region=' + encodeURIComponent(regionParam) : '';
+    function withRegion(url) {
+      return regionParam ? url + '?region=' + encodeURIComponent(regionParam) : url;
+    }
+
+    // URL params: /checkout.html?service=online-store[&region=IN]
+    // The service picks a row in the website-order price list. The PRICE is never
+    // taken from the URL — the server quotes it, so a link cannot set the amount
+    // that gets charged.
     (function readParams() {
       try {
-        const q = new URLSearchParams(location.search);
-        const plan = q.get('plan');
-        const price = parseFloat(q.get('price'));
-        const service = q.get('service');
-        if (plan) orderData.name = plan;
-        if (!isNaN(price) && price >= 0) orderData.price = price;
+        const service = new URLSearchParams(location.search).get('service');
         if (service) orderData.id = service;
-        if (plan || !isNaN(price)) sessionStorage.setItem('checkoutOrder', JSON.stringify(orderData));
       } catch (e) {}
     })();
 
-    if (orderData.name) {
-      document.getElementById('selectedServiceName').textContent = orderData.name;
-      document.getElementById('selectedServicePrice').textContent = '$' + orderData.price;
-      document.getElementById('subtotal').textContent = '$' + orderData.price;
-      document.getElementById('totalAmount').textContent = '$' + orderData.price;
-      total = orderData.price;
+    function money(amount) {
+      const n = Number(amount);
+      return symbol + (Number.isInteger(n) ? n : n.toFixed(2));
+    }
+
+    function renderTotals() {
+      const subtotal = quote ? Number(quote.amount) : 0;
+      const discount = appliedCoupon ? Number(appliedCoupon.discount) : 0;
+      total = Math.max(0, Math.round((subtotal - discount) * 100) / 100);
+      document.getElementById('selectedServicePrice').textContent = money(subtotal);
+      document.getElementById('subtotal').textContent = money(subtotal);
+      document.getElementById('totalAmount').textContent = money(total);
+      document.getElementById('discountRow').style.display = discount > 0 ? 'flex' : 'none';
+      document.getElementById('discountAmount').textContent = '-' + money(discount);
     }
 
     // Minimal toast used when a payment gateway needs user attention
@@ -614,33 +627,30 @@
         return;
       }
 
-      // Validate against the backend so admin-created coupons,
-      // usage limits, expiry and minimums are all honored.
-      const baseTotal = Number(orderData.price || 499);
+      // Validate against the backend so admin-created coupons, usage limits,
+      // expiry and minimums are all honored — and so the discount the page shows
+      // is the discount the server will apply to the charge.
+      if (!quote || !Number.isFinite(Number(quote.amount))) {
+        result.innerHTML = '<span style="color:var(--danger);">Wait for the price to load, then try again</span>';
+        return;
+      }
       try {
         const res = await fetch('/api/coupons/validate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code, subtotal: baseTotal })
+          body: JSON.stringify({ code, subtotal: Number(quote.amount), currency: currency })
         });
         const d = await res.json();
 
         if (!d.valid) {
           appliedCoupon = null;
-          total = baseTotal;
-          document.getElementById('discountRow').style.display = 'none';
-          document.getElementById('totalAmount').textContent = '$' + baseTotal.toFixed(2);
+          renderTotals();
           result.innerHTML = '<span style="color:var(--danger);">' + (d.message || 'Invalid coupon code') + '</span>';
           return;
         }
 
-        const discount = Number(d.discount_amount || 0);
-        total = Math.max(0, baseTotal - discount);
-        appliedCoupon = { code: d.code, discount };
-
-        document.getElementById('discountRow').style.display = 'flex';
-        document.getElementById('discountAmount').textContent = '-$' + discount.toFixed(2);
-        document.getElementById('totalAmount').textContent = '$' + total.toFixed(2);
+        appliedCoupon = { code: d.code, discount: Number(d.discount_amount || 0) };
+        renderTotals();
         result.innerHTML = '<span class="coupon-applied"><i class="fas fa-check"></i> ' + (d.message || 'Coupon applied') + '</span>';
         result.querySelector('.coupon-applied').innerHTML += '<span class="discount-code">' + d.code + '</span>';
       } catch (e) {
@@ -664,37 +674,53 @@
       radio.addEventListener('change', syncMethodUI);
     });
 
-    // ---- Which rails can actually settle money right now ----
-    // Asked of the server, so the page never offers a method that would fail or
-    // pay the wrong account (for example a placeholder UPI ID).
-    async function loadPaymentConfig() {
+    // ---- Price and payment rails, both answered by the server ----
+    // The quote endpoint returns the price for this visitor's region AND which
+    // rails can settle it, so the page never shows a price it cannot charge or
+    // offers a method that would fail or pay the wrong account (a placeholder
+    // UPI ID, for instance).
+    async function loadQuote() {
       const notice = document.getElementById('payNotice');
       const cardRadio = document.querySelector('input[name="paymentMethod"][value="card"]');
       const upiRadio = document.querySelector('input[name="paymentMethod"][value="upi_qr"]');
-      let config = null;
       try {
-        const res = await fetch('/api/payment/config?currency=usd');
-        config = await res.json();
-      } catch (e) { config = null; }
-      if (!config || !config.methods) {
+        const query = new URLSearchParams();
+        if (regionParam) query.set('region', regionParam);
+        if (orderData.id) query.set('service', orderData.id);
+        const res = await fetch('/api/website-order/quote' + (query.toString() ? '?' + query.toString() : ''));
+        quote = await res.json();
+      } catch (e) { quote = null; }
+      if (!quote || !quote.service || !Number.isFinite(Number(quote.amount))) {
         notice.style.display = 'block';
-        notice.textContent = 'Could not confirm which payment methods are available. Refresh this page before paying.';
+        notice.textContent = (quote && quote.unavailableReason) ||
+          'Could not load the price for this order. Refresh the page before paying.';
+        document.getElementById('submitBtn').disabled = true;
         return;
       }
+
+      symbol = quote.symbol || '$';
+      currency = String(quote.currency || 'USD').toUpperCase();
+      document.getElementById('selectedServiceName').textContent = quote.service.name;
+      renderTotals();
+
       const reasons = [];
-      if (!config.methods.card.available) {
+      if (quote.region && quote.region.regional) {
+        reasons.push('Showing ' + quote.region.label + ' pricing in ' + currency +
+          '. You are charged exactly ' + money(quote.amount) + '.');
+      }
+      if (!quote.methods.card.available) {
         cardRadio.disabled = true;
         document.getElementById('optCard').style.opacity = '.55';
-        reasons.push('Card: ' + (config.methods.card.reason || 'unavailable'));
+        reasons.push('Card: ' + (quote.methods.card.reason || 'unavailable'));
       }
-      if (!config.methods.upi.available) {
+      if (!quote.methods.upi.available) {
         upiRadio.disabled = true;
         document.getElementById('optUpi').style.opacity = '.55';
-        reasons.push('UPI: ' + (config.methods.upi.reason || 'unavailable'));
+        reasons.push('UPI: ' + (quote.methods.upi.reason || 'unavailable'));
       }
       if (cardRadio.disabled && !upiRadio.disabled) { upiRadio.checked = true; }
       syncMethodUI();
-      if (!config.anyAvailable) {
+      if (!quote.anyAvailable) {
         const btn = document.getElementById('submitBtn');
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-lock"></i> Payment method unavailable';
@@ -704,7 +730,7 @@
         notice.textContent = reasons.join(' ');
       }
     }
-    loadPaymentConfig();
+    loadQuote();
 
     document.getElementById('cardNumber').addEventListener('input', (e) => {
       let value = e.target.value.replace(/\s/g, '').replace(/\D/g, '');
@@ -731,9 +757,12 @@
 
       try {
         const token = localStorage.getItem('token');
+        if (!quote || !quote.service) throw new Error('The price for this order has not loaded yet. Refresh the page and try again.');
+        // No prices are sent: the server prices the order from the catalog and
+        // the coupon below. The browser cannot set what an order costs.
         const payload = {
-          service: orderData.id || 'custom',
-          serviceName: orderData.name || 'Custom Project',
+          service: quote.service.slug,
+          currency: currency,
           customerName: document.getElementById('name').value,
           customerEmail: document.getElementById('email').value,
           customerPhone: document.getElementById('phone').value,
@@ -744,10 +773,7 @@
             budget: document.getElementById('budget').value,
             timeline: document.getElementById('timeline').value
           },
-          subtotal: orderData.price,
-          discount: appliedCoupon?.discount || 0,
           discountCode: appliedCoupon?.code || '',
-          total: total,
           paymentMethod: document.querySelector('input[name="paymentMethod"]:checked').value,
           paymentStatus: 'pending'
         };
@@ -756,7 +782,7 @@
           payload.userId = JSON.parse(atob(token.split('.')[1])).userId;
         }
 
-        const response = await fetch('/api/website-order', {
+        const response = await fetch(withRegion('/api/website-order'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': 'Bearer ' + token } : {}) },
           body: JSON.stringify(payload)
@@ -772,12 +798,20 @@
         // ---- Payment step (only for real money orders) ----
         if (total > 0 && orderId) {
           const authHeaders = token ? { 'Authorization': 'Bearer ' + token } : {};
-          const piRes = await fetch('/api/payment/create-intent', {
+          const piRes = await fetch(withRegion('/api/payment/create-intent'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', ...authHeaders },
-            // Website orders are billed in USD, so both the rail check and the
-            // charge use USD. The UPI rail exists only for orders priced in INR.
-            body: JSON.stringify({ orderId, amount: total, type: 'website_order', method, currency: 'usd' })
+            // The order's currency and service come from the price list; the
+            // server re-quotes them and refuses a figure that does not match.
+            body: JSON.stringify({
+              orderId,
+              amount: total,
+              type: 'website_order',
+              method,
+              currency: currency,
+              service: quote.service.slug,
+              discountCode: appliedCoupon?.code || ''
+            })
           });
           const pi = await piRes.json();
 

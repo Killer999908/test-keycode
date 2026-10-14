@@ -1079,6 +1079,7 @@ a { text-decoration: none; color: inherit; }
           <li><a href="/ai-builder.html">AI Studio</a></li>
           <li><a href="/gallery.html">Gallery</a></li>
           <li><a href="/pricing.html">Pricing</a></li>
+          <li><a href="/hire.html">Hire us</a></li>
           <li><a href="/docs.html">Documentation</a></li>
           <li><a href="/status.html">Status</a></li>
         </ul>
@@ -1310,7 +1311,10 @@ function toggleFaq(btn) {
 // ─── FETCH PRICING DATA ───
 async function loadPricing() {
   try {
-    var res = await fetch('/api/services');
+    // ?region=IN forwards through so the regional list can be previewed (and
+    // verified) without a country-lookup header.
+    var regionParam = new URLSearchParams(location.search).get('region');
+    var res = await fetch('/api/services' + (regionParam ? '?region=' + encodeURIComponent(regionParam) : ''));
     if (!res.ok) throw new Error('API error');
     var data = await res.json();
     services = Array.isArray(data) ? data : (data.services || []);

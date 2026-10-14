@@ -156,6 +156,7 @@
       '<a href="/" class="kc-nav-logo">KEYCODE</a>',
       '<div class="kc-nav-links">',
       '<a href="/pricing.html">Pricing</a>',
+      '<a href="/hire.html">Hire us</a>',
       '<a href="/shop.html">Shop</a>',
       '<a href="/ai-builder.html">AI</a>',
       '<a href="/os.html">OS</a>',
@@ -180,6 +181,7 @@
     menu.className = 'kc-mobile-menu';
     menu.innerHTML = [
       '<a href="/pricing.html">Pricing</a>',
+      '<a href="/hire.html">Hire us</a>',
       '<a href="/shop.html">Shop</a>',
       '<a href="/ai-builder.html">AI</a>',
       '<a href="/os.html">Agent OS</a>',

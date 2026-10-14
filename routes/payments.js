@@ -27,6 +27,8 @@ module.exports = function PaymentsRoutes(opts) {
 
   const paymentConfig = require('../lib/payment-config');
   const pricing = require('../lib/pricing');
+  const websiteOrders = require('../lib/website-orders');
+  const coupons = require('../lib/coupons');
 
   function regionPayload(req) {
     const region = pricing.resolve(req);
@@ -87,7 +89,7 @@ module.exports = function PaymentsRoutes(opts) {
     try {
       const body = req.body || {};
       const user = req.user;
-      const amount = Math.max(0, Number(body.amount || 0));
+      let amount = Math.max(0, Number(body.amount || 0));
       const method = String(body.method || 'auto').toLowerCase();
       const orderId = body.orderId || null;
 
@@ -131,6 +133,33 @@ module.exports = function PaymentsRoutes(opts) {
 
       if (method !== 'card' && method !== 'auto' && method !== 'upi_qr') {
         return res.status(400).json({ error: 'Unsupported payment method.' });
+      }
+
+      // ---- Website orders are priced by the server, not by the caller ----
+      // checkout.html sends the service slug; the amount and any coupon discount
+      // come from lib/pricing-regions.json. Trusting the browser's number would
+      // let someone pay ₹1 for a ₹12,999 order and have it recorded as paid.
+      if (String(body.type || '') === 'website_order') {
+        const quote = websiteOrders.quote(body.service, region);
+        if (!Number.isFinite(Number(quote.amount))) {
+          return res.status(503).json({ error: 'This service is not priced for your region yet.' });
+        }
+        let expected = quote.amount;
+        if (body.discountCode) {
+          const applied = await coupons.evaluate(
+            { code: body.discountCode, subtotal: expected, currency: currency },
+            { supabase: SUPABASE, projectRoot: projectRoot }
+          );
+          if (!applied.valid) {
+            return res.status(409).json({ error: applied.message || 'That coupon is not valid.' });
+          }
+          expected = Math.max(0, Math.round((expected - applied.discount_amount) * 100) / 100);
+        }
+        if (currency !== String(quote.currency || '').toUpperCase() || Math.abs(amount - expected) > 0.005) {
+          return res.status(409).json({ error: 'The price changed. Reload the checkout page and try again.' });
+        }
+        // Bill the server's figure, so what is charged is exactly what was quoted.
+        amount = expected;
       }
 
       // ---- Card (real Stripe) ----
@@ -179,7 +208,6 @@ module.exports = function PaymentsRoutes(opts) {
           message:         methods.card.reason || 'Card payments are not configured. Nothing was charged.',
           orderId:         orderId,
           payment,
-          clientSecret:    'sim_' + rand(16) + '_secret',
         });
       }
 
@@ -233,11 +261,11 @@ module.exports = function PaymentsRoutes(opts) {
   //  Confirm payment
   //
   //  Request body:
-  //    { orderId, amount?, gateway, paymentIntentId?, razorpay_*?, upi_qr? }
+  //    { orderId, gateway, paymentIntentId?, upiReference? }
   //
-  //  For simulated Stripe we accept the fake clientSecret generated above and
-  //  mark the payment succeeded. For real Stripe the webhook is the source of
-  //  truth; this endpoint is a convenience for the client-side confirm call.
+  //  Confirming is the second half of a create-intent: without the pending
+  //  payment it recorded, there is nothing to confirm. For real Stripe the
+  //  webhook stays the source of truth; this endpoint is the client-side check.
   // ---------------------------------------------------------------------------
   // ---------------------------------------------------------------------------
   //  Confirm payment — dispatches to per-gateway confirm functions below
@@ -257,29 +285,46 @@ module.exports = function PaymentsRoutes(opts) {
   }
 
   async function confirmStripe(payment, { paymentIntentId }, res) {
-    if (STRIPE) {
-      try {
-        const intent = await STRIPE.paymentIntents.retrieve(paymentIntentId);
-        if (intent.status === 'succeeded') {
-          return markPayment(payment, { provider_tx_id: intent.id, status: 'completed', metadata: { ...payment.metadata, method: 'card' } }, res, 'Payment confirmed via Stripe.');
-        }
-        if (intent.status === 'requires_payment_method' || intent.status === 'canceled') {
-          await markPayment(payment, { status: 'failed' }, res, '');
-          return res.status(400).json({ success: false, error: 'Payment not successful.', payment });
-        }
-        // Still processing — the webhook will reconcile shortly.
-        return markPayment(payment, { status: 'pending' }, res, 'Payment is processing; confirmation email will follow.');
-      } catch (_) {
-        // Can't reach Stripe — treat as simulated for the demo flow.
-        return markPayment(payment, { status: 'completed', provider_tx_id: paymentIntentId || 'manual-' + rand(8) }, res, 'Payment recorded (Stripe unreachable — marked complete for demo).');
-      }
+    if (!STRIPE) {
+      // Card payments are off, so a card payment cannot have been made. Marking
+      // it completed here would hand out a paid order for free.
+      return res.status(503).json({
+        success: false,
+        error: 'Card payments are not configured, so this payment cannot be confirmed.',
+        payment,
+      });
     }
-    // Stripe library not present — simulated confirm
-    return markPayment(payment, { status: 'completed', provider_tx_id: paymentIntentId || 'sim-' + rand(8), metadata: { ...payment.metadata, method: 'card' } }, res, 'Payment recorded (simulated).');
+    try {
+      const intent = await STRIPE.paymentIntents.retrieve(paymentIntentId);
+      if (intent.status === 'succeeded') {
+        return markPayment(payment, { provider_tx_id: intent.id, status: 'completed', metadata: { ...payment.metadata, method: 'card' } }, res, 'Payment confirmed via Stripe.');
+      }
+      if (intent.status === 'requires_payment_method' || intent.status === 'canceled') {
+        await markPayment(payment, { status: 'failed' }, res, '');
+        return res.status(400).json({ success: false, error: 'Payment not successful.', payment });
+      }
+      // Still processing — the webhook will reconcile shortly.
+      return markPayment(payment, { status: 'pending' }, res, 'Payment is processing; confirmation email will follow.');
+    } catch (err) {
+      // Never claim a charge we could not verify with Stripe.
+      console.error('[payment.confirm] stripe lookup failed:', err && err.message);
+      return res.status(502).json({
+        success: false,
+        error: 'Could not verify this card payment with Stripe. Your payment status is unchanged.',
+        payment,
+      });
+    }
   }
 
+  // A plain UPI QR has no provider callback, so this records what the payer says
+  // happened. The transfer still has to be checked before the order moves on.
   function confirmUPI(payment, body, res) {
-    return markPayment(payment, { status: 'completed', provider_tx_id: body.razorpay_order_id || 'upi-' + rand(8) }, res, 'UPI payment recorded. Funds will reflect shortly.');
+    return markPayment(
+      payment,
+      { status: 'completed', provider_tx_id: body.upiReference || 'upi-' + rand(8) },
+      res,
+      'UPI payment reported and recorded. It is verified once the transfer reaches the account.'
+    );
   }
 
   app.post('/api/payment/confirm', requireAuth, async (req, res) => {

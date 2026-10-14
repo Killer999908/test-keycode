@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Hire us — your website, live in 48 hours | KEYCODE Studio</title>
+  <meta name="description" content="We build complete, fast, mobile-friendly business websites in 48 hours. Flat price, free preview before you pay anything, delivered with a contact form that actually works.">
+  <meta name="keywords" content="hire website developer, business website India, affordable website design, website in 48 hours">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="/hire">
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="/hire">
+  <meta property="og:title" content="Hire us — your website, live in 48 hours">
+  <meta property="og:description" content="A complete business website in 48 hours. Flat price, free preview, pay only when you love it.">
+
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0a0a0a">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="alternate icon" type="image/png" href="/icon-192.png">
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer">
+
+  <style>
+:root {
+  --bg: #0a0a0a;
+  --card: #121212;
+  --card-hover: #1a1a1a;
+  --primary: #ffffff;
+  --text: #e5e5e5;
+  --ash: #a3a3a3;
+  --border: rgba(255,255,255,0.06);
+  --white: #ffffff;
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; background: var(--bg); }
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: inherit; text-decoration: none; }
+
+.text-gradient {
+  background: linear-gradient(135deg, #ffffff 30%, #8f8f8f 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ─── NAV ─── */
+.nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1200px;
+  margin: 16px auto 0;
+  padding: 12px 20px;
+  background: rgba(10,10,10,0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: 2px;
+  color: var(--white);
+}
+
+.nav-links { display: flex; align-items: center; gap: 4px; list-style: none; }
+.nav-links a {
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ash);
+  transition: color 0.2s, background 0.2s;
+}
+.nav-links a:hover { color: var(--white); background: rgba(255,255,255,0.06); }
+.nav-cta {
+  background: var(--primary);
+  color: #0a0a0a !important;
+  font-weight: 700;
+  border-radius: 100px !important;
+}
+.nav-cta:hover { background: #e5e5e5 !important; }
+.nav-toggle { display: none; background: none; border: none; color: var(--ash); font-size: 20px; padding: 8px; cursor: pointer; }
+
+@media (max-width: 860px) {
+  .nav-toggle { display: block; }
+  .nav-links {
+    display: none;
+    position: absolute;
+    top: 64px; left: 0; right: 0;
+    flex-direction: column;
+    align-items: stretch;
+    background: rgba(10,10,10,0.97);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 12px;
+  }
+  .nav-links.open { display: flex; }
+}
+
+/* ─── HERO ─── */
+.hero {
+  padding: 180px 24px 70px;
+  text-align: center;
+  max-width: 860px;
+  margin: 0 auto;
+}
+.hero h1 {
+  font-size: clamp(36px, 6vw, 62px);
+  font-weight: 800;
+  letter-spacing: -2px;
+  line-height: 1.08;
+  color: var(--white);
+  margin-bottom: 20px;
+}
+.hero p {
+  font-size: 18px;
+  color: var(--ash);
+  max-width: 620px;
+  margin: 0 auto 36px;
+}
+.hero-badges {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  font-size: 13px;
+  color: var(--ash);
+}
+.hero-badges span {
+  border: 1px solid var(--border);
+  background: var(--card);
+  border-radius: 100px;
+  padding: 8px 16px;
+}
+
+/* ─── SECTIONS ─── */
+section { padding: 70px 24px; }
+.section-title {
+  text-align: center;
+  font-size: clamp(28px, 4vw, 40px);
+  font-weight: 800;
+  letter-spacing: -1px;
+  color: var(--white);
+  margin-bottom: 48px;
+}
+
+/* ─── PACKAGES ─── */
+.pack-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.pack {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 36px 28px;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.pack:hover {
+  background: var(--card-hover);
+  border-color: rgba(255,255,255,0.15);
+  transform: translateY(-4px);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.pack.featured { border-color: rgba(255,255,255,0.25); position: relative; }
+.pack-badge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--primary);
+  color: #0a0a0a;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 100px;
+  padding: 4px 14px;
+  white-space: nowrap;
+}
+.pack-cat {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--ash);
+  margin-bottom: 10px;
+}
+.pack-name { font-size: 22px; font-weight: 700; color: var(--white); margin-bottom: 8px; }
+.pack-desc { font-size: 14px; color: var(--ash); margin-bottom: 24px; }
+.pack-price { margin-bottom: 24px; }
+.pack-price .amount { font-size: 42px; font-weight: 800; color: var(--white); letter-spacing: -1px; }
+.pack-price .cur { font-size: 20px; font-weight: 600; color: var(--white); vertical-align: top; }
+.pack-price .per { font-size: 14px; color: var(--ash); }
+.pack-features { list-style: none; margin-bottom: 28px; flex: 1; }
+.pack-features li {
+  display: flex;
+  gap: 10px;
+  padding: 6px 0;
+  font-size: 14px;
+  color: var(--text);
+  align-items: flex-start;
+}
+.pack-features i { color: var(--white); font-size: 12px; margin-top: 5px; }
+.pack-features i.off { color: rgba(255,255,255,0.2); }
+.pack-cta {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: transparent;
+  color: var(--white);
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.25s;
+  font-family: inherit;
+}
+.pack-cta:hover { background: rgba(255,255,255,0.06); }
+.pack-cta.primary { background: var(--primary); color: #0a0a0a; border-color: var(--primary); }
+.pack-cta.primary:hover { background: #e5e5e5; transform: translateY(-2px); }
+
+/* ─── PROCESS ─── */
+.steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 24px;
+  max-width: 1100px;
+  margin: 0 auto;
+  counter-reset: step;
+}
+.step { text-align: center; padding: 12px; }
+.step .num {
+  width: 48px; height: 48px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: var(--white);
+}
+.step h3 { font-size: 17px; font-weight: 700; color: var(--white); margin-bottom: 8px; }
+.step p { font-size: 14px; color: var(--ash); }
+
+/* ─── FORM ─── */
+.order-wrap {
+  max-width: 640px;
+  margin: 0 auto;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 40px 32px;
+}
+.field { margin-bottom: 18px; }
+.field label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ash);
+  margin-bottom: 6px;
+}
+.field input, .field textarea, .field select {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.04);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 15px;
+}
+.field textarea { resize: vertical; min-height: 90px; }
+.field input:focus, .field textarea:focus, .field select:focus {
+  outline: none;
+  border-color: rgba(255,255,255,0.35);
+}
+.order-note { font-size: 13px; color: var(--ash); margin: 4px 0 20px; }
+.submit {
+  width: 100%;
+  padding: 15px;
+  border-radius: 12px;
+  border: none;
+  background: var(--primary);
+  color: #0a0a0a;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.25s;
+}
+.submit:hover { transform: translateY(-2px); background: #e5e5e5; }
+.submit:disabled { opacity: 0.6; cursor: wait; transform: none; }
+#orderMsg { display: none; margin-top: 16px; padding: 12px 16px; border-radius: 10px; font-size: 14px; }
+#orderMsg.ok { display: block; background: rgba(255,255,255,0.08); color: var(--white); }
+#orderMsg.err { display: block; background: rgba(255,80,80,0.12); color: #ff9b9b; }
+
+/* ─── FAQ ─── */
+.faq { max-width: 720px; margin: 0 auto; }
+.faq-item { border-bottom: 1px solid var(--border); }
+.faq-q {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 4px;
+  background: none;
+  border: none;
+  color: var(--white);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+}
+.faq-a { display: none; padding: 0 4px 20px; font-size: 14px; color: var(--ash); }
+.faq-item.open .faq-a { display: block; }
+
+/* ─── FOOTER ─── */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 40px 24px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--ash);
+}
+footer a { color: var(--ash); }
+footer a:hover { color: var(--white); }
+
+@media (max-width: 640px) {
+  .hero { padding-top: 140px; }
+  section { padding: 50px 20px; }
+  .order-wrap { padding: 28px 20px; }
+}
+  </style>
+</head>
+<body>
+
+  <nav class="nav">
+    <a class="nav-logo" href="/">KEYCODE</a>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Menu"><i class="fas fa-bars"></i></button>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="/ai-builder.html">AI Studio</a></li>
+      <li><a href="/gallery.html">Gallery</a></li>
+      <li><a href="/pricing.html">Pricing</a></li>
+      <li><a href="/hire.html" class="nav-cta">Start now</a></li>
+    </ul>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <h1>Your business website,<br><span class="text-gradient">live in 48 hours</span></h1>
+    <p>Tell us about your shop, clinic, tuition centre or company. We design, build and publish a complete, fast, mobile-friendly website with a working contact form — you preview it free before paying anything.</p>
+    <div class="hero-badges">
+      <span>✓ Free preview first</span>
+      <span>✓ One flat price</span>
+      <span>✓ Delivered in 48 hours</span>
+      <span>✓ UPI accepted</span>
+    </div>
+  </section>
+
+  <!-- PACKAGES -->
+  <section id="packages">
+    <h2 class="section-title">Pick a <span class="text-gradient">package</span></h2>
+    <div class="pack-grid">
+      <div class="pack">
+        <div class="pack-cat">Starter</div>
+        <div class="pack-name">One-page site</div>
+        <div class="pack-desc">Everything a small business needs to be found online.</div>
+        <div class="pack-price"><span class="cur">₹</span><span class="amount">4,999</span> <span class="per">one-time</span></div>
+        <ul class="pack-features">
+          <li><i class="fas fa-check"></i> One polished page: hero, services, about, contact</li>
+          <li><i class="fas fa-check"></i> Working enquiry form to your email</li>
+          <li><i class="fas fa-check"></i> Mobile &amp; WhatsApp friendly</li>
+          <li><i class="fas fa-check"></i> Your own .com domain connected</li>
+          <li><i class="fas fa-check off"></i> Blog or gallery</li>
+        </ul>
+        <button class="pack-cta primary" onclick="pick('One-page site — ₹4,999')">Get started</button>
+      </div>
+
+      <div class="pack featured">
+        <span class="pack-badge">Most popular</span>
+        <div class="pack-cat">Business</div>
+        <div class="pack-name">Full website</div>
+        <div class="pack-desc">A complete multi-page site that grows with your business.</div>
+        <div class="pack-price"><span class="cur">₹</span><span class="amount">9,999</span> <span class="per">one-time</span></div>
+        <ul class="pack-features">
+          <li><i class="fas fa-check"></i> Up to 5 pages: home, services, gallery, about, contact</li>
+          <li><i class="fas fa-check"></i> Working enquiry form to your email</li>
+          <li><i class="fas fa-check"></i> Google Maps &amp; WhatsApp button</li>
+          <li><i class="fas fa-check"></i> Domain connected + 1 month free changes</li>
+          <li><i class="fas fa-check"></i> Photo gallery</li>
+        </ul>
+        <button class="pack-cta primary" onclick="pick('Full website — ₹9,999')">Get started</button>
+      </div>
+
+      <div class="pack">
+        <div class="pack-cat">Custom</div>
+        <div class="pack-name">Web app / custom</div>
+        <div class="pack-desc">Booking, payments, dashboards — describe it and get a quote.</div>
+        <div class="pack-price"><span class="cur">₹</span><span class="amount">Ask</span></div>
+        <ul class="pack-features">
+          <li><i class="fas fa-check"></i> Logins, payments, admin panels</li>
+          <li><i class="fas fa-check"></i> Built on the same engine as this site</li>
+          <li><i class="fas fa-check"></i> Quoted after a free 10-minute call</li>
+          <li><i class="fas fa-check"></i> Monthly care plan available</li>
+        </ul>
+        <button class="pack-cta primary" onclick="pick('Custom project')">Get a quote</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROCESS -->
+  <section id="process">
+    <h2 class="section-title">How it <span class="text-gradient">works</span></h2>
+    <div class="steps">
+      <div class="step"><div class="num">1</div><h3>Send the form</h3><p>Two minutes: your business, what you sell, any photos.</p></div>
+      <div class="step"><div class="num">2</div><h3>Free preview</h3><p>Within 24 hours you get a live preview link. No payment yet.</p></div>
+      <div class="step"><div class="num">3</div><h3>Approve &amp; pay</h3><p>Happy with the preview? Pay by UPI. One flat price, no extras.</p></div>
+      <div class="step"><div class="num">4</div><h3>Go live</h3><p>We connect your domain and publish. Search engines indexed.</p></div>
+    </div>
+  </section>
+
+  <!-- ORDER FORM -->
+  <section id="order">
+    <h2 class="section-title">Start your <span class="text-gradient">project</span></h2>
+    <div class="order-wrap">
+      <form id="orderForm" novalidate>
+        <div class="field">
+          <label for="fName">Your name *</label>
+          <input id="fName" name="name" type="text" required maxlength="120" autocomplete="name">
+        </div>
+        <div class="field">
+          <label for="fEmail">Email *</label>
+          <input id="fEmail" name="email" type="email" required maxlength="160" autocomplete="email">
+        </div>
+        <div class="field">
+          <label for="fPhone">Phone / WhatsApp</label>
+          <input id="fPhone" name="phone" type="tel" maxlength="40" autocomplete="tel">
+        </div>
+        <div class="field">
+          <label for="fBiz">Business name &amp; what you do *</label>
+          <input id="fBiz" name="biz" type="text" required maxlength="200" placeholder="e.g. Sharma Dental Clinic — dentist in Pune">
+        </div>
+        <div class="field">
+          <label for="fMsg">Tell us what you need *</label>
+          <textarea id="fMsg" name="message" required maxlength="2000" placeholder="Pages you want, colours you like, websites you admire, anything."></textarea>
+        </div>
+        <p class="order-note">We reply within one business day. The preview is free — you pay only after you approve it.</p>
+        <button class="submit" id="orderBtn" type="submit"><i class="fas fa-paper-plane"></i>&nbsp; Send my request</button>
+        <p id="orderMsg" role="status" aria-live="polite"></p>
+      </form>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq">
+    <h2 class="section-title">Questions, <span class="text-gradient">answered</span></h2>
+    <div class="faq">
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">Why is the preview free?<i class="fas fa-chevron-down"></i></button>
+        <div class="faq-a"><p>Because you should never pay for something you haven't seen. We build the preview first; you pay only if you want it published. If you walk away, you owe nothing.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">What do I need to give you?<i class="fas fa-chevron-down"></i></button>
+        <div class="faq-a"><p>Your business name, what you do, and any logo or photos you have. If you have nothing, we use clean stock imagery and simple typography — it still looks professional.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">How do I pay?<i class="fas fa-chevron-down"></i></button>
+        <div class="faq-a"><p>UPI — we send a QR, you scan it, done. Card payments are available too. You always know the full amount before you pay: it is the package price, nothing hidden.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">Do I own the website?<i class="fas fa-chevron-down"></i></button>
+        <div class="faq-a"><p>Yes — completely. We hand over the full source code and publish it on your own domain and hosting, so no one can hold your site hostage. Ever.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">What about changes later?<i class="fas fa-chevron-down"></i></button>
+        <div class="faq-a"><p>Every package includes 1 month of small content changes (prices, hours, photos). After that, a yearly care plan covers updates — or you keep the code and edit it yourself.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">Can you rank me on Google?<i class="fas fa-chevron-down"></i></button>
+        <div class="faq-a"><p>We build every site search-engine ready: proper titles, sitemap, fast loading and mobile friendly — the technical foundation Google needs. No honest developer can promise a #1 ranking; anyone who does is selling you something.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>Part of <a href="/">KEYCODE Studio</a> · <a href="/pricing.html">Plans</a> · <a href="/support.html">Support</a> · <a href="/privacy.html">Privacy</a> · <a href="/terms.html">Terms</a></p>
+    <p>&copy; 2026 KEYCODE. All rights reserved.</p>
+  </footer>
+
+<script>
+// ─── MOBILE NAV ───
+var burger = document.getElementById('nav-toggle');
+if (burger) burger.addEventListener('click', function () {
+  document.getElementById('navLinks').classList.toggle('open');
+});
+
+// ─── PACKAGE PICK → PREFILL ───
+function pick(label) {
+  var msg = document.getElementById('fMsg');
+  var biz = document.getElementById('fBiz');
+  msg.value = 'I am interested in: ' + label + '.';
+  document.getElementById('order').scrollIntoView({ behavior: 'smooth' });
+  if (biz && !biz.value) setTimeout(function () { biz.focus(); }, 450);
+}
+
+// ─── FAQ ───
+function toggleFaq(btn) {
+  btn.parentElement.classList.toggle('open');
+}
+
+// ─── SUBMIT ───
+var form = document.getElementById('orderForm');
+var btn = document.getElementById('orderBtn');
+var out = document.getElementById('orderMsg');
+form.addEventListener('submit', function (e) {
+  e.preventDefault();
+  out.className = '';
+  out.style.display = 'none';
+
+  var name = document.getElementById('fName').value.trim();
+  var email = document.getElementById('fEmail').value.trim();
+  var biz = document.getElementById('fBiz').value.trim();
+  var msg = document.getElementById('fMsg').value.trim();
+  if (!name || !email || !biz || !msg) {
+    out.className = 'err'; out.style.display = 'block';
+    out.textContent = 'Please fill the required fields marked *.';
+    return;
+  }
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    out.className = 'err'; out.style.display = 'block';
+    out.textContent = 'That email does not look right — please check it.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>&nbsp; Sending...';
+
+  var payload = {
+    name: name,
+    email: email,
+    phone: document.getElementById('fPhone').value.trim(),
+    company: biz,
+    message: msg,
+    source: 'hire-page'
+  };
+
+  fetch('/api/inquiries', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).then(function (r) {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  }).then(function () {
+    form.reset();
+    out.className = 'ok'; out.style.display = 'block';
+    out.textContent = 'Thanks! We got your request and will reply within one business day with your free preview plan.';
+    btn.innerHTML = '<i class="fas fa-check"></i>&nbsp; Request sent';
+    setTimeout(function () { btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane"></i>&nbsp; Send my request'; }, 4000);
+  }).catch(function () {
+    out.className = 'err'; out.style.display = 'block';
+    out.textContent = 'Sorry, that did not send. Please email us directly at keycode.techio@gmail.com.';
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-paper-plane"></i>&nbsp; Send my request';
+  });
+});
+</script>
+</body>
+</html>

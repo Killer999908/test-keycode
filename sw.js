@@ -10,6 +10,7 @@ const PRECACHE = [
   '/theme.js',
   '/gallery.html',
   '/pricing.html',
+  '/hire.html',
   '/blog.html',
   '/docs.html',
   '/news.html',

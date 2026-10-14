@@ -287,6 +287,54 @@ describe('Admin console APIs', () => {
       .send({ message: 'Show me the business data.' });
     expect(nonAdmin.status).toBe(403);
   });
+
+  test('AI manager is admin-only, triages new inquiries, drafts replies and never auto-sends them', async () => {
+    const nonAdmin = await request(app).get('/api/admin/manager').set('Authorization', 'Bearer ' + regularUserToken);
+    expect([401, 403]).toContain(nonAdmin.status);
+
+    // Seed a hire-page lead the manager should pick up.
+    const inquiriesFile = path.join(DATA_DIR, 'mock-inquiries.json');
+    const leadId = 'mgr-lead-' + Date.now();
+    fs.writeFileSync(inquiriesFile, JSON.stringify([{
+      id: leadId, name: 'Ramesh', email: 'ramesh@example.com',
+      company: 'Ramesh Sweets', phone: '', message: 'I need a website for my sweet shop in Pune.',
+      source: 'hire-page', status: 'new', createdAt: new Date().toISOString(),
+    }], null, 2));
+
+    const sweep = await request(app)
+      .post('/api/admin/manager/sweep')
+      .set('Authorization', 'Bearer ' + adminToken);
+    expect(sweep.status).toBe(200);
+    expect(sweep.body.success).toBe(true);
+    expect(sweep.body.handled).toBeGreaterThanOrEqual(1);
+
+    const status = await request(app).get('/api/admin/manager').set('Authorization', 'Bearer ' + adminToken);
+    expect(status.status).toBe(200);
+    const handled = (status.body.inquiries || []).find(i => i.id === leadId);
+    expect(handled).toBeTruthy();
+    expect(['lead', 'support', 'spam']).toContain(handled.kind);
+    expect(handled.replyDraft.length).toBeGreaterThan(20);
+    // Reply drafts are prepared but never sent by the sweep itself.
+    expect(handled.replySent).toBe(false);
+
+    const config = await request(app)
+      .put('/api/admin/manager')
+      .set('Authorization', 'Bearer ' + adminToken)
+      .send({ intervalMinutes: 9999, maxPreviewsPerSweep: 99 });
+    expect(config.status).toBe(200);
+    expect(config.body.config.intervalMinutes).toBeLessThanOrEqual(180);
+    expect(config.body.config.maxPreviewsPerSweep).toBeLessThanOrEqual(5);
+
+    const digest = await request(app)
+      .post('/api/admin/manager/digest')
+      .set('Authorization', 'Bearer ' + adminToken);
+    expect(digest.status).toBe(200);
+    expect(digest.body.digest).toMatch(/revenue/i);
+
+    // Restore inquiry file state.
+    const inquiryBackup = fs.existsSync(inquiriesFile) ? null : null;
+    fs.writeFileSync(inquiriesFile, JSON.stringify([], null, 2));
+  });
 });
 
 describe('server middleware errors', () => {
@@ -524,13 +572,334 @@ describe('payments', () => {
   });
 
   test('upi is refused while the deployment has no real UPI ID configured', async () => {
-    const create = await request(app)
+    const originalUpiId = process.env.UPI_ID;
+    delete process.env.UPI_ID;
+    try {
+      const create = await request(app)
+        .post('/api/payment/create-intent')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ amount: 42.5, method: 'upi_qr', orderId: 'order-test-1' });
+      expect(create.status).toBe(503);
+      expect(create.body.gateway).toBe('unavailable');
+      expect(create.body.rail).toBe('upi');
+      expect(create.body.reason).toMatch(/not configured/i);
+    } finally {
+      if (originalUpiId === undefined) delete process.env.UPI_ID;
+      else process.env.UPI_ID = originalUpiId;
+    }
+  });
+
+  test('cannot confirm a payment that was never started', async () => {
+    const res = await request(app)
+      .post('/api/payment/confirm')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ orderId: 'order-never-started', gateway: 'stripe', amount: 500 });
+    expect(res.status).toBe(404);
+  });
+
+  test('with no Stripe key a card charge is reported unconfigured, never as paid', async () => {
+    const res = await request(app)
       .post('/api/payment/create-intent')
       .set('Authorization', `Bearer ${token}`)
-      .send({ amount: 42.5, method: 'upi_qr', orderId: 'order-test-1' });
-    expect([400, 503]).toContain(create.status);
-    expect(create.body.gateway).toBe('unavailable');
-    expect(create.body.rail).toBe('upi');
+      .send({ amount: 42.5, method: 'card', orderId: 'order-card-off' });
+    expect(res.status).toBe(200);
+    expect(res.body.gateway).toBe('stripe_simulated');
+    expect(res.body.message).toMatch(/STRIPE_SECRET_KEY/);
+    // No fake client secret that could be confirmed into a "paid" order.
+    expect(res.body.clientSecret).toBeUndefined();
+
+    const confirm = await request(app)
+      .post('/api/payment/confirm')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ orderId: 'order-card-off', gateway: 'stripe', paymentIntentId: 'pi_fake' });
+    expect(confirm.status).toBe(503);
+    expect(confirm.body.payment.status).toBe('pending');
+  });
+});
+
+describe('checkout rails only offer what can actually settle money', () => {
+  const originalUpiId = process.env.UPI_ID;
+  const token = jwt.sign({ userId: 'rails-user', email: 'rails@example.com', role: 'user' }, process.env.JWT_SECRET);
+
+  afterEach(() => {
+    if (originalUpiId === undefined) delete process.env.UPI_ID;
+    else process.env.UPI_ID = originalUpiId;
+  });
+
+  test('reports every rail unavailable, with the reason, when nothing is configured', async () => {
+    process.env.UPI_ID = '';
+    const res = await request(app).get('/api/payment/config');
+    expect(res.status).toBe(200);
+    expect(res.body.region.currency).toBe('USD');
+    expect(res.body.region.regional).toBe(false);
+    expect(res.body.methods.card.available).toBe(false);
+    expect(res.body.methods.card.reason).toMatch(/STRIPE_SECRET_KEY/);
+    expect(res.body.methods.upi.available).toBe(false);
+    expect(res.body.methods.upi.reason).toMatch(/not configured/i);
+    expect(res.body.anyAvailable).toBe(false);
+  });
+
+  test('never builds a UPI QR while UPI_ID is still a placeholder', async () => {
+    process.env.UPI_ID = 'keycodestudio@upi';
+    const config = await request(app).get('/api/payment/config?region=IN');
+    expect(config.body.methods.upi.available).toBe(false);
+    expect(config.body.methods.upi.reason).toMatch(/placeholder/i);
+
+    const intent = await request(app)
+      .post('/api/payment/create-intent')
+      .set('Authorization', `Bearer ${token}`)
+      .set('X-Country', 'IN')
+      .send({ amount: 499, method: 'upi_qr', currency: 'INR', orderId: 'order-placeholder-upi' });
+    expect(intent.status).toBe(503);
+    expect(intent.body.gateway).toBe('unavailable');
+    expect(intent.body.rail).toBe('upi');
+    expect(intent.body.reason).toMatch(/placeholder/i);
+    expect(JSON.stringify(intent.body)).not.toContain('upi://pay');
+  });
+
+  test('offers UPI for a real UPI ID in an INR region and refuses it for a USD order', async () => {
+    process.env.UPI_ID = 'keycode.techio@okhdfcbank';
+
+    const indian = await request(app).get('/api/payment/config?region=IN');
+    expect(indian.body.region.currency).toBe('INR');
+    expect(indian.body.region.symbol).toBe('\u20b9');
+    expect(indian.body.methods.upi.available).toBe(true);
+
+    const usd = await request(app).get('/api/payment/config?currency=usd&region=IN');
+    expect(usd.body.methods.upi.available).toBe(false);
+    expect(usd.body.methods.upi.reason).toMatch(/INR/);
+
+    const intent = await request(app)
+      .post('/api/payment/create-intent')
+      .set('Authorization', `Bearer ${token}`)
+      .set('X-Country', 'IN')
+      .send({ amount: 499, method: 'upi_qr', currency: 'INR', orderId: 'order-upi-inr' });
+    expect(intent.status).toBe(200);
+    expect(intent.body.gateway).toBe('upi_qr');
+    expect(intent.body.upiId).toBe('keycode.techio@okhdfcbank');
+    expect(intent.body.qrUrl).toContain('pa=keycode.techio%40okhdfcbank');
+    expect(intent.body.qrUrl).toContain('am=499.00');
+    expect(intent.body.qrUrl).toContain('cu=INR');
+
+    // The same visitor paying a USD order must not get an INR QR for a USD figure.
+    const mismatch = await request(app)
+      .post('/api/payment/create-intent')
+      .set('Authorization', `Bearer ${token}`)
+      .set('X-Country', 'IN')
+      .send({ amount: 499, method: 'upi_qr', currency: 'USD', orderId: 'order-upi-usd' });
+    expect(mismatch.status).toBe(400);
+    expect(JSON.stringify(mismatch.body)).not.toContain('upi://pay');
+  });
+});
+
+describe('regional website orders', () => {
+  const token = jwt.sign({ userId: 'website-order-user', email: 'order@example.com', role: 'user' }, process.env.JWT_SECRET);
+  const originalUpiId = process.env.UPI_ID;
+  const ordersFile = path.join(DATA_DIR, 'mock-orders.json');
+  const ordersBackup = fs.existsSync(ordersFile) ? fs.readFileSync(ordersFile, 'utf8') : null;
+
+  afterEach(() => {
+    if (originalUpiId === undefined) delete process.env.UPI_ID;
+    else process.env.UPI_ID = originalUpiId;
+  });
+
+  afterAll(() => {
+    if (ordersBackup === null) fs.rmSync(ordersFile, { force: true });
+    else fs.writeFileSync(ordersFile, ordersBackup);
+  });
+
+  test('quotes the one-off services per region without trusting the caller', async () => {
+    const global = await request(app).get('/api/website-order/quote');
+    expect(global.status).toBe(200);
+    expect(global.body.service.slug).toBe('professional-website');
+    expect(global.body.amount).toBe(499);
+    expect(global.body.currency).toBe('USD');
+    expect(global.body.region.regional).toBe(false);
+
+    const india = await request(app).get('/api/website-order/quote?region=IN');
+    expect(india.body.amount).toBe(12999);
+    expect(india.body.currency).toBe('INR');
+    expect(india.body.symbol).toBe('\u20b9');
+    expect(india.body.region.regional).toBe(true);
+
+    const store = await request(app).get('/api/website-order/quote?service=online-store&region=IN');
+    expect(store.body.service.slug).toBe('online-store');
+    expect(store.body.service.matched).toBe(true);
+    expect(store.body.amount).toBe(24999);
+
+    // An unknown slug falls back to the default service and says it did.
+    const unknown = await request(app).get('/api/website-order/quote?service=nope&region=IN');
+    expect(unknown.body.service.slug).toBe('professional-website');
+    expect(unknown.body.service.matched).toBe(false);
+    expect(unknown.body.service.requested).toBe('nope');
+  });
+
+  test('the INR quote offers UPI once a real UPI ID exists, and never in USD', async () => {
+    process.env.UPI_ID = 'keycode.techio@okhdfcbank';
+
+    const india = await request(app).get('/api/website-order/quote?region=IN');
+    expect(india.body.methods.upi.available).toBe(true);
+    expect(india.body.anyAvailable).toBe(true);
+
+    const global = await request(app).get('/api/website-order/quote');
+    expect(global.body.methods.upi.available).toBe(false);
+    expect(global.body.methods.upi.reason).toMatch(/INR/);
+  });
+
+  test('an INR website order builds a UPI QR for the catalog price', async () => {
+    process.env.UPI_ID = 'keycode.techio@okhdfcbank';
+    const intent = await request(app)
+      .post('/api/payment/create-intent?region=IN')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        orderId: 'order-inr-upi', amount: 12999, currency: 'INR',
+        type: 'website_order', service: 'professional-website', method: 'upi_qr',
+      });
+    expect(intent.status).toBe(200);
+    expect(intent.body.gateway).toBe('upi_qr');
+    expect(intent.body.currency).toBe('INR');
+    expect(intent.body.qrUrl).toContain('am=12999.00');
+    expect(intent.body.qrUrl).toContain('cu=INR');
+    expect(intent.body.qrUrl).toContain('pa=keycode.techio%40okhdfcbank');
+  });
+
+  test('refuses an amount the price list did not quote', async () => {
+    process.env.UPI_ID = 'keycode.techio@okhdfcbank';
+
+    const underpaid = await request(app)
+      .post('/api/payment/create-intent?region=IN')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        orderId: 'order-underpaid', amount: 1, currency: 'INR',
+        type: 'website_order', service: 'professional-website', method: 'upi_qr',
+      });
+    expect(underpaid.status).toBe(409);
+    expect(JSON.stringify(underpaid.body)).not.toContain('upi://pay');
+
+    // The USD entry may not be billed as if it were rupees.
+    const wrongCurrency = await request(app)
+      .post('/api/payment/create-intent')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        orderId: 'order-wrong-currency', amount: 12999, currency: 'USD',
+        type: 'website_order', service: 'professional-website', method: 'card',
+      });
+    expect(wrongCurrency.status).toBe(409);
+  });
+
+  test('stores the order at the server-side price and currency', async () => {
+    const res = await request(app)
+      .post('/api/website-order?region=IN')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        service: 'online-store', subtotal: 1, discount: 0, total: 1,
+        paymentMethod: 'upi_qr', paymentStatus: 'pending',
+        customerName: 'Test Buyer', customerEmail: 'order@example.com',
+      });
+    expect(res.status).toBe(201);
+    expect(res.body.order.currency).toBe('INR');
+    expect(res.body.order.service).toBe('online-store');
+    expect(res.body.order.service_name).toBe('Online Store');
+    expect(res.body.order.subtotal).toBe(24999);
+    expect(res.body.order.total).toBe(24999);
+
+    const usd = await request(app)
+      .post('/api/website-order')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        service: 'professional-website', subtotal: 1, total: 1,
+        paymentMethod: 'card', paymentStatus: 'pending',
+        customerName: 'Test Buyer', customerEmail: 'order@example.com',
+      });
+    expect(usd.status).toBe(201);
+    expect(usd.body.order.currency).toBe('USD');
+    expect(usd.body.order.total).toBe(499);
+  });
+
+  test('applies a coupon to the server-side price, and refuses coupons outside USD', async () => {
+    const created = await request(app)
+      .post('/api/admin/coupons')
+      .set('Authorization', 'Bearer ' + adminToken)
+      .send({ code: 'QA-ORDER20', description: '20% off', discount_percent: 20, is_active: true });
+    expect(created.status).toBe(201);
+    const couponId = created.body.coupon.id;
+
+    try {
+      const usd = await request(app)
+        .post('/api/website-order')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          service: 'professional-website', discountCode: 'QA-ORDER20',
+          paymentMethod: 'card', paymentStatus: 'pending',
+          customerName: 'Test Buyer', customerEmail: 'order@example.com',
+        });
+      expect(usd.status).toBe(201);
+      expect(usd.body.order.discount).toBe(99.8);
+      expect(usd.body.order.total).toBe(399.2);
+
+      // The discounted figure is what the payment step will accept.
+      const intent = await request(app)
+        .post('/api/payment/create-intent')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          orderId: 'order-coupon-usd', amount: 399.2, currency: 'USD',
+          type: 'website_order', service: 'professional-website',
+          discountCode: 'QA-ORDER20', method: 'card',
+        });
+      expect(intent.status).toBe(200);
+
+      const undiscounted = await request(app)
+        .post('/api/payment/create-intent')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          orderId: 'order-coupon-skip', amount: 499, currency: 'USD',
+          type: 'website_order', service: 'professional-website',
+          discountCode: 'QA-ORDER20', method: 'card',
+        });
+      expect(undiscounted.status).toBe(409);
+
+      const inr = await request(app)
+        .post('/api/website-order?region=IN')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          service: 'professional-website', discountCode: 'QA-ORDER20',
+          paymentMethod: 'upi_qr', paymentStatus: 'pending',
+          customerName: 'Test Buyer', customerEmail: 'order@example.com',
+        });
+      expect(inr.status).toBe(409);
+      expect(inr.body.error).toMatch(/USD/);
+    } finally {
+      await request(app)
+        .delete('/api/admin/coupons/' + couponId)
+        .set('Authorization', 'Bearer ' + adminToken);
+    }
+  });
+});
+
+describe('regional plan pricing', () => {
+  test('prices plans per region and states which price list is shown', async () => {
+    const global = await request(app).get('/api/services');
+    const globalStarter = global.body.services.find(s => s.slug === 'starter');
+    expect(globalStarter.basePrice).toBe(19);
+    expect(globalStarter.currency).toBe('USD');
+    expect(global.body.region.regional).toBe(false);
+
+    const india = await request(app).get('/api/services').set('X-Country', 'IN');
+    const inStarter = india.body.services.find(s => s.slug === 'starter');
+    expect(inStarter.basePrice).toBe(499);
+    expect(inStarter.currency).toBe('INR');
+    expect(inStarter.symbol).toBe('\u20b9');
+    expect(india.body.region.regional).toBe(true);
+    expect(india.body.region.label).toBe('India');
+
+    // Free stays free and Enterprise stays a quote, in every region.
+    expect(india.body.services.find(s => s.slug === 'free').basePrice).toBe(0);
+    expect(india.body.services.find(s => s.slug === 'enterprise').basePrice).toBe(null);
+
+    const featured = await request(app).get('/api/services/featured?region=IN');
+    expect(featured.body.region.currency).toBe('INR');
+    expect(featured.body.services.length).toBeLessThanOrEqual(3);
+    featured.body.services.forEach(item => { if (item.basePrice > 0) expect(item.currency).toBe('INR'); });
   });
 });
 
