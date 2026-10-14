@@ -226,6 +226,7 @@
         <div style="font-size:10px;color:var(--ash);padding:4px 14px;text-transform:uppercase;letter-spacing:1px;">Platform</div>
         <div class="nav-item" data-page="users"><i class="fas fa-users"></i> Users</div>
         <div class="nav-item" data-page="orders"><i class="fas fa-shopping-bag"></i> Orders</div>
+        <div class="nav-item" data-page="upi-checks"><i class="fas fa-qrcode"></i> UPI Verification</div>
         <div class="nav-item" data-page="tickets"><i class="fas fa-life-ring"></i> Support</div>
         <div class="nav-item" data-page="inquiries"><i class="fas fa-envelope"></i> Inquiries</div>
         <div class="nav-item" data-page="discounts"><i class="fas fa-tag"></i> Discounts</div>
@@ -283,6 +284,24 @@
             <button class="btn-sm" style="background:rgba(145,145,145,0.2);color:var(--success);" onclick="filterByStatus('completed')">Completed</button>
           </div>
           <div style="overflow-x:auto;"><table><thead><tr><th>ID</th><th>Customer</th><th>Email</th><th>Type</th><th>Total</th><th>Payment</th><th>Status</th><th>Access</th><th>Date</th><th>Action</th></tr></thead><tbody id="ordersList"></tbody></table></div>
+        </div>
+      </div>
+
+      <!-- UPI VERIFICATION: a UPI QR has no callback, so a human confirms it -->
+      <div id="upi-checks" class="page-section">
+        <div class="page-header"><h1 class="page-title">UPI Verification</h1><button class="btn-sm btn-primary" onclick="loadUpiChecks()"><i class="fas fa-sync"></i> Refresh</button></div>
+        <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
+          <div class="stat-card"><div class="stat-icon"><i class="fas fa-hand-holding-usd"></i></div><div class="stat-value" id="upiReported">-</div><div class="stat-label">Reported by customer</div></div>
+          <div class="stat-card"><div class="stat-icon"><i class="fas fa-hourglass-half"></i></div><div class="stat-value" id="upiAwaiting">-</div><div class="stat-label">QR created, not reported</div></div>
+        </div>
+        <div class="section-card">
+          <h3 class="section-title" style="margin-bottom:8px;">Claims to check</h3>
+          <p id="upiPayeeNote" style="font-size:13px;color:var(--ash);margin-bottom:16px;line-height:1.6;">Confirming marks the order paid and starts it; rejecting leaves it unpaid. Check the transfer in your bank / UPI app first.</p>
+          <div style="overflow-x:auto;"><table><thead><tr><th>Order</th><th>Customer</th><th>Service</th><th>Amount</th><th>State</th><th>Reference</th><th>Created</th><th>Action</th></tr></thead><tbody id="upiOpenList"></tbody></table></div>
+        </div>
+        <div class="section-card">
+          <h3 class="section-title" style="margin-bottom:16px;">Recently settled</h3>
+          <div style="overflow-x:auto;"><table><thead><tr><th>Order</th><th>Amount</th><th>Decision</th><th>By</th><th>When</th><th>Note</th></tr></thead><tbody id="upiSettledList"></tbody></table></div>
         </div>
       </div>
 
@@ -1115,6 +1134,7 @@
       loadAuditLogs(); loadActivity(); loadPartners(); loadGDPR();
       loadServices(); loadReviews(); loadSubscriptions();
       loadDiscounts(); loadMaintenance(); loadSystem();
+      loadUpiChecks();
     }
 
     async function loadOverview() {
@@ -1234,6 +1254,97 @@
       const res = await api(`/admin/orders/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) });
       if (res) showToast('Order updated', 'success');
       loadOrders();
+    }
+
+    // ==================== UPI VERIFICATION ====================
+    // A UPI QR has no provider callback, so nothing here is automatic: the owner
+    // checks the transfer in their bank / UPI app and then confirms it. Confirming
+    // marks the order paid; rejecting records that no money arrived.
+    async function loadUpiChecks() {
+      const data = await api('/admin/payments/upi');
+      if (!data) { showToast('Failed to load UPI payments', 'error'); return; }
+      window._upiOpen = data.open || [];
+      document.getElementById('upiReported').textContent = data.counts ? data.counts.reported : 0;
+      document.getElementById('upiAwaiting').textContent = data.counts ? data.counts.awaitingReport : 0;
+
+      const note = document.getElementById('upiPayeeNote');
+      if (data.payee) {
+        note.innerHTML = 'QRs asked for payment to <strong>' + escapeHtml(data.payee) +
+          '</strong>. Check that account, then confirm. Confirming marks the order paid and moves it to In Progress; rejecting leaves it unpaid.';
+      } else {
+        note.textContent = 'UPI is not configured, so no QR could have been generated. ' +
+          (data.payeeUnavailableReason || 'Set UPI_ID in .env to the account that should receive payments.');
+      }
+
+      const stateBadge = { reported: 'badge-yellow', 'awaiting-report': 'badge-gray' };
+      const stateLabel = { reported: 'Reported — check', 'awaiting-report': 'No report yet' };
+      document.getElementById('upiOpenList').innerHTML = (data.open || []).map(function (p) {
+        const order = p.order || {};
+        return '<tr>' +
+          '<td><strong>' + escapeHtml(order.orderNumber || order.id || '-') + '</strong> <span style="font-size:11px;color:var(--ash)">' + escapeHtml(order.status || '') + '</span></td>' +
+          '<td>' + escapeHtml(order.customer || '-') + '<div style="font-size:11px;color:var(--ash)">' + escapeHtml(order.email || '') + '</div></td>' +
+          '<td>' + escapeHtml(order.service || '-') + '</td>' +
+          '<td>' + escapeHtml(p.symbol) + escapeHtml(p.amount) + ' ' + escapeHtml(p.currency) + '</td>' +
+          '<td><span class="badge ' + (stateBadge[p.state] || 'badge-gray') + '">' + escapeHtml(stateLabel[p.state] || p.state) + '</span></td>' +
+          '<td style="font-family:monospace;font-size:11px">' + escapeHtml(p.reference || '-') + '</td>' +
+          '<td style="font-size:12px">' + (p.createdAt ? escapeHtml(new Date(p.createdAt).toLocaleString()) : '-') + '</td>' +
+          '<td style="white-space:nowrap">' +
+            '<button class="btn-sm btn-success" onclick="verifyUpiPayment(\'' + escapeHtml(p.id) + '\')"><i class="fas fa-check"></i> Confirm paid</button> ' +
+            '<button class="btn-sm" style="background:rgba(104,104,104,0.2);color:var(--danger);" onclick="rejectUpiPayment(\'' + escapeHtml(p.id) + '\')"><i class="fas fa-times"></i> Reject</button>' +
+          '</td>' +
+        '</tr>';
+      }).join('') || '<tr><td colspan="8" class="empty-state"><i class="fas fa-qrcode" style="font-size:24px;margin-bottom:8px;"></i><h3>Nothing waiting</h3><p>UPI payments show up here as soon as a customer pays by QR, and leave once you confirm or reject them.</p></td></tr>';
+
+      document.getElementById('upiSettledList').innerHTML = (data.settled || []).map(function (p) {
+        const order = p.order || {};
+        const verified = p.state === 'verified';
+        return '<tr>' +
+          '<td>' + escapeHtml(order.orderNumber || order.id || '-') + '</td>' +
+          '<td>' + escapeHtml(p.symbol) + escapeHtml(p.amount) + ' ' + escapeHtml(p.currency) + '</td>' +
+          '<td><span class="badge ' + (verified ? 'badge-green' : 'badge-red') + '">' + (verified ? 'Confirmed' : 'Rejected') + '</span></td>' +
+          '<td style="font-size:12px">' + escapeHtml(p.settledBy || '-') + '</td>' +
+          '<td style="font-size:12px">' + (p.settledAt ? escapeHtml(new Date(p.settledAt).toLocaleString()) : '-') + '</td>' +
+          '<td style="font-size:12px;color:var(--ash)">' + escapeHtml(p.rejectionReason || p.reference || '-') + '</td>' +
+        '</tr>';
+      }).join('') || '<tr><td colspan="6" class="empty-state">Nothing settled yet</td></tr>';
+    }
+
+    async function verifyUpiPayment(id) {
+      const p = (window._upiOpen || []).find(function (item) { return item.id === id; });
+      if (!p) { showToast('Reload the list and try again', 'error'); return; }
+      const order = p.order || {};
+      const label = p.symbol + p.amount + ' ' + p.currency;
+      if (!confirm('Confirm that ' + label + ' arrived for ' + (order.orderNumber || order.id || 'this order') + '?\n\nCheck your bank / UPI app first. This marks the order paid and moves it to In Progress.')) return;
+      const reference = prompt('Bank / UPI reference for this transfer (optional — recorded on the order and in the audit log):', p.reference || '');
+      if (reference === null) return;
+      const res = await api('/admin/payments/upi/' + encodeURIComponent(id) + '/verify', {
+        method: 'POST', body: JSON.stringify({ reference: reference })
+      });
+      if (res && res.success) {
+        showToast('Marked paid: ' + label, 'success');
+        loadUpiChecks(); loadOrders(); loadOverview();
+      } else {
+        showToast((res && res.error) || 'Could not verify that payment', 'error');
+      }
+    }
+
+    async function rejectUpiPayment(id) {
+      const p = (window._upiOpen || []).find(function (item) { return item.id === id; });
+      if (!p) { showToast('Reload the list and try again', 'error'); return; }
+      const order = p.order || {};
+      const label = p.symbol + p.amount + ' ' + p.currency;
+      const reason = prompt('No ' + label + ' arrived for ' + (order.orderNumber || order.id || 'this order') + '?\n\nGive a reason — it is recorded on the order and in the audit log:', 'No payment received');
+      if (reason === null) return;
+      if (!String(reason).trim()) { showToast('A reason is required to reject a UPI payment', 'error'); return; }
+      const res = await api('/admin/payments/upi/' + encodeURIComponent(id) + '/reject', {
+        method: 'POST', body: JSON.stringify({ reason: reason })
+      });
+      if (res && res.success) {
+        showToast('Rejected — order stays unpaid', 'success');
+        loadUpiChecks(); loadOrders();
+      } else {
+        showToast((res && res.error) || 'Could not reject that payment', 'error');
+      }
     }
 
     async function loadPendingReviews() {
@@ -2484,6 +2595,7 @@
           case 'overview': loadOverview(); break;
           case 'monetization': loadMonetization(); break;
           case 'orders': loadOrders(); break;
+          case 'upi-checks': loadUpiChecks(); break;
           case 'pending-reviews': loadPendingReviews(); break;
           case 'transactions': loadTransactions(); break;
           case 'discounts': loadDiscounts(); break;

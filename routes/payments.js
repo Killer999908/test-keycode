@@ -102,7 +102,11 @@ module.exports = function PaymentsRoutes(opts) {
       const methods = paymentConfig.methodsFor(region, STRIPE, process.env);
       const userId = user.userId || user.id;
 
-      function recordPayment(provider, extra) {
+      // Persisted through the serialized store AND awaited: the checkout page
+      // calls /api/payment/confirm immediately after this, and a read that
+      // overtakes the write would answer "no pending payment" for a payment that
+      // had just been created. A fire-and-forget write loses that race under load.
+      async function recordPayment(provider, extra) {
         const payment = Object.assign({
           id:          rand(16),
           user_id:     userId,
@@ -115,9 +119,7 @@ module.exports = function PaymentsRoutes(opts) {
           metadata:    { type: body.type || 'website_order', method },
           created_at:  now(),
         }, extra || {});
-        const list = loadPayments();
-        list.push(payment);
-        savePayments(list);
+        await withPayments(function (list) { list.push(payment); return list; });
         return payment;
       }
 
@@ -172,7 +174,7 @@ module.exports = function PaymentsRoutes(opts) {
               metadata:      { orderId: orderId || '', userId, type: body.type || 'website_order' },
               automatic_payment_methods: { enabled: true },
             });
-            const payment = recordPayment('stripe', {
+            const payment = await recordPayment('stripe', {
               provider_tx_id: intent.id,
               metadata: { type: body.type || 'website_order', method: 'card' },
             });
@@ -199,7 +201,7 @@ module.exports = function PaymentsRoutes(opts) {
         // ---- Stripe not configured → honest simulated response ----
         // checkout.html reads gateway:'stripe_simulated' and shows a toast instead
         // of pretending the card was charged.
-        const payment = recordPayment('stripe_simulated', {
+        const payment = await recordPayment('stripe_simulated', {
           provider_tx_id: 'sim-' + rand(8),
           metadata: { type: body.type || 'website_order', method: 'card' },
         });
@@ -238,7 +240,7 @@ module.exports = function PaymentsRoutes(opts) {
           `cu=INR`,
           `tn=Order+${orderId || rand(8)}`,
         ].join('&');
-        const payment = recordPayment('upi_qr', {
+        const payment = await recordPayment('upi_qr', {
           currency: 'inr',
           provider_tx_id: 'upi-' + rand(8),
         });
@@ -409,7 +411,7 @@ module.exports = function PaymentsRoutes(opts) {
             reason: body.reason || 'requested_by_customer',
           });
           payment.status = 'refunded';
-          savePayments(loadPayments().map(p => p.provider_tx_id === payment.provider_tx_id ? { ...p, status: 'refunded' } : p));
+          await withPayments((list) => list.map(p => (p.provider_tx_id === payment.provider_tx_id ? { ...p, status: 'refunded' } : p)));
           return res.json({ success: true, refund: { id: refund.id, amount: refundAmount }, payment });
         } catch (e) {
           console.error('[payment.refund] stripe refund failed:', e && e.message);
@@ -418,10 +420,11 @@ module.exports = function PaymentsRoutes(opts) {
 
       // Mock refund
       payment.status = 'refunded';
-      const mlist = loadPayments();
-      const mi = mlist.findIndex(p => p.provider_tx_id === payment.provider_tx_id);
-      if (mi >= 0) mlist[mi] = { ...payment, status: 'refunded' };
-      savePayments(mlist);
+      await withPayments((list) => {
+        const index = list.findIndex(p => p.provider_tx_id === payment.provider_tx_id);
+        if (index >= 0) list[index] = { ...payment, status: 'refunded' };
+        return list;
+      });
       res.json({ success: true, refund: { id: 'ref-' + rand(8), amount: refundAmount }, payment });
     } catch (err) {
       console.error('[payment.refund]', err);

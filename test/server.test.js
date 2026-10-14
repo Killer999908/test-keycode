@@ -876,6 +876,236 @@ describe('regional website orders', () => {
   });
 });
 
+describe('manual UPI verification', () => {
+  const ORDER_TOKEN = jwt.sign({ userId: 'upi-verify-user', email: 'upi@example.com', role: 'user' }, process.env.JWT_SECRET);
+  const originalUpiId = process.env.UPI_ID;
+  const ordersFile = path.join(DATA_DIR, 'mock-orders.json');
+  const auditFile = path.join(DATA_DIR, 'mock-audit.json');
+  const ordersBackup = fs.existsSync(ordersFile) ? fs.readFileSync(ordersFile, 'utf8') : null;
+  const auditBackup = fs.existsSync(auditFile) ? fs.readFileSync(auditFile, 'utf8') : null;
+
+  beforeAll(() => { process.env.UPI_ID = 'keycode.techio@okhdfcbank'; });
+
+  afterAll(() => {
+    if (originalUpiId === undefined) delete process.env.UPI_ID;
+    else process.env.UPI_ID = originalUpiId;
+    if (ordersBackup === null) fs.rmSync(ordersFile, { force: true });
+    else fs.writeFileSync(ordersFile, ordersBackup);
+    if (auditBackup === null) fs.rmSync(auditFile, { force: true });
+    else fs.writeFileSync(auditFile, auditBackup);
+  });
+
+  // Places a real INR UPI order through the public APIs, and reports it as paid
+  // the way checkout.html does. Returns { orderId, paymentId }.
+  async function placeReportedUpiOrder(tag) {
+    const order = await request(app)
+      .post('/api/website-order?region=IN')
+      .set('Authorization', `Bearer ${ORDER_TOKEN}`)
+      .send({
+        service: 'professional-website', paymentMethod: 'upi_qr', paymentStatus: 'pending',
+        customerName: 'UPI ' + tag, customerEmail: 'upi-' + tag + '@example.com',
+      });
+    expect(order.status).toBe(201);
+    const orderId = order.body.order.id;
+
+    const intent = await request(app)
+      .post('/api/payment/create-intent?region=IN')
+      .set('Authorization', `Bearer ${ORDER_TOKEN}`)
+      .send({
+        orderId, amount: 12999, currency: 'INR', type: 'website_order',
+        service: 'professional-website', method: 'upi_qr',
+      });
+    expect(intent.status).toBe(200);
+    const paymentId = intent.body.payment.id;
+
+    const confirm = await request(app)
+      .post('/api/payment/confirm')
+      .set('Authorization', `Bearer ${ORDER_TOKEN}`)
+      .send({ orderId, gateway: 'upi_qr', upiReference: 'UTR-' + tag });
+    expect(confirm.status).toBe(200);
+
+    return { orderId, paymentId };
+  }
+
+  function readOrder(orderId) {
+    return JSON.parse(fs.readFileSync(ordersFile, 'utf8')).find(order => order.id === orderId) || null;
+  }
+
+  function readPayment(paymentId) {
+    return require('../lib/mockStore').loadPayments().find(payment => payment.id === paymentId) || null;
+  }
+
+  test('is admin-only', async () => {
+    const anon = await request(app).get('/api/admin/payments/upi');
+    expect(anon.status).toBe(401);
+    const nonAdmin = await request(app).get('/api/admin/payments/upi').set('Authorization', `Bearer ${regularUserToken}`);
+    expect(nonAdmin.status).toBe(403);
+    const verify = await request(app)
+      .post('/api/admin/payments/upi/anything/verify')
+      .set('Authorization', `Bearer ${regularUserToken}`)
+      .send({});
+    expect(verify.status).toBe(403);
+  });
+
+  test('lists a reported UPI payment with its order, and the account the QR asked for', async () => {
+    const { orderId, paymentId } = await placeReportedUpiOrder('list');
+
+    const res = await request(app)
+      .get('/api/admin/payments/upi')
+      .set('Authorization', `Bearer ${adminToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body.payee).toBe('keycode.techio@okhdfcbank');
+    expect(res.body.counts.reported).toBeGreaterThanOrEqual(1);
+
+    const entry = res.body.open.find(item => item.id === paymentId);
+    expect(entry).toBeTruthy();
+    expect(entry.state).toBe('reported');
+    expect(entry.amount).toBe(12999);
+    expect(entry.currency).toBe('INR');
+    expect(entry.symbol).toBe('\u20b9');
+    expect(entry.reference).toBe('UTR-list');
+    expect(entry.order.id).toBe(orderId);
+    expect(entry.order.paymentStatus).toBe('pending');
+    expect(entry.order.total).toBe(12999);
+
+    // A QR that has fired but been neither reported nor checked is still listed.
+    const intent = await request(app)
+      .post('/api/payment/create-intent?region=IN')
+      .set('Authorization', `Bearer ${ORDER_TOKEN}`)
+      .send({ orderId, amount: 12999, currency: 'INR', type: 'website_order', service: 'professional-website', method: 'upi_qr' });
+    expect(intent.status).toBe(200);
+    const after = await request(app).get('/api/admin/payments/upi').set('Authorization', `Bearer ${adminToken}`);
+    const awaiting = after.body.open.find(item => item.id === intent.body.payment.id);
+    expect(awaiting.state).toBe('awaiting-report');
+  });
+
+  test('confirming marks the order paid and leaves an audit trail', async () => {
+    const { orderId, paymentId } = await placeReportedUpiOrder('confirm');
+    expect(readOrder(orderId).payment_status).toBe('pending');
+
+    const res = await request(app)
+      .post('/api/admin/payments/upi/' + paymentId + '/verify')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ reference: 'BANK-REF-991' });
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.payment.status).toBe('completed');
+    expect(res.body.payment.metadata.verified).toBe(true);
+    expect(res.body.payment.metadata.reference).toBe('BANK-REF-991');
+
+    const order = readOrder(orderId);
+    expect(order.payment_status).toBe('completed');
+    expect(order.status).toBe('in_progress');
+    expect(order.verification.method).toBe('upi');
+    expect(order.verification.reference).toBe('BANK-REF-991');
+    expect(order.verification.verifiedAt).toBeTruthy();
+
+    // It leaves the queue and shows up in the settled history instead.
+    const queue = await request(app).get('/api/admin/payments/upi').set('Authorization', `Bearer ${adminToken}`);
+    expect(queue.body.open.some(item => item.id === paymentId)).toBe(false);
+    const settled = queue.body.settled.find(item => item.id === paymentId);
+    expect(settled.state).toBe('verified');
+    expect(settled.order.paymentStatus).toBe('completed');
+
+    // Confirming twice must not "re-confirm" anything.
+    const again = await request(app)
+      .post('/api/admin/payments/upi/' + paymentId + '/verify')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({});
+    expect(again.status).toBe(409);
+
+    const audit = await request(app).get('/api/admin/audit').set('Authorization', `Bearer ${adminToken}`);
+    const entry = audit.body.logs.find(log => log.action === 'upi.payment.verified' && log.resource === 'payment');
+    expect(entry).toBeTruthy();
+  });
+
+  test('confirming an unreported QR is allowed, and a QR cannot be sent twice to another plan', async () => {
+    const order = await request(app)
+      .post('/api/website-order?region=IN')
+      .set('Authorization', `Bearer ${ORDER_TOKEN}`)
+      .send({ service: 'basic-website', paymentMethod: 'upi_qr', customerName: 'UPI unreported', customerEmail: 'upi-unreported@example.com' });
+    const orderId = order.body.order.id;
+    const intent = await request(app)
+      .post('/api/payment/create-intent?region=IN')
+      .set('Authorization', `Bearer ${ORDER_TOKEN}`)
+      .send({ orderId, amount: 7999, currency: 'INR', type: 'website_order', service: 'basic-website', method: 'upi_qr' });
+
+    // Money can arrive without the customer ever reporting it.
+    const res = await request(app)
+      .post('/api/admin/payments/upi/' + intent.body.payment.id + '/verify')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ reference: 'BANK-REF-UNREPORTED' });
+    expect(res.status).toBe(200);
+    expect(readOrder(orderId).payment_status).toBe('completed');
+  });
+
+  test('rejecting records that no money arrived and keeps the order unpaid', async () => {
+    const { orderId, paymentId } = await placeReportedUpiOrder('reject');
+
+    const noReason = await request(app)
+      .post('/api/admin/payments/upi/' + paymentId + '/reject')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({});
+    expect(noReason.status).toBe(400);
+    expect(readOrder(orderId).payment_status).toBe('pending');
+
+    const rejected = await request(app)
+      .post('/api/admin/payments/upi/' + paymentId + '/reject')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ reason: 'No transfer received' });
+    expect(rejected.status).toBe(200);
+    expect(rejected.body.payment.status).toBe('failed');
+    expect(rejected.body.payment.metadata.rejectionReason).toBe('No transfer received');
+
+    const order = readOrder(orderId);
+    expect(order.payment_status).toBe('failed');
+    expect(order.status).toBe('pending');
+    expect(order.verification.rejectionReason).toBe('No transfer received');
+
+    // A rejected claim cannot then be "confirmed", and cannot be rejected twice.
+    const thenVerify = await request(app)
+      .post('/api/admin/payments/upi/' + paymentId + '/verify')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({});
+    expect(thenVerify.status).toBe(409);
+    expect(readOrder(orderId).payment_status).toBe('failed');
+
+    const again = await request(app)
+      .post('/api/admin/payments/upi/' + paymentId + '/reject')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ reason: 'still nothing' });
+    expect(again.status).toBe(409);
+  });
+
+  test('refuses unknown payments and non-UPI payments', async () => {
+    const missing = await request(app)
+      .post('/api/admin/payments/upi/does-not-exist/verify')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({});
+    expect(missing.status).toBe(404);
+
+    // A card payment must not be confirmable through the UPI screen.
+    const store = require('../lib/mockStore');
+    const cardId = 'qa-card-' + Date.now();
+    await store.update(store.paymentsPath(), function (payments) {
+      payments.push({
+        id: cardId, user_id: 'upi-verify-user', order_id: 'order-card-qa', amount: 199,
+        currency: 'usd', provider: 'stripe', status: 'pending', provider_tx_id: 'pi_qa',
+        metadata: { type: 'website_order', method: 'card' }, created_at: new Date().toISOString(),
+      });
+      return payments;
+    });
+    const res = await request(app)
+      .post('/api/admin/payments/upi/' + cardId + '/verify')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({});
+    expect(res.status).toBe(400);
+    expect(await store.update(store.paymentsPath(), function (payments) {
+      return payments.filter(payment => payment.id !== cardId);
+    })).toBeTruthy();
+  });
+});
+
 describe('regional plan pricing', () => {
   test('prices plans per region and states which price list is shown', async () => {
     const global = await request(app).get('/api/services');
