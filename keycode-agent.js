@@ -114,8 +114,10 @@ async function main() {
   // run a goal
   const maxStepsFlag = args.indexOf('--max-steps');
   const maxSteps = maxStepsFlag !== -1 ? parseInt(args[maxStepsFlag + 1], 10) : undefined;
-  const goal = args.filter((a, i) => a !== '--max-steps' && i !== maxStepsFlag + 1).join(' ').trim();
+  const goal = args.filter((a, i) => a !== '--max-steps' && !(maxStepsFlag !== -1 && i === maxStepsFlag + 1)).filter(Boolean).join(' ').trim();
   if (!goal) die('No goal given.');
+  // Load .env so AI_PROVIDER/AI_API_KEY configured via setup-llm apply to CLI runs.
+  try { require('dotenv').config({ path: require('path').join(__dirname, '.env') }); } catch (_) { }
 
   console.log('▶ KEYCODE Agent — goal: ' + goal);
   const session = await agent.runTask({ goal: goal, maxSteps: maxSteps }, function (evt) {

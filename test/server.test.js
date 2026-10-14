@@ -513,22 +513,24 @@ describe('payments', () => {
     expect(res.status).toBe(400);
   });
 
-  test('bank create-intent then confirm completes the payment', async () => {
+  test('bank transfers are refused: that rail never actually sent anything', async () => {
     const create = await request(app)
       .post('/api/payment/create-intent')
       .set('Authorization', `Bearer ${token}`)
       .send({ amount: 42.5, method: 'bank', orderId: 'order-test-1' });
-    expect(create.status).toBe(200);
-    expect(create.body.gateway).toBe('bank');
-    expect(create.body.payment.status).toBe('pending');
+    expect(create.status).toBe(410);
+    expect(create.body.gateway).toBe('unavailable');
+    expect(create.body.reason).toMatch(/card|UPI/i);
+  });
 
-    const confirm = await request(app)
-      .post('/api/payment/confirm')
+  test('upi is refused while the deployment has no real UPI ID configured', async () => {
+    const create = await request(app)
+      .post('/api/payment/create-intent')
       .set('Authorization', `Bearer ${token}`)
-      .send({ orderId: 'order-test-1', gateway: 'bank' });
-    expect(confirm.status).toBe(200);
-    expect(confirm.body.success).toBe(true);
-    expect(confirm.body.payment.status).toBe('completed');
+      .send({ amount: 42.5, method: 'upi_qr', orderId: 'order-test-1' });
+    expect([400, 503]).toContain(create.status);
+    expect(create.body.gateway).toBe('unavailable');
+    expect(create.body.rail).toBe('upi');
   });
 });
 
@@ -605,6 +607,48 @@ describe('agent workspaces and account isolation', () => {
     expect(otherMemory.body.facts.some(function (item) { return item.text === fact; })).toBe(false);
     expect(ownMemory.body.skills.some(function (item) { return item.id === teach.body.skill.id; })).toBe(true);
     expect(otherMemory.body.skills.some(function (item) { return item.id === teach.body.skill.id; })).toBe(false);
+  });
+
+  test('registry lists built-in tools plus the caller\u2019s learned skills', async () => {
+    const anon = await request(app).get('/api/agent/registry');
+    expect(anon.status).toBe(401);
+
+    const registry = await request(app).get('/api/agent/registry').set('Authorization', 'Bearer ' + tokenA);
+    expect(registry.status).toBe(200);
+    expect(registry.body.builtin).toBeGreaterThan(0);
+    expect(registry.body.skills).toBeGreaterThanOrEqual(1);
+    expect(registry.body.total).toBe(registry.body.builtin + registry.body.skills);
+    expect(registry.body.tools.some(function (t) { return t.name === 'fs_write'; })).toBe(true);
+    expect(registry.body.tools.some(function (t) { return t.group === 'skill' && t.name.indexOf('skill_') === 0; })).toBe(true);
+
+    const other = await request(app).get('/api/agent/registry').set('Authorization', 'Bearer ' + tokenB);
+    expect(other.status).toBe(200);
+    expect(other.body.skills).toBe(0);
+  });
+
+  test('default agent runs pass learned skills to the agent loop', async () => {
+    let runOptions;
+    const runTask = jest.spyOn(agent, 'runTask').mockImplementation(async function (opts, onEvent) {
+      runOptions = opts;
+      onEvent({ type: 'final', text: 'pong' });
+      return { id: 'test-session', status: 'done', final: 'pong', steps: [] };
+    });
+    try {
+      const response = await request(app).post('/api/agent/react')
+        .set('Authorization', 'Bearer ' + tokenA)
+        .send({ task: 'ping', maxSteps: 1, workspaceId: workspaceId });
+      expect(response.status).toBe(200);
+      expect(runOptions.allowedTools).toContain('fs_write');
+      expect(runOptions.allowedTools.some(function (name) { return name.indexOf('skill_') === 0; })).toBe(true);
+
+      const explicit = await request(app).post('/api/agent/react')
+        .set('Authorization', 'Bearer ' + tokenA)
+        .send({ task: 'ping', maxSteps: 1, workspaceId: workspaceId, allowedTools: ['fs_read'] });
+      expect(explicit.status).toBe(200);
+      expect(runOptions.allowedTools).toEqual(['fs_read']);
+    } finally {
+      runTask.mockRestore();
+    }
   });
 
   test('restricts session reads to their owner and rejects invalid workspace ids', async () => {
@@ -708,9 +752,26 @@ describe('AI Builder website stream', () => {
       const completedProject = JSON.parse(completeEvent.slice(6)).data;
       expect(completedProject.fileId).toMatch(/^proj_/);
       expect(completedProject.previewUrl).toContain(completedProject.fileId);
+
+      // the published page must carry a working lead form: name, email, message -> /api/inquiries
+      const htmlEvent = response.text.split('\n').find(line => line.startsWith('data: {"type":"html"'));
+      const generatedHtml = JSON.parse(htmlEvent.slice(6)).html;
+      expect(generatedHtml).toContain('/api/inquiries');
+      expect(generatedHtml).toMatch(/<textarea[^>]*id="cbody"/);
+      expect(generatedHtml).toMatch(/name:\s*nm/);
+      expect(generatedHtml).toMatch(/email:\s*em/);
+      expect(generatedHtml).toMatch(/message:\s*ms/);
     } finally {
       if (previousProvider === undefined) delete process.env.AI_PROVIDER;
       else process.env.AI_PROVIDER = previousProvider;
     }
+  });
+
+  test('rejects incomplete generated HTML so a truncated page is never published', () => {
+    const { htmlLooksComplete } = require('../routes/appdata');
+    expect(htmlLooksComplete('')).toBe(false);
+    expect(htmlLooksComplete('<!DOCTYPE html><html><head><title>Moxa</title><style>body{}</style></head><body><h1>cut off here')).toBe(false);
+    expect(htmlLooksComplete('Here is your site:\n<!DOCTYPE html><html><head><title>x</title><style></style></head><body>' + 'x'.repeat(1000) + '</body></html>')).toBe(false);
+    expect(htmlLooksComplete('<!DOCTYPE html><html><head><title>R</title><style>' + 'a{}'.repeat(300) + '</style></head><body><h1>' + 'x'.repeat(300) + '</h1></body></html>')).toBe(true);
   });
 });

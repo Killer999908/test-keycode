@@ -168,8 +168,10 @@ module.exports = function AppDataRoutes(opts) {
     h.push('.price ul{list-style:none;color:var(--mu);margin:0 0 20px}');
     h.push('.price li{padding:5px 0}');
     h.push('.price button{width:100%;padding:11px;border-radius:10px;border:0;background:var(--ac);color:#0b0d10;font-weight:700;cursor:pointer}');
-    h.push('form.inp{display:flex;gap:10px;max-width:520px;margin:0 auto 14px}');
-    h.push('form.inp input{flex:1;padding:12px 16px;border-radius:10px;border:1px solid #ffffff22;background:#ffffff0a;color:var(--tx)}');
+    h.push('form.inp{display:flex;flex-wrap:wrap;gap:10px;max-width:520px;margin:0 auto 14px}');
+    h.push('form.inp input{flex:1 1 180px;padding:12px 16px;border-radius:10px;border:1px solid #ffffff22;background:#ffffff0a;color:var(--tx)}');
+    h.push('form.inp textarea{flex:1 1 100%;padding:12px 16px;border-radius:10px;border:1px solid #ffffff22;background:#ffffff0a;color:var(--tx);font:inherit;resize:vertical}');
+    h.push('form.inp .btn{flex:1 1 100%}');
     h.push('</style>');
     h.push('</head>');
     h.push('<body>');
@@ -198,15 +200,18 @@ module.exports = function AppDataRoutes(opts) {
     });
     h.push('</section>');
     h.push('<section id="contact" class="band"><h2>Contact us</h2><p class="sub" style="margin-bottom:22px">Tell us what you need.</p>');
-    h.push('<form id="cform" class="inp"><input id="cemail" type="email" placeholder="Your email" required><button class="btn" type="submit">Send</button></form>');
+    h.push('<form id="cform" class="inp"><input id="cname" type="text" placeholder="Your name" required><input id="cemail" type="email" placeholder="Your email" required><textarea id="cbody" rows="3" placeholder="How can we help?" required></textarea><button class="btn" type="submit">Send</button></form>');
     h.push('<p id="cmsg" style="color:var(--ac2);display:none"></p>');
     h.push('<script>');
     h.push('var f=document.getElementById("cform"),m=document.getElementById("cmsg");');
     h.push('f.addEventListener("submit",function(e){e.preventDefault();');
-    h.push('var em=document.getElementById("cemail").value;var x=new XMLHttpRequest();');
+    h.push('var nm=document.getElementById("cname").value,em=document.getElementById("cemail").value,ms=document.getElementById("cbody").value;');
+    h.push('var x=new XMLHttpRequest();');
     h.push('x.open("POST","/api/inquiries",true);x.setRequestHeader("Content-Type","application/json");');
-    h.push('x.send(JSON.stringify({name:"",email:em,message:"Contact form - ' + name + '",source:"generated-site"}));');
-    h.push('f.reset();m.style.display="block";m.textContent="Thanks! We got your message.";});');
+    h.push('x.onload=function(){m.style.display="block";m.textContent=x.status<400?"Thanks! We got your message.":"Sorry, that did not send - please email us directly.";};');
+    h.push('x.onerror=function(){m.style.display="block";m.textContent="Sorry, that did not send - please email us directly.";};');
+    h.push('x.send(JSON.stringify({name:nm,email:em,message:ms,source:"generated-site"}));');
+    h.push('f.reset();});');
     h.push('<\/script>');
     h.push('</section>');
     h.push('<footer><div>' + name + ' &copy; 2026</div><div><a href="mailto:' + email + '">' + email + '</a></div></footer>');
@@ -803,7 +808,7 @@ module.exports = function AppDataRoutes(opts) {
     let t = r.text.trim();
     const fence = t.match(/```(?:html)?\s*([\s\S]*?)```/i);
     if (fence) t = fence[1].trim();
-    if (!/<html/i.test(t) || t.length < 300) { console.warn('[ai-provider] generated HTML failed validation'); return null; }
+    if (!htmlLooksComplete(t)) { console.warn('[ai-provider] generated HTML failed validation (incomplete or too small)'); return null; }
     return t;
   }
 
@@ -1329,19 +1334,20 @@ module.exports = function AppDataRoutes(opts) {
   });
 
   // --------------------------------------------------------
-  //  SUBSCRIPTIONS + SUBSCRIBE  + CHAT
+  //  NEWSLETTER SIGNUP  (blog.html / changelog.html)
+  //  Plan status lives in routes/subscriptions.js (/api/subscriptions) — a plan
+  //  can only be activated there by a verified payment, never from this route.
   // --------------------------------------------------------
-  app.get('/api/subscriptions', requireAuth, function (req, res) {
-    const store = readJSON('data/mock-subscriptions.json', {});
-    res.json({ success: true, subscriptions: store[req.user.userId] || null, active: !!(store[req.user.userId] && store[req.user.userId].status === 'active') });
-  });
-  app.post('/api/subscribe', requireAuth, function (req, res) {
-    const b = req.body || {};
-    const plan = String(b.plan || 'pro');
-    const store = readJSON('data/mock-subscriptions.json', {});
-    store[req.user.userId] = { plan: plan, status: 'active', interval: String(b.interval || 'monthly'), price: Number(b.price) || (plan === 'pro' ? 29 : 0), startedAt: now(), renewsAt: new Date(Date.now() + 30 * 86400000).toISOString() };
-    writeJSON('data/mock-subscriptions.json', store);
-    res.status(201).json({ success: true, subscription: store[req.user.userId] });
+  app.post('/api/subscribe', function (req, res) {
+    const email = String((req.body || {}).email || '').trim().toLowerCase().slice(0, 160);
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return res.status(400).json({ error: 'A valid email is required.' });
+    const list = readJSON('data/mock-newsletter.json', []);
+    const already = list.some(function (entry) { return entry.email === email; });
+    if (!already) {
+      list.push({ email: email, source: String((req.body || {}).source || 'blog').slice(0, 40), createdAt: now() });
+      writeJSON('data/mock-newsletter.json', list.slice(-2000));
+    }
+    res.status(201).json({ success: true, subscribed: true, alreadySubscribed: already });
   });
   app.post('/api/chat', requireAuth, function (req, res) {
     const b = req.body || {};
@@ -1502,13 +1508,38 @@ module.exports = function AppDataRoutes(opts) {
   // --------------------------------------------------------
   //  SERVICES (public listing)
   // --------------------------------------------------------
+  // Plans are priced per region (lib/pricing-regions.json). The price the page
+  // shows and the price checkout charges come from this one resolver.
+  const pricing = require('../lib/pricing');
+  function pricedServices(req) {
+    const region = pricing.resolve(req);
+    const items = readJSON('data/services.json', []).map(function (item) {
+      const slug = String(item.slug || item._id || '').toLowerCase();
+      const base = Number(item.basePrice);
+      const amount = base > 0 ? pricing.priceFor(slug, region, base) : base;
+      return Object.assign({}, item, {
+        basePrice: amount,
+        currency: region.currency,
+        symbol: region.symbol,
+        priceLabel: amount > 0 ? region.symbol + amount : (base === 0 ? 'Free' : 'Custom'),
+      });
+    });
+    return {
+      items: items,
+      region: {
+        key: region.key, label: region.label, country: region.country,
+        currency: region.currency, symbol: region.symbol, regional: region.regional,
+      },
+    };
+  }
+
   app.get('/api/services', function (req, res) {
-    const items = readJSON('data/services.json', []);
-    res.json({ success: true, services: items });
+    const priced = pricedServices(req);
+    res.json({ success: true, services: priced.items, region: priced.region });
   });
   app.get('/api/services/featured', function (req, res) {
-    const items = readJSON('data/services.json', []);
-    res.json({ success: true, services: items.slice(0, 3) });
+    const priced = pricedServices(req);
+    res.json({ success: true, services: priced.items.slice(0, 3), region: priced.region });
   });
   app.get('/api/services/providers', requireAuth, function (req, res) {
     res.json({ success: true, providers: [
@@ -1743,5 +1774,22 @@ module.exports = function AppDataRoutes(opts) {
     })();
   });
 
-  return { buildSiteHtml: buildSiteHtml };
+  return { buildSiteHtml: buildSiteHtml, htmlLooksComplete: htmlLooksComplete };
 };
+
+// A model response is only usable if the document is actually complete: providers
+// sometimes cut a response short, and a truncated page must never be published as
+// a project preview. Incomplete output is rejected so callers fall back to the
+// local template engine instead of shipping a broken site.
+function htmlLooksComplete(html) {
+  if (typeof html !== 'string') return false;
+  const t = html.trim();
+  if (t.length < 800 || t.length > 400000) return false;
+  if (!/^<!doctype html>/i.test(t)) return false;
+  if (!/<html[\s>]/i.test(t) || !/<\/html>\s*$/i.test(t)) return false;
+  if (!/<body[\s>]/i.test(t) || !/<\/body>\s*<\/html>\s*$/i.test(t)) return false;
+  if (!/<head[\s>]/i.test(t) || !/<title>\s*\S[\s\S]*?<\/title>/i.test(t)) return false;
+  if (!/<style[\s>]/i.test(t)) return false;
+  return true;
+}
+module.exports.htmlLooksComplete = htmlLooksComplete;

@@ -70,8 +70,14 @@ function initSupabase() {
 //  Stripe (optional)
 // ---------------------------------------------------------------------------
 function initStripe() {
-  const key = process.env.STRIPE_SECRET_KEY;
-  if (!key) return;
+  const key = String(process.env.STRIPE_SECRET_KEY || '').trim();
+  // Ignore empty values and .env placeholders. A bogus key must leave card
+  // payments off (checkout falls back to UPI / bank transfer) instead of
+  // failing every charge with a Stripe auth error.
+  if (!/^(sk|rk)_(test|live)_[A-Za-z0-9]{8,}$/.test(key)) {
+    if (key) console.warn('[keycode] STRIPE_SECRET_KEY is a placeholder — card payments stay disabled.');
+    return;
+  }
   try {
     STRIPE = require('stripe')(key);
   } catch (err) {
@@ -105,7 +111,14 @@ app.use(cors({
   },
   credentials: true,
 }));
-app.use(express.json({ limit: '2mb' }));
+// Keep the raw body of Stripe webhook calls: signature verification hashes the
+// exact bytes Stripe sent, so a parsed object cannot be verified.
+app.use(express.json({
+  limit: '2mb',
+  verify: function (req, _res, buf) {
+    if (req.originalUrl && req.originalUrl.indexOf('/api/webhooks/stripe') === 0) req.rawBody = buf;
+  },
+}));
 app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 
 // Tiny cookie parser (no extra dependency): exposes req.cookies so the
@@ -203,6 +216,14 @@ app.get('/api/health', (_req, res) => {
     mode: NODE_ENV,
   });
 });
+
+// ===========================================================================
+//  Optional clients (Supabase, Stripe) are created BEFORE the route modules
+//  below because each module receives them by value. Creating them later (in
+//  boot) would leave payments and subscriptions permanently unconfigured.
+// ===========================================================================
+initSupabase();
+initStripe();
 
 // ===========================================================================
 //  AUTH  (register / login / logout / oauth / otp / magic link / passkey)
@@ -375,6 +396,16 @@ const WebsiteOrders = require('./routes/website-order')({
 });
 
 // ===========================================================================
+//  SUBSCRIPTIONS  (/api/subscriptions/*) — plan checkout, status, verification
+// ===========================================================================
+const Subscriptions = require('./routes/subscriptions')({
+  app,
+  requireAuth,
+  STRIPE,
+  projectRoot,
+});
+
+// ===========================================================================
 //  WEBHOOKS
 // ===========================================================================
 const Webhooks = require('./routes/webhooks')({
@@ -423,8 +454,7 @@ app.use((err, req, res, _next) => {
 //  Start
 // ===========================================================================
 async function boot() {
-  initSupabase();
-  initStripe();
+  // Supabase and Stripe are already initialised above, before route mounting.
 
   // If an HTTP server is available, favour that over direct listen so we
   // can attach to a port the runtime controls; otherwise fallback.

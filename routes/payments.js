@@ -25,172 +25,204 @@ module.exports = function PaymentsRoutes(opts) {
   // serialized read-modify-write helper
   const withPayments = (mutator) => store.update(PAYMENTS_PATH, mutator);
 
+  const paymentConfig = require('../lib/payment-config');
+  const pricing = require('../lib/pricing');
+
+  function regionPayload(req) {
+    const region = pricing.resolve(req);
+    return {
+      key: region.key, label: region.label, country: region.country,
+      currency: region.currency, symbol: region.symbol, regional: region.regional,
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  //  Payment configuration (public)
+  //
+  //  Tells the checkout page which rails can actually settle money right now and,
+  //  when one cannot, says why. The page disables the rest instead of offering a
+  //  method that would silently fail.
+  // ---------------------------------------------------------------------------
+  app.get('/api/payment/config', function (req, res) {
+    const region = pricing.resolve(req);
+    // A caller that charges in a currency other than the visitor's regional one
+    // (the website-order checkout bills in USD) passes it here, so the answer is
+    // about the currency actually being charged, not the visitor's locale.
+    const requested = String((req.query || {}).currency || '').trim().toUpperCase();
+    const chargingCurrency = requested || region.currency;
+    const methods = paymentConfig.methodsFor(
+      Object.assign({}, region, { currency: chargingCurrency }),
+      STRIPE,
+      process.env
+    );
+    res.json({
+      success: true,
+      region: regionPayload(req),
+      currency: chargingCurrency,
+      methods: {
+        card: { available: methods.card.available, reason: methods.card.reason },
+        upi: { available: methods.upi.available, reason: methods.upi.reason },
+      },
+      anyAvailable: paymentConfig.anyAvailable(methods),
+    });
+  });
+
   // ---------------------------------------------------------------------------
   //  Create payment intent / UPI QR / simulated stripe intent
   //
   //  Request body:
-  //    { orderId, amount, type:'website_order', method }
+  //    { orderId, amount, type:'website_order', method, currency? }
+  //
+  //  `currency` is the currency `amount` is expressed in; it defaults to the
+  //  visitor's regional currency. A rail is refused with a reason (never a
+  //  pretend success) when it cannot settle in that currency.
   //
   //  Response shapes (all of these are handled by checkout.html):
-  //    - gateway:'stripe',         paymentIntentId, amount, currency
+  //    - gateway:'stripe',           paymentIntentId, amount, currency
   //    - gateway:'stripe_simulated', message, orderId   (Stripe keys missing)
-  //    - gateway:'upi_qr',         qrUrl, amount, orderId
-  //    - gateway:'razorpay',       orderId, keyId, amount, currency
+  //    - gateway:'upi_qr',           qrUrl, amount, currency:'INR'
+  //    - gateway:'unavailable',      rail, reason       (rail cannot settle)
   // ---------------------------------------------------------------------------
   app.post('/api/payment/create-intent', requireAuth, async (req, res) => {
     try {
       const body = req.body || {};
       const user = req.user;
       const amount = Math.max(0, Number(body.amount || 0));
-      const method = (body.method || 'auto').toLowerCase();
+      const method = String(body.method || 'auto').toLowerCase();
       const orderId = body.orderId || null;
 
       if (amount <= 0) {
         return res.status(400).json({ error: 'amount must be greater than 0' });
       }
 
-      // ---- Bank transfer: no gateway, just a record ----
-      if (method === 'bank') {
-        const payment = {
+      const region = pricing.resolve(req);
+      const currency = String(body.currency || region.currency || 'usd').trim().toUpperCase();
+      const methods = paymentConfig.methodsFor(region, STRIPE, process.env);
+      const userId = user.userId || user.id;
+
+      function recordPayment(provider, extra) {
+        const payment = Object.assign({
           id:          rand(16),
-          user_id:     user.userId || user.id,
+          user_id:     userId,
           order_id:    orderId,
           amount,
-          currency:    'usd',
-          provider:    'bank_transfer',
+          currency:    currency.toLowerCase(),
+          provider,
           status:      'pending',
           provider_tx_id: null,
-          metadata:    { type: body.type || 'website_order', method: 'bank' },
+          metadata:    { type: body.type || 'website_order', method },
           created_at:  now(),
-        };
+        }, extra || {});
         const list = loadPayments();
         list.push(payment);
         savePayments(list);
-        return res.json({ gateway: 'bank', payment, message: 'Bank transfer instructions sent to your email.' });
+        return payment;
       }
 
-      // ---- Stripe (real) — only for card/auto; explicit UPI etc. skip Stripe ----
-      if (STRIPE && (method === 'card' || method === 'auto')) {
-        try {
-          const params = {
-            amount:        Math.round(amount * 100),
-            currency:      'usd',
-            metadata:      { orderId: orderId || '', userId: user.userId || user.id, type: body.type || 'website_order' },
-            automatic_payment_methods: { enabled: true },
-          };
-          const intent = await STRIPE.paymentIntents.create(params);
-
-          const payment = {
-            id:          rand(16),
-            user_id:     user.userId || user.id,
-            order_id:    orderId,
-            amount,
-            currency:    'usd',
-            provider:    'stripe',
-            status:      'pending',
-            provider_tx_id: intent.id,
-            metadata:    { type: body.type || 'website_order', method: 'card' },
-            created_at:  now(),
-          };
-          const list = loadPayments();
-          list.push(payment);
-          savePayments(list);
-
-          return res.json({
-            gateway:            'stripe',
-            paymentIntentId:    intent.id,
-            clientSecret:       intent.client_secret,
-            amount:             amount,
-            currency:           'usd',
-            payment,
-          });
-        } catch (stripeErr) {
-          console.error('[payment.create-intent] stripe error:', stripeErr && stripeErr.message);
-          // If Stripe is configured but the call failed, fall back to simulated.
-        }
+      // ---- Bank transfer: no longer offered (nothing was ever sent) ----
+      if (method === 'bank') {
+        return res.status(410).json({
+          gateway: 'unavailable',
+          rail: 'bank',
+          reason: 'Bank transfer is no longer offered. Pay by card or UPI.',
+          orderId,
+        });
       }
 
-      // ---- Stripe not configured → honest simulated response ----
-      // checkout.html reads gateway:'stripe_simulated' and shows a toast instead
-      // of pretending the card was charged.
-      const payment = {
-        id:          rand(16),
-        user_id:     user.userId || user.id,
-        order_id:    orderId,
-        amount,
-        currency:    'usd',
-        provider:    'stripe_simulated',
-        status:      'pending',
-        provider_tx_id: 'sim-' + rand(8),
-        metadata:    { type: body.type || 'website_order', method: method === 'card' ? 'card' : method },
-        created_at:  now(),
-      };
-      const list = loadPayments();
-      list.push(payment);
-      savePayments(list);
+      if (method !== 'card' && method !== 'auto' && method !== 'upi_qr') {
+        return res.status(400).json({ error: 'Unsupported payment method.' });
+      }
 
-      // If the caller explicitly chose 'card' and there is no Stripe, be honest.
+      // ---- Card (real Stripe) ----
       if (method === 'card' || method === 'auto') {
+        if (STRIPE) {
+          try {
+            const intent = await STRIPE.paymentIntents.create({
+              amount:        pricing.minorUnits(amount, currency),
+              currency:      currency.toLowerCase(),
+              metadata:      { orderId: orderId || '', userId, type: body.type || 'website_order' },
+              automatic_payment_methods: { enabled: true },
+            });
+            const payment = recordPayment('stripe', {
+              provider_tx_id: intent.id,
+              metadata: { type: body.type || 'website_order', method: 'card' },
+            });
+            return res.json({
+              gateway:         'stripe',
+              paymentIntentId: intent.id,
+              clientSecret:    intent.client_secret,
+              amount,
+              currency:        currency.toLowerCase(),
+              payment,
+            });
+          } catch (stripeErr) {
+            console.error('[payment.create-intent] stripe error:', stripeErr && stripeErr.message);
+            // Card rail is configured but the call failed: be honest, do not fake it.
+            return res.status(502).json({
+              gateway: 'unavailable',
+              rail: 'card',
+              reason: 'Stripe could not start this card payment. Nothing was charged — try again or pay by UPI.',
+              orderId,
+            });
+          }
+        }
+
+        // ---- Stripe not configured → honest simulated response ----
+        // checkout.html reads gateway:'stripe_simulated' and shows a toast instead
+        // of pretending the card was charged.
+        const payment = recordPayment('stripe_simulated', {
+          provider_tx_id: 'sim-' + rand(8),
+          metadata: { type: body.type || 'website_order', method: 'card' },
+        });
         return res.json({
           gateway:         'stripe_simulated',
-          message:         'Card payments need STRIPE_SECRET_KEY configured. Order is saved — pay via UPI QR or bank transfer, or configure Stripe and retry.',
+          message:         methods.card.reason || 'Card payments are not configured. Nothing was charged.',
           orderId:         orderId,
           payment,
-          // For quick dev/testing we also hand back a fake clientSecret so the
-          // client-side stripe.confirmCardPayment path can be exercised
-          // against our mock confirm endpoint.
           clientSecret:    'sim_' + rand(16) + '_secret',
         });
       }
 
-      // ---- UPI QR fallback (INR-ish, but we keep USD range) ----
-      if (method === 'upi_qr' || method === 'auto') {
-        const upiId = process.env.UPI_ID || 'keycodestudio@upi';
+      // ---- UPI QR: only when a real UPI ID exists AND we are charging INR ----
+      if (method === 'upi_qr') {
+        if (!methods.upi.available) {
+          return res.status(503).json({
+            gateway: 'unavailable',
+            rail: 'upi',
+            reason: methods.upi.reason || 'UPI is not configured.',
+            orderId,
+          });
+        }
+        if (currency !== 'INR') {
+          // The QR always asks for INR; charging a USD figure as rupees would
+          // under-charge ~100x, so refuse instead of quietly mis-billing.
+          return res.status(400).json({
+            gateway: 'unavailable',
+            rail: 'upi',
+            reason: 'UPI charges in INR, but this order is priced in ' + currency + '. Pay by card instead.',
+            orderId,
+          });
+        }
         const qrParams = [
-          `pa=${encodeURIComponent(upiId)}`,
+          `pa=${encodeURIComponent(methods.upi.id)}`,
           `pn=KEYCODE+Studio`,
-          `am=${amount.toFixed(2)}`,
+          `am=${Number(amount).toFixed(2)}`,
           `cu=INR`,
           `tn=Order+${orderId || rand(8)}`,
         ].join('&');
-        const qrUrl = `upi://pay?${qrParams}`;
-
-        payment.provider     = 'upi_qr';
-        payment.provider_tx_id = 'upi-' + rand(8);
-        const plist = loadPayments();
-        const pi = plist.find(p => p.id === payment.id);
-        if (pi) pi.provider = 'upi_qr';
-        savePayments(plist);
-
+        const payment = recordPayment('upi_qr', {
+          currency: 'inr',
+          provider_tx_id: 'upi-' + rand(8),
+        });
         return res.json({
-          gateway:   'upi_qr',
-          qrUrl,
+          gateway:  'upi_qr',
+          qrUrl:    `upi://pay?${qrParams}`,
+          upiId:    methods.upi.id,
           amount,
-          currency:  'INR',
-          payment,
-        });
-      }
-
-      // ---- Razorpay fallback (when keys present) ----
-      const rzpKey = process.env.RAZORPAY_KEY_ID;
-      if (rzpKey) {
-        // In a real deploy you would create a Razorpay Order here.
-        return res.json({
-          gateway:  'razorpay',
-          keyId:    rzpKey,
-          amount,    // minor units handled by client
           currency: 'INR',
-          orderId:  'rzp_' + rand(12),
           payment,
         });
       }
-
-      // Last resort: bank-style instructions
-      return res.json({
-        gateway:  'bank',
-        message:  'No card/UPI gateway configured. Contact support for bank transfer details.',
-        payment,
-      });
     } catch (err) {
       console.error('[payment.create-intent]', err);
       res.status(500).json({ error: 'Could not create payment intent.' });
@@ -250,14 +282,6 @@ module.exports = function PaymentsRoutes(opts) {
     return markPayment(payment, { status: 'completed', provider_tx_id: body.razorpay_order_id || 'upi-' + rand(8) }, res, 'UPI payment recorded. Funds will reflect shortly.');
   }
 
-  function confirmRazorpay(payment, body, res) {
-    return markPayment(payment, { status: 'completed', provider_tx_id: body.razorpay_payment_id || body.paymentIntentId || 'rzp-' + rand(8) }, res, 'Razorpay payment recorded.');
-  }
-
-  function confirmBank(payment, _body, res) {
-    return markPayment(payment, { status: 'completed' }, res, 'Bank transfer recorded.');
-  }
-
   app.post('/api/payment/confirm', requireAuth, async (req, res) => {
     try {
       const body = req.body || {};
@@ -274,30 +298,16 @@ module.exports = function PaymentsRoutes(opts) {
       );
 
       if (!payment) {
-        // No prior create-intent — record a fresh completed payment.
-        const newPay = {
-          id:          rand(16),
-          user_id:     user.userId || user.id,
-          order_id:    orderId,
-          amount:      Math.max(0, Number(amount || 0)),
-          currency:    'usd',
-          provider:    gateway,
-          status:      'completed',
-          provider_tx_id: paymentIntentId || 'manual-' + rand(8),
-          metadata:    { type: 'website_order', method: gateway },
-          created_at:  now(),
-        };
-        await withPayments((list) => { list.push(newPay); return list; });
-        return res.json({ success: true, payment: newPay, message: 'Payment recorded.' });
+        // Confirmation is only ever the second half of a create-intent. Without
+        // that recorded intent there is nothing to confirm, and inventing a
+        // "completed" payment here would mark an order paid that nobody paid for.
+        return res.status(404).json({ error: 'No pending payment found for this order. Start the payment first.' });
       }
 
       if (gateway === 'stripe' && paymentIntentId) return confirmStripe(payment, body, res);
       if (gateway === 'upi_qr')  return confirmUPI(payment, body, res);
-      if (gateway === 'razorpay') return confirmRazorpay(payment, body, res);
-      if (gateway === 'bank')     return confirmBank(payment, body, res);
 
-      // Unknown gateway — mark completed as a safe default for the order flow.
-      return markPayment(payment, { status: 'completed', provider_tx_id: paymentIntentId || 'manual-' + rand(8) }, res, 'Payment recorded.');
+      return res.status(400).json({ error: 'Unsupported payment gateway.' });
     } catch (err) {
       console.error('[payment.confirm]', err);
       res.status(500).json({ error: 'Could not confirm payment.' });

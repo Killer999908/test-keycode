@@ -64,10 +64,16 @@
         }) || null;
         if (!selected) throw new Error('That paid plan is not available. Choose a plan from the pricing page.');
         document.getElementById('planName').textContent = selected.name;
+        // The price the server resolves for this visitor's region is the price
+        // checkout charges, so display it with the region's own symbol.
+        var symbol = selected.symbol || (result.region && result.region.symbol) || '$';
         var monthly = Number(selected.basePrice);
         document.getElementById('billingLabel').textContent = interval === 'yearly'
-          ? '$' + (monthly * 0.8).toFixed(2) + '/mo equivalent · $' + (monthly * 9.6).toFixed(2) + ' billed yearly'
-          : '$' + monthly.toFixed(2) + ' billed monthly';
+          ? symbol + (monthly * 0.8).toFixed(2) + '/mo equivalent · ' + symbol + (monthly * 9.6).toFixed(2) + ' billed yearly'
+          : symbol + monthly.toFixed(2) + ' billed monthly';
+        if (result.region && result.region.regional) {
+          notice.textContent = 'Showing ' + result.region.label + ' pricing in ' + result.region.currency + '.';
+        }
         if (!isReturning) button.disabled = false;
       }).catch(function (error) {
         document.getElementById('planName').textContent = 'Select a plan';

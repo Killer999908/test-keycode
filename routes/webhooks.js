@@ -21,6 +21,9 @@ module.exports = function WebhookRoutes(opts) {
   const projectRoot = process.cwd();
   const ORDERS_PATH = store.ordersPath();
   const PAYMENTS_PATH = store.paymentsPath();
+  // Same subscription store (and JSON files) as routes/subscriptions.js, so a
+  // webhook can activate or update a plan without the buyer returning to the app.
+  const subscriptionStore = require('../lib/subscriptions').createSubscriptionStore(projectRoot);
   const loadOrders = store.loadOrders;
   const saveOrders = (list) => store.write(ORDERS_PATH, list);
   const loadPayments = store.loadPayments;
@@ -34,19 +37,35 @@ module.exports = function WebhookRoutes(opts) {
     const signature = req.headers['stripe-signature'];
     const rawBody   = req.rawBody || req.body; // Express json middleware already parsed
     let event;
+    // Only a signature-verified event may change what an account is entitled to.
+    // An unsigned payload is still accepted for local development of the payment
+    // reconciliation paths, but it can never activate or upgrade a paid plan.
+    let signatureVerified = false;
 
     if (STRIPE && signature && process.env.STRIPE_WEBHOOK_SECRET) {
       try {
         event = STRIPE.webhooks.constructEvent(rawBody, signature, process.env.STRIPE_WEBHOOK_SECRET);
+        signatureVerified = true;
       } catch (err) {
         console.warn('[webhook.stripe] signature verification failed:', err && err.message);
         return res.status(400).json({ error: 'Invalid signature' });
       }
     } else {
-      // Dev / no-secret mode: trust the payload shape.
-      event = (typeof rawBody === 'object' && rawBody) ? rawBody : {};
+      // Dev / no-secret mode: trust the payload shape. The raw body is a Buffer
+      // once the json verify hook is installed, so parse it here.
+      let parsed = {};
+      if (Buffer.isBuffer(rawBody)) {
+        try { parsed = JSON.parse(rawBody.toString('utf8')); } catch (_) { parsed = {}; }
+      } else if (rawBody && typeof rawBody === 'object') {
+        parsed = rawBody;
+      }
+      event = parsed;
       if (!event.type) {
         return res.status(400).json({ error: 'No event type' });
+      }
+      if (!STRIPE || !process.env.STRIPE_WEBHOOK_SECRET) {
+        console.warn('[webhook.stripe] ' + event.type + ' accepted WITHOUT signature verification — ' +
+          'set STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET to verify. Plan changes are refused.');
       }
     }
 
@@ -75,6 +94,37 @@ module.exports = function WebhookRoutes(opts) {
           const orderId = s.metadata && s.metadata.orderId;
           if (orderId) {
             await linkOrderPayment(orderId, s.payment_intent, 'completed', s.amount_total ? s.amount_total / 100 : null);
+          }
+          // A paid plan activates from the webhook too, so a subscription is live
+          // even when the buyer never returns to the success URL to verify it.
+          if (s.metadata && s.metadata.type === 'subscription') {
+            if (!signatureVerified) {
+              // Refuse plans from unsigned payloads: anyone could POST a forged
+              // 'paid' session and grant themselves Professional for free.
+              console.warn('[webhook.stripe] subscription NOT activated — event was not signature verified');
+            } else {
+              try {
+                const activated = subscriptionStore.activate(s);
+                console.log('[webhook.stripe] subscription activated — plan ' + activated.plan + ' renews ' + activated.renewsAt);
+              } catch (err) {
+                console.warn('[webhook.stripe] subscription activation skipped:', err && err.message);
+              }
+            }
+          }
+          break;
+        }
+        case 'customer.subscription.updated':
+        case 'customer.subscription.deleted': {
+          // Renewals, upgrades, cancellations and failed payments arrive here.
+          if (!signatureVerified) {
+            console.warn('[webhook.stripe] subscription NOT updated — event was not signature verified');
+            break;
+          }
+          try {
+            const updated = subscriptionStore.updateStripeSubscription(event.data.object);
+            console.log('[webhook.stripe] subscription ' + (updated ? 'now ' + updated.status + ' (renews ' + updated.renewsAt + ')' : 'ignored — unknown subscription'));
+          } catch (err) {
+            console.warn('[webhook.stripe] subscription update skipped:', err && err.message);
           }
           break;
         }

@@ -118,12 +118,14 @@ module.exports = function AgentRoutes(opts) {
     res.json({ success: true, total: manifest.length, byGroup: byGroup, tools: manifest });
   });
 
-  // Runtime panel: MCP connector + sandbox status. Real MCP servers are not
-  // attached yet — report honestly so the OS UI renders real numbers (0).
+  // Runtime panel: MCP connector + sandbox status. Reads the configured MCP
+  // servers from data/mcp-servers.json so the OS UI renders real numbers.
   app.get('/api/agent/mcp', function (req, res) {
+    let mcpServers = [];
+    try { mcpServers = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'data', 'mcp-servers.json'), 'utf8')); } catch (_) { }
     res.json({
       success: true,
-      mcp: { connected: 0, builtin: tools.manifest().length },
+      mcp: { connected: mcpServers.length, servers: mcpServers.map(function (s) { return { name: s.name, transport: s.transport, command: s.command, note: s.note || '' }; }), builtin: tools.manifest().length },
       sandbox: { activeSandboxes: running.size },
       pool: ai_poolStatus(),
     });

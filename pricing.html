@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
   <title>Pricing - KEYCODE Studio</title>
   <meta name="description" content="Simple, transparent pricing for KEYCODE's AI-powered design platform. Choose the plan that fits your project.">
-  <meta name="keywords" content="KEYCODE pricing, AI pricing, website builder plans, CAD subscription, PCB design pricing">
+  <meta name="keywords" content="KEYCODE pricing, AI pricing, website builder plans, PCB design pricing">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="/pricing">
 
@@ -967,12 +967,13 @@ a { text-decoration: none; color: inherit; }
   <!-- HERO -->
 <section class="hero">
   <h1>Simple, <span class="text-gradient">transparent</span> pricing</h1>
-  <p>Choose the plan that fits your project. All plans include AI-powered generation, hosting, and support.</p>
+  <p>Choose the plan that fits your project. Every plan runs on the same engine &mdash; you can cancel any time.</p>
   <div class="toggle-wrap" id="toggleWrap">
     <button class="toggle-btn active" data-period="monthly" onclick="setBilling('monthly')">Monthly</button>
     <button class="toggle-btn" data-period="annual" onclick="setBilling('annual')">Annual</button>
     <span class="toggle-badge" id="saveBadge">Save 20%</span>
   </div>
+  <p id="regionNote" style="display:none;margin:16px auto 0;max-width:560px;font-size:13px;color:var(--ash)"></p>
 </section>
 
 <!-- SKELETON LOADING -->
@@ -1016,21 +1017,21 @@ a { text-decoration: none; color: inherit; }
         Can I switch plans anytime?
         <i class="fas fa-chevron-down"></i>
       </button>
-      <div class="faq-answer"><p>Yes, you can upgrade or downgrade at any time. When upgrading, you'll be charged the prorated difference for the remainder of your billing cycle. When downgrading, the new rate takes effect at the start of your next billing period.</p></div>
+      <div class="faq-answer"><p>Email us and we will change the plan on your subscription. Upgrades start immediately; downgrades take effect at your next renewal. We do not prorate part of a billing period.</p></div>
     </div>
     <div class="faq-item">
       <button class="faq-question" onclick="toggleFaq(this)">
         Is there a free trial?
         <i class="fas fa-chevron-down"></i>
       </button>
-      <div class="faq-answer"><p>We offer a 7-day free trial on all paid plans. No credit card required. You'll get full access to all features during the trial period. Cancel anytime before the trial ends and you won't be charged.</p></div>
+      <div class="faq-answer"><p>There is no separate trial period: paid plans are billed as soon as you subscribe &mdash; monthly, or yearly at 20% off. The Free plan uses the same engine on real projects and needs no card. Email us any time to cancel a subscription.</p></div>
     </div>
     <div class="faq-item">
       <button class="faq-question" onclick="toggleFaq(this)">
         What payment methods do you accept?
         <i class="fas fa-chevron-down"></i>
       </button>
-      <div class="faq-answer"><p>We accept all major credit cards, PayPal, and UPI. All payments are processed securely through Stripe. Your payment information is never stored on our servers.</p></div>
+      <div class="faq-answer"><p>Card payments are processed by Stripe. Where UPI is available you can also pay by UPI QR from the checkout page. Card details are handled by Stripe &mdash; we never see or store them.</p></div>
     </div>
     <div class="faq-item">
       <button class="faq-question" onclick="toggleFaq(this)">
@@ -1044,7 +1045,7 @@ a { text-decoration: none; color: inherit; }
         Do you offer custom enterprise plans?
         <i class="fas fa-chevron-down"></i>
       </button>
-      <div class="faq-answer"><p>Yes, contact our sales team for custom pricing on enterprise plans. We offer dedicated infrastructure, SLA guarantees, custom integrations, and priority support for large organizations.</p></div>
+      <div class="faq-answer"><p>Email <a href="mailto:keycode.techio@gmail.com">keycode.techio@gmail.com</a> describing what you need and we will quote it. We do not currently offer dedicated infrastructure, uptime SLAs, custom integrations or a dedicated account manager.</p></div>
     </div>
   </div>
 </section>
@@ -1111,7 +1112,19 @@ a { text-decoration: none; color: inherit; }
 // ─── STATE ───
 var billing = 'monthly';
 var services = [];
+var regionInfo = null;
 var pricingGrid = document.getElementById('pricingGrid');
+
+// ─── MONEY ───
+// Prices are stated per region (lib/pricing-regions.json). Format with the
+// region's own symbol so the page and the charge can never disagree.
+function symbolFor(svc) {
+  return (svc && svc.symbol) || (regionInfo && regionInfo.symbol) || '$';
+}
+function formatAmount(value) {
+  var n = Number(value);
+  return Number.isInteger(n) ? String(n) : n.toFixed(2);
+}
 
 // ─── MOBILE MENU ───
 function toggleMobileMenu() {
@@ -1136,14 +1149,12 @@ function setBilling(period) {
   renderCards();
 }
 
-// ─── FORMAT PRICE ───
-function formatPrice(price, period) {
-  if (!price && price !== 0) return null;
-  if (period === 'annual') {
-    var monthly = price * 0.8;
-    return '$' + Math.round(monthly) + '/mo';
-  }
-  return '$' + Math.round(price) + '/mo';
+// ─── PRICE FOR THE SELECTED BILLING PERIOD ───
+// Annual is 12 months at 20% off — the exact rate /api/subscriptions/checkout
+// charges — so the per-month figure shown is the per-month figure billed.
+function monthlyRateFor(price) {
+  var n = Number(price);
+  return billing === 'annual' ? Math.round(n * 0.8 * 100) / 100 : n;
 }
 
 // ─── RENDER PRICING CARDS ───
@@ -1160,10 +1171,10 @@ function renderCards() {
   var fallback = !sorted.length;
   if (fallback) {
     sorted = [
-      { _id: 'free', name: 'Free', slug: 'free', category: 'Free', description: 'Perfect for getting started. Basic AI generation with community support.', shortDescription: 'Perfect for getting started', basePrice: 0, features: ['AI Website Generation', 'PCB Design (3 projects)', 'CAD Modeling (3 projects)', 'Community Support', 'Hosting Included', '1 Custom Domain'], sortOrder: 1 },
-      { _id: 'starter', name: 'Starter', slug: 'starter', category: 'Starter', description: 'For hobbyists and small projects. More generations and priority features.', shortDescription: 'For hobbyists & small projects', basePrice: 19, features: ['AI Website Generation', 'PCB Design (15 projects)', 'CAD Modeling (15 projects)', 'MCU Programming', 'Hosting Included', '3 Custom Domains', 'Email Support'], sortOrder: 2 },
-      { _id: 'professional', name: 'Professional', slug: 'professional', category: 'Professional', description: 'For professionals and growing teams. Unlimited projects with priority support.', shortDescription: 'For professionals & teams', basePrice: 49, features: ['AI Website Generation', 'Unlimited PCB Design', 'Unlimited CAD Modeling', 'MCU Programming', 'Hosting Included', 'Custom Domain', 'API Access', 'Priority Support', 'Team Collaboration'], sortOrder: 3 },
-      { _id: 'enterprise', name: 'Enterprise', slug: 'enterprise', category: 'Enterprise', description: 'For large organizations. Dedicated infrastructure with SLA and custom integrations.', shortDescription: 'For large organizations', basePrice: null, features: ['AI Website Generation', 'Unlimited PCB Design', 'Unlimited CAD Modeling', 'MCU Programming', 'Dedicated Hosting', 'Unlimited Domains', 'Full API Access', '24/7 Priority Support', 'SLA Guarantee', 'Custom Integrations', 'Dedicated Account Manager'], sortOrder: 4 },
+      { _id: 'free', name: 'Free', slug: 'free', category: 'Free', description: 'Use the whole toolkit on real projects. No card required.', shortDescription: 'Use everything, no card', basePrice: 0, features: ['AI website generation', 'Website preview, HTML download and ZIP export', 'PCB design with Gerber and SKiDL files', 'Autonomous agent runs', 'Email support'], sortOrder: 1 },
+      { _id: 'starter', name: 'Starter', slug: 'starter', category: 'Starter', description: 'For hobbyists and small projects that want a faster reply.', shortDescription: 'For hobbyists & small projects', basePrice: 19, features: ['Everything in Free', 'Priority email support'], sortOrder: 2 },
+      { _id: 'professional', name: 'Professional', slug: 'professional', category: 'Professional', description: 'For freelancers who need programmatic access to the same engine.', shortDescription: 'For freelancers & client work', basePrice: 49, features: ['Everything in Starter', 'API access \u2014 create and revoke keys in your account', 'Priority email support'], sortOrder: 3 },
+      { _id: 'enterprise', name: 'Enterprise', slug: 'enterprise', category: 'Enterprise', description: 'Volume work and custom projects, scoped over email.', shortDescription: 'For volume & custom work', basePrice: null, features: ['Everything in Professional', 'Volume pricing quoted by email', 'Custom scoped work quoted by email'], sortOrder: 4 },
     ];
   }
 
@@ -1191,9 +1202,10 @@ function renderCards() {
       if (price === 0) {
         html += '<span class="pricing-value">Free</span>';
       } else {
-        html += '<span class="pricing-currency">$</span>';
-        html += '<span class="pricing-value">' + Math.round(price) + '</span>';
-        html += '<span class="pricing-period">/mo</span>';
+        var rate = monthlyRateFor(price);
+        html += '<span class="pricing-currency">' + symbolFor(svc) + '</span>';
+        html += '<span class="pricing-value">' + formatAmount(rate) + '</span>';
+        html += '<span class="pricing-period">/mo' + (billing === 'annual' ? ' · billed yearly' : '') + '</span>';
       }
       html += '</div>';
     }
@@ -1205,17 +1217,18 @@ function renderCards() {
     html += '</ul>';
 
     var ctaClass = isFeatured ? 'primary' : (isEnterprise ? 'secondary' : 'outline');
-    var ctaText = isEnterprise ? 'Contact Sales' : 'Start now';
-    // Paid plans go straight to checkout with the plan context; free plan goes to signup
+    var ctaText = isEnterprise ? 'Contact Sales' : (price > 0 ? 'Subscribe now' : 'Start now');
+    // Paid plans start a real subscription for the billing period this page is
+    // showing; the free plan goes to signup.
+    var interval = billing === 'annual' ? 'yearly' : 'monthly';
+    var planSlug = String(svc.slug || svc._id || svc.name || 'plan').toLowerCase();
     var ctaHref;
     if (isEnterprise) {
       ctaHref = 'mailto:keycode.techio@gmail.com';
     } else if (price === 0 || price === null || price === undefined) {
       ctaHref = '/register.html';
     } else {
-      ctaHref = '/checkout.html?plan=' + encodeURIComponent(svc.name || 'plan') +
-        '&price=' + encodeURIComponent(Math.round(price)) +
-        '&service=' + encodeURIComponent(svc.id || svc.slug || 'plan');
+      ctaHref = '/subscribe.html?plan=' + encodeURIComponent(planSlug) + '&interval=' + interval;
     }
     html += '<a href="' + ctaHref + '" class="pricing-cta ' + ctaClass + '">' + ctaText + ' <i class="fas fa-arrow-right"></i></a>';
 
@@ -1231,15 +1244,14 @@ function renderCards() {
 
 // ─── COMPARISON TABLE ───
 var comparisonData = {
-  'AI Website Generation': { free: true, starter: true, professional: true, enterprise: true },
-  'PCB Design': { free: true, starter: true, professional: true, enterprise: true },
-  'CAD Modeling': { free: true, starter: true, professional: true, enterprise: true },
-  'MCU Programming': { free: false, starter: true, professional: true, enterprise: true },
-  'Hosting Included': { free: true, starter: true, professional: true, enterprise: true },
-  'Custom Domain': { free: '1', starter: '3', professional: true, enterprise: true },
-  'API Access': { free: false, starter: false, professional: true, enterprise: true },
-  'Priority Support': { free: false, starter: false, professional: true, enterprise: true },
-  'SLA Guarantee': { free: false, starter: false, professional: false, enterprise: true },
+  'AI website generation': { free: true, starter: true, professional: true, enterprise: true },
+  'Website preview, download & ZIP export': { free: true, starter: true, professional: true, enterprise: true },
+  'PCB design': { free: true, starter: true, professional: true, enterprise: true },
+  'Gerber & SKiDL files': { free: true, starter: true, professional: true, enterprise: true },
+  'Autonomous agent runs': { free: true, starter: true, professional: true, enterprise: true },
+  'Email support': { free: true, starter: true, professional: true, enterprise: true },
+  'Priority email support': { free: false, starter: true, professional: true, enterprise: true },
+  'API access': { free: false, starter: false, professional: true, enterprise: true },
 };
 
 function renderComparison(servicesList) {
@@ -1302,11 +1314,29 @@ async function loadPricing() {
     if (!res.ok) throw new Error('API error');
     var data = await res.json();
     services = Array.isArray(data) ? data : (data.services || []);
+    regionInfo = Array.isArray(data) ? null : (data.region || null);
   } catch (e) {
     console.warn('API failed, using fallback data');
     services = [];
+    regionInfo = null;
   }
+  updateRegionNote();
   renderCards();
+}
+
+// Say out loud which price list the visitor is seeing, instead of letting the
+// numbers change silently by country.
+function updateRegionNote() {
+  var note = document.getElementById('regionNote');
+  if (!note) return;
+  if (!regionInfo || !regionInfo.regional) {
+    note.style.display = 'none';
+    note.textContent = '';
+    return;
+  }
+  note.style.display = 'block';
+  note.textContent = 'Showing ' + regionInfo.label + ' pricing in ' + regionInfo.currency +
+    '. Checkout charges exactly these amounts in ' + regionInfo.currency + '.';
 }
 
 loadPricing();

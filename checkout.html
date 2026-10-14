@@ -443,7 +443,7 @@
             <i class="fas fa-credit-card"></i> Payment Method
           </h2>
           <div class="payment-methods">
-            <label class="payment-option selected">
+            <label class="payment-option selected" id="optCard">
               <input type="radio" name="paymentMethod" value="card" checked>
               <span class="payment-icon"><i class="fas fa-credit-card"></i></span>
               <span class="payment-label">
@@ -451,15 +451,16 @@
                 <span>Pay securely with Stripe</span>
               </span>
             </label>
-            <label class="payment-option">
-              <input type="radio" name="paymentMethod" value="bank">
-              <span class="payment-icon"><i class="fas fa-university"></i></span>
+            <label class="payment-option" id="optUpi">
+              <input type="radio" name="paymentMethod" value="upi_qr">
+              <span class="payment-icon"><i class="fas fa-qrcode"></i></span>
               <span class="payment-label">
-                <strong>Bank Transfer</strong>
-                <span>Wire transfer to our account</span>
+                <strong>UPI</strong>
+                <span>Scan our QR and pay in INR</span>
               </span>
             </label>
           </div>
+          <p id="payNotice" style="display:none;margin:12px 0 0;font-size:13px;line-height:1.6;color:var(--ash)"></p>
           <div id="cardPaymentSection">
             <div class="form-group">
               <label for="cardName">Name on Card</label>
@@ -647,15 +648,63 @@
       }
     }
 
+    function selectedMethod() {
+      return document.querySelector('input[name="paymentMethod"]:checked').value;
+    }
+
+    function syncMethodUI() {
+      const method = selectedMethod();
+      document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('selected'));
+      const radio = document.querySelector('input[name="paymentMethod"]:checked');
+      if (radio) radio.closest('.payment-option').classList.add('selected');
+      document.getElementById('cardPaymentSection').style.display = method === 'card' ? 'block' : 'none';
+    }
+
     document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
-      radio.addEventListener('change', (e) => {
-        document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('selected'));
-        e.target.closest('.payment-option').classList.add('selected');
-        
-        const cardSection = document.getElementById('cardPaymentSection');
-        cardSection.style.display = e.target.value === 'card' ? 'block' : 'none';
-      });
+      radio.addEventListener('change', syncMethodUI);
     });
+
+    // ---- Which rails can actually settle money right now ----
+    // Asked of the server, so the page never offers a method that would fail or
+    // pay the wrong account (for example a placeholder UPI ID).
+    async function loadPaymentConfig() {
+      const notice = document.getElementById('payNotice');
+      const cardRadio = document.querySelector('input[name="paymentMethod"][value="card"]');
+      const upiRadio = document.querySelector('input[name="paymentMethod"][value="upi_qr"]');
+      let config = null;
+      try {
+        const res = await fetch('/api/payment/config?currency=usd');
+        config = await res.json();
+      } catch (e) { config = null; }
+      if (!config || !config.methods) {
+        notice.style.display = 'block';
+        notice.textContent = 'Could not confirm which payment methods are available. Refresh this page before paying.';
+        return;
+      }
+      const reasons = [];
+      if (!config.methods.card.available) {
+        cardRadio.disabled = true;
+        document.getElementById('optCard').style.opacity = '.55';
+        reasons.push('Card: ' + (config.methods.card.reason || 'unavailable'));
+      }
+      if (!config.methods.upi.available) {
+        upiRadio.disabled = true;
+        document.getElementById('optUpi').style.opacity = '.55';
+        reasons.push('UPI: ' + (config.methods.upi.reason || 'unavailable'));
+      }
+      if (cardRadio.disabled && !upiRadio.disabled) { upiRadio.checked = true; }
+      syncMethodUI();
+      if (!config.anyAvailable) {
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-lock"></i> Payment method unavailable';
+      }
+      if (reasons.length) {
+        notice.style.display = 'block';
+        notice.textContent = reasons.join(' ');
+      }
+    }
+    loadPaymentConfig();
 
     document.getElementById('cardNumber').addEventListener('input', (e) => {
       let value = e.target.value.replace(/\s/g, '').replace(/\D/g, '');
@@ -721,14 +770,21 @@
         const method = payload.paymentMethod;
 
         // ---- Payment step (only for real money orders) ----
-        if (total > 0 && method !== 'bank' && orderId) {
+        if (total > 0 && orderId) {
           const authHeaders = token ? { 'Authorization': 'Bearer ' + token } : {};
           const piRes = await fetch('/api/payment/create-intent', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', ...authHeaders },
-            body: JSON.stringify({ orderId, amount: total, type: 'website_order', method: method === 'card' ? (payload.userId ? 'auto' : 'upi_qr') : method })
+            // Website orders are billed in USD, so both the rail check and the
+            // charge use USD. The UPI rail exists only for orders priced in INR.
+            body: JSON.stringify({ orderId, amount: total, type: 'website_order', method, currency: 'usd' })
           });
           const pi = await piRes.json();
+
+          if (!piRes.ok || pi.gateway === 'unavailable') {
+            // Nothing was charged and nothing was recorded as paid.
+            throw new Error(pi.reason || pi.error || 'That payment method is unavailable right now.');
+          }
 
           if (pi.gateway === 'stripe' && pi.paymentIntentId) {
             // Real Stripe: confirm with the card form fields
@@ -739,38 +795,22 @@
             const conf = await confirmRes.json();
             if (!conf.success) throw new Error(conf.error || 'Card payment failed');
           } else if (pi.gateway === 'stripe_simulated') {
-            // Stripe not configured — surface it honestly instead of faking success
-            showToast(pi.message || 'Card payments need Stripe keys — order saved, choose UPI or bank to pay.', 'error');
+            // Stripe not configured — say so instead of faking a charge.
+            throw new Error(pi.message || 'Card payments are not configured. Nothing was charged.');
           } else if (pi.gateway === 'upi_qr' && pi.qrUrl) {
+            // A plain UPI QR has no callback, so the order stays pending until the
+            // transfer is verified. Show the exact payee and amount, and claim nothing more.
             window.open(pi.qrUrl, '_blank');
-            await fetch('/api/payment/confirm', {
-              method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders },
-              body: JSON.stringify({ gateway: 'upi_qr', orderId, amount: total })
-            });
-          } else if (pi.gateway === 'razorpay' && pi.orderId) {
-            // Razorpay checkout via script
-            await new Promise((resolve, reject) => {
-              const s = document.createElement('script');
-              s.src = 'https://checkout.razorpay.com/v1/checkout.js';
-              s.onload = resolve; s.onerror = reject;
-              document.head.appendChild(s);
-            });
-            await new Promise((resolve, reject) => {
-              const rzp = new window.Razorpay({
-                key: pi.keyId, amount: Math.round(pi.amount * 100), currency: 'INR',
-                name: 'KEYCODE Studio', order_id: pi.orderId,
-                handler: async (r) => {
-                  const c = await fetch('/api/payment/confirm', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders },
-                    body: JSON.stringify({ gateway: 'razorpay', orderId, amount: total, razorpayPaymentId: r.razorpay_payment_id, razorpaySignature: r.razorpay_signature, razorpay_order_id: r.razorpay_order_id, paymentIntentId: pi.orderId })
-                  });
-                  const cj = await c.json();
-                  cj.success ? resolve() : reject(new Error(cj.error || 'verification failed'));
-                },
-                modal: { ondismiss: () => reject(new Error('Payment cancelled')) }
-              });
-              rzp.open();
-            });
+            document.getElementById('orderId').textContent = result.order?.orderNumber || 'KC-' + Date.now().toString(36).toUpperCase();
+            document.getElementById('successOverlay').classList.add('show');
+            showToast('Pay ' + pi.currency + ' ' + Number(total).toFixed(2) + ' to ' + (pi.upiId || 'the UPI ID shown') +
+              '. Keep the reference — your order stays pending until we verify the payment.', 'error');
+            sessionStorage.removeItem('checkoutOrder');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-lock"></i> Pay Deposit Now';
+            return;
+          } else {
+            throw new Error('That payment method is unavailable right now.');
           }
         }
 
